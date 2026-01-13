@@ -41,4 +41,18 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.status = :status")
     List<Member> findByKindergartenIdAndStatus(@Param("kindergartenId") Long kindergartenId,
                                                 @Param("status") MemberStatus status);
+
+    /**
+     * 유치원별 특정 역할 회원 조회 (원장 찾기 등)
+     */
+    @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role = :role AND m.deletedAt IS NULL")
+    Optional<Member> findByKindergartenIdAndRole(@Param("kindergartenId") Long kindergartenId,
+                                                  @Param("role") MemberRole role);
+
+    /**
+     * 유치원별 특정 역할 회원 목록
+     */
+    @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role = :role AND m.deletedAt IS NULL")
+    List<Member> findAllByKindergartenIdAndRole(@Param("kindergartenId") Long kindergartenId,
+                                                  @Param("role") MemberRole role);
 }

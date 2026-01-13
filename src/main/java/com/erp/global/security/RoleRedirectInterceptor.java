@@ -1,0 +1,125 @@
+package com.erp.global.security;
+
+import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberRole;
+import com.erp.domain.member.entity.MemberStatus;
+import com.erp.domain.member.repository.MemberRepository;
+import com.erp.global.security.user.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import java.io.IOException;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class RoleRedirectInterceptor implements HandlerInterceptor {
+
+    private final MemberRepository memberRepository;
+
+    @Override
+    public boolean preHandle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Object handler) throws Exception {
+
+        String uri = request.getRequestURI();
+
+        // 공개 경로는 통과
+        if (isPublicPath(uri)) {
+            return true;
+        }
+
+        // 정적 리소스는 통과
+        if (isStaticResource(uri)) {
+            return true;
+        }
+
+        // API 엔드포인트는 통과 (Controller에서 권한 체크)
+        if (isApiPath(uri)) {
+            return true;
+        }
+
+        // 인증 확인
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            response.sendRedirect("/login");
+            return false;
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Member member = memberRepository.findById(userDetails.getMemberId())
+                .orElse(null);
+
+        if (member == null) {
+            response.sendRedirect("/login");
+            return false;
+        }
+
+        // 강제 리다이렉트 로직
+        String redirectUrl = shouldForceRedirect(member, uri);
+        if (redirectUrl != null) {
+            log.debug("Forcing redirect for member: {} from {} to {}", member.getEmail(), uri, redirectUrl);
+            response.sendRedirect(redirectUrl);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean isPublicPath(String uri) {
+        return uri.equals("/") ||
+                uri.startsWith("/login") ||
+                uri.startsWith("/signup") ||
+                uri.startsWith("/error");
+    }
+
+    private boolean isStaticResource(String uri) {
+        return uri.startsWith("/css/") ||
+                uri.startsWith("/js/") ||
+                uri.startsWith("/images/") ||
+                uri.startsWith("/favicon.ico") ||
+                uri.endsWith(".css") ||
+                uri.endsWith(".js") ||
+                uri.endsWith(".png") ||
+                uri.endsWith(".jpg") ||
+                uri.endsWith(".jpeg") ||
+                uri.endsWith(".gif") ||
+                uri.endsWith(".svg") ||
+                uri.endsWith(".ico");
+    }
+
+    private boolean isApiPath(String uri) {
+        return uri.startsWith("/api/");
+    }
+
+    private String shouldForceRedirect(Member member, String uri) {
+        // 원장: 유치원 없으면 생성 페이지로 강제 이동
+        if (member.getRole() == MemberRole.PRINCIPAL &&
+                member.getKindergarten() == null &&
+                !uri.startsWith("/kindergarten/create")) {
+            return "/kindergarten/create";
+        }
+
+        // 교사: 유치원 없으면 선택 페이지로 강제 이동
+        if (member.getRole() == MemberRole.TEACHER &&
+                member.getKindergarten() == null &&
+                !uri.startsWith("/kindergarten/select")) {
+            return "/kindergarten/select";
+        }
+
+        // PENDING 상태: 대기 페이지로 강제 이동
+        if (member.getStatus() == MemberStatus.PENDING &&
+                !uri.startsWith("/applications/pending")) {
+            return "/applications/pending";
+        }
+
+        return null;
+    }
+}

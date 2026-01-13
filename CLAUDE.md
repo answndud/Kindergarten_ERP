@@ -37,6 +37,10 @@ The project follows a "Simple is Best" philosophy - focused on core functionalit
 ./gradlew test jacocoTestReport
 ```
 
+## docs
+- 기능 구현하면서 주요 기능 추가될 때마다 @docs/00_project에 설명 마크다운 파일 작성
+- 기술 도입 이유, 면접 예상 질문, 사용된 라이브러리 정리 등 초보자 입장에서 작성
+
 ### Database (Flyway Migrations)
 ```bash
 # Flyway migrations run automatically on startup
