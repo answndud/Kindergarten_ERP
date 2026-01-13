@@ -134,6 +134,13 @@ public class Member extends BaseEntity {
     }
 
     /**
+     * 회원 활성화 (별칭 메서드)
+     */
+    public void activateMember() {
+        this.status = MemberStatus.ACTIVE;
+    }
+
+    /**
      * 회원 비활성화
      */
     public void deactivate() {

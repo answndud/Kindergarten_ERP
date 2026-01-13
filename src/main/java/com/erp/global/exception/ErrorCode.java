@@ -38,6 +38,7 @@ public enum ErrorCode {
     CLASSROOM_NOT_FOUND(404, "CL001", "반을 찾을 수 없습니다"),
     CLASSROOM_ALREADY_HAS_TEACHER(400, "CL002", "이미 담임 교사가 배정된 반입니다"),
     CLASSROOM_HAS_KIDS(400, "CL003", "원생이 있는 반은 삭제할 수 없습니다"),
+    CLASSROOM_NOT_BELONG_TO_KINDERGARTEN(400, "CL004", "해당 유치원의 반이 아닙니다"),
 
     // ========== Kid ==========
     KID_NOT_FOUND(404, "KD001", "원생을 찾을 수 없습니다"),
@@ -54,7 +55,21 @@ public enum ErrorCode {
     NOTEPAD_ACCESS_DENIED(403, "N002", "알림장 조회 권한이 없습니다"),
 
     // ========== Announcement ==========
-    ANNOUNCEMENT_NOT_FOUND(404, "AN001", "공지사항을 찾을 수 없습니다");
+    ANNOUNCEMENT_NOT_FOUND(404, "AN001", "공지사항을 찾을 수 없습니다"),
+
+    // ========== Notification ==========
+    NOTIFICATION_NOT_FOUND(404, "NT001", "알림을 찾을 수 없습니다"),
+    NOTIFICATION_ACCESS_DENIED(403, "NT002", "알림 조회 권한이 없습니다"),
+
+    // ========== Application ==========
+    APPLICATION_NOT_FOUND(404, "AP001", "지원서를 찾을 수 없습니다"),
+    APPLICATION_NOT_PENDING(400, "AP002", "처리 가능한 상태가 아닙니다"),
+    APPLICATION_ALREADY_EXISTS(409, "AP003", "이미 지원한 유치원입니다"),
+    PENDING_APPLICATION_EXISTS(400, "AP004", "이미 대기 중인 지원서가 있습니다"),
+    APPLICATION_ACCESS_DENIED(403, "AP005", "지원서 접근 권한이 없습니다"),
+    ALREADY_ASSIGNED_TO_KINDERGARTEN(400, "AP006", "이미 유치원에 배정된 교사입니다"),
+    KINDERGARTEN_ACCESS_DENIED(403, "AP007", "유치원 접근 권한이 없습니다"),
+    INVALID_MEMBER_ROLE(403, "AP008", "잘못된 회원 역할입니다");
 
     /**
      * HTTP 상태 코드
