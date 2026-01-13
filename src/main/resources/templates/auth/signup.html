@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 유치원 ERP</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        }
+        .role-radio:checked + label {
+            border-color: #14b8a6;
+            background-color: #f0fdfa;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4"
+      x-data="{
+          email: '',
+          password: '',
+          passwordConfirm: '',
+          name: '',
+          phone: '',
+          role: 'PARENT',
+          isLoading: false,
+          error: '',
+          errors: {},
+          passwordsMatch() {
+              return this.password === this.passwordConfirm && this.password.length > 0;
+          },
+          async handleSubmit() {
+              this.isLoading = true;
+              this.error = '';
+              this.errors = {};
+
+              try {
+                  const response = await fetch('/api/v1/auth/signup', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                          email: this.email,
+                          password: this.password,
+                          passwordConfirm: this.passwordConfirm,
+                          name: this.name,
+                          phone: this.phone,
+                          role: this.role
+                      })
+                  });
+
+                  const data = await response.json();
+
+                  if (data.success) {
+                      alert('회원가입이 완료되었습니다. 로그인해주세요.');
+                      window.location.href = '/login';
+                  } else {
+                      if (data.data && typeof data.data === 'object') {
+                          this.errors = data.data;
+                      } else {
+                          this.error = data.message || '회원가입에 실패했습니다';
+                      }
+                  }
+              } catch (e) {
+                  this.error = '서버 오류가 발생했습니다';
+              } finally {
+                  this.isLoading = false;
+              }
+          }
+      }">
+
+    <!-- Signup Container -->
+    <div class="w-full max-w-2xl">
+        <!-- Logo -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="text-white text-xl font-bold">ER</span>
+                </div>
+                <div class="text-left">
+                    <h1 class="text-2xl font-bold text-gray-900">유치원 ERP</h1>
+                    <p class="text-sm text-gray-500">Smart Management</p>
+                </div>
+            </div>
+            <p class="text-gray-600 mt-1">유치원 ERP에 오신 것을 환영합니다</p>
+        </div>
+
+        <!-- Signup Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <!-- Error Alert -->
+            <div x-show="error" x-cloak
+                 class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="text-sm text-red-600" x-text="error"></span>
+                </div>
+            </div>
+
+            <form @submit.prevent="handleSubmit">
+                <!-- Role Selection -->
+                <div class="mb-5">
+                    <label class="block mb-2 text-sm font-medium text-gray-700">회원 유형</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <input type="radio" name="role" value="PARENT" x-model="role" id="role-parent" class="role-radio peer sr-only">
+                            <label for="role-parent" class="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-all">
+                                <div class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center mb-1.5">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">학부모</span>
+                            </label>
+                        </div>
+                        <div>
+                            <input type="radio" name="role" value="TEACHER" x-model="role" id="role-teacher" class="role-radio peer sr-only">
+                            <label for="role-teacher" class="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-all">
+                                <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center mb-1.5">
+                                    <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">교사</span>
+                            </label>
+                        </div>
+                        <div>
+                            <input type="radio" name="role" value="PRINCIPAL" x-model="role" id="role-principal" class="role-radio peer sr-only">
+                            <label for="role-principal" class="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-all">
+                                <div class="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center mb-1.5">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">원장</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Name, Email, Phone -->
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label for="name" class="block mb-1.5 text-sm font-medium text-gray-700">이름</label>
+                        <input type="text" id="name" name="name" required
+                               x-model="name"
+                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               placeholder="홍길동">
+                        <p x-show="errors.name" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.name"></p>
+                    </div>
+                    <div>
+                        <label for="email" class="block mb-1.5 text-sm font-medium text-gray-700">이메일</label>
+                        <input type="email" id="email" name="email" required
+                               x-model="email"
+                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               placeholder="example@email.com">
+                        <p x-show="errors.email" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.email"></p>
+                    </div>
+                    <div>
+                        <label for="phone" class="block mb-1.5 text-sm font-medium text-gray-700">전화번호</label>
+                        <input type="tel" id="phone" name="phone"
+                               x-model="phone"
+                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               placeholder="01012345678">
+                        <p x-show="errors.phone" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.phone"></p>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="password" class="block mb-1.5 text-sm font-medium text-gray-700">비밀번호</label>
+                        <input type="password" id="password" name="password" required
+                               x-model="password"
+                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               placeholder="8자 이상">
+                        <p x-show="errors.password" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.password"></p>
+                    </div>
+                    <div>
+                        <label for="passwordConfirm" class="block mb-1.5 text-sm font-medium text-gray-700">비밀번호 확인</label>
+                        <div class="relative">
+                            <input type="password" id="passwordConfirm" name="passwordConfirm" required
+                                   x-model="passwordConfirm"
+                                   class="py-2.5 px-3 pr-8 block w-full border rounded-xl text-sm focus:ring-primary-500"
+                                   :class="passwordsMatch() ? 'border-green-400 focus:border-green-500' : (passwordConfirm ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-primary-500')"
+                                   placeholder="다시 입력">
+                            <div x-show="passwordConfirm" x-cloak class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <svg x-show="passwordsMatch()" class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <svg x-show="!passwordsMatch()" class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms -->
+                <div class="mb-5 p-3 bg-gray-50 rounded-xl">
+                    <label class="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" required class="w-4 h-4 mt-0.5 border-gray-300 rounded text-primary-600 focus:ring-primary-500">
+                        <span class="text-xs text-gray-600">
+                            <a href="#" class="text-primary-600 hover:underline font-medium">이용약관</a>과
+                            <a href="#" class="text-primary-600 hover:underline font-medium">개인정보처리방침</a>에 동의합니다.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" :disabled="isLoading || !passwordsMatch() || !email || !name"
+                        class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-xl border border-transparent bg-gradient-primary text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                    <span x-show="!isLoading">회원가입</span>
+                    <span x-show="isLoading" x-cloak class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        가입 중...
+                    </span>
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="mt-6 text-center text-sm text-gray-600">
+                이미 계정이 있으신가요?
+                <a href="/login" class="font-medium text-primary-600 hover:text-primary-700">로그인</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="mt-6 text-center text-sm text-gray-500">
+            © 2024 유치원 ERP. All rights reserved.
+        </p>
+    </div>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+</body>
+</html>

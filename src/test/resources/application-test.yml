@@ -1,0 +1,48 @@
+spring:
+  # Test Database Configuration (H2)
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        show_sql: false
+
+  # Flyway Configuration (disabled for tests)
+  flyway:
+    enabled: false
+
+  # Redis Configuration (disabled for tests - using mock)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 3000
+
+# H2 Console (for debugging)
+h2:
+  console:
+    enabled: true
+
+# JWT Configuration
+jwt:
+  secret: test-secret-key-for-testing-purpose-only-must-be-at-least-256-bits-long-for-jwt-token-generation-and-validation
+  access-token-validity: 900000    # 15 minutes
+  refresh-token-validity: 604800000 # 7 days
+
+# Logging
+logging:
+  level:
+    com.erp: DEBUG
+    org.springframework.security: INFO
+    org.springframework.test.web.servlet: INFO
+    org.hibernate.SQL: INFO

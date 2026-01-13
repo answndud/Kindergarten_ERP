@@ -1,0 +1,33 @@
+package com.erp.global.security.user;
+
+import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberStatus;
+import com.erp.domain.member.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+/**
+ * Spring Security 사용자 조회 서비스
+ */
+@Service
+@RequiredArgsConstructor
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final MemberRepository memberRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다: " + email));
+
+        // ACTIVE 상태인 경우만 로그인 가능
+        if (!MemberStatus.ACTIVE.equals(member.getStatus())) {
+            throw new UsernameNotFoundException("회원이 비활성화되었습니다: " + email);
+        }
+
+        return new CustomUserDetails(member);
+    }
+}

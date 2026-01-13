@@ -1,0 +1,48 @@
+package com.erp.domain.announcement.repository;
+
+import com.erp.domain.announcement.entity.Announcement;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+/**
+ * 공지사항 리포지토리
+ */
+@Repository
+public interface AnnouncementRepository extends JpaRepository<Announcement, Long> {
+
+    /**
+     * 유치원별 공지사항 목록 조회 (삭제되지 않은 것만, 최신순)
+     */
+    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.isImportant DESC, a.createdAt DESC")
+    Page<Announcement> findByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
+
+    /**
+     * 유치원별 중요 공지사항 목록 조회
+     */
+    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.isImportant = true ORDER BY a.createdAt DESC")
+    Page<Announcement> findImportantByKindergartenId(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
+
+    /**
+     * ID로 조회 (삭제되지 않은 것만)
+     */
+    @Query("SELECT a FROM Announcement a WHERE a.id = :id AND a.deletedAt IS NULL")
+    Optional<Announcement> findByIdAndDeletedAtIsNull(@Param("id") Long id);
+
+    /**
+     * 제목으로 검색 (유치원별)
+     */
+    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.title LIKE %:title% ORDER BY a.createdAt DESC")
+    Page<Announcement> findByKindergartenIdAndTitleContaining(@Param("kindergartenId") Long kindergartenId, @Param("title") String title, Pageable pageable);
+
+    /**
+     * 조회수 상위 공지사항
+     */
+    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.viewCount DESC")
+    Page<Announcement> findMostViewedByKindergartenId(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
+}
