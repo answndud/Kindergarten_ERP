@@ -3,6 +3,7 @@ package com.erp.domain.attendance.dto.request;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalTime;
 
@@ -10,6 +11,7 @@ import java.time.LocalTime;
  * 등원 기록 요청 DTO
  */
 @Getter
+@Setter
 @NoArgsConstructor
 public class DropOffRequest {
 
