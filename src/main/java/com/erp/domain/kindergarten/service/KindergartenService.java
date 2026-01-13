@@ -1,0 +1,96 @@
+package com.erp.domain.kindergarten.service;
+
+import com.erp.domain.kindergarten.entity.Kindergarten;
+import com.erp.domain.kindergarten.repository.KindergartenRepository;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * 유치원 서비스
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class KindergartenService {
+
+    private final KindergartenRepository kindergartenRepository;
+
+    /**
+     * 유치원 등록
+     */
+    @Transactional
+    public Long register(String name, String address, String phone,
+                         String openTime, String closeTime) {
+        // 유치원명 중복 확인 (선택)
+        if (kindergartenRepository.existsByName(name)) {
+            throw new BusinessException(ErrorCode.KINDERGARTEN_ALREADY_EXISTS);
+        }
+
+        // 시간 변환
+        java.time.LocalTime open = parseTime(openTime);
+        java.time.LocalTime close = parseTime(closeTime);
+
+        // 유치원 생성
+        Kindergarten kindergarten = Kindergarten.create(name, address, phone, open, close);
+
+        // 저장
+        Kindergarten saved = kindergartenRepository.save(kindergarten);
+
+        return saved.getId();
+    }
+
+    /**
+     * 유치원 조회
+     */
+    public Kindergarten getKindergarten(Long id) {
+        return kindergartenRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.KINDERGARTEN_NOT_FOUND));
+    }
+
+    /**
+     * 전체 유치원 조회
+     */
+    public List<Kindergarten> getAllKindergartens() {
+        return kindergartenRepository.findAllByOrderByNameAsc();
+    }
+
+    /**
+     * 유치원 수정
+     */
+    @Transactional
+    public void updateKindergarten(Long id, String name, String address, String phone,
+                                   String openTime, String closeTime) {
+        Kindergarten kindergarten = getKindergarten(id);
+
+        // 시간 변환
+        java.time.LocalTime open = parseTime(openTime);
+        java.time.LocalTime close = parseTime(closeTime);
+
+        // 수정
+        kindergarten.update(name, address, phone, open, close);
+    }
+
+    /**
+     * 유치원 삭제
+     */
+    @Transactional
+    public void deleteKindergarten(Long id) {
+        Kindergarten kindergarten = getKindergarten(id);
+        kindergartenRepository.delete(kindergarten);
+    }
+
+    /**
+     * 시간 문자열 파싱 (HH:mm)
+     */
+    private java.time.LocalTime parseTime(String time) {
+        if (time == null || time.isBlank()) {
+            return null;
+        }
+        return java.time.LocalTime.parse(time);
+    }
+}

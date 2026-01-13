@@ -121,14 +121,17 @@ Phase 5: 공지사항
 | Flyway | - | DB 마이그레이션 |
 
 ### 3.3 Frontend (Server-Side Rendering)
-| 기술 | 용도 |
-|------|------|
-| Thymeleaf | 템플릿 엔진 |
-| Vanilla JavaScript (ES6+) | 인터랙션 |
-| CSS (Custom Properties) | 스타일링 |
-| Fetch API | AJAX 요청 |
+| 기술 | 버전 | 용도 |
+|------|------|------|
+| Thymeleaf | - | 템플릿 엔진 |
+| HTMX | 1.9.x | 동적 HTML 교체 (AJAX 없이) |
+| Alpine.js | 3.x | 가벼운 클라이언트 상태 관리 |
+| Tailwind CSS | 3.4 | 유틸리티 퍼스트 스타일링 |
 
-> **Note**: 프레임워크 없이 순수 HTML/CSS/JS로 구현
+> **Note**: Thymeleaf + HTMX 조합으로 서버 사이드 렌더링하면서 동적 상호작용 가능
+> - HTMX: 서버에서 HTML 조각만 받아와서 DOM 업데이트
+> - Alpine.js: 간단한 클라이언트 사이드 상태 (모달, 토글 등)
+> - Tailwind CSS: 클래스 기반 스타일링으로 빠른 UI 개발
 
 ### 3.4 Infrastructure
 | 기술 | 용도 |
@@ -269,29 +272,9 @@ aibayo-v2/
 │   │       │       └── ...
 │   │       ├── static/
 │   │       │   ├── css/
-│   │       │   │   ├── base/
-│   │       │   │   │   ├── reset.css
-│   │       │   │   │   └── variables.css
-│   │       │   │   ├── components/
-│   │       │   │   │   ├── button.css
-│   │       │   │   │   ├── card.css
-│   │       │   │   │   ├── form.css
-│   │       │   │   │   ├── modal.css
-│   │       │   │   │   └── table.css
-│   │       │   │   ├── layout/
-│   │       │   │   │   ├── header.css
-│   │       │   │   │   ├── sidebar.css
-│   │       │   │   │   └── footer.css
-│   │       │   │   └── main.css
+│   │       │   │   └── custom.css           # Tailwind로 커버 안되는 커스텀 스타일
 │   │       │   ├── js/
-│   │       │   │   ├── utils/
-│   │       │   │   │   ├── api.js
-│   │       │   │   │   ├── dom.js
-│   │       │   │   │   └── validate.js
-│   │       │   │   ├── components/
-│   │       │   │   │   ├── modal.js
-│   │       │   │   │   └── toast.js
-│   │       │   │   └── app.js
+│   │       │   │   └── app.js               # HTMX/Alpine 설정 및 전역 함수
 │   │       │   └── images/
 │   │       │       └── logo.svg
 │   │       └── templates/

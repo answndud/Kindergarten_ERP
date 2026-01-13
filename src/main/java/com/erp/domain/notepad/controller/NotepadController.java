@@ -1,0 +1,169 @@
+package com.erp.domain.notepad.controller;
+
+import com.erp.domain.notepad.dto.request.NotepadRequest;
+import com.erp.domain.notepad.dto.response.NotepadDetailResponse;
+import com.erp.domain.notepad.dto.response.NotepadResponse;
+import com.erp.domain.notepad.entity.Notepad;
+import com.erp.domain.notepad.service.NotepadService;
+import com.erp.global.common.ApiResponse;
+import com.erp.global.security.user.CustomUserDetails;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * 알림장 API 컨트롤러
+ */
+@RestController
+@RequestMapping("/api/v1/notepads")
+@RequiredArgsConstructor
+public class NotepadController {
+
+    private final NotepadService notepadService;
+
+    /**
+     * 알림장 생성 (교사, 원장만 가능)
+     */
+    @PostMapping
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<NotepadResponse>> create(
+            @Valid @RequestBody NotepadRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long writerId = userDetails.getMemberId();
+
+        Long id = notepadService.createNotepad(request, writerId);
+
+        Notepad notepad = notepadService.getNotepad(id);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(notepadService.toResponse(notepad), "알림장이 작성되었습니다"));
+    }
+
+    /**
+     * 알림장 조회
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<NotepadDetailResponse>> getNotepad(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long readerId = userDetails.getMemberId();
+
+        NotepadDetailResponse response = notepadService.getNotepadDetail(id, readerId);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 반별 알림장 목록 (페이지)
+     */
+    @GetMapping("/classroom/{classroomId}")
+    public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getClassroomNotepads(
+            @PathVariable Long classroomId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<NotepadResponse> responses = notepadService.getClassroomNotepads(classroomId, pageable);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * 원생별 알림장 목록 (페이지)
+     */
+    @GetMapping("/kid/{kidId}")
+    public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getKidNotepads(
+            @PathVariable Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<NotepadResponse> responses = notepadService.getKidNotepads(kidId, pageable);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * 학부모용 알림장 목록 (반 전체 + 내 원생)
+     */
+    @GetMapping("/parent")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getNotepadsForParent(
+            @RequestParam Long classroomId,
+            @RequestParam Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<NotepadResponse> responses = notepadService.getNotepadsForParent(classroomId, kidId, pageable);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * 알림장 수정 (작성자만 가능)
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<NotepadResponse>> updateNotepad(
+            @PathVariable Long id,
+            @Valid @RequestBody NotepadRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long writerId = userDetails.getMemberId();
+
+        notepadService.updateNotepad(id, request, writerId);
+
+        Notepad notepad = notepadService.getNotepad(id);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(notepadService.toResponse(notepad), "알림장이 수정되었습니다"));
+    }
+
+    /**
+     * 알림장 삭제 (작성자 또는 원장만 가능)
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<Void>> deleteNotepad(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long requesterId = userDetails.getMemberId();
+
+        notepadService.deleteNotepad(id, requesterId);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(null, "알림장이 삭제되었습니다"));
+    }
+
+    /**
+     * 알림장 읽음 처리 (학부모만 가능)
+     */
+    @PostMapping("/{id}/read")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<ApiResponse<Void>> markAsRead(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long readerId = userDetails.getMemberId();
+
+        notepadService.markAsRead(id, readerId);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(null, "읽음 처리되었습니다"));
+    }
+}

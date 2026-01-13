@@ -94,11 +94,12 @@
 | Flyway | - | DB 마이그레이션 |
 
 ### Frontend
-| 기술 | 용도 |
-|------|------|
-| Thymeleaf | 템플릿 엔진 |
-| Vanilla JavaScript | 인터랙션 |
-| CSS3 | 스타일링 |
+| 기술 | 버전 | 용도 |
+|------|------|------|
+| Thymeleaf | - | 템플릿 엔진 (SSR) |
+| HTMX | 1.9.x | 동적 HTML 업데이트 |
+| Alpine.js | 3.x | 가벼운 클라이언트 상태 관리 |
+| Tailwind CSS | 3.4 | 유틸리티 퍼스트 CSS 프레임워크 |
 
 ### DevOps
 | 기술 | 용도 |
