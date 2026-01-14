@@ -22,6 +22,10 @@ public class CustomUserDetails implements UserDetails {
         this.member = member;
     }
 
+    public Member getMember() {
+        return member;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // ROLE_ 접두사를 포함한 권한 반환

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림장 수정 - 유치원 ERP</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex-shrink-0">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                        <span class="text-white text-lg font-bold">ER</span>
+                    </div>
+                    <span class="text-lg font-bold text-gray-900">유치원 ERP</span>
+                </a>
+            </div>
+            <nav class="flex items-center gap-4">
+                <a href="/notepad" class="text-gray-600 hover:text-primary-600 font-medium">알림장</a>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-700" th:text="${currentMember?.name}">사용자</span>
+                    <span class="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full" th:text="${currentMember?.role?.title}">역할</span>
+                </div>
+                <form action="/logout" method="post">
+                    <button type="submit" class="text-sm text-red-600 hover:text-red-700">로그아웃</button>
+                </form>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <a th:href="@{/notepad/{id}(id=${notepad.id()})}" class="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-4">
+            <span class="text-lg">←</span>
+            상세로
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900">알림장 수정</h1>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+        <form th:action="@{/notepad/{id}(id=${notepad.id()})}" method="post" class="p-6 space-y-6">
+            <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="px-2 py-1 bg-white border border-gray-200 rounded-full" th:text="${notepad.classroomName() != null ? notepad.classroomName() : '전체'}">전체</span>
+                    <span class="px-2 py-1 bg-white border border-gray-200 rounded-full" th:if="${notepad.kidName() != null}" th:text="${notepad.kidName()}">원생</span>
+                    <span class="text-gray-400">•</span>
+                    <span th:text="'작성자: ' + ${notepad.writerName()}">작성자</span>
+                </div>
+            </div>
+
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">제목 *</label>
+                <input type="text" name="title" id="title" required
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                       placeholder="제목을 입력하세요" th:value="${notepad.title()}" />
+            </div>
+
+            <div>
+                <label for="content" class="block text-sm font-medium text-gray-700 mb-1">내용 *</label>
+                <textarea name="content" id="content" required rows="12"
+                          class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-y"
+                          placeholder="내용을 입력하세요..." th:text="${notepad.content()}"></textarea>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-gray-200">
+                <button type="submit" class="flex-1 px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                    수정하기
+                </button>
+                <button type="button" th:onclick="|location.href='/notepad/${notepad.id()}'|" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                    취소
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const textarea = document.getElementById('content');
+        if (textarea) {
+            const resize = () => {
+                textarea.style.height = 'auto';
+                textarea.style.height = (textarea.scrollHeight) + 'px';
+            };
+            textarea.addEventListener('input', resize);
+            resize();
+        }
+    </script>
+</main>
+
+</body>
+</html>

@@ -7,7 +7,7 @@ import com.erp.domain.notepad.dto.response.NotepadDetailResponse;
 import com.erp.domain.notepad.dto.response.NotepadResponse;
 import com.erp.domain.notepad.service.NotepadService;
 import com.erp.global.security.user.CustomUserDetails;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -21,12 +21,17 @@ import java.util.List;
  * 알림장 뷰 컨트롤러
  */
 @Controller
-@RequiredArgsConstructor
 public class NotepadViewController {
 
     private final NotepadService notepadService;
     private final ClassroomService classroomService;
     private final KidService kidService;
+
+    public NotepadViewController(NotepadService notepadService, ClassroomService classroomService, KidService kidService) {
+        this.notepadService = notepadService;
+        this.classroomService = classroomService;
+        this.kidService = kidService;
+    }
 
     /**
      * 알림장 목록 페이지

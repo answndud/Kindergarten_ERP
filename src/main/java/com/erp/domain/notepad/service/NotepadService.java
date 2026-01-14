@@ -13,6 +13,7 @@ import com.erp.domain.notepad.repository.NotepadRepository;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.List;
 /**
  * 알림장 서비스
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -92,6 +94,9 @@ public class NotepadService {
      */
     @Transactional
     public Long createNotepad(NotepadRequest request, Long writerId) {
+        log.debug("알림장 생성 요청 - classroomId: {}, kidId: {}, title: {}", 
+                  request.getClassroomId(), request.getKidId(), request.getTitle());
+        
         Member writer = memberService.getMemberById(writerId);
         validateWriterRole(writer);
 
@@ -99,14 +104,17 @@ public class NotepadService {
 
         if (request.getKidId() != null) {
             // 원생별 알림장
+            log.debug("원생별 알림장 생성 - kidId: {}", request.getKidId());
             var kid = kidService.getKid(request.getKidId());
             notepad = Notepad.createKidNotepad(kid, writer, request.getTitle(), request.getContent());
         } else if (request.getClassroomId() != null) {
             // 반별 알림장
+            log.debug("반별 알림장 생성 - classroomId: {}", request.getClassroomId());
             var classroom = classroomService.getClassroom(request.getClassroomId());
             notepad = Notepad.createClassroomNotepad(classroom, writer, request.getTitle(), request.getContent());
         } else {
             // 전체 알림장
+            log.debug("전체 알림장 생성");
             if (writer.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
                 throw new BusinessException(ErrorCode.ACCESS_DENIED);
             }
@@ -145,6 +153,14 @@ public class NotepadService {
         }
 
         return NotepadDetailResponse.from(notepad, readConfirms, isRead);
+    }
+
+    /**
+     * 유치원별 알림장 목록 조회 (페이지)
+     */
+    public Page<NotepadResponse> getNotepadsByKindergarten(Long kindergartenId, Pageable pageable) {
+        return notepadRepository.findByKindergartenId(kindergartenId, pageable)
+                .map(notepad -> NotepadResponse.from(notepad, 0));
     }
 
     /**
@@ -187,13 +203,12 @@ public class NotepadService {
      * 알림장 수정
      */
     @Transactional
-    public void updateNotepad(Long id, NotepadRequest request, Long writerId) {
+    public void updateNotepad(Long id, NotepadRequest request, Long requesterId) {
         Notepad notepad = getNotepad(id);
 
-        // 작성자 확인
-        if (!notepad.getWriter().getId().equals(writerId)) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+        // 수정 권한 확인 (원장 또는 교사만 가능)
+        Member requester = memberService.getMemberById(requesterId);
+        validateWriterRole(requester);
 
         notepad.update(request.getTitle(), request.getContent());
 
@@ -209,12 +224,9 @@ public class NotepadService {
     public void deleteNotepad(Long id, Long requesterId) {
         Notepad notepad = getNotepad(id);
 
-        // 작성자 또는 원장만 삭제 가능
+        // 삭제 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
-        if (!notepad.getWriter().getId().equals(requesterId) &&
-            requester.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+        validateWriterRole(requester);
 
         notepadRepository.delete(notepad);
     }

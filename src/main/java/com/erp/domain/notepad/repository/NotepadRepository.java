@@ -4,6 +4,7 @@ import com.erp.domain.notepad.entity.Notepad;
 import com.erp.domain.notepad.entity.NotepadReadConfirm;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,27 +20,57 @@ import java.util.Optional;
 public interface NotepadRepository extends JpaRepository<Notepad, Long> {
 
     /**
+     * 유치원별 알림장 목록 조회 (최신순)
+     */
+    @EntityGraph(attributePaths = {"classroom", "kid", "writer"})
+    @Query("SELECT n FROM Notepad n " +
+           "LEFT JOIN n.classroom c " +
+           "LEFT JOIN n.writer w " +
+           "WHERE (c.kindergarten.id = :kindergartenId) " +
+           "   OR (n.classroom IS NULL AND w.kindergarten.id = :kindergartenId) " +
+           "ORDER BY n.createdAt DESC")
+    Page<Notepad> findByKindergartenId(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
+
+    /**
      * 반별 알림장 목록 조회 (최신순)
      */
-    @Query("SELECT n FROM Notepad n WHERE n.classroom.id = :classroomId AND n.kid IS NULL ORDER BY n.createdAt DESC")
+    @Query("SELECT n FROM Notepad n " +
+           "LEFT JOIN FETCH n.classroom " +
+           "LEFT JOIN FETCH n.writer " +
+           "WHERE n.classroom.id = :classroomId AND n.kid IS NULL " +
+           "ORDER BY n.createdAt DESC")
     Page<Notepad> findClassroomNotepads(@Param("classroomId") Long classroomId, Pageable pageable);
 
     /**
      * 원생별 알림장 목록 조회 (최신순)
      */
-    @Query("SELECT n FROM Notepad n WHERE n.kid.id = :kidId ORDER BY n.createdAt DESC")
+    @Query("SELECT n FROM Notepad n " +
+           "LEFT JOIN FETCH n.kid " +
+           "LEFT JOIN FETCH n.classroom " +
+           "LEFT JOIN FETCH n.writer " +
+           "WHERE n.kid.id = :kidId " +
+           "ORDER BY n.createdAt DESC")
     Page<Notepad> findKidNotepads(@Param("kidId") Long kidId, Pageable pageable);
 
     /**
      * 반별 + 원생별 알림장 (반 전체 + 내 원생)
      */
-    @Query("SELECT n FROM Notepad n WHERE (n.classroom.id = :classroomId AND n.kid IS NULL) OR n.kid.id = :kidId ORDER BY n.createdAt DESC")
+    @Query("SELECT n FROM Notepad n " +
+           "LEFT JOIN FETCH n.classroom " +
+           "LEFT JOIN FETCH n.kid " +
+           "LEFT JOIN FETCH n.writer " +
+           "WHERE (n.classroom.id = :classroomId AND n.kid IS NULL) OR n.kid.id = :kidId " +
+           "ORDER BY n.createdAt DESC")
     Page<Notepad> findNotepadsForParent(@Param("classroomId") Long classroomId, @Param("kidId") Long kidId, Pageable pageable);
 
     /**
-     * ID로 조회
+     * ID로 조회 (연관 엔티티 JOIN FETCH)
      */
-    @Query("SELECT n FROM Notepad n WHERE n.id = :id")
+    @Query("SELECT n FROM Notepad n " +
+           "LEFT JOIN FETCH n.classroom " +
+           "LEFT JOIN FETCH n.kid " +
+           "LEFT JOIN FETCH n.writer " +
+           "WHERE n.id = :id")
     Optional<Notepad> findById(@Param("id") Long id);
 
     /**

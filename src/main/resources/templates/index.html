@@ -81,6 +81,7 @@
                             <div class="w-9 h-9 bg-gradient-primary rounded-full flex items-center justify-center">
                                 <span class="text-sm font-semibold text-white" th:text="${#strings.toUpperCase(#strings.substring(currentMember?.name ?: 'U', 0, 1))}">U</span>
                             </div>
+
                             <span class="hidden lg:block text-sm font-medium text-gray-700" th:text="${currentMember?.name}">user@example.com</span>
                             <svg class="w-4 h-4 text-gray-400" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
@@ -192,12 +193,9 @@
         </div>
 
         <!-- Profile Info -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+        <a href="/profile" class="block bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-lg font-bold text-gray-900">내 정보</h2>
-                <a href="/profile" class="text-sm font-medium text-primary-600 hover:text-primary-700">
-                    자세히 보기 →
-                </a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
@@ -245,7 +243,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
 
         <!-- Quick Menu -->
         <h2 class="text-lg font-bold text-gray-900 mb-4">빠른 메뉴</h2>

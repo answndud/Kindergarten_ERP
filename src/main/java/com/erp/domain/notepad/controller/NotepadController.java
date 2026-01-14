@@ -8,7 +8,7 @@ import com.erp.domain.notepad.service.NotepadService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,10 +23,43 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/notepads")
-@RequiredArgsConstructor
 public class NotepadController {
 
     private final NotepadService notepadService;
+
+    public NotepadController(NotepadService notepadService) {
+        this.notepadService = notepadService;
+    }
+
+    /**
+     * 알림장 목록 조회 (유치원별)
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getNotepads(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) Long classroomId,
+            @RequestParam(required = false) Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<NotepadResponse> responses;
+
+        if (kidId != null) {
+            // 원생별 조회
+            responses = notepadService.getKidNotepads(kidId, pageable);
+        } else if (classroomId != null) {
+            // 반별 조회
+            responses = notepadService.getClassroomNotepads(classroomId, pageable);
+        } else {
+            // 유치원 전체 조회
+            Long kindergartenId = userDetails.getMember().getKindergarten().getId();
+            responses = notepadService.getNotepadsByKindergarten(kindergartenId, pageable);
+        }
+
+        return ResponseEntity
+                .ok(ApiResponse.success(responses));
+    }
 
     /**
      * 알림장 생성 (교사, 원장만 가능)
