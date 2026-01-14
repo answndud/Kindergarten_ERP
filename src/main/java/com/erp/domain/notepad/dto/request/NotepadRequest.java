@@ -5,11 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * 알림장 등록/수정 요청 DTO
  */
 @Getter
+@Setter
 @NoArgsConstructor
 public class NotepadRequest {
 
