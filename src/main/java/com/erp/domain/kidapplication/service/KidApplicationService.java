@@ -58,6 +58,11 @@ public class KidApplicationService {
             throw new BusinessException(ErrorCode.INVALID_MEMBER_ROLE);
         }
 
+        // 이미 유치원에 배정된 학부모는 신청 불가
+        if (parent.getKindergarten() != null) {
+            throw new BusinessException(ErrorCode.ALREADY_ASSIGNED_TO_KINDERGARTEN);
+        }
+
         Kindergarten kindergarten = kindergartenRepository.findById(request.kindergartenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.KINDERGARTEN_NOT_FOUND));
 
@@ -67,12 +72,45 @@ public class KidApplicationService {
                     .orElse(null);
         }
 
-        KidApplication application = KidApplication.create(
-                parent, kindergarten, request.kidName(), request.birthDate(),
-                request.gender(), preferredClassroom, request.notes()
-        );
+        // 동일 유치원에 이미 대기 중인 신청이 있으면 불가
+        applicationRepository.findPendingApplicationByParentAndKindergarten(parentId, request.kindergartenId())
+                .ifPresent(existing -> {
+                    throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
+                });
 
-        KidApplication saved = applicationRepository.save(application);
+        // 다른 유치원 포함 "대기 중" 신청이 있으면 추가 신청 불가
+        if (applicationRepository.existsByParentIdAndStatusAndDeletedAtIsNull(parentId, ApplicationStatus.PENDING)) {
+            throw new BusinessException(ErrorCode.PENDING_APPLICATION_EXISTS);
+        }
+
+        // 기존 취소/거절 신청이 있으면 재신청(UPDATE)
+        KidApplication saved;
+        var existing = applicationRepository.findByParentAndKindergarten(parentId, request.kindergartenId());
+        if (existing.isPresent()) {
+            KidApplication application = existing.get();
+            if (application.getStatus().isCancelled() || application.getStatus().isRejected()) {
+                application.reapply(kindergarten, request.kidName(), request.birthDate(), request.gender(), preferredClassroom, request.notes());
+                saved = applicationRepository.save(application);
+            } else {
+                throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
+            }
+        } else {
+            KidApplication application = KidApplication.create(
+                    parent, kindergarten, request.kidName(), request.birthDate(),
+                    request.gender(), preferredClassroom, request.notes()
+            );
+
+            try {
+                saved = applicationRepository.save(application);
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
+            }
+        }
+
+        // 신청 시점부터 승인 전까지는 PENDING으로 고정
+        if (parent.getStatus() != MemberStatus.PENDING) {
+            parent.markPending();
+        }
 
         // 유치원 원장/교사에게 알림 발송
         notifyStaffAboutApplication(kindergarten, parent, request.kidName());

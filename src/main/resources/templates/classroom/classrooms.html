@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>반 관리 - 유치원 ERP</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">반 관리</h1>
+        <p class="text-gray-600">
+            <span th:if="${currentMember?.kindergartenName != null}">
+                <span class="font-medium" th:text="${currentMember.kindergartenName}">유치원</span>의 반을 관리합니다.
+            </span>
+            <span th:if="${currentMember?.kindergartenName == null}">소속 유치원이 없습니다. 먼저 승인/배정을 완료하세요.</span>
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">반 생성</h2>
+            <form id="classroom-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">반 이름 *</label>
+                    <input id="classroom-name" required
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           placeholder="예) 해바라기반" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">연령대 (선택)</label>
+                    <input id="classroom-age" 
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           placeholder="예) 5세" />
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="px-5 py-2.5 bg-gradient-primary text-white font-medium rounded-xl hover:shadow-lg transition-all">
+                        생성
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-sm text-gray-600" th:if="${currentMember?.kindergartenId == null}">
+                반을 생성하려면 먼저 소속 유치원이 필요합니다.
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">반 목록</h2>
+                <button type="button" class="text-sm text-primary-700 hover:text-primary-800" onclick="loadClassrooms().catch(e => UI.error(e.message || '반 목록을 불러오지 못했습니다.'))">새로고침</button>
+            </div>
+
+            <div id="classroom-list" class="space-y-3">
+                <div class="text-center py-8 text-gray-500">불러오는 중...</div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Custom JS (Notifications/UI) -->
+<script th:src="@{/js/app.js}"></script>
+
+<script th:inline="javascript">
+    const initialKindergartenId = /*[[${currentMember?.kindergartenId}]]*/ null;
+    let kindergartenId = initialKindergartenId;
+
+    async function fetchMe() {
+        const response = await fetch('/api/v1/members/me', { credentials: 'same-origin' });
+        if (!response.ok) return null;
+        const result = await response.json().catch(() => ({}));
+        return result.data || null;
+    }
+
+    async function ensureKindergartenId() {
+        if (kindergartenId) return kindergartenId;
+        const me = await fetchMe();
+        if (me && me.kindergartenId) kindergartenId = me.kindergartenId;
+        return kindergartenId;
+    }
+
+    async function loadClassrooms() {
+        const id = await ensureKindergartenId();
+        const container = document.getElementById('classroom-list');
+
+        if (!id) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">소속 유치원이 없어 반 목록을 불러올 수 없습니다.</div>';
+            return;
+        }
+
+        const response = await fetch(`/api/v1/classrooms?kindergartenId=${id}`, { credentials: 'same-origin' });
+        if (!response.ok) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">반 목록 로드 실패</div>';
+            return;
+        }
+
+        const result = await response.json().catch(() => ({}));
+        const classrooms = result.data || [];
+
+        if (!classrooms.length) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">등록된 반이 없습니다.</div>';
+            return;
+        }
+
+        container.innerHTML = classrooms.map(c => {
+            const teacher = c.teacherName ? `담임: ${c.teacherName}` : '담임: 미배정';
+            const age = c.ageGroup ? ` · ${c.ageGroup}` : '';
+            return `
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="font-semibold text-gray-900">${c.name}${age}</div>
+                    <div class="mt-1 text-sm text-gray-600">${teacher}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadClassrooms().catch(() => {});
+
+        const form = document.getElementById('classroom-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = await ensureKindergartenId();
+            if (!id) {
+                await UI.alert({
+                    title: '소속 유치원이 필요해요',
+                    text: '반을 생성하려면 먼저 유치원 소속이 필요합니다.',
+                    icon: 'info'
+                });
+                return;
+            }
+
+            const name = document.getElementById('classroom-name').value;
+            const ageGroup = document.getElementById('classroom-age').value;
+
+            const response = await fetch('/api/v1/classrooms', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    kindergartenId: Number(id),
+                    name: name,
+                    ageGroup: ageGroup && ageGroup.trim() !== '' ? ageGroup : null
+                })
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                await UI.error(payload.message || '반 생성에 실패했습니다.');
+                return;
+            }
+
+            await UI.success('반이 생성되었습니다.');
+            form.reset();
+            await loadClassrooms();
+        });
+    });
+</script>
+</body>
+</html>

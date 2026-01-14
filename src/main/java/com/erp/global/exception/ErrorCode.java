@@ -67,7 +67,7 @@ public enum ErrorCode {
     APPLICATION_ALREADY_EXISTS(409, "AP003", "이미 지원한 유치원입니다"),
     PENDING_APPLICATION_EXISTS(400, "AP004", "이미 대기 중인 지원서가 있습니다"),
     APPLICATION_ACCESS_DENIED(403, "AP005", "지원서 접근 권한이 없습니다"),
-    ALREADY_ASSIGNED_TO_KINDERGARTEN(400, "AP006", "이미 유치원에 배정된 교사입니다"),
+    ALREADY_ASSIGNED_TO_KINDERGARTEN(400, "AP006", "이미 유치원에 배정된 회원입니다"),
     KINDERGARTEN_ACCESS_DENIED(403, "AP007", "유치원 접근 권한이 없습니다"),
     INVALID_MEMBER_ROLE(403, "AP008", "잘못된 회원 역할입니다");
 

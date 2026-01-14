@@ -113,6 +113,7 @@ public class SecurityConfig {
                                 "/kindergarten/select",
                                 "/css/**",
                                 "/js/**",
+                                "/img/**",
                                 "/images/**",
                                 "/favicon.ico",
                                 "/error",

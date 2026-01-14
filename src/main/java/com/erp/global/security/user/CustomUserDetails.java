@@ -61,8 +61,9 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // ACTIVE 상태인 경우만 로그인 가능
-        return com.erp.domain.member.entity.MemberStatus.ACTIVE.equals(member.getStatus());
+        // 승인 대기(PENDING) 상태도 로그인은 허용하고,
+        // 화면 접근은 인터셉터/권한으로 제한한다.
+        return !com.erp.domain.member.entity.MemberStatus.INACTIVE.equals(member.getStatus());
     }
 
     /**

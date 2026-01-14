@@ -45,6 +45,11 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName());
 
+        // 홈("/")은 비로그인 사용자만 통과 (로그인 사용자는 아래 강제 리다이렉트 적용)
+        if (uri.equals("/") && !isAuthenticated) {
+            return true;
+        }
+
         // 로그인/회원가입 페이지는 인증 없이 통과
         if (isPublicPath(uri)) {
             // 이미 로그인된 사용자가 로그인 페이지로 오면 홈으로 리다이렉트
@@ -82,8 +87,7 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublicPath(String uri) {
-        return uri.equals("/") ||
-                uri.startsWith("/login") ||
+        return uri.startsWith("/login") ||
                 uri.startsWith("/signup") ||
                 uri.startsWith("/error");
     }
@@ -108,6 +112,18 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
     }
 
     private String shouldForceRedirect(Member member, String uri) {
+        // 알림 프래그먼트는 어디서든 허용 (대기 화면에서도 사용)
+        if (uri.startsWith("/notifications/fragments/")) {
+            return null;
+        }
+
+        // PENDING 상태: 대기 페이지로 강제 이동 (선생님/학부모)
+        if ((member.getRole() == MemberRole.TEACHER || member.getRole() == MemberRole.PARENT) &&
+                member.getStatus() == MemberStatus.PENDING &&
+                !uri.startsWith("/applications/pending")) {
+            return "/applications/pending";
+        }
+
         // 원장: 유치원 없으면 생성 페이지로 강제 이동
         if (member.getRole() == MemberRole.PRINCIPAL &&
                 member.getKindergarten() == null &&
@@ -115,15 +131,16 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
             return "/kindergarten/create";
         }
 
-        // 교사: 유치원 없으면 선택 페이지로 강제 이동
+        // 교사: 유치원 미배정이면 신청 페이지로 강제 이동
         if (member.getRole() == MemberRole.TEACHER &&
                 member.getKindergarten() == null &&
-                !uri.startsWith("/kindergarten/select")) {
-            return "/kindergarten/select";
+                !uri.startsWith("/applications/pending")) {
+            return "/applications/pending";
         }
 
-        // PENDING 상태: 대기 페이지로 강제 이동
-        if (member.getStatus() == MemberStatus.PENDING &&
+        // 학부모: 유치원 미배정이면 신청 페이지로 강제 이동
+        if (member.getRole() == MemberRole.PARENT &&
+                member.getKindergarten() == null &&
                 !uri.startsWith("/applications/pending")) {
             return "/applications/pending";
         }

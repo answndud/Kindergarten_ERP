@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지원/승인 - 유치원 ERP</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex-shrink-0">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                        <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
+                    </div>
+                    <span class="sr-only">KinderCare</span>
+                </a>
+            </div>
+                <nav class="flex items-center gap-4">
+                    <a href="/" class="text-gray-600 hover:text-primary-600 font-medium">홈</a>
+
+                    <!-- 알림 버튼 (뱃지/목록 HTMX 갱신) -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button type="button"
+                                @click="open = !open"
+                                @click.outside="open = false"
+                                class="p-2.5 text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors relative">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span id="notification-badge"
+                                  hx-get="/notifications/fragments/badge"
+                                  hx-trigger="load, notifications-changed from:body, every 30s"
+                                  hx-swap="outerHTML"
+                                  class="absolute -top-1 -right-1"></span>
+                        </button>
+
+                        <div x-show="open" x-transition class="absolute right-0 mt-2 z-50">
+                            <div id="notification-list"
+                                 hx-get="/notifications/fragments/list?limit=10"
+                                 hx-trigger="load, notifications-changed from:body, every 30s"
+                                 hx-swap="outerHTML"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-700" th:text="${currentMember?.name}">사용자</span>
+                        <span class="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full" th:text="${currentMember?.role?.title}">역할</span>
+                    </div>
+                    <form action="/logout" method="post">
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-700">로그아웃</button>
+                    </form>
+                </nav>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">지원/승인</h1>
+        <p class="text-gray-600">지원 현황과 승인 대기 목록을 확인하세요</p>
+    </div>
+
+    <div id="pending-content"
+         hx-get="/applications/pending/content"
+         hx-trigger="load"
+         hx-swap="outerHTML">
+        <div class="flex justify-center items-center py-12">
+            <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+    </div>
+</main>
+
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Custom JS (UI/Notifications) -->
+<script th:src="@{/js/app.js}"></script>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentKindergartenId = /*[[${currentMember?.kindergartenId}]]*/ null;
+        const currentRole = /*[[${currentMember?.role?.name()}]]*/ null;
+        const currentStatus = /*[[${currentMember?.status?.name()}]]*/ null;
+
+        const refreshApplications = () => {
+            if (window.htmx) htmx.trigger(document.body, 'applications-changed');
+        };
+
+        const notifyRefresh = () => {
+            if (window.htmx) htmx.trigger(document.body, 'notifications-changed');
+        };
+
+        const requestJson = async (url, method, body) => {
+            const response = await fetch(url, {
+                method,
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body ? JSON.stringify(body) : undefined
+            });
+
+            const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload.message || '요청 중 오류가 발생했습니다.');
+                }
+            return payload;
+        };
+
+        const fetchList = async (url) => {
+            const response = await fetch(url, { credentials: 'same-origin' });
+            if (!response.ok) return [];
+            const payload = await response.json().catch(() => ({}));
+            return payload.data || [];
+        };
+
+        const setOptions = (selectEl, placeholderText, items, labelFn) => {
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = placeholderText;
+            selectEl.appendChild(placeholder);
+
+            (items || []).forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = labelFn ? labelFn(item) : item.name;
+                selectEl.appendChild(option);
+            });
+        };
+
+        // expose to inline onclick handlers
+        window.Applications = {
+            refresh: refreshApplications,
+            notifyRefresh,
+
+            async approveTeacher(applicationId) {
+                await requestJson(`/api/v1/kindergarten-applications/${applicationId}/approve`, 'PUT');
+                refreshApplications();
+                notifyRefresh();
+            },
+            async cancelTeacher(applicationId) {
+                await requestJson(`/api/v1/kindergarten-applications/${applicationId}/cancel`, 'PUT');
+                refreshApplications();
+                notifyRefresh();
+            },
+            async rejectTeacher(applicationId, reason) {
+                await requestJson(`/api/v1/kindergarten-applications/${applicationId}/reject`, 'PUT', { reason });
+                refreshApplications();
+                notifyRefresh();
+            },
+
+            async cancelKid(applicationId) {
+                await requestJson(`/api/v1/kid-applications/${applicationId}/cancel`, 'PUT');
+                refreshApplications();
+                notifyRefresh();
+            },
+            async approveKid(applicationId, classroomId) {
+                await requestJson(`/api/v1/kid-applications/${applicationId}/approve`, 'PUT', { classroomId: Number(classroomId) });
+                refreshApplications();
+                notifyRefresh();
+            },
+            async rejectKid(applicationId, reason) {
+                await requestJson(`/api/v1/kid-applications/${applicationId}/reject`, 'PUT', { reason });
+                refreshApplications();
+                notifyRefresh();
+            },
+
+            // ===== UI wrappers (SweetAlert2) =====
+            async uiApproveTeacher(applicationId) {
+                const ok = await UI.confirm({
+                    title: '교사 지원 승인',
+                    text: '승인 처리하시겠습니까?',
+                    confirmText: '승인',
+                    cancelText: '취소'
+                });
+                if (!ok) return;
+
+                try {
+                    await this.approveTeacher(applicationId);
+                    await UI.success('승인 처리했습니다.');
+                } catch (e) {
+                    await UI.error(e.message);
+                }
+            },
+            async uiRejectTeacher(applicationId) {
+                const result = await UI.promptTextarea({
+                    title: '교사 지원 거절',
+                    label: '거절 사유(선택)',
+                    placeholder: '예) 현재 정원 초과로 신규 교사 모집이 어렵습니다.',
+                    confirmText: '거절',
+                    cancelText: '취소',
+                    required: false
+                });
+                if (!result.isConfirmed) return;
+
+                try {
+                    await this.rejectTeacher(applicationId, result.value || null);
+                    await UI.success('거절 처리했습니다.');
+                } catch (e) {
+                    await UI.error(e.message);
+                }
+            },
+            async uiCancelTeacher(applicationId) {
+                const ok = await UI.confirm({
+                    title: '지원 신청 취소',
+                    text: '지원 신청을 취소하시겠습니까?',
+                    confirmText: '취소하기',
+                    cancelText: '닫기'
+                });
+                if (!ok) return;
+
+                try {
+                    await this.cancelTeacher(applicationId);
+                    await UI.success('지원 신청을 취소했습니다.');
+                } catch (e) {
+                    await UI.error(e.message);
+                }
+            },
+
+            async uiCancelKid(applicationId) {
+                const ok = await UI.confirm({
+                    title: '입학 신청 취소',
+                    text: '입학 신청을 취소하시겠습니까?',
+                    confirmText: '취소하기',
+                    cancelText: '닫기'
+                });
+                if (!ok) return;
+
+                try {
+                    await this.cancelKid(applicationId);
+                    await UI.success('입학 신청을 취소했습니다.');
+                } catch (e) {
+                    await UI.error(e.message);
+                }
+            },
+
+            async uiApproveKid(applicationId) {
+                try {
+                    if (!currentKindergartenId) {
+                        await UI.error('소속 유치원 정보가 없어 승인 처리를 할 수 없습니다.');
+                        return;
+                    }
+
+                    const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${currentKindergartenId}`);
+                    if (!classrooms.length) {
+                        await UI.alert({
+                            title: '반이 없습니다',
+                            text: '승인 처리를 하려면 먼저 반을 생성해 주세요.',
+                            icon: 'info'
+                        });
+                        return;
+                    }
+
+                    const options = {};
+                    classrooms.forEach(c => { options[String(c.id)] = c.ageGroup ? `${c.name} (${c.ageGroup})` : c.name; });
+
+                    const result = await UI.promptSelect({
+                        title: '입학 신청 승인',
+                        label: '배정할 반을 선택해 주세요.',
+                        options,
+                        confirmText: '승인',
+                        cancelText: '취소'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    await this.approveKid(applicationId, result.value);
+                    await UI.success('승인 처리했습니다.');
+                } catch (e) {
+                    await UI.error(e.message);
+                }
+            },
+
+            async uiRejectKid(applicationId) {
+                const result = await UI.promptTextarea({
+                    title: '입학 신청 거절',
+                    label: '거절 사유(선택)',
+                    placeholder: '예) 현재 정원 초과로 입학이 어렵습니다.',
+                    confirmText: '거절',
+                    cancelText: '취소',
+                    required: false
+                });
+                if (!result.isConfirmed) return;
+
+                try {
+                    await this.rejectKid(applicationId, result.value || null);
+                    await UI.success('거절 처리했습니다.');
+                } catch (e) {
+                    await UI.error(e.message);
+                }
+            },
+
+            async openNotification(notificationId, linkUrl) {
+                if (notificationId) {
+                    await requestJson(`/api/v1/notifications/${notificationId}/read`, 'PUT');
+                    notifyRefresh();
+                }
+
+                if (linkUrl && linkUrl !== 'null' && linkUrl !== 'undefined' && linkUrl.trim() !== '') {
+                    window.location.href = linkUrl;
+                }
+            },
+            async markAllNotificationsRead() {
+                await requestJson('/api/v1/notifications/read-all', 'PUT');
+                notifyRefresh();
+            },
+
+            // 원장/교사용 (승인 모달) - 현재 소속 유치원 반 목록
+            async loadClassrooms(selectEl) {
+                if (!currentKindergartenId) return;
+                const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${currentKindergartenId}`);
+                setOptions(selectEl, '반을 선택하세요', classrooms);
+            },
+
+            // 신청 폼용: 전체 유치원 목록
+            async loadKindergartens(selectEl, placeholderText = '유치원을 선택하세요') {
+                const kindergartens = await fetchList('/api/v1/kindergartens');
+                setOptions(selectEl, placeholderText, kindergartens, (k) => {
+                    const address = k.address ? ` · ${k.address}` : '';
+                    return `${k.name}${address} (ID:${k.id})`;
+                });
+            },
+
+            // 신청 폼용: 특정 유치원의 반 목록
+            async loadClassroomsByKindergarten(selectEl, kindergartenId, placeholderText = '희망 반(선택)') {
+                if (!kindergartenId) {
+                    setOptions(selectEl, '유치원을 선택하면 반 목록이 표시됩니다', []);
+                    return;
+                }
+                const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${kindergartenId}`);
+                setOptions(selectEl, placeholderText, classrooms);
+            },
+
+            async applyTeacher(kindergartenId, message) {
+                await requestJson('/api/v1/kindergarten-applications', 'POST', {
+                    kindergartenId: Number(kindergartenId),
+                    message: message && message.trim() !== '' ? message : null
+                });
+                refreshApplications();
+                notifyRefresh();
+            },
+
+            async applyParent(payload) {
+                await requestJson('/api/v1/kid-applications', 'POST', payload);
+                refreshApplications();
+                notifyRefresh();
+            },
+
+            async initPendingForms() {
+                // Teacher apply form
+                const teacherForm = document.getElementById('teacher-apply-form');
+                if (teacherForm && !teacherForm.dataset.bound) {
+                    teacherForm.dataset.bound = 'true';
+
+                    const teacherSelect = document.getElementById('teacher-kindergarten-select');
+                    await this.loadKindergartens(teacherSelect);
+
+                    teacherForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        try {
+                            const kid = teacherSelect.value;
+                            const message = document.getElementById('teacher-apply-message')?.value || '';
+                            if (!kid) {
+                                await UI.alert({ title: '유치원 선택', text: '지원할 유치원을 선택해 주세요.', icon: 'info' });
+                                return;
+                            }
+                            await this.applyTeacher(kid, message);
+                            await UI.success('유치원 지원 신청이 접수되었습니다.');
+                            teacherForm.reset();
+                        } catch (err) {
+                            await UI.error(err.message);
+                        }
+                    });
+                }
+
+                // Parent apply form
+                const parentForm = document.getElementById('parent-apply-form');
+                if (parentForm && !parentForm.dataset.bound) {
+                    parentForm.dataset.bound = 'true';
+
+                    const parentKindergartenSelect = document.getElementById('parent-kindergarten-select');
+                    const preferredClassroomSelect = document.getElementById('parent-preferred-classroom');
+
+                    await this.loadKindergartens(parentKindergartenSelect);
+                    await this.loadClassroomsByKindergarten(preferredClassroomSelect, parentKindergartenSelect.value);
+
+                    parentKindergartenSelect.addEventListener('change', async () => {
+                        await this.loadClassroomsByKindergarten(preferredClassroomSelect, parentKindergartenSelect.value);
+                    });
+
+                    parentForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        try {
+                            const kindergartenId = parentKindergartenSelect.value;
+                            const kidName = document.getElementById('parent-kid-name')?.value || '';
+                            const birthDate = document.getElementById('parent-birth-date')?.value || '';
+                            const gender = document.getElementById('parent-gender')?.value || '';
+                            const preferredClassroomId = preferredClassroomSelect.value;
+                            const notes = document.getElementById('parent-notes')?.value || '';
+
+                            if (!kindergartenId) {
+                                await UI.alert({ title: '유치원 선택', text: '신청할 유치원을 선택해 주세요.', icon: 'info' });
+                                return;
+                            }
+
+                            await this.applyParent({
+                                kindergartenId: Number(kindergartenId),
+                                kidName: kidName,
+                                birthDate: birthDate,
+                                gender: gender,
+                                preferredClassroomId: preferredClassroomId ? Number(preferredClassroomId) : null,
+                                notes: notes && notes.trim() !== '' ? notes : null
+                            });
+
+                            await UI.success('입학 신청이 접수되었습니다.');
+                            parentForm.reset();
+                            await this.loadClassroomsByKindergarten(preferredClassroomSelect, parentKindergartenSelect.value);
+                        } catch (err) {
+                            await UI.error(err.message);
+                        }
+                    });
+                }
+            }
+        };
+
+        // 알림 프래그먼트에서 사용하는 공통 네임스페이스
+        window.Notifications = {
+            refresh: notifyRefresh,
+            open: (notificationId, linkUrl) => window.Applications.openNotification(notificationId, linkUrl),
+            markAllRead: () => window.Applications.markAllNotificationsRead()
+        };
+
+        // HTMX로 조각이 바뀌면 폼 바인딩 재시도
+        document.body.addEventListener('htmx:afterSwap', async (evt) => {
+            const target = evt.detail?.target;
+            if (target && target.id === 'pending-content') {
+                await window.Applications.initPendingForms();
+            }
+        });
+
+        // 최초 1회
+        window.Applications.initPendingForms().catch(() => {});
+
+        // 승인 완료 시 자동 이동
+        const shouldPoll = (currentRole === 'TEACHER' || currentRole === 'PARENT') && (currentStatus === 'PENDING' || !currentKindergartenId);
+        if (shouldPoll) {
+            setInterval(async () => {
+                try {
+                    const me = await requestJson('/api/v1/members/me', 'GET');
+                    const status = me?.data?.status;
+                    const kindergartenId = me?.data?.kindergartenId;
+                    if (status === 'ACTIVE' && kindergartenId) {
+                        window.location.href = '/';
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }, 10000);
+        }
+    });
+</script>
+</body>
+</html>

@@ -43,6 +43,15 @@ public interface KindergartenApplicationRepository extends JpaRepository<Kinderg
     );
 
     /**
+     * 교사-유치원 지원서 조회 (상태 무관, soft delete 제외)
+     */
+    @Query("SELECT a FROM KindergartenApplication a WHERE a.teacher.id = :teacherId AND a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
+    Optional<KindergartenApplication> findByTeacherAndKindergarten(
+            @Param("teacherId") Long teacherId,
+            @Param("kindergartenId") Long kindergartenId
+    );
+
+    /**
      * 특정 상태의 지원서 목록
      */
     List<KindergartenApplication> findByTeacherIdAndStatusAndDeletedAtIsNullOrderByCreatedAtDesc(Long teacherId, ApplicationStatus status);

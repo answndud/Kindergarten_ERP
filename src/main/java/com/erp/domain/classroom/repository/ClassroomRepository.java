@@ -19,13 +19,20 @@ public interface ClassroomRepository extends JpaRepository<Classroom, Long> {
     /**
      * 유치원별 반 목록 조회 (삭제되지 않은 반만)
      */
-    @Query("SELECT c FROM Classroom c WHERE c.kindergarten.id = :kindergartenId AND c.deletedAt IS NULL ORDER BY c.name")
+    @Query("SELECT c FROM Classroom c " +
+           "JOIN FETCH c.kindergarten k " +
+           "LEFT JOIN FETCH c.teacher t " +
+           "WHERE k.id = :kindergartenId AND c.deletedAt IS NULL " +
+           "ORDER BY c.name")
     List<Classroom> findByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
 
     /**
      * ID로 조회 (삭제되지 않은 것만)
      */
-    @Query("SELECT c FROM Classroom c WHERE c.id = :id AND c.deletedAt IS NULL")
+    @Query("SELECT c FROM Classroom c " +
+           "JOIN FETCH c.kindergarten k " +
+           "LEFT JOIN FETCH c.teacher t " +
+           "WHERE c.id = :id AND c.deletedAt IS NULL")
     Optional<Classroom> findByIdAndDeletedAtIsNull(@Param("id") Long id);
 
     /**
@@ -37,6 +44,9 @@ public interface ClassroomRepository extends JpaRepository<Classroom, Long> {
     /**
      * 교사별 반 조회
      */
-    @Query("SELECT c FROM Classroom c WHERE c.teacher.id = :teacherId AND c.deletedAt IS NULL")
+    @Query("SELECT c FROM Classroom c " +
+           "JOIN FETCH c.kindergarten k " +
+           "LEFT JOIN FETCH c.teacher t " +
+           "WHERE t.id = :teacherId AND c.deletedAt IS NULL")
     Optional<Classroom> findByTeacherIdAndDeletedAtIsNull(@Param("teacherId") Long teacherId);
 }
