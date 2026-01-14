@@ -101,23 +101,31 @@ Kid (1:1) KidApplication (승인 후 생성)
 
 ### 구현 방식
 ```java
+// 교사 지원
 @UniqueConstraint(columnNames = {"teacher_id", "kindergarten_id"})
+
+// 입학 신청
+@UniqueConstraint(columnNames = {"parent_id", "kindergarten_id"})
 ```
 
 ### 비즈니스 로직
 ```java
-// 이미 대기 중인 지원서가 있는지 확인
-if (repository.existsByTeacherIdAndStatus(...)) {
+// 이미 대기 중인 지원서가 있으면 추가 신청 불가
+if (repository.existsByXIdAndStatus(...PENDING...)) {
     throw new BusinessException(PENDING_APPLICATION_EXISTS);
 }
+
+// 취소/거절된 건은 재신청 = UPDATE
+// (DB 유니크 제약 때문에 INSERT 대신 상태를 PENDING으로 되돌림)
 ```
 
 ### 이유
 1. **DB 무결성**: 중복 데이터 방지
-2. **비즈니스 로직**: 한 번에 한 유치원에만 지원
+2. **비즈니스 로직**: 승인 전에는 한 번에 1건만 처리하도록 강제
 
 ### 변경 이력
 - 2025-01-14: 유니크 제약조건 채택
+- 2026-01-14: KidApplication도 parent+kindergarten 유니크 + 재신청(UPDATE) 정책 추가
 
 ---
 
@@ -300,6 +308,7 @@ Phase 8: 알림 시스템 구현
 |------|------|
 | `domain/kindergartenapplication/controller/KindergartenApplicationController.java` | 교사 지원 API |
 | `domain/kidapplication/controller/KidApplicationController.java` | 입학 신청 API |
+| `domain/application/controller/ApplicationViewController.java` | `/applications/pending` 화면 (HTMX) |
 
 #### 6. Security
 | 파일 | 설명 |
@@ -311,6 +320,23 @@ Phase 8: 알림 시스템 구현
 ---
 
 ### 구현된 기능 상세
+
+#### 프론트엔드(Thymeleaf/HTMX)
+
+**1. 승인/신청 화면 `/applications/pending`**
+- 승인 전(TEACHER/PARENT)에는 이 페이지에서만 신청/상태 확인이 가능하다.
+- 역할/상태에 따라 “신청 폼” 또는 “승인 대기 목록”을 제공한다.
+  - 원장(PRINCIPAL): 교사 지원 대기 + 입학 신청 대기
+  - 교사(TEACHER, PENDING): 유치원 지원 신청 폼(페이지) + 내 지원 신청 목록
+  - 교사(TEACHER, ACTIVE): 입학 신청 승인 대기 목록
+  - 학부모(PARENT): 입학 신청 폼(페이지) + 내 입학 신청 목록(취소 가능)
+
+**2. HTMX로 부분 갱신 + 승인 후 적용**
+- 본문은 `/applications/pending/content` 프래그먼트를 로드하고, 승인/거절/취소 후 `applications-changed` 이벤트로 본문만 갱신한다.
+- 신청/승인/거절/취소 액션은 기존 REST API(`/api/v1/*-applications`)를 그대로 호출한다.
+- 승인 완료 시(상태 `ACTIVE` + 유치원 배정) `/api/v1/members/me`를 폴링하여 자동으로 대시보드로 이동한다.
+
+---
 
 #### 백엔드
 
@@ -325,13 +351,19 @@ Phase 8: 알림 시스템 구현
 ```java
 // 필드: parent, kindergarten, kidName, birthDate, gender, preferredClassroom, notes, kidId
 // 연관관계: Member (학부모, N:1), Kindergarten (N:1), Classroom (희망 반, N:1)
-// 비즈니스 메서드: approve(classroom, processor, kidId), reject(), cancel()
+// 비즈니스 메서드: approve(classroom, processor, kidId), reject(), cancel(), reapply(...)
 ```
+
+- 정책: 학부모는 "대기 중(PENDING) 입학 신청"이 있으면 추가 신청 불가
+- 동일 유치원에 취소/거절된 신청이 있으면 재신청은 UPDATE로 처리
 
 **3. 워크플로우**
 - 교사가 유치원 검색 → 지원 → 원장 승인 → 유치원 배정
 - 학부모가 원아 정보 입력 → 유치원 검색 → 입학 신청 → 교사/원장 승인 → Kid 생성
 
 ---
+
+## 변경 이력
+- 2026-01-14: `/applications/pending` 화면 추가(승인 전 신청 폼/상태 확인 + HTMX 부분 갱신 + 승인 후 자동 적용)
 
 **Phase 7 완료일: 2025-01-14**
