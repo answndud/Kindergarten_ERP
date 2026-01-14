@@ -19,6 +19,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/login",
                         "/signup",
+                        "/kindergarten/create",
+                        "/kindergarten/select",
+                        "/applications/pending",
                         "/api/v1/auth/**",
                         "/css/**",
                         "/js/**",

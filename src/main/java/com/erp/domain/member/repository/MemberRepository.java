@@ -55,4 +55,11 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role = :role AND m.deletedAt IS NULL")
     List<Member> findAllByKindergartenIdAndRole(@Param("kindergartenId") Long kindergartenId,
                                                   @Param("role") MemberRole role);
+
+    /**
+     * ID로 회원 조회 (유치원 포함)
+     * 뷰에서 사용할 때 LazyInitializationException 방지용
+     */
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.kindergarten WHERE m.id = :id AND m.deletedAt IS NULL")
+    Optional<Member> findByIdWithKindergarten(@Param("id") Long id);
 }

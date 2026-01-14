@@ -31,11 +31,6 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
 
         String uri = request.getRequestURI();
 
-        // 공개 경로는 통과
-        if (isPublicPath(uri)) {
-            return true;
-        }
-
         // 정적 리소스는 통과
         if (isStaticResource(uri)) {
             return true;
@@ -46,9 +41,22 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 인증 확인
+        // 인증 확인 (홈 페이지 제외)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+        boolean isAuthenticated = auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName());
+
+        // 로그인/회원가입 페이지는 인증 없이 통과
+        if (isPublicPath(uri)) {
+            // 이미 로그인된 사용자가 로그인 페이지로 오면 홈으로 리다이렉트
+            if (isAuthenticated && (uri.startsWith("/login") || uri.startsWith("/signup"))) {
+                response.sendRedirect("/");
+                return false;
+            }
+            return true;
+        }
+
+        // 인증되지 않은 사용자는 로그인 페이지로
+        if (!isAuthenticated) {
             response.sendRedirect("/login");
             return false;
         }

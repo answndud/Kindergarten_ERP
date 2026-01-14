@@ -1,22 +1,19 @@
 package com.erp.domain.auth.controller;
 
-import com.erp.domain.member.dto.response.MemberResponse;
-import com.erp.domain.member.service.MemberService;
 import com.erp.global.security.user.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 /**
  * 인증 뷰 컨트롤러
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class AuthViewController {
-
-    private final MemberService memberService;
 
     /**
      * 로그인 페이지
@@ -63,21 +60,5 @@ public class AuthViewController {
             return "redirect:/login";
         }
         return "auth/settings";
-    }
-
-    /**
-     * 현재 로그인한 회원 정보를 모든 뷰에 전달
-     */
-    @ModelAttribute("currentMember")
-    public MemberResponse currentMember(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            return null;
-        }
-
-        try {
-            return MemberResponse.from(memberService.getMemberById(userDetails.getMemberId()));
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

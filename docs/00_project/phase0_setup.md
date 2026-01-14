@@ -443,4 +443,44 @@ http://localhost:8080
 
 ---
 
+## 12. LazyInitializationException 방지 전략
+
+### 문제
+OSIV를 비활성화한 상태에서 뷰 계층에서 Lazy Loading된 연관관계 접근 시 `LazyInitializationException` 발생
+
+### 원인
+- `@ModelAttribute` 메서드와 뷰 컨트롤러는 트랜잭션 외부에서 실행됨
+- 연관관계가 LAZY 로딩으로 설정된 경우 프록시 객체 반환
+- 트랜잭션 종료 후 Hibernate Session 닫혀 프록시 접근 불가
+
+### 해결 방법
+1. **JOIN FETCH 쿼리**: 연관 엔티티를 함께 로드
+2. **뷰용 서비스 메서드**: 뷰에서 필요한 데이터를 명시적으로 조회
+
+### 구현 예시
+```java
+// Repository
+@Query("SELECT m FROM Member m LEFT JOIN FETCH m.kindergarten WHERE m.id = :id AND m.deletedAt IS NULL")
+Optional<Member> findByIdWithKindergarten(@Param("id") Long id);
+
+// Service
+public Member getMemberByIdWithKindergarten(Long id) {
+    return memberRepository.findByIdWithKindergarten(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+}
+
+// Controller
+@ModelAttribute("currentMember")
+public MemberResponse currentMember(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
+    return MemberResponse.from(member); // kindergarten 접근 가능
+}
+```
+
+### 변경 이력
+- 2025-01-14: JOIN FETCH 쿼리 패턴 추가로 LazyInitializationException 해결
+
+---
+
 **Phase 0 완료일: 2024-12-28**
+**업데이트일: 2025-01-14 (LazyInitializationException 방지 전략 추가)**

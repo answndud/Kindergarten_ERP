@@ -45,4 +45,18 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
      */
     @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.viewCount DESC")
     Page<Announcement> findMostViewedByKindergartenId(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
+
+    /**
+     * ID로 조회 (연관 엔티티 포함)
+     * 뷰에서 사용할 때 LazyInitializationException 방지용
+     */
+    @Query("SELECT a FROM Announcement a LEFT JOIN FETCH a.kindergarten k LEFT JOIN FETCH a.writer w WHERE a.id = :id AND a.deletedAt IS NULL")
+    Optional<Announcement> findByIdWithRelations(@Param("id") Long id);
+
+    /**
+     * 유치원별 공지사항 목록 조회 (연관 엔티티 포함)
+     * 뷰에서 사용할 때 LazyInitializationException 방지용
+     */
+    @Query("SELECT a FROM Announcement a LEFT JOIN FETCH a.kindergarten k LEFT JOIN FETCH a.writer w WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.isImportant DESC, a.createdAt DESC")
+    java.util.List<Announcement> findByKindergartenIdWithRelations(@Param("kindergartenId") Long kindergartenId);
 }

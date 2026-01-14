@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 상세 - 유치원 ERP</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+        .prose p { margin-bottom: 1rem; line-height: 1.75; }
+        .prose h1, .prose h2, .prose h3 { margin-top: 1.5rem; margin-bottom: 1rem; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <a href="/" class="flex items-center gap-2">
+                        <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                            <span class="text-white text-lg font-bold">ER</span>
+                        </div>
+                        <span class="text-lg font-bold text-gray-900">유치원 ERP</span>
+                    </a>
+                </div>
+                <nav class="flex items-center gap-4">
+                    <a href="/announcements" class="text-gray-600 hover:text-primary-600 font-medium">목록</a>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-700" th:text="${currentMember?.name}">사용자</span>
+                        <span class="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full" th:text="${currentMember?.role?.title}">역할</span>
+                    </div>
+                    <form action="/logout" method="post">
+                        <button type="submit" class="text-sm text-red-600 hover:text-red-700">로그아웃</button>
+                    </form>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Back Button -->
+        <a href="/announcements" class="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-6">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            목록으로
+        </a>
+
+        <!-- Announcement Detail -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center gap-2 mb-3">
+                    <span th:if="${announcement.isImportant}" class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">중요</span>
+                    <span class="text-sm text-gray-500" th:text="${announcement.kindergartenName}">유치원명</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-4" th:text="${announcement.title}">공지사항 제목</h1>
+
+                <!-- Meta Info -->
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </div>
+                        <span th:text="${announcement.writerName}">작성자</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span th:text="${#temporals.format(announcement.createdAt, 'yyyy-MM-dd HH:mm')}">2025-01-10 14:30</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span th:text="${announcement.viewCount}">0</span>
+                    </div>
+                    <div th:if="${announcement.updatedAt != announcement.createdAt}" class="flex items-center gap-1 text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span th:text="${#temporals.format(announcement.updatedAt, 'yyyy-MM-dd HH:mm')} + '에 수정됨'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+                <div class="prose max-w-none text-gray-700 whitespace-pre-wrap" th:text="${announcement.content}">
+                    공지사항 내용이 여기에 표시됩니다.
+                </div>
+            </div>
+
+            <!-- Action Buttons (Writer or Principal only) -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between" th:if="${currentMember != null}">
+                <div class="flex gap-2">
+                    <form th:action="@{/announcement/{id}/edit(id=${announcement.id})}" method="get">
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                            수정
+                        </button>
+                    </form>
+                    <form th:action="@{/announcement/{id}/delete(id=${announcement.id})}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                            삭제
+                        </button>
+                    </form>
+                </div>
+                <form th:action="@{/announcement/{id}/toggle-important(id=${announcement.id})}" method="post">
+                    <button type="submit" class="px-4 py-2 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors">
+                        <span th:text="${announcement.isImportant} ? '중요 해제' : '중요 표시'">중요 표시</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-6 flex justify-between">
+            <a href="/announcements" class="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                목록으로
+            </a>
+        </div>
+    </main>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</body>
+</html>
