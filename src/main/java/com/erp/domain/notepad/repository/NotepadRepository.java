@@ -64,6 +64,18 @@ public interface NotepadRepository extends JpaRepository<Notepad, Long> {
     Page<Notepad> findNotepadsForParent(@Param("classroomId") Long classroomId, @Param("kidId") Long kidId, Pageable pageable);
 
     /**
+     * 학부모용 알림장 목록 (내 원생 전체 기준)
+     */
+    @EntityGraph(attributePaths = {"classroom", "kid", "writer"})
+    @Query("SELECT n FROM Notepad n " +
+           "WHERE (n.classroom.id IN :classroomIds AND n.kid IS NULL) OR (n.kid.id IN :kidIds) " +
+           "ORDER BY n.createdAt DESC")
+    Page<Notepad> findNotepadsForParentKids(
+            @Param("classroomIds") List<Long> classroomIds,
+            @Param("kidIds") List<Long> kidIds,
+            Pageable pageable);
+ 
+    /**
      * ID로 조회 (연관 엔티티 JOIN FETCH)
      */
     @Query("SELECT n FROM Notepad n " +

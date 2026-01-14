@@ -2,12 +2,21 @@ package com.erp.domain.notepad.controller;
 
 import com.erp.domain.classroom.service.ClassroomService;
 import com.erp.domain.kid.service.KidService;
+import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberRole;
+import com.erp.domain.member.service.MemberService;
 import com.erp.domain.notepad.dto.request.NotepadRequest;
 import com.erp.domain.notepad.dto.response.NotepadDetailResponse;
 import com.erp.domain.notepad.dto.response.NotepadResponse;
 import com.erp.domain.notepad.service.NotepadService;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.user.CustomUserDetails;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -15,7 +24,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
 
 /**
  * 알림장 뷰 컨트롤러
@@ -26,12 +34,19 @@ public class NotepadViewController {
     private final NotepadService notepadService;
     private final ClassroomService classroomService;
     private final KidService kidService;
+    private final MemberService memberService;
 
-    public NotepadViewController(NotepadService notepadService, ClassroomService classroomService, KidService kidService) {
+    public NotepadViewController(
+            NotepadService notepadService,
+            ClassroomService classroomService,
+            KidService kidService,
+            MemberService memberService) {
         this.notepadService = notepadService;
         this.classroomService = classroomService;
         this.kidService = kidService;
+        this.memberService = memberService;
     }
+
 
     /**
      * 알림장 목록 페이지
@@ -42,6 +57,51 @@ public class NotepadViewController {
         return "notepad/notepad";
     }
 
+    /**
+     * 알림장 목록 조각 (HTMX)
+     */
+    @GetMapping("/notepad/list")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
+    public String notepadList(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) Long classroomId,
+            @RequestParam(required = false) Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<NotepadResponse> notepads;
+
+        if (userDetails.getRole() == MemberRole.PARENT) {
+            if (kidId != null) {
+                var myKids = kidService.getKidsByParent(userDetails.getMemberId());
+                var selectedKid = myKids.stream()
+                        .filter(k -> k.getId().equals(kidId))
+                        .findFirst()
+                        .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
+
+                Long kidClassroomId = selectedKid.getClassroom().getId();
+                notepads = notepadService.getNotepadsForParent(kidClassroomId, kidId, pageable);
+            } else {
+                notepads = notepadService.getNotepadsForParent(userDetails.getMemberId(), pageable);
+            }
+        } else {
+            if (kidId != null) {
+                notepads = notepadService.getKidNotepads(kidId, pageable);
+            } else if (classroomId != null) {
+                notepads = notepadService.getClassroomNotepads(classroomId, pageable);
+            } else {
+                Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
+                Long kindergartenId = member.getKindergarten().getId();
+                notepads = notepadService.getNotepadsByKindergarten(kindergartenId, pageable);
+            }
+        }
+
+        model.addAttribute("notepads", notepads);
+        return "notepad/fragments/list :: notepadList";
+    }
+ 
     /**
      * 알림장 작성 페이지
      */

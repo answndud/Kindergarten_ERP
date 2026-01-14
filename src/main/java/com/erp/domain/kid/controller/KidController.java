@@ -11,7 +11,9 @@ import com.erp.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import com.erp.global.security.user.CustomUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -86,10 +88,11 @@ public class KidController {
      * 학부모의 원생 목록 조회
      */
     @GetMapping("/my-kids")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<List<KidResponse>>> getMyKids() {
-        // 인증된 사용자 정보는 SecurityContext에서 가져옴 (추후 구현)
-        Long parentId = 1L; // 임시 값
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<ApiResponse<List<KidResponse>>> getMyKids(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long parentId = userDetails.getMemberId();
 
         List<Kid> kids = kidService.getKidsByParent(parentId);
 
@@ -100,6 +103,7 @@ public class KidController {
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
     }
+
 
     /**
      * 원생 수정 (원장, 교사만 가능)

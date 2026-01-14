@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="notepadList">
+    <div id="notepad-list"
+         hx-get="/notepad/list"
+         hx-trigger="filters-changed from:body"
+         hx-include="#filterClassroom,#filterKid"
+         hx-swap="outerHTML"
+         class="space-y-4">
+        <div th:if="${notepads == null or #lists.isEmpty(notepads.content)}"
+             class="text-center py-12 bg-white rounded-2xl border border-gray-200">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">알림장이 없습니다</h3>
+            <p class="text-gray-600">선생님이 보낸 알림장이 여기에 표시됩니다</p>
+        </div>
+
+        <a th:each="notepad : ${notepads.content}"
+           th:href="@{/notepad/{id}(id=${notepad.id})}"
+           class="block bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-lg font-semibold text-gray-900" th:text="${notepad.title}">제목</h3>
+                    <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            <span th:text="${notepad.writerName}">작성자</span>
+                        </span>
+                        <span th:text="${notepad.classroomName != null ? notepad.classroomName : '전체'} + ${notepad.kidName != null ? ' - ' + notepad.kidName : ''}">대상</span>
+                        <span th:text="${#temporals.format(notepad.createdAt, 'yyyy-MM-dd')}">날짜</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-gray-700 line-clamp-2" th:text="${#strings.abbreviate(notepad.content, 120)}">내용</p>
+        </a>
+
+    </div>
+</th:block>
+</body>
+</html>
