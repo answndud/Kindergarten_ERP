@@ -498,4 +498,20 @@ curl -X DELETE http://localhost:8080/api/v1/classrooms/1 \
 
 ---
 
+## 11. 유치원 등록 뷰
+
+### 결정
+원장이 유치원에 소속되지 않았을 때 유치원 등록 페이지로 리다이렉트
+
+### 구현
+- `RoleRedirectInterceptor`: 원장의 kindergarten이 null일 때 `/kindergarten/create`로 리다이렉트
+- `KindergartenViewController`: 유치원 생성/선택 페이지 제공
+- 템플릿: `kindergarten/create.html`, `kindergarten/select.html`
+
+### 변경 이력
+- 2025-01-14: 유치원 등록 뷰 구현
+
+---
+
 **Phase 2 완료일: 2024-12-28**
+**업데이트일: 2025-01-14 (유치원 등록 뷰 구현)**

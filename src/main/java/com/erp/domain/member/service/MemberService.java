@@ -67,6 +67,15 @@ public class MemberService {
     }
 
     /**
+     * ID로 회원 조회 (유치원 포함)
+     * 뷰에서 사용할 때 LazyInitializationException 방지용
+     */
+    public Member getMemberByIdWithKindergarten(Long id) {
+        return memberRepository.findByIdWithKindergarten(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    /**
      * 프로필 수정
      */
     @Transactional

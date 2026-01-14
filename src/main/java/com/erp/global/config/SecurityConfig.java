@@ -109,6 +109,8 @@ public class SecurityConfig {
                                 "/signup",
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
+                                "/kindergarten/create",
+                                "/kindergarten/select",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",

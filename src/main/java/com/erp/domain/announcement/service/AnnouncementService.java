@@ -72,8 +72,17 @@ public class AnnouncementService {
      * 공지사항 조회 (조회수 증가 없음)
      */
     public Announcement getAnnouncementWithoutIncrement(Long id) {
-        return announcementRepository.findByIdAndDeletedAtIsNull(id)
+        return announcementRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
+    }
+
+    /**
+     * 유치원별 공지사항 목록 조회 (뷰용 - 연관 엔티티 포함)
+     */
+    public java.util.List<Announcement> getAnnouncementsByKindergartenForView(Long kindergartenId) {
+        // 유치원 존재 확인
+        kindergartenService.getKindergarten(kindergartenId);
+        return announcementRepository.findByKindergartenIdWithRelations(kindergartenId);
     }
 
     /**
@@ -129,13 +138,12 @@ public class AnnouncementService {
      * 공지사항 수정
      */
     @Transactional
-    public void updateAnnouncement(Long id, AnnouncementRequest request, Long writerId) {
+    public void updateAnnouncement(Long id, AnnouncementRequest request, Long requesterId) {
         Announcement announcement = getAnnouncementWithoutIncrement(id);
 
-        // 작성자 확인
-        if (!announcement.getWriter().getId().equals(writerId)) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+        // 수정 권한 확인 (원장 또는 교사만 가능)
+        Member requester = memberService.getMemberById(requesterId);
+        validateWriterRole(requester);
 
         announcement.update(request.getTitle(), request.getContent());
 
@@ -152,12 +160,9 @@ public class AnnouncementService {
     public void deleteAnnouncement(Long id, Long requesterId) {
         Announcement announcement = getAnnouncementWithoutIncrement(id);
 
-        // 작성자 또는 원장만 삭제 가능
+        // 삭제 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
-        if (!announcement.getWriter().getId().equals(requesterId) &&
-            requester.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+        validateWriterRole(requester);
 
         announcement.softDelete();
     }
@@ -169,12 +174,9 @@ public class AnnouncementService {
     public void toggleImportant(Long id, Long requesterId) {
         Announcement announcement = getAnnouncementWithoutIncrement(id);
 
-        // 작성자 또는 원장만 가능
+        // 토글 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
-        if (!announcement.getWriter().getId().equals(requesterId) &&
-            requester.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+        validateWriterRole(requester);
 
         announcement.toggleImportant();
     }

@@ -36,6 +36,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * 로컬 개발용 더미 데이터 로더
+ *
+ * 테스트 계정 정보 (비밀번호: test1234!):
+ * - 원장A: principal@test.com / test1234!
+ * - 원장B: principal2@test.com / test1234!
+ * - 선생A1: teacher1@test.com / test1234!
+ * - 선생A2: teacher2@test.com / test1234!
+ * - 선생B1: teacher3@test.com / test1234!
+ * - 선생B2: teacher4@test.com / test1234!
+ * - 학부모A1-3: parent{1,2,3}@test.com / test1234!
+ * - 학부모B1-3: parent{4,5,6}@test.com / test1234!
+ */
 @Slf4j
 @Component
 @Profile("local")
@@ -53,84 +66,135 @@ public class DataLoader implements CommandLineRunner {
     private final AnnouncementRepository announcementRepository;
     private final Random random = new Random();
 
+    // 테스트용 고정 비밀번호
+    private static final String TEST_PASSWORD = "test1234!";
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (kindergartenRepository.count() > 0) {
+        // 기존 데이터 확인 - 없을 때만 생성
+        if (memberRepository.count() > 0) {
             log.info("Dummy data already exists. Skipping data loading.");
+            log.info("Test password: {}", TEST_PASSWORD);
             return;
         }
 
         log.info("Loading dummy data...");
 
         // 1. 유치원 2개 생성
-        Kindergarten kg1 = createKindergarten("해바라기 유치원", "서울시 강남구 테헤란로 123", "02-1234-5678");
-        Kindergarten kg2 = createKindergarten("꿈나무 유치원", "서울시 서초구 강남대로 456", "02-9876-5432");
+        Kindergarten kgA = createKindergarten("해바라기 유치원", "서울시 강남구 테헤란로 123", "02-1234-5678");
+        Kindergarten kgB = createKindergarten("꿈나무 유치원", "서울시 서초구 강남대로 456", "02-9876-5432");
 
-        // 2. 원장 2명 생성
-        Member principal1 = createMember("principal1@test.com", "김원장", MemberRole.PRINCIPAL, kg1);
-        Member principal2 = createMember("principal2@test.com", "이원장", MemberRole.PRINCIPAL, kg2);
+        // 2. 원장 2명 생성 (각 유치원 1명씩)
+        Member principalA = createMember("principal@test.com", "김원장", MemberRole.PRINCIPAL, kgA);
+        Member principalB = createMember("principal2@test.com", "이원장", MemberRole.PRINCIPAL, kgB);
 
-        // 3. 선생님 4명 생성 (각 유치원 2명씩)
-        Member teacher1 = createMember("teacher1@test.com", "김교사", MemberRole.TEACHER, kg1);
-        Member teacher2 = createMember("teacher2@test.com", "박교사", MemberRole.TEACHER, kg1);
-        Member teacher3 = createMember("teacher3@test.com", "최교사", MemberRole.TEACHER, kg2);
-        Member teacher4 = createMember("teacher4@test.com", "정교사", MemberRole.TEACHER, kg2);
+        // 3. 선생님 4명 생성 (A: 2명, B: 2명)
+        Member teacherA1 = createMember("teacher1@test.com", "김교사", MemberRole.TEACHER, kgA);
+        Member teacherA2 = createMember("teacher2@test.com", "박교사", MemberRole.TEACHER, kgA);
+        Member teacherB1 = createMember("teacher3@test.com", "최교사", MemberRole.TEACHER, kgB);
+        Member teacherB2 = createMember("teacher4@test.com", "정교사", MemberRole.TEACHER, kgB);
 
         // 4. 반 4개 생성 (각 유치원 2개씩)
-        Classroom class1 = createClassroom(kg1, "해바라기반", "5세", teacher1);
-        Classroom class2 = createClassroom(kg1, "장미반", "6세", teacher2);
-        Classroom class3 = createClassroom(kg2, "나무반", "5세", teacher3);
-        Classroom class4 = createClassroom(kg2, "꽃반", "6세", teacher4);
+        Classroom classA1 = createClassroom(kgA, "해바라기반", "5세", teacherA1);
+        Classroom classA2 = createClassroom(kgA, "장미반", "6세", teacherA2);
+        Classroom classB1 = createClassroom(kgB, "나무반", "5세", teacherB1);
+        Classroom classB2 = createClassroom(kgB, "꽃반", "6세", teacherB2);
 
-        // 5. 원아 12명 생성 (각 반 3명씩)
-        List<Kid> kids = new ArrayList<>();
-        kids.addAll(createKidsForClassroom(class1, "준우", "서윤", "도윤"));
-        kids.addAll(createKidsForClassroom(class2, "시우", "하은", "지호"));
-        kids.addAll(createKidsForClassroom(class3, "주원", "수빈", "지원"));
-        kids.addAll(createKidsForClassroom(class4, "다은", "예준", "연우"));
+        // 5. 원아 생성 (A: 6명, B: 6명 = 총 12명)
+        List<Kid> kidsA = new ArrayList<>();
+        kidsA.addAll(createKidsForClassroom(classA1, "준우", "서윤", "도윤"));
+        kidsA.addAll(createKidsForClassroom(classA2, "시우", "하은", "지호"));
 
-        // 6. 부모님 12명 생성 (각 원아당 1명)
-        int parentNum = 1;
-        for (Kid kid : kids) {
-            Member parent = createMember("parent" + parentNum + "@test.com", "학부모" + parentNum, MemberRole.PARENT, kid.getClassroom().getKindergarten());
-            createParentKid(parent, kid, Relationship.FATHER);
-            parentNum++;
-        }
+        List<Kid> kidsB = new ArrayList<>();
+        kidsB.addAll(createKidsForClassroom(classB1, "주원", "수빈", "지원"));
+        kidsB.addAll(createKidsForClassroom(classB2, "다은", "예준", "연우"));
+
+        // 6. 학부모 생성 (A: 3명, B: 3명 = 총 6명)
+        // A 유치원 학부모 3명 (각각 여러 자녀 연결)
+        Member parentA1 = createMember("parent1@test.com", "준우아빠", MemberRole.PARENT, kgA);
+        Member parentA2 = createMember("parent2@test.com", "서윤엄마", MemberRole.PARENT, kgA);
+        Member parentA3 = createMember("parent3@test.com", "시우할아빠", MemberRole.PARENT, kgA);
+
+        // A 유치원 자녀들과 부모 연결
+        createParentKid(parentA1, kidsA.get(0), Relationship.FATHER);  // 준우
+        createParentKid(parentA1, kidsA.get(3), Relationship.FATHER);  // 시우
+        createParentKid(parentA2, kidsA.get(1), Relationship.MOTHER);  // 서윤
+        createParentKid(parentA2, kidsA.get(4), Relationship.MOTHER);  // 하은
+        createParentKid(parentA3, kidsA.get(2), Relationship.FATHER);  // 도윤
+        createParentKid(parentA3, kidsA.get(5), Relationship.FATHER);  // 지호
+
+        // B 유치원 학부모 3명
+        Member parentB1 = createMember("parent4@test.com", "주원엄마", MemberRole.PARENT, kgB);
+        Member parentB2 = createMember("parent5@test.com", "수빈아빠", MemberRole.PARENT, kgB);
+        Member parentB3 = createMember("parent6@test.com", "지원할머니", MemberRole.PARENT, kgB);
+
+        // B 유치원 자녀들과 부모 연결
+        createParentKid(parentB1, kidsB.get(0), Relationship.MOTHER);  // 주원
+        createParentKid(parentB1, kidsB.get(3), Relationship.MOTHER);  // 다은
+        createParentKid(parentB2, kidsB.get(1), Relationship.FATHER);  // 수빈
+        createParentKid(parentB2, kidsB.get(4), Relationship.FATHER);  // 예준
+        createParentKid(parentB3, kidsB.get(2), Relationship.GRANDMOTHER);  // 지원
+        createParentKid(parentB3, kidsB.get(5), Relationship.GRANDMOTHER);  // 연우
 
         // 7. 출석부 생성 (최근 7일간)
         LocalDate today = LocalDate.now();
-        for (Kid kid : kids) {
+        for (Kid kid : kidsA) {
+            for (int i = 0; i < 7; i++) {
+                LocalDate date = today.minusDays(i);
+                createAttendance(kid, date);
+            }
+        }
+        for (Kid kid : kidsB) {
             for (int i = 0; i < 7; i++) {
                 LocalDate date = today.minusDays(i);
                 createAttendance(kid, date);
             }
         }
 
-        // 8. 알림장 생성 (각 반 2개씩)
-        createNotepad(class1, teacher1, "오늘의 활동 안내", "오늘은 미술 시간에 그림 그리기 활동을 했습니다. 아이들이 참 재미있어하네요!", null);
-        createNotepad(class1, teacher1, "주간 식단 안내", "이번 주 월요일: 김밥, 화요일: 비빔밥, 수요목: 돈가스, 금요일: 떡국", null);
-        createNotepad(class2, teacher2, "현장 학습 안내", "다음 주 화요일은 과학관으로 현장 학습을 갑니다. 간편한 복장으로 와주세요.", null);
-        createNotepad(class2, teacher2, "날씨에 따른 준비물", "내일은 비가 온다고 하니 우산을 꼭 챙겨주세요.", null);
-        createNotepad(class3, teacher3, "체육 대회 연습", "이번 주부터 체육 대회 연습을 시작합니다. 운동화를 꼭 신어주세요.", null);
-        createNotepad(class3, teacher3, "도서관 이용 안내", "매주 수요일은 도서관 날입니다. 도서 대출증을 챙겨주세요.", null);
-        createNotepad(class4, teacher4, "음악 발표회", "이번 달 말에 음악 발표회가 있습니다. 악기 연습을 열심히 해주세요.", null);
-        createNotepad(class4, teacher4, "비 오는 날 실내 놀이", "비가 오는 날은 실내에서 보드 게임과 블록 놀이를 합니다.", null);
+        // 8. 알림장 생성
+        createNotepad(classA1, teacherA1, "오늘의 활동 안내", "오늘은 미술 시간에 그림 그리기 활동을 했습니다. 아이들이 참 재미있어하네요!", null);
+        createNotepad(classA1, teacherA1, "주간 식단 안내", "이번 주 월요일: 김밥, 화요일: 비빔밥, 수요목: 돈가스, 금요일: 떡국", null);
+        createNotepad(classA2, teacherA2, "현장 학습 안내", "다음 주 화요일은 과학관으로 현장 학습을 갑니다. 간편한 복장으로 와주세요.", null);
+        createNotepad(classA2, teacherA2, "날씨에 따른 준비물", "내일은 비가 온다고 하니 우산을 꼭 챙겨주세요.", null);
+        createNotepad(classB1, teacherB1, "체육 대회 연습", "이번 주부터 체육 대회 연습을 시작합니다. 운동화를 꼭 신어주세요.", null);
+        createNotepad(classB1, teacherB1, "도서관 이용 안내", "매주 수요일은 도서관 날입니다. 도서 대출증을 챙겨주세요.", null);
+        createNotepad(classB2, teacherB2, "음악 발표회", "이번 달 말에 음악 발표회가 있습니다. 악기 연습을 열심히 해주세요.", null);
+        createNotepad(classB2, teacherB2, "비 오는 날 실내 놀이", "비가 오는 날은 실내에서 보드 게임과 블록 놀이를 합니다.", null);
 
-        // 9. 공지사항 생성 (각 유치원 3개씩)
-        createAnnouncement(kg1, principal1, "[긴급] 송파구 코로나19 확진자 동선 안내", "송파구에 코로나19 확진자 동선이 발생하여 이를 안내드립니다.", true);
-        createAnnouncement(kg1, principal1, "5월 가정 통신문 발송 안내", "5월 가정 통신문을 오늘 발송하였습니다. 확인 부탁드립니다.", false);
-        createAnnouncement(kg1, principal1, "여름 방학 일정 안내", "올해 여름 방학은 7월 20일부터 8월 20일까지입니다.", false);
-        createAnnouncement(kg2, principal2, "[중요] 어린이잔치 행사 안내", "다음 주 5일 어린이날을 맞아 특별 행사가 준비되었습니다.", true);
-        createAnnouncement(kg2, principal2, "새 학기 입학 안내", "2025학년도 새 학기 입학 원서 접수가 시작되었습니다.", false);
-        createAnnouncement(kg2, principal2, "급식비 납부 안내", "이번 달 급식비를 5월 10일까지 납부부탁드립니다.", false);
+        // 원아별 알림장
+        createNotepad(classA1, teacherA1, "준우 생일 축하", "오늘 준우의 5번째 생일을 축하합니다!", kidsA.get(0));
+        createNotepad(classA2, teacherA2, "시우 칭찬 일기", "시우가 친구들과 사이좋게 지내는 모습이 아주 좋습니다.", kidsA.get(3));
 
-        // 10. 원아별 알림장도 몇 개 생성
-        createNotepad(class1, teacher1, "준우 생일 축하", "오늘 준우의 5번째 생일을 축하합니다! ", kids.get(0));
-        createNotepad(class2, teacher2, "시우 칭찬 일기", "시우가 친구들과 사이좋게 지내는 모습이 아주 좋습니다.", kids.get(3));
+        // 9. 공지사항 생성
+        createAnnouncement(kgA, principalA, "[긴급] 송파구 코로나19 확진자 동선 안내", "송파구에 코로나19 확진자 동선이 발생하여 이를 안내드립니다.", true);
+        createAnnouncement(kgA, principalA, "5월 가정 통신문 발송 안내", "5월 가정 통신문을 오늘 발송하였습니다. 확인 부탁드립니다.", false);
+        createAnnouncement(kgA, principalA, "여름 방학 일정 안내", "올해 여름 방학은 7월 20일부터 8월 20일까지입니다.", false);
+        createAnnouncement(kgB, principalB, "[중요] 어린이잔치 행사 안내", "다음 주 5일 어린이날을 맞아 특별 행사가 준비되었습니다.", true);
+        createAnnouncement(kgB, principalB, "새 학기 입학 안내", "2025학년도 새 학기 입학 원서 접수가 시작되었습니다.", false);
+        createAnnouncement(kgB, principalB, "급식비 납부 안내", "이번 달 급식비를 5월 10일까지 납부부탁드립니다.", false);
 
-        log.info("Dummy data loaded successfully!");
-        log.info("Generated 2 kindergartens, 2 principals, 4 teachers, 4 classrooms, 12 kids, 12 parents, 84 attendance records, 10 notepads, 6 announcements");
+        log.info("=================================================");
+        log.info("DUMMY DATA LOADED SUCCESSFULLY!");
+        log.info("=================================================");
+        log.info("TEST PASSWORD: {}", TEST_PASSWORD);
+        log.info("---------------------------------------------------");
+        log.info("유치원 A (해바라기 유치원):");
+        log.info("  원장:   principal@test.com / {}", TEST_PASSWORD);
+        log.info("  선생님: teacher1@test.com, teacher2@test.com");
+        log.info("  학부모: parent1@test.com (준우,시우아빠)");
+        log.info("          parent2@test.com (서윤,하은엄마)");
+        log.info("          parent3@test.com (도윤,지호할아빠)");
+        log.info("---------------------------------------------------");
+        log.info("유치원 B (꿈나무 유치원):");
+        log.info("  원장:   principal2@test.com / {}", TEST_PASSWORD);
+        log.info("  선생님: teacher3@test.com, teacher4@test.com");
+        log.info("  학부모: parent4@test.com (주원,다은엄마)");
+        log.info("          parent5@test.com (수빈,예준아빠)");
+        log.info("          parent6@test.com (지원,연우할머니)");
+        log.info("=================================================");
+        log.info("총 생성: 2 유치원, 2 원장, 4 선생님, 6 학부모, 4 반, 12 원아");
+        log.info("=================================================");
     }
 
     private Kindergarten createKindergarten(String name, String address, String phone) {
@@ -139,7 +203,7 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private Member createMember(String email, String name, MemberRole role, Kindergarten kindergarten) {
-        Member member = Member.create(email, passwordEncoder.encode("password123"), name, "010-1234-5678", role);
+        Member member = Member.create(email, passwordEncoder.encode(TEST_PASSWORD), name, "010-1234-5678", role);
         member.assignKindergarten(kindergarten);
         return memberRepository.save(member);
     }

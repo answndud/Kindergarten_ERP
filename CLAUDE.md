@@ -264,3 +264,12 @@ These logs directly answer interview questions like:
 - "Why did you choose X over Y?"
 - "What trade-offs did you consider?"
 - "How would you improve this if you could restart?"
+
+## Test Commands
+- Full Test: `./gradlew test`
+- Single Test: `./gradlew test --tests <test-class>`
+
+### Stability & Backward Compatibility
+- Prioritize "Extension over Modification". Avoid breaking existing API contracts (Endpoints, Request/Response formats).
+- Ensure that newly added dependencies do not conflict with existing Spring Boot starters.
+- Always maintain existing error handling and logging patterns.
