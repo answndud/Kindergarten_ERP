@@ -162,6 +162,29 @@ public class KidApplication extends BaseEntity {
     }
 
     /**
+     * 취소/거절된 입학 신청 재신청
+     */
+    public void reapply(Kindergarten kindergarten, String kidName, LocalDate birthDate, Gender gender,
+                        Classroom preferredClassroom, String notes) {
+        if (!(status.isCancelled() || status.isRejected())) {
+            throw new IllegalStateException("재신청 가능한 상태가 아닙니다: " + status);
+        }
+
+        this.kindergarten = kindergarten;
+        this.kidName = kidName;
+        this.birthDate = birthDate;
+        this.gender = gender;
+        this.preferredClassroom = preferredClassroom;
+        this.notes = notes;
+
+        this.status = ApplicationStatus.PENDING;
+        this.processedAt = null;
+        this.processedBy = null;
+        this.rejectionReason = null;
+        this.kidId = null;
+    }
+
+    /**
      * Soft Delete
      */
     public void softDelete() {

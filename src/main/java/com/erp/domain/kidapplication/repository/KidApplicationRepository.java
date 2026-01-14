@@ -14,6 +14,30 @@ import java.util.Optional;
 public interface KidApplicationRepository extends JpaRepository<KidApplication, Long> {
 
     /**
+     * 특정 유치원에 대한 학부모의 대기 중인 신청
+     */
+    @Query("SELECT a FROM KidApplication a WHERE a.parent.id = :parentId AND a.kindergarten.id = :kindergartenId AND a.status = 'PENDING' AND a.deletedAt IS NULL")
+    Optional<KidApplication> findPendingApplicationByParentAndKindergarten(
+            @Param("parentId") Long parentId,
+            @Param("kindergartenId") Long kindergartenId
+    );
+
+    /**
+     * 학부모-유치원 신청 조회 (상태 무관, soft delete 제외)
+     */
+    @Query("SELECT a FROM KidApplication a WHERE a.parent.id = :parentId AND a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
+    Optional<KidApplication> findByParentAndKindergarten(
+            @Param("parentId") Long parentId,
+            @Param("kindergartenId") Long kindergartenId
+    );
+
+    /**
+     * 학부모의 대기 중인 입학 신청 존재 여부
+     */
+    boolean existsByParentIdAndStatusAndDeletedAtIsNull(Long parentId, ApplicationStatus status);
+
+
+    /**
      * 학부모의 입학 신청 목록
      */
     List<KidApplication> findByParentIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long parentId);

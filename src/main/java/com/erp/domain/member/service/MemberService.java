@@ -44,6 +44,11 @@ public class MemberService {
         // 회원 생성
         Member member = Member.create(email, encodedPassword, name, phone, role);
 
+        // 선생님/학부모는 승인 전까지 PENDING
+        if (role == MemberRole.TEACHER || role == MemberRole.PARENT) {
+            member.markPending();
+        }
+
         // 저장
         Member savedMember = memberRepository.save(member);
 

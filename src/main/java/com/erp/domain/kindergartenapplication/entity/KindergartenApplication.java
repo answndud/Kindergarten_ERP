@@ -120,6 +120,21 @@ public class KindergartenApplication extends BaseEntity {
     }
 
     /**
+     * 취소/거절된 지원서 재신청
+     */
+    public void reapply(String message) {
+        if (!(status.isCancelled() || status.isRejected())) {
+            throw new IllegalStateException("재신청 가능한 상태가 아닙니다: " + status);
+        }
+
+        this.status = ApplicationStatus.PENDING;
+        this.message = message;
+        this.processedAt = null;
+        this.processedBy = null;
+        this.rejectionReason = null;
+    }
+
+    /**
      * Soft Delete
      */
     public void softDelete() {

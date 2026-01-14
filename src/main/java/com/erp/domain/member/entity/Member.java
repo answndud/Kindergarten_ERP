@@ -141,6 +141,13 @@ public class Member extends BaseEntity {
     }
 
     /**
+     * 승인 대기 상태로 전환
+     */
+    public void markPending() {
+        this.status = MemberStatus.PENDING;
+    }
+
+    /**
      * 회원 비활성화
      */
     public void deactivate() {

@@ -45,23 +45,23 @@ public class RedirectAuthenticationSuccessHandler implements AuthenticationSucce
             if (member.getKindergarten() == null) {
                 return "/kindergarten/create";
             }
-            return "/dashboard/principal";
+            return "/";
         }
 
         // 교사 로직
         if (member.getRole() == MemberRole.TEACHER) {
-            if (member.getKindergarten() == null) {
-                return "/kindergarten/select";
+            if (member.getStatus() == MemberStatus.PENDING || member.getKindergarten() == null) {
+                return "/applications/pending";
             }
-            return "/dashboard/teacher";
+            return "/";
         }
 
         // 학부모 로직
         if (member.getRole() == MemberRole.PARENT) {
-            if (member.getStatus() == MemberStatus.PENDING) {
+            if (member.getStatus() == MemberStatus.PENDING || member.getKindergarten() == null) {
                 return "/applications/pending";
             }
-            return "/dashboard/parent";
+            return "/";
         }
 
         // 기본: 홈

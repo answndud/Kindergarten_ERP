@@ -50,22 +50,44 @@ public class KindergartenApplicationService {
             throw new BusinessException(ErrorCode.ALREADY_ASSIGNED_TO_KINDERGARTEN);
         }
 
+        // 지원 신청 시점부터 승인 전까지는 PENDING으로 고정
+        if (teacher.getStatus() != MemberStatus.PENDING) {
+            teacher.markPending();
+        }
+
         Kindergarten kindergarten = kindergartenRepository.findById(request.kindergartenId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.KINDERGARTEN_NOT_FOUND));
 
-        // 이미 대기 중인 지원서가 있는지 확인
+        // 이미 대기 중인 지원서가 있는지 확인 (같은 유치원)
         applicationRepository.findPendingApplicationByTeacherAndKindergarten(teacherId, request.kindergartenId())
                 .ifPresent(existing -> {
                     throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
                 });
 
-        // 대기 중인 지원서가 있으면 지원 불가
+        // 대기 중인 지원서가 있으면 지원 불가 (다른 유치원 포함)
         if (applicationRepository.existsByTeacherIdAndStatusAndDeletedAtIsNull(teacherId, ApplicationStatus.PENDING)) {
             throw new BusinessException(ErrorCode.PENDING_APPLICATION_EXISTS);
         }
 
-        KindergartenApplication application = KindergartenApplication.create(teacher, kindergarten, request.message());
-        KindergartenApplication saved = applicationRepository.save(application);
+        // 이미 취소/거절된 지원서가 있으면 재신청으로 처리 (DB 유니크 제약 고려)
+        KindergartenApplication saved;
+        var existing = applicationRepository.findByTeacherAndKindergarten(teacherId, request.kindergartenId());
+        if (existing.isPresent()) {
+            KindergartenApplication application = existing.get();
+            if (application.getStatus().isCancelled() || application.getStatus().isRejected()) {
+                application.reapply(request.message());
+                saved = applicationRepository.save(application);
+            } else {
+                throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
+            }
+        } else {
+            KindergartenApplication application = KindergartenApplication.create(teacher, kindergarten, request.message());
+            try {
+                saved = applicationRepository.save(application);
+            } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                throw new BusinessException(ErrorCode.APPLICATION_ALREADY_EXISTS);
+            }
+        }
 
         // 유치원 원장에게 알림 발송
         notifyPrincipalAboutApplication(kindergarten, teacher);
