@@ -200,6 +200,31 @@ public class NotepadService {
     }
 
     /**
+     * 학부모용 알림장 목록 (내 원생 전체 기준)
+     */
+    public Page<NotepadResponse> getNotepadsForParent(Long parentId, Pageable pageable) {
+        var kids = kidService.getKidsByParent(parentId);
+
+        if (kids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> kidIds = kids.stream()
+                .map(k -> k.getId())
+                .distinct()
+                .toList();
+
+        List<Long> classroomIds = kids.stream()
+                .map(k -> k.getClassroom().getId())
+                .distinct()
+                .toList();
+
+        return notepadRepository.findNotepadsForParentKids(classroomIds, kidIds, pageable)
+                .map(notepad -> NotepadResponse.from(notepad, 0));
+    }
+
+
+    /**
      * 알림장 수정
      */
     @Transactional
