@@ -20,9 +20,9 @@
                 <div class="flex-shrink-0">
                     <a href="/" class="flex items-center gap-2">
                         <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                            <img th:src="@{/img/logo-mark.png}" src="/img/logo-mark.png" alt="KinderCare" class="w-full h-full object-contain" />
+                            <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
                         </div>
-                        <span class="text-lg font-bold text-gray-900">유치원 ERP</span>
+                        <span class="sr-only">KinderCare</span>
                     </a>
                 </div>
             </div>
@@ -33,7 +33,7 @@
     <main class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">유치원 선택</h1>
-            <p class="text-gray-600">소속된 유치원을 선택해주세요</p>
+            <p class="text-gray-600">소속할 유치원을 선택해 주세요.</p>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -43,7 +43,13 @@
         </div>
     </main>
 
-    <script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom JS (UI helpers) -->
+    <script th:src="@{/js/app.js}"></script>
+ 
+     <script>
         async function loadKindergartens() {
             try {
                 const response = await fetch('/api/v1/kindergartens');
@@ -75,14 +81,25 @@
         }
 
         async function selectKindergarten(id) {
-            if (!confirm('이 유치원에 소속되시겠습니까?')) return;
+            const ok = await UI.confirm({
+                title: '유치원 소속 선택',
+                text: '이 유치원에 소속하시겠습니까?',
+                confirmText: '소속하기',
+                cancelText: '취소',
+                icon: 'question'
+            });
+            if (!ok) return;
 
             try {
                 // TODO: 교사-유치원 연결 API 호출 필요
-                alert('유치원 선택 기능은 준비 중입니다.');
+                await UI.alert({
+                    title: '준비 중인 기능입니다',
+                    text: '유치원 선택 기능은 곧 제공될 예정입니다.',
+                    icon: 'info'
+                });
             } catch (error) {
                 console.error('Error:', error);
-                alert('오류가 발생했습니다.');
+                await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');
             }
         }
 
