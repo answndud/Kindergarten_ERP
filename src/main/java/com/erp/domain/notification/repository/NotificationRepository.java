@@ -3,6 +3,7 @@ package com.erp.domain.notification.repository;
 import com.erp.domain.notification.entity.Notification;
 import com.erp.domain.notification.entity.NotificationType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -56,12 +57,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     /**
      * 일괄 읽음 표시
      */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = :readAt WHERE n.receiver.id = :receiverId AND n.isRead = false AND n.deletedAt IS NULL")
     int markAllAsRead(@Param("receiverId") Long receiverId, @Param("readAt") LocalDateTime readAt);
 
     /**
      * 오래된 알림 삭제 (Soft Delete)
      */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Notification n SET n.deletedAt = :deletedAt WHERE n.receiver.id = :receiverId AND n.isRead = true AND n.createdAt < :beforeDate AND n.deletedAt IS NULL")
     int softDeleteOldReadNotifications(@Param("receiverId") Long receiverId,
                                        @Param("beforeDate") LocalDateTime beforeDate,

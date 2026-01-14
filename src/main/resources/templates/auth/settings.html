@@ -48,9 +48,9 @@
                 <div class="flex-shrink-0">
                     <a href="/" class="flex items-center gap-2">
                         <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                            <img th:src="@{/img/logo-mark.png}" src="/img/logo-mark.png" alt="KinderCare" class="w-full h-full object-contain" />
+                            <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
                         </div>
-                        <span class="text-lg font-bold text-gray-900">유치원 ERP</span>
+                        <span class="sr-only">KinderCare</span>
                     </a>
                 </div>
                 <nav class="flex items-center gap-4">
@@ -182,7 +182,13 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
 
-    <script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom JS (UI helpers) -->
+    <script th:src="@{/js/app.js}"></script>
+ 
+     <script>
         document.getElementById('passwordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -192,12 +198,20 @@
 
             // 비밀번호 확인 검증
             if (newPassword !== confirmPassword) {
-                alert('새 비밀번호와 확인이 일치하지 않습니다');
+                await UI.alert({
+                    title: '입력값을 확인해 주세요',
+                    text: '새 비밀번호와 확인 비밀번호가 일치하지 않습니다.',
+                    icon: 'warning'
+                });
                 return;
             }
 
             if (newPassword.length < 8) {
-                alert('비밀번호는 최소 8자 이상이어야 합니다');
+                await UI.alert({
+                    title: '비밀번호 규칙',
+                    text: '비밀번호는 최소 8자 이상이어야 합니다.',
+                    icon: 'warning'
+                });
                 return;
             }
 
@@ -216,14 +230,14 @@
                 });
 
                 if (response.ok) {
-                    alert('비밀번호가 변경되었습니다. 다시 로그인해주세요.');
+                    await UI.success('비밀번호가 변경되었습니다. 다시 로그인해 주세요.');
                     window.location.href = '/logout';
                 } else {
-                    const error = await response.json();
-                    alert('변경 실패: ' + error.message);
+                    const error = await response.json().catch(() => ({}));
+                    await UI.error(error.message || '비밀번호 변경에 실패했습니다.');
                 }
             } catch (error) {
-                alert('오류가 발생했습니다: ' + error.message);
+                await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');
             }
         });
     </script>

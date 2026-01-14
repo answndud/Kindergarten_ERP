@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="list">
+    <div id="notification-list"
+         hx-get="/notifications/fragments/list?limit=10"
+         hx-trigger="notifications-changed from:body, every 30s"
+         hx-swap="outerHTML"
+         class="w-80 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div class="font-semibold text-gray-900">알림</div>
+            <button type="button"
+                    class="text-xs text-gray-600 hover:text-primary-600"
+                    onclick="Notifications.markAllRead().catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
+                모두 읽음
+            </button>
+        </div>
+
+        <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="p-4 text-sm text-gray-500">
+            새로운 알림이 없습니다.
+        </div>
+
+        <div th:if="${notifications != null and !#lists.isEmpty(notifications)}" class="max-h-96 overflow-y-auto">
+            <button type="button"
+                    th:each="n : ${notifications}"
+                    class="w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50"
+                    th:classappend="${n.isRead()} ? 'opacity-70' : ''"
+                    th:attr="data-id=${n.id()},data-link=${n.linkUrl()}"
+                    onclick="Notifications.open(this.dataset.id, this.dataset.link).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
+                <div class="flex items-start gap-3">
+                    <span class="mt-1 w-2 h-2 rounded-full"
+                          th:classappend="${n.isRead()} ? 'bg-gray-300' : 'bg-red-500'"></span>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-medium text-gray-900" th:text="${n.title()}">제목</div>
+                        <div class="mt-1 text-xs text-gray-600 line-clamp-2" th:text="${n.content()}">내용</div>
+                        <div class="mt-2 text-[11px] text-gray-400" th:text="${#temporals.format(n.createdAt(), 'yyyy-MM-dd HH:mm')}">시간</div>
+                    </div>
+                </div>
+            </button>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

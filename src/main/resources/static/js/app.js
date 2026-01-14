@@ -51,7 +51,216 @@ const API = {
     }
 };
 
+// SweetAlert2 기반 공통 UI
+window.UI = window.UI || {
+    hasSwal() {
+        return typeof window.Swal !== 'undefined';
+    },
+
+    async alert({ title = '알림', text = '', icon = 'info' } = {}) {
+        if (this.hasSwal()) {
+            await window.Swal.fire({
+                title,
+                text,
+                icon,
+                confirmButtonText: '확인',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-medium',
+                },
+                buttonsStyling: false,
+            });
+            return;
+        }
+
+        window.alert(text ? `${title}\n\n${text}` : title);
+    },
+
+    async success(message, title = '완료') {
+        return this.alert({ title, text: message, icon: 'success' });
+    },
+
+    async error(message, title = '오류') {
+        return this.alert({ title, text: message, icon: 'error' });
+    },
+
+    async confirm({
+        title = '확인',
+        text = '계속 진행할까요?',
+        confirmText = '확인',
+        cancelText = '취소',
+        icon = 'question'
+    } = {}) {
+        if (this.hasSwal()) {
+            const result = await window.Swal.fire({
+                title,
+                text,
+                icon,
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText,
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-medium',
+                    cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                },
+                buttonsStyling: false,
+            });
+            return result.isConfirmed;
+        }
+
+        return window.confirm(text);
+    },
+
+    async promptTextarea({
+        title,
+        label,
+        placeholder = '',
+        confirmText = '확인',
+        cancelText = '취소',
+        required = false,
+    } = {}) {
+        if (this.hasSwal()) {
+            const result = await window.Swal.fire({
+                title,
+                input: 'textarea',
+                inputLabel: label,
+                inputPlaceholder: placeholder,
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText,
+                inputValidator: (value) => {
+                    if (required && (!value || value.trim() === '')) {
+                        return '내용을 입력해 주세요.';
+                    }
+                    return undefined;
+                },
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-medium',
+                    cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                },
+                buttonsStyling: false,
+            });
+
+            return result;
+        }
+
+        const value = window.prompt(title, '');
+        return { isConfirmed: value !== null, value };
+    },
+
+    async promptSelect({
+        title,
+        label,
+        options,
+        placeholder = '선택해 주세요',
+        confirmText = '확인',
+        cancelText = '취소',
+        required = true,
+    } = {}) {
+        if (this.hasSwal()) {
+            const result = await window.Swal.fire({
+                title,
+                input: 'select',
+                inputLabel: label,
+                inputOptions: options,
+                inputPlaceholder: placeholder,
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText,
+                inputValidator: (value) => {
+                    if (required && (!value || value === '')) {
+                        return '항목을 선택해 주세요.';
+                    }
+                    return undefined;
+                },
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-medium',
+                    cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                },
+                buttonsStyling: false,
+            });
+
+            return result;
+        }
+
+        return { isConfirmed: false, value: null };
+    }
+};
+
+// 알림 (공통)
+window.Notifications = window.Notifications || {
+    refresh() {
+        if (window.htmx) {
+            htmx.trigger(document.body, 'notifications-changed');
+        }
+    },
+
+    async requestJson(url, method, body) {
+        const response = await fetch(url, {
+            method,
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.message || '요청이 실패했습니다');
+        }
+        return payload;
+    },
+
+    async open(notificationId, linkUrl) {
+        if (notificationId) {
+            await this.requestJson(`/api/v1/notifications/${notificationId}/read`, 'PUT');
+            this.refresh();
+        }
+
+        if (linkUrl && linkUrl !== 'null' && linkUrl !== 'undefined' && linkUrl.trim() !== '') {
+            window.location.href = linkUrl;
+        }
+    },
+
+    async markAllRead() {
+        await this.requestJson('/api/v1/notifications/read-all', 'PUT');
+        this.refresh();
+    }
+};
+
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function () {
     console.log('유치원 ERP initialized');
+});
+
+document.addEventListener('submit', async (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    const confirmMessage = form.dataset.uiConfirm;
+    if (!confirmMessage) return;
+
+    if (form.dataset.uiConfirmed === 'true') return;
+
+    e.preventDefault();
+
+    const ok = await window.UI.confirm({
+        title: '확인',
+        text: confirmMessage,
+        confirmText: '계속',
+        cancelText: '취소',
+        icon: 'warning'
+    });
+
+    if (!ok) return;
+
+    form.dataset.uiConfirmed = 'true';
+    form.submit();
 });

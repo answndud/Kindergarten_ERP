@@ -48,9 +48,9 @@
                 <div class="flex-shrink-0">
                     <a href="/" class="flex items-center gap-2">
                         <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                            <img th:src="@{/img/logo-mark.png}" src="/img/logo-mark.png" alt="KinderCare" class="w-full h-full object-contain" />
+                            <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
                         </div>
-                        <span class="text-lg font-bold text-gray-900">유치원 ERP</span>
+                        <span class="sr-only">KinderCare</span>
                     </a>
                 </div>
                 <nav class="flex items-center gap-4">
@@ -210,7 +210,13 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
 
-    <script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom JS (UI helpers) -->
+    <script th:src="@{/js/app.js}"></script>
+ 
+     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Show quick actions for Principal/Teacher
             const userRole = '[[${currentMember?.role?.name}]]';
@@ -256,9 +262,13 @@
             }
         });
 
-        function showBulkModal(type) {
+        async function showBulkModal(type) {
             // TODO: Show bulk update modal
-            alert('일괄 변경 기능: ' + type);
+            await UI.alert({
+                title: '준비 중인 기능입니다',
+                text: `일괄 변경 기능은 곧 제공될 예정입니다. (${type})`,
+                icon: 'info'
+            });
         }
 
         async function saveAttendance(kidId) {
@@ -286,14 +296,14 @@
                 });
 
                 if (response.ok) {
-                    alert('출석 정보가 저장되었습니다');
+                    await UI.success('출결 정보를 저장했습니다.');
                 } else {
-                    const error = await response.json();
-                    alert('저장 실패: ' + error.message);
+                    const error = await response.json().catch(() => ({}));
+                    await UI.error(error.message || '저장에 실패했습니다.');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('오류가 발생했습니다');
+                await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');
             }
         }
     </script>
