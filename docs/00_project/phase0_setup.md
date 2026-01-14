@@ -246,6 +246,26 @@ QueryDSL 5.0.0으로 동적 쿼리 처리
 
 ### 변경 이력
 - 2024-12-28: Bootstrap + jQuery → HTMX + Alpine + Tailwind
+- 2026-01-14: 알림/확인 UX를 SweetAlert2로 통일
+
+---
+
+## 12. 공통 다이얼로그: SweetAlert2 + window.UI
+
+### 결정
+기본 `alert/confirm` 및 템플릿 내 모달 대신 SweetAlert2(CDN) 사용, 호출은 `window.UI`로 통일
+
+### 이유
+1. **일관된 UX**: 성공/오류/확인 메시지 스타일 통일
+2. **HTML 단순화**: 페이지별 모달 마크업 제거, JS 호출로 대체
+3. **점진적 적용**: SweetAlert2 미로딩 시에도 `window.alert/confirm`으로 폴백
+
+### 사용 규칙
+- 알림: `UI.alert()`, 성공: `UI.success()`, 오류: `UI.error()`, 확인: `UI.confirm()`
+- 삭제 등 폼 제출 확인: `<form data-ui-confirm="...">` 사용 (공통 submit 핸들러가 다이얼로그 표시)
+
+### 변경 이력
+- 2026-01-14: 도입
 
 ---
 
@@ -318,10 +338,10 @@ Phase 1: 인증 시스템 (JWT, Spring Security) 구현
 #### 5. 프론트엔드 기초
 | 파일 | 설명 | 주요 내용 |
 |------|------|----------|
-| `templates/layout/default.html` | 기본 레이아웃 | HTMX/Alpine/Tailwind CDN, Primary 색상 설정 |
+| `templates/layout/default.html` | 기본 레이아웃 | HTMX/Alpine/Tailwind/SweetAlert2 CDN, Primary 색상 설정 |
 | `templates/fragments/header.html` | 헤더 | 인증 상태에 따른 UI (로그인/회원가입 또는 프로필/로그아웃) |
 | `templates/fragments/footer.html` | 푸터 | 저작권 표시 |
-| `static/js/app.js` | 공통 JS | HTMX 이벤트 로깅, Alpine utils 스토어 |
+| `static/js/app.js` | 공통 JS | HTMX 이벤트 로깅, Alpine utils 스토어, `window.UI`(SweetAlert2) |
 | `static/css/custom.css` | 커스텀 CSS | 로딩 인디케이터, 토스트 애니메이션, 스피너 |
 
 ---

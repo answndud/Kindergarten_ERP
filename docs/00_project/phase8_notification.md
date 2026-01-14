@@ -201,6 +201,10 @@ public Long create(NotificationCreateRequest request)
 ### 결정
 HTMX + Alpine.js로 알림 배지 구현
 
+### 추가 결정(2026-01-14)
+- 화면 내 주요 액션(승인/거절/취소 등) 이후에는 **이벤트 기반(HTMX trigger)** 으로 알림 배지/목록을 즉시 갱신한다.
+- 주기적 폴링(`every 30s`)은 보조 수단으로 두되, UX는 이벤트 기반 즉시 갱신을 우선한다.
+
 ### 주요 기능
 1. **빨간 점**: 안 읽은 알림 수 표시
 2. **드롭다운**: 벨 클릭 시 알림 목록 표시
@@ -209,9 +213,9 @@ HTMX + Alpine.js로 알림 배지 구현
 
 ### 구현 방식
 ```html
-<!-- HTMX로 주기적으로 미읽은 알림 수 갱신 -->
-<div hx-get="/api/v1/notifications/unread-count"
-     hx-trigger="every 30s"
+<!-- HTMX로 즉시 + 주기적 미읽은 알림 수 갱신 -->
+<div hx-get="/notifications/fragments/badge"
+     hx-trigger="load, notifications-changed from:body, every 30s"
      hx-swap="outerHTML">
     <!-- 안 읽은 알림 수 -->
 </div>
@@ -223,6 +227,7 @@ HTMX + Alpine.js로 알림 배지 구현
 
 ### 변경 이력
 - 2025-01-14: HTMX 주기적 갱신 채택
+- 2026-01-14: 이벤트 기반 즉시 갱신(`notifications-changed`) 추가
 
 ---
 

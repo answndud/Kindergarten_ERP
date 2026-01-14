@@ -154,11 +154,19 @@ public void viewNotepad() { }
 
 ### 이유
 1. **Soft Delete**: 실제 삭제 대신 상태 변경으로 데이터 보존
-2. **승인 프로세스**: 원생/학부모는 유치원 승인 후 ACTIVE
+2. **승인 프로세스**: 교사/학부모는 승인 후 ACTIVE
 3. **계정 정지**: 위반 시 INACTIVE로 변경
+
+### 추가 결정(2026-01-14)
+- **회원가입 시 상태 정책**
+  - `PRINCIPAL`: 기본 `ACTIVE`
+  - `TEACHER`, `PARENT`: 기본 `PENDING` (유치원 승인 전까지)
+- **로그인 허용 정책**
+  - `PENDING`도 로그인은 허용하고, 접근 가능한 화면을 `/applications/pending`로 제한한다.
 
 ### 변경 이력
 - 2024-12-28: 3가지 상태 정의
+- 2026-01-14: TEACHER/PARENT 가입 기본 PENDING + PENDING 로그인 허용(대기 페이지로 제한)
 
 ---
 
