@@ -19,13 +19,13 @@ public interface KidRepository extends JpaRepository<Kid, Long> {
     /**
      * 반별 원생 목록 조회 (삭제되지 않은 원생만)
      */
-    @Query("SELECT k FROM Kid k WHERE k.classroom.id = :classroomId AND k.deletedAt IS NULL ORDER BY k.name")
+    @Query("SELECT k FROM Kid k JOIN FETCH k.classroom WHERE k.classroom.id = :classroomId AND k.deletedAt IS NULL ORDER BY k.name")
     List<Kid> findByClassroomIdAndDeletedAtIsNull(@Param("classroomId") Long classroomId);
 
     /**
      * ID로 조회 (삭제되지 않은 것만)
      */
-    @Query("SELECT k FROM Kid k WHERE k.id = :id AND k.deletedAt IS NULL")
+    @Query("SELECT k FROM Kid k JOIN FETCH k.classroom WHERE k.id = :id AND k.deletedAt IS NULL")
     Optional<Kid> findByIdAndDeletedAtIsNull(@Param("id") Long id);
 
     /**
@@ -37,13 +37,13 @@ public interface KidRepository extends JpaRepository<Kid, Long> {
     /**
      * 이름으로 원생 검색 (반별)
      */
-    @Query("SELECT k FROM Kid k WHERE k.classroom.id = :classroomId AND k.deletedAt IS NULL AND k.name LIKE %:name% ORDER BY k.name")
+    @Query("SELECT k FROM Kid k JOIN FETCH k.classroom WHERE k.classroom.id = :classroomId AND k.deletedAt IS NULL AND k.name LIKE %:name% ORDER BY k.name")
     List<Kid> findByClassroomIdAndNameContaining(@Param("classroomId") Long classroomId, @Param("name") String name);
 
     /**
      * 특정 학부모의 원생 목록 조회
      */
-    @Query("SELECT pk.kid FROM ParentKid pk WHERE pk.parent.id = :parentId AND pk.kid.deletedAt IS NULL ORDER BY pk.kid.name")
+    @Query("SELECT k FROM ParentKid pk JOIN pk.kid k JOIN FETCH k.classroom WHERE pk.parent.id = :parentId AND k.deletedAt IS NULL ORDER BY k.name")
     List<Kid> findByParentId(@Param("parentId") Long parentId);
 
     /**

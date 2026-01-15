@@ -84,33 +84,26 @@ window.UI = window.UI || {
         return this.alert({ title, text: message, icon: 'error' });
     },
 
-    async confirm({
-        title = '확인',
-        text = '계속 진행할까요?',
-        confirmText = '확인',
-        cancelText = '취소',
-        icon = 'question'
-    } = {}) {
+    async confirm(options) {
         if (this.hasSwal()) {
-            const result = await window.Swal.fire({
-                title,
-                text,
-                icon,
-                showCancelButton: true,
-                confirmButtonText: confirmText,
-                cancelButtonText: cancelText,
-                customClass: {
-                    popup: 'rounded-2xl',
-                    confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-medium',
-                    cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
-                },
-                buttonsStyling: false,
-            });
-            return result.isConfirmed;
+            const result = await window.Swal.fire(options);
+
+            console.log('[DEBUG] SweetAlert version:', window.Swal.version);
+            console.log('[DEBUG] Confirm result:', result);
+
+            // SweetAlert2 v10 이하에서 result.isConfirmed 사용
+            // SweetAlert2 v11 이상에서 result.value.isConfirmed 사용
+            const isConfirmed = window.Swal.version && window.Swal.version.startsWith('11')
+                ? result.value?.isConfirmed !== false
+                : result.isConfirmed !== false;
+
+            console.log('[DEBUG] Confirm isConfirmed:', isConfirmed);
+
+            return isConfirmed;
         }
 
-        return window.confirm(text);
-    },
+        return window.confirm(options.text || options);
+    }
 
     async promptTextarea({
         title,
