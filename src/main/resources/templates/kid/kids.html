@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원생 관리 - 유치원 ERP</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">원생 관리</h1>
+        <p class="text-gray-600">
+            <span th:if="${currentMember?.kindergartenName != null}">
+                <span class="font-medium" th:text="${currentMember.kindergartenName}">유치원</span>의 원생을 관리합니다.
+            </span>
+            <span th:if="${currentMember?.kindergartenName == null}">소속 유치원이 없습니다. 먼저 승인/배정을 완료하세요.</span>
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">원생 검색</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">반</label>
+                    <select id="classroom-filter"
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">전체</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                    <input id="name-filter"
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           placeholder="이름 검색" />
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="loadKids()" class="flex-1 px-5 py-2.5 bg-gradient-primary text-white font-medium rounded-xl hover:shadow-lg transition-all">
+                        검색
+                    </button>
+                    <button type="button" onclick="resetFilters()" class="px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all">
+                        초기화
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">원생 목록</h2>
+                <div class="flex gap-2">
+                    <button type="button" onclick="showCreateKidModal()" class="px-4 py-2 bg-gradient-primary text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all">
+                        원생 추가
+                    </button>
+                    <button type="button" onclick="loadKids()" class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-all">
+                        새로고침
+                    </button>
+                </div>
+            </div>
+
+            <div id="kid-list" class="space-y-3">
+                <div class="text-center py-8 text-gray-500">불러오는 중...</div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<!-- Alpine.js -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Custom JS (Notifications/UI) -->
+<script th:src="@{/js/app.js}" src="/js/app.js"></script>
+
+<script th:inline="javascript">
+    const UI = window.UI || {
+        alert: async ({ title = '알림', text = '' } = {}) => window.alert(text ? `${title}\n\n${text}` : title),
+        success: async (message, title = '완료') => window.alert(`${title}\n\n${message}`),
+        error: async (message, title = '오류') => window.alert(`${title}\n\n${message}`),
+        confirm: async ({ text = '계속 진행할까요?' } = {}) => window.confirm(text)
+    };
+    const initialKindergartenId = /*[[${currentMember?.kindergartenId}]]*/ null;
+    let kindergartenId = initialKindergartenId;
+
+    async function fetchMe() {
+        const response = await fetch('/api/v1/members/me', { credentials: 'same-origin' });
+        if (!response.ok) return null;
+        const result = await response.json().catch(() => ({}));
+        return result.data || null;
+    }
+
+    async function ensureKindergartenId() {
+        if (kindergartenId) return kindergartenId;
+        const me = await fetchMe();
+        if (me && me.kindergartenId) kindergartenId = me.kindergartenId;
+        return kindergartenId;
+    }
+
+    async function loadClassrooms() {
+        const id = await ensureKindergartenId();
+        const select = document.getElementById('classroom-filter');
+
+        if (!id) {
+            select.innerHTML = '<option value="">소속 유치원 없음</option>';
+            return;
+        }
+
+        const response = await fetch(`/api/v1/classrooms?kindergartenId=${id}`, { credentials: 'same-origin' });
+        if (!response.ok) {
+            select.innerHTML = '<option value="">반 목록 로드 실패</option>';
+            return;
+        }
+
+        const result = await response.json().catch(() => ({}));
+        const classrooms = result.data || [];
+
+        select.innerHTML = '<option value="">전체</option>' + classrooms
+            .map(c => `<option value="${c.id}">${c.name}</option>`)
+            .join('');
+    }
+
+    async function loadKids() {
+        console.log('[DEBUG] loadKids called');
+
+        const id = await ensureKindergartenId();
+        const container = document.getElementById('kid-list');
+        const classroomId = document.getElementById('classroom-filter').value;
+        const name = document.getElementById('name-filter').value;
+
+        console.log('[DEBUG] loadKids - kindergartenId:', id, 'classroomId:', classroomId, 'name:', name);
+
+        if (!id) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">소속 유치원이 없어 원생 목록을 불러올 수 없습니다.</div>';
+            return;
+        }
+
+        const params = new URLSearchParams({ kindergartenId: id });
+        if (classroomId) params.append('classroomId', classroomId);
+        if (name) params.append('name', name);
+
+        const response = await fetch(`/api/v1/kids?${params}`, { credentials: 'same-origin' });
+        console.log('[DEBUG] loadKids response status:', response.status);
+
+        if (!response.ok) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">원생 목록 로드 실패</div>';
+            return;
+        }
+
+        const result = await response.json().catch(() => ({}));
+        console.log('[DEBUG] loadKids response data:', result);
+        const kids = result.data || [];
+
+        if (!kids.length) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">원생이 없습니다.</div>';
+            return;
+        }
+
+        container.innerHTML = kids.map(k => {
+            const age = k.age ? `(${k.age}세)` : '';
+            return `
+                <div class="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <div class="font-semibold text-gray-900">${k.name} ${age}</div>
+                        <div class="mt-1 text-sm text-gray-600">
+                            ${k.birthDate} · ${k.gender === 'MALE' ? '남' : '여'}
+                        </div>
+                        <div class="text-sm text-primary-700">${k.classroomName || '반 미배정'}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="showParentManageModal(${k.id})" class="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all">
+                            학부모 관리
+                        </button>
+                        <button type="button" onclick="showEditKidModal(${k.id})" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
+                            편집
+                        </button>
+                        <button type="button" onclick="deleteKid(${k.id}, '${k.name}')" class="px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all">
+                            삭제
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function resetFilters() {
+        document.getElementById('classroom-filter').value = '';
+        document.getElementById('name-filter').value = '';
+        loadKids();
+    }
+
+    async function showCreateKidModal() {
+        const id = await ensureKindergartenId();
+        if (!id) {
+            await UI.alert({
+                title: '소속 유치원이 필요해요',
+                text: '원생을 추가하려면 먼저 유치원 소속이 필요합니다.',
+                icon: 'info'
+            });
+            return;
+        }
+
+        const result = await window.Swal.fire({
+            title: '원생 추가',
+            html: `
+                <form id="create-kid-form" class="text-left space-y-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">이름 *</label>
+                        <input id="kid-name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="이름을 입력하세요" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">생년월일 *</label>
+                        <input id="kid-birthdate" type="date" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">성별 *</label>
+                        <select id="kid-gender" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">선택</option>
+                            <option value="MALE">남</option>
+                            <option value="FEMALE">여</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">입소일 *</label>
+                        <input id="kid-admission-date" type="date" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">반 *</label>
+                        <select id="kid-classroom" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">선택</option>
+                        </select>
+                    </div>
+                </form>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            cancelButtonText: '취소',
+            confirmButtonText: '추가',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'bg-gradient-primary hover:shadow-lg transition-all',
+                cancelButton: 'border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all'
+            },
+            didOpen: async () => {
+                const classroomSelect = document.getElementById('kid-classroom');
+                const response = await fetch(`/api/v1/classrooms?kindergartenId=${id}`, { credentials: 'same-origin' });
+                if (response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    const classrooms = payload.data || [];
+                    classroomSelect.innerHTML = '<option value="">선택</option>' + classrooms
+                        .map(c => `<option value="${c.id}">${c.name}</option>`)
+                        .join('');
+                }
+
+                document.getElementById('kid-admission-date').valueAsDate = new Date();
+            },
+            preConfirm: () => {
+                const name = document.getElementById('kid-name').value;
+                const birthDate = document.getElementById('kid-birthdate').value;
+                const gender = document.getElementById('kid-gender').value;
+                const admissionDate = document.getElementById('kid-admission-date').value;
+                const classroomId = document.getElementById('kid-classroom').value;
+
+                if (!name || !birthDate || !gender || !admissionDate || !classroomId) {
+                    UI.error('모든 필드를 입력해주세요.');
+                    return false;
+                }
+
+                return { name, birthDate, gender, admissionDate, classroomId };
+            }
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        const formValues = result.value;
+        if (!formValues) {
+            return;
+        }
+
+        const response = await fetch('/api/v1/kids', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: formValues.name,
+                birthDate: formValues.birthDate,
+                gender: formValues.gender,
+                admissionDate: formValues.admissionDate,
+                classroomId: Number(formValues.classroomId)
+            })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            await UI.error(payload.message || '원생 추가에 실패했습니다.');
+            return;
+        }
+
+        await UI.success('원생이 추가되었습니다.');
+        await loadKids();
+        await loadClassrooms();
+    }
+
+    async function showEditKidModal(kidId) {
+        const result = await window.Swal.fire({
+            title: '원생 정보 수정',
+            html: `
+                <form id="edit-kid-form" class="text-left space-y-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">이름 *</label>
+                        <input id="edit-kid-name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                               placeholder="이름을 입력하세요" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">생년월일 *</label>
+                        <input id="edit-kid-birthdate" type="date" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">성별 *</label>
+                        <select id="edit-kid-gender" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="">선택</option>
+                            <option value="MALE">남</option>
+                            <option value="FEMALE">여</option>
+                        </select>
+                    </div>
+                </form>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            cancelButtonText: '취소',
+            confirmButtonText: '수정',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'bg-gradient-primary hover:shadow-lg transition-all',
+                cancelButton: 'border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all'
+            },
+            didOpen: async () => {
+                const response = await fetch(`/api/v1/kids/${kidId}`, { credentials: 'same-origin' });
+                if (!response.ok) return;
+
+                const payload = await response.json().catch(() => ({}));
+                const kid = payload.data;
+
+                if (kid) {
+                    document.getElementById('edit-kid-name').value = kid.name;
+                    document.getElementById('edit-kid-birthdate').value = kid.birthDate;
+                    document.getElementById('edit-kid-gender').value = kid.gender;
+                }
+            },
+            preConfirm: () => {
+                const name = document.getElementById('edit-kid-name').value;
+                const birthDate = document.getElementById('edit-kid-birthdate').value;
+                const gender = document.getElementById('edit-kid-gender').value;
+
+                if (!name || !birthDate || !gender) {
+                    UI.error('모든 필드를 입력해주세요.');
+                    return false;
+                }
+
+                return { name, birthDate, gender };
+            }
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        const formValues = result.value;
+        if (!formValues) {
+            return;
+        }
+
+        const response = await fetch(`/api/v1/kids/${kidId}`, {
+            method: 'PUT',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: formValues.name,
+                birthDate: formValues.birthDate,
+                gender: formValues.gender
+            })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            await UI.error(payload.message || '원생 정보 수정에 실패했습니다.');
+            return;
+        }
+
+        await UI.success('원생 정보가 수정되었습니다.');
+        await loadKids();
+    }
+
+    async function deleteKid(kidId, kidName) {
+        const confirmed = await UI.confirm({
+            title: '원생 삭제',
+            text: `${kidName} 원생을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+            icon: 'warning',
+            confirmButtonText: '삭제',
+            cancelButtonText: '취소',
+            customClass: {
+                confirmButton: 'bg-red-600 hover:bg-red-700 transition-all',
+                cancelButton: 'border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all'
+            }
+        });
+
+        if (confirmed) {
+            const response = await fetch(`/api/v1/kids/${kidId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                await UI.error(payload.message || '원생 삭제에 실패했습니다.');
+                return;
+            }
+
+            await UI.success('원생이 삭제되었습니다.');
+            await loadKids();
+        }
+    }
+
+    async function showParentManageModal(kidId) {
+        console.log('[DEBUG] showParentManageModal called - kidId:', kidId);
+
+        const response = await fetch(`/api/v1/kids/${kidId}`, { credentials: 'same-origin' });
+        console.log('[DEBUG] showParentManageModal fetch status:', response.status);
+
+        if (!response.ok) {
+            await UI.error('원생 정보를 불러오지 못했습니다.');
+            return;
+        }
+
+        const result = await response.json().catch(() => ({}));
+        console.log('[DEBUG] showParentManageModal response data:', result);
+        const kidDetail = result.data;
+
+        if (!kidDetail) {
+            await UI.error('원생 정보를 찾을 수 없습니다.');
+            return;
+        }
+
+        const parentsHtml = kidDetail.parents && kidDetail.parents.length > 0
+            ? kidDetail.parents.map(p => `
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div>
+                        <span class="font-medium text-gray-900">${p.parentName}</span>
+                        <span class="ml-2 text-sm text-gray-600">(${p.relationship})</span>
+                    </div>
+                    <button type="button" onclick="removeParent(${kidId}, ${p.parentId}, '${p.parentName}')" class="text-red-600 hover:text-red-800 text-sm">
+                        제거
+                    </button>
+                </div>
+            `).join('')
+            : '<div class="text-gray-500 text-center py-4">연결된 학부모가 없습니다.</div>';
+
+        window.Swal.fire({
+            title: '학부모 관리',
+            html: `
+                <div class="text-left space-y-4">
+                    <div>
+                        <div class="font-semibold text-gray-900 mb-2">${kidDetail.name} 원생의 학부모</div>
+                        <div id="parent-list">
+                            ${parentsHtml}
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-gray-200">
+                        <div class="font-medium text-gray-900 mb-2">학부모 추가</div>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">학부모 선택 *</label>
+                                <select id="parent-select" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">선택</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">관계 *</label>
+                                <select id="relationship-select" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">선택</option>
+                                    <option value="FATHER">아버지</option>
+                                    <option value="MOTHER">어머니</option>
+                                    <option value="GRANDFATHER">할아버지</option>
+                                    <option value="GRANDMOTHER">할머니</option>
+                                    <option value="GUARDIAN">보호자</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="assignParent(${kidId})" class="w-full px-4 py-2 bg-gradient-primary text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all">
+                                학부모 추가
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: '닫기',
+            customClass: {
+                popup: 'rounded-2xl',
+                cancelButton: 'border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all'
+            }
+        }).then((result) => {
+            if (result.dismiss === window.Swal.DismissReason.cancel) {
+                console.log('[DEBUG] Modal closed by user');
+            }
+        });
+    }
+
+    async function assignParent(kidId) {
+        const parentId = document.getElementById('parent-select').value;
+        const relationship = document.getElementById('relationship-select').value;
+
+        console.log('[DEBUG] assignParent called - parentId:', parentId, 'relationship:', relationship);
+
+        if (!parentId || !relationship) {
+            UI.error('학부모와 관계를 선택해주세요.');
+            return;
+        }
+
+        const response = await fetch(`/api/v1/kids/${kidId}/parents`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                parentId: Number(parentId),
+                relationship: relationship
+            })
+        });
+
+        console.log('[DEBUG] assignParent response status:', response.status);
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            await UI.error(payload.message || '학부모 연결에 실패했습니다.');
+            return;
+        }
+
+        await UI.success('학부모가 연결되었습니다.');
+        await showParentManageModal(kidId);
+    }
+
+    async function removeParent(kidId, parentId, parentName) {
+        console.log('[DEBUG] removeParent called - kidId:', kidId, 'parentId:', parentId);
+
+        const confirmed = await UI.confirm({
+            title: '학부모 연결 해제',
+            text: `${parentName}님의 연결을 해제하시겠습니까?`,
+            icon: 'warning',
+            confirmButtonText: '해제',
+            cancelButtonText: '취소',
+            customClass: {
+                confirmButton: 'bg-red-600 hover:bg-red-700 transition-all',
+                cancelButton: 'border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all'
+            }
+        });
+
+        if (confirmed) {
+            const response = await fetch(`/api/v1/kids/${kidId}/parents/${parentId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+
+            console.log('[DEBUG] removeParent response status:', response.status);
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                await UI.error(payload.message || '학부모 연결 해제에 실패했습니다.');
+                return;
+            }
+
+            await UI.success('학부모 연결이 해제되었습니다.');
+            await showParentManageModal(kidId);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadClassrooms().catch(() => {});
+        loadKids().catch(() => {});
+    });
+</script>
+</body>
+</html>
