@@ -1,11 +1,21 @@
 package com.erp.common;
 
+import com.erp.domain.classroom.entity.Classroom;
+import com.erp.domain.classroom.repository.ClassroomRepository;
+import com.erp.domain.kid.entity.Gender;
+import com.erp.domain.kid.entity.Kid;
+import com.erp.domain.kid.repository.KidRepository;
+import com.erp.domain.kindergarten.entity.Kindergarten;
+import com.erp.domain.kindergarten.repository.KindergartenRepository;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * 테스트용 데이터 헬퍼 클래스
@@ -14,10 +24,18 @@ public class TestData {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final KindergartenRepository kindergartenRepository;
+    private final ClassroomRepository classroomRepository;
+    private final KidRepository kidRepository;
 
-    public TestData(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+    public TestData(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
+                  KindergartenRepository kindergartenRepository, ClassroomRepository classroomRepository,
+                  KidRepository kidRepository) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
+        this.kindergartenRepository = kindergartenRepository;
+        this.classroomRepository = classroomRepository;
+        this.kidRepository = kidRepository;
     }
 
     /**
@@ -52,9 +70,38 @@ public class TestData {
     }
 
     /**
+     * 테스트용 유치원 생성
+     */
+    public Kindergarten createKindergarten() {
+        Kindergarten kindergarten = Kindergarten.create("테스트 유치원", "서울시", "010-0000-0000",
+                LocalTime.of(9, 0), LocalTime.of(18, 0));
+        return kindergartenRepository.save(kindergarten);
+    }
+
+    /**
+     * 테스트용 반 생성
+     */
+    public Classroom createClassroom(Kindergarten kindergarten) {
+        Classroom classroom = Classroom.create(kindergarten, "테스트반", "5세");
+        return classroomRepository.save(classroom);
+    }
+
+    /**
+     * 테스트용 원생 생성
+     */
+    public Kid createKid(Classroom classroom) {
+        Kid kid = Kid.create(classroom, "테스트 원생", LocalDate.of(2020, 1, 1),
+                Gender.MALE, LocalDate.now());
+        return kidRepository.save(kid);
+    }
+
+    /**
      * 모든 테스트 데이터 정리
      */
     public void cleanup() {
+        kidRepository.deleteAll();
+        classroomRepository.deleteAll();
+        kindergartenRepository.deleteAll();
         memberRepository.deleteAll();
     }
 }
