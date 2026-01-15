@@ -61,7 +61,7 @@
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" @click.outside="open = false" type="button" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                                 <div class="w-9 h-9 bg-gradient-primary rounded-full flex items-center justify-center">
-                                    <span class="text-sm font-semibold text-white" th:text="${#authentication.name?.charAt(0)?.toUpperCase()}">U</span>
+                                    <span class="text-sm font-semibold text-white" th:text="${#authentication.name?.toUpperCase()?.charAt(0)}">U</span>
                                 </div>
                                 <span class="hidden lg:block text-sm font-medium text-gray-700" th:text="${#authentication.name}">user@example.com</span>
                                 <svg class="w-4 h-4 text-gray-400" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
