@@ -103,7 +103,7 @@ window.UI = window.UI || {
         }
 
         return window.confirm(options.text || options);
-    }
+    },
 
     async promptTextarea({
         title,
@@ -142,11 +142,11 @@ window.UI = window.UI || {
             return result;
         }
 
-        const value = window.prompt(title, '');
-        return { isConfirmed: value !== null, value };
+        return { isConfirmed: false, value: null };
     },
 
     async promptSelect({
+
         title,
         label,
         options,
@@ -222,8 +222,39 @@ window.Notifications = window.Notifications || {
         }
     },
 
+    async markRead(notificationId) {
+        if (!notificationId) return;
+        await this.requestJson(`/api/v1/notifications/${notificationId}/read`, 'PUT');
+        this.refresh();
+    },
+
     async markAllRead() {
+        const ok = await window.UI.confirm({
+            title: '전체 읽음 처리',
+            text: '모든 알림을 읽음 처리할까요?',
+            confirmText: '처리',
+            cancelText: '취소',
+            icon: 'warning'
+        });
+        if (!ok) return;
+
         await this.requestJson('/api/v1/notifications/read-all', 'PUT');
+        this.refresh();
+    },
+
+    async remove(notificationId) {
+        if (!notificationId) return;
+
+        const ok = await window.UI.confirm({
+            title: '알림 삭제',
+            text: '알림을 삭제할까요?',
+            confirmText: '삭제',
+            cancelText: '취소',
+            icon: 'warning'
+        });
+        if (!ok) return;
+
+        await this.requestJson(`/api/v1/notifications/${notificationId}`, 'DELETE');
         this.refresh();
     }
 };

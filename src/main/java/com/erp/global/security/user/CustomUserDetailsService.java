@@ -23,8 +23,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다: " + email));
 
-        // ACTIVE 상태인 경우만 로그인 가능
-        if (!MemberStatus.ACTIVE.equals(member.getStatus())) {
+        // PENDING 상태도 로그인 허용 (승인 전 신청 화면 접근 목적)
+        if (MemberStatus.INACTIVE.equals(member.getStatus())) {
             throw new UsernameNotFoundException("회원이 비활성화되었습니다: " + email);
         }
 

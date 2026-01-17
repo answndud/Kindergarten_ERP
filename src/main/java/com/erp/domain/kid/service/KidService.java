@@ -74,6 +74,13 @@ public class KidService {
     }
 
     /**
+     * 유치원 원생 목록 조회
+     */
+    public List<Kid> getKidsByKindergarten(Long kindergartenId) {
+        return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId);
+    }
+
+    /**
      * 반별 원생 목록 조회 (이름 검색)
      */
     public List<Kid> searchKidsByName(Long classroomId, String name) {
@@ -81,6 +88,13 @@ public class KidService {
         classroomService.getClassroom(classroomId);
 
         return kidRepository.findByClassroomIdAndNameContaining(classroomId, name);
+    }
+
+    /**
+     * 유치원 원생 목록 조회 (이름 검색)
+     */
+    public List<Kid> searchKidsByKindergarten(Long kindergartenId, String name) {
+        return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name);
     }
 
     /**

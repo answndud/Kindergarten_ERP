@@ -37,9 +37,16 @@ public class AuthService {
      */
     @Transactional
     public Long signUp(String email, String password, String name, String phone, String role) {
-        // 역할 변환
-        com.erp.domain.member.entity.MemberRole memberRole =
-                com.erp.domain.member.entity.MemberRole.valueOf(role);
+        if (role == null || role.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "역할은 필수입니다");
+        }
+
+        com.erp.domain.member.entity.MemberRole memberRole;
+        try {
+            memberRole = com.erp.domain.member.entity.MemberRole.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "역할 값이 올바르지 않습니다");
+        }
 
         return memberService.signUp(email, password, name, phone, memberRole);
     }
