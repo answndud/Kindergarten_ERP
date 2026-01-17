@@ -3,13 +3,31 @@
 <body>
 <th:block th:fragment="list">
     <div id="notification-list"
-         hx-get="/notifications/fragments/list?limit=10"
+         th:attr="hx-get=@{/notifications/fragments/list(limit=${unreadOnly} ? 50 : 10, unreadOnly=${unreadOnly})}"
          hx-trigger="notifications-changed from:body, every 30s"
          hx-swap="outerHTML"
          class="w-80 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
 
         <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div class="font-semibold text-gray-900">알림</div>
+            <div class="flex items-center gap-2">
+                <div class="font-semibold text-gray-900">알림</div>
+                <button type="button"
+                        th:classappend="${!unreadOnly} ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-primary-600'"
+                        class="text-[11px] px-2 py-0.5 rounded-full border border-transparent"
+                        hx-get="/notifications/fragments/list?limit=10&unreadOnly=false"
+                        hx-target="#notification-list"
+                        hx-swap="outerHTML">
+                    전체
+                </button>
+                <button type="button"
+                        th:classappend="${unreadOnly} ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-primary-600'"
+                        class="text-[11px] px-2 py-0.5 rounded-full border border-transparent"
+                        hx-get="/notifications/fragments/list?limit=10&unreadOnly=true"
+                        hx-target="#notification-list"
+                        hx-swap="outerHTML">
+                    미읽음
+                </button>
+            </div>
             <button type="button"
                     class="text-xs text-gray-600 hover:text-primary-600"
                     onclick="Notifications.markAllRead().catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
@@ -35,6 +53,19 @@
                         <div class="text-sm font-medium text-gray-900" th:text="${n.title()}">제목</div>
                         <div class="mt-1 text-xs text-gray-600 line-clamp-2" th:text="${n.content()}">내용</div>
                         <div class="mt-2 text-[11px] text-gray-400" th:text="${#temporals.format(n.createdAt(), 'yyyy-MM-dd HH:mm')}">시간</div>
+                    </div>
+                    <div class="flex flex-col items-end gap-2 text-[11px] text-gray-500">
+                        <button type="button"
+                                th:if="${!n.isRead()}"
+                                class="hover:text-primary-600"
+                                onclick="event.stopPropagation(); Notifications.markRead(this.closest('button').dataset.id).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
+                            읽음
+                        </button>
+                        <button type="button"
+                                class="hover:text-red-500"
+                                onclick="event.stopPropagation(); Notifications.remove(this.closest('button').dataset.id).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
+                            삭제
+                        </button>
                     </div>
                 </div>
             </button>

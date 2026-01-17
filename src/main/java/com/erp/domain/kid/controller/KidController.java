@@ -61,6 +61,7 @@ public class KidController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<KidResponse>>> getKids(
             @RequestParam(required = false) Long classroomId,
+            @RequestParam(required = false) Long kindergartenId,
             @RequestParam(required = false) String name) {
 
         List<Kid> kids;
@@ -70,6 +71,12 @@ public class KidController {
                 kids = kidService.searchKidsByName(classroomId, name);
             } else {
                 kids = kidService.getKidsByClassroom(classroomId);
+            }
+        } else if (kindergartenId != null) {
+            if (name != null && !name.isBlank()) {
+                kids = kidService.searchKidsByKindergarten(kindergartenId, name);
+            } else {
+                kids = kidService.getKidsByKindergarten(kindergartenId);
             }
         } else {
             // 전체 조회는 추후 구현

@@ -69,6 +69,15 @@
                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                            placeholder="이름 검색" />
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">정렬</label>
+                    <select id="sort-filter"
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="name">이름순</option>
+                        <option value="age">나이순</option>
+                        <option value="recent">최근 등록순</option>
+                    </select>
+                </div>
                 <div class="flex gap-2">
                     <button type="button" onclick="loadKids()" class="flex-1 px-5 py-2.5 bg-gradient-primary text-white font-medium rounded-xl hover:shadow-lg transition-all">
                         검색
@@ -120,7 +129,11 @@
         confirm: async ({ text = '계속 진행할까요?' } = {}) => window.confirm(text)
     };
     const initialKindergartenId = /*[[${currentMember?.kindergartenId}]]*/ null;
+    const currentRole = /*[[${currentMember?.role?.name()}]]*/ null;
+    const isPrincipal = currentRole === 'PRINCIPAL';
     let kindergartenId = initialKindergartenId;
+    let classroomsCache = [];
+    let kidsCache = [];
 
     async function fetchMe() {
         const response = await fetch('/api/v1/members/me', { credentials: 'same-origin' });
@@ -134,6 +147,59 @@
         const me = await fetchMe();
         if (me && me.kindergartenId) kindergartenId = me.kindergartenId;
         return kindergartenId;
+    }
+
+    function buildClassroomCounts(kids) {
+        return (kids || []).reduce((acc, kid) => {
+            const classroomId = kid.classroomId;
+            if (!classroomId) return acc;
+            acc[classroomId] = (acc[classroomId] || 0) + 1;
+            return acc;
+        }, {});
+    }
+
+    function renderClassroomOptions(select, classrooms, counts = {}) {
+        if (!select) return;
+        select.innerHTML = '<option value="">전체</option>' + (classrooms || [])
+            .map(c => {
+                const count = counts[c.id] || 0;
+                return `<option value="${c.id}">${c.name} (${count}명)</option>`;
+            })
+            .join('');
+    }
+
+    async function ensureKidsCache(force = false) {
+        const id = await ensureKindergartenId();
+        if (!id) return [];
+        if (kidsCache.length > 0 && !force) return kidsCache;
+
+        const response = await fetch(`/api/v1/kids?kindergartenId=${id}`, { credentials: 'same-origin' });
+        if (!response.ok) {
+            kidsCache = [];
+            return kidsCache;
+        }
+
+        const result = await response.json().catch(() => ({}));
+        kidsCache = result.data || [];
+        return kidsCache;
+    }
+
+    async function fetchKids(params) {
+        const response = await fetch(`/api/v1/kids?${params}`, { credentials: 'same-origin' });
+        if (!response.ok) return [];
+        const result = await response.json().catch(() => ({}));
+        return result.data || [];
+    }
+
+    function sortKids(kids, sortKey) {
+        const list = [...kids];
+        if (sortKey === 'age') {
+            return list.sort((a, b) => (b.age || 0) - (a.age || 0));
+        }
+        if (sortKey === 'recent') {
+            return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        return list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
     }
 
     async function loadClassrooms() {
@@ -152,20 +218,20 @@
         }
 
         const result = await response.json().catch(() => ({}));
-        const classrooms = result.data || [];
+        classroomsCache = result.data || [];
 
-        select.innerHTML = '<option value="">전체</option>' + classrooms
-            .map(c => `<option value="${c.id}">${c.name}</option>`)
-            .join('');
+        const counts = buildClassroomCounts(kidsCache);
+        renderClassroomOptions(select, classroomsCache, counts);
     }
 
-    async function loadKids() {
+    async function loadKids({ refreshCounts = false } = {}) {
         console.log('[DEBUG] loadKids called');
 
         const id = await ensureKindergartenId();
         const container = document.getElementById('kid-list');
         const classroomId = document.getElementById('classroom-filter').value;
         const name = document.getElementById('name-filter').value;
+        const sortKey = document.getElementById('sort-filter').value || 'name';
 
         console.log('[DEBUG] loadKids - kindergartenId:', id, 'classroomId:', classroomId, 'name:', name);
 
@@ -178,25 +244,29 @@
         if (classroomId) params.append('classroomId', classroomId);
         if (name) params.append('name', name);
 
-        const response = await fetch(`/api/v1/kids?${params}`, { credentials: 'same-origin' });
-        console.log('[DEBUG] loadKids response status:', response.status);
+        const [kids] = await Promise.all([
+            fetchKids(params),
+            refreshCounts || (!classroomId && !name) ? ensureKidsCache(true) : ensureKidsCache()
+        ]);
 
-        if (!response.ok) {
-            container.innerHTML = '<div class="text-center py-8 text-gray-500">원생 목록 로드 실패</div>';
-            return;
+        const counts = buildClassroomCounts(kidsCache);
+        if (classroomsCache.length > 0) {
+            renderClassroomOptions(document.getElementById('classroom-filter'), classroomsCache, counts);
         }
-
-        const result = await response.json().catch(() => ({}));
-        console.log('[DEBUG] loadKids response data:', result);
-        const kids = result.data || [];
 
         if (!kids.length) {
             container.innerHTML = '<div class="text-center py-8 text-gray-500">원생이 없습니다.</div>';
             return;
         }
 
-        container.innerHTML = kids.map(k => {
+        const sortedKids = sortKids(kids, sortKey);
+
+        container.innerHTML = sortedKids.map(k => {
             const age = k.age ? `(${k.age}세)` : '';
+            const changeClassroomButton = isPrincipal
+                ? `<button type="button" data-id="${k.id}" data-name="${k.name}" data-classroom-id="${k.classroomId}" onclick="openChangeClassroom(this)" class="px-3 py-1.5 text-sm bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all">반 변경</button>`
+                : '';
+
             return `
                 <div class="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
                     <div>
@@ -207,13 +277,14 @@
                         <div class="text-sm text-primary-700">${k.classroomName || '반 미배정'}</div>
                     </div>
                     <div class="flex gap-2">
+                        ${changeClassroomButton}
                         <button type="button" onclick="showParentManageModal(${k.id})" class="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all">
                             학부모 관리
                         </button>
                         <button type="button" onclick="showEditKidModal(${k.id})" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
                             편집
                         </button>
-                        <button type="button" onclick="deleteKid(${k.id}, '${k.name}')" class="px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all">
+                        <button type="button" data-id="${k.id}" data-name="${k.name}" onclick="openDeleteKid(this)" class="px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all">
                             삭제
                         </button>
                     </div>
@@ -225,7 +296,97 @@
     function resetFilters() {
         document.getElementById('classroom-filter').value = '';
         document.getElementById('name-filter').value = '';
+        document.getElementById('sort-filter').value = 'name';
         loadKids();
+    }
+
+    function openDeleteKid(button) {
+        const kidId = Number(button.dataset.id);
+        const kidName = button.dataset.name || '원생';
+        deleteKid(kidId, kidName);
+    }
+
+    function openChangeClassroom(button) {
+        const kidId = Number(button.dataset.id);
+        const kidName = button.dataset.name || '원생';
+        const classroomId = Number(button.dataset.classroomId || 0);
+        showChangeClassroomModal(kidId, kidName, classroomId);
+    }
+
+    async function showChangeClassroomModal(kidId, kidName, currentClassroomId) {
+        if (!isPrincipal) {
+            await UI.alert({ title: '권한 없음', text: '반 변경은 원장만 할 수 있습니다.', icon: 'info' });
+            return;
+        }
+
+        if (!classroomsCache.length) {
+            await loadClassrooms();
+        }
+
+        if (!classroomsCache.length) {
+            await UI.alert({ title: '반 없음', text: '반을 먼저 생성해 주세요.', icon: 'info' });
+            return;
+        }
+
+        const result = await window.Swal.fire({
+            title: '반 변경',
+            html: `
+                <div class="text-left space-y-4 mt-4">
+                    <div class="text-sm text-gray-600">${kidName} 원생의 반을 변경합니다.</div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">배정할 반 *</label>
+                        <select id="change-classroom-select"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </select>
+                    </div>
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            cancelButtonText: '취소',
+            confirmButtonText: '변경',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'bg-gradient-primary hover:shadow-lg transition-all',
+                cancelButton: 'border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all'
+            },
+            didOpen: () => {
+                const select = document.getElementById('change-classroom-select');
+                select.innerHTML = classroomsCache
+                    .map(c => `<option value="${c.id}">${c.name}</option>`)
+                    .join('');
+                if (currentClassroomId) {
+                    select.value = String(currentClassroomId);
+                }
+            },
+            preConfirm: () => {
+                const selectedId = document.getElementById('change-classroom-select').value;
+                if (!selectedId) {
+                    UI.error('반을 선택해주세요.');
+                    return false;
+                }
+                return { classroomId: selectedId };
+            }
+        });
+
+        if (!result.isConfirmed || !result.value) return;
+
+        const response = await fetch(`/api/v1/kids/${kidId}/classroom`, {
+            method: 'PUT',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ classroomId: Number(result.value.classroomId) })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            await UI.error(payload.message || '반 변경에 실패했습니다.');
+            return;
+        }
+
+        await UI.success('반이 변경되었습니다.');
+        kidsCache = [];
+        await loadKids({ refreshCounts: true });
     }
 
     async function showCreateKidModal() {
@@ -344,7 +505,8 @@
         }
 
         await UI.success('원생이 추가되었습니다.');
-        await loadKids();
+        kidsCache = [];
+        await loadKids({ refreshCounts: true });
         await loadClassrooms();
     }
 
@@ -467,7 +629,8 @@
             }
 
             await UI.success('원생이 삭제되었습니다.');
-            await loadKids();
+            kidsCache = [];
+            await loadKids({ refreshCounts: true });
         }
     }
 
@@ -625,9 +788,10 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loadClassrooms().catch(() => {});
-        loadKids().catch(() => {});
+    document.addEventListener('DOMContentLoaded', async () => {
+        await ensureKidsCache(true);
+        await loadClassrooms();
+        await loadKids();
     });
 </script>
 </body>

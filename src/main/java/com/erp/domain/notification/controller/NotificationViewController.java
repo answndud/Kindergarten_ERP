@@ -33,14 +33,22 @@ public class NotificationViewController {
     public String list(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "false") boolean unreadOnly,
             Model model) {
 
         if (userDetails == null) {
             model.addAttribute("notifications", java.util.List.of());
+            model.addAttribute("unreadOnly", unreadOnly);
             return "notifications/fragments/list :: list";
         }
 
-        model.addAttribute("notifications", notificationService.getNotifications(userDetails.getMemberId(), limit));
+        if (unreadOnly) {
+            model.addAttribute("notifications", notificationService.getUnreadNotifications(userDetails.getMemberId()));
+        } else {
+            model.addAttribute("notifications", notificationService.getNotifications(userDetails.getMemberId(), limit));
+        }
+
+        model.addAttribute("unreadOnly", unreadOnly);
         return "notifications/fragments/list :: list";
     }
 }

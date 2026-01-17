@@ -215,10 +215,10 @@
             },
 
             // ===== UI wrappers (SweetAlert2) =====
-            async uiApproveTeacher(applicationId) {
+            async uiApproveTeacher(applicationId, teacherName = '교사') {
                 const ok = await UI.confirm({
                     title: '교사 지원 승인',
-                    text: '승인 처리하시겠습니까?',
+                    text: `${teacherName} 선생님을 승인 처리하시겠습니까?`,
                     confirmText: '승인',
                     cancelText: '취소'
                 });
@@ -231,10 +231,10 @@
                     await UI.error(e.message);
                 }
             },
-            async uiRejectTeacher(applicationId) {
+            async uiRejectTeacher(applicationId, teacherName = '교사') {
                 const result = await UI.promptTextarea({
                     title: '교사 지원 거절',
-                    label: '거절 사유(선택)',
+                    label: `${teacherName} 선생님 거절 사유(선택)`,
                     placeholder: '예) 현재 정원 초과로 신규 교사 모집이 어렵습니다.',
                     confirmText: '거절',
                     cancelText: '취소',
@@ -249,10 +249,10 @@
                     await UI.error(e.message);
                 }
             },
-            async uiCancelTeacher(applicationId) {
+            async uiCancelTeacher(applicationId, kindergartenName = '유치원') {
                 const ok = await UI.confirm({
                     title: '지원 신청 취소',
-                    text: '지원 신청을 취소하시겠습니까?',
+                    text: `${kindergartenName} 지원 신청을 취소하시겠습니까?`,
                     confirmText: '취소하기',
                     cancelText: '닫기'
                 });
@@ -266,10 +266,10 @@
                 }
             },
 
-            async uiCancelKid(applicationId) {
+            async uiCancelKid(applicationId, kidName = '원아') {
                 const ok = await UI.confirm({
                     title: '입학 신청 취소',
-                    text: '입학 신청을 취소하시겠습니까?',
+                    text: `${kidName} 입학 신청을 취소하시겠습니까?`,
                     confirmText: '취소하기',
                     cancelText: '닫기'
                 });
@@ -283,7 +283,7 @@
                 }
             },
 
-            async uiApproveKid(applicationId) {
+            async uiApproveKid(applicationId, kidName = '원아') {
                 try {
                     if (!currentKindergartenId) {
                         await UI.error('소속 유치원 정보가 없어 승인 처리를 할 수 없습니다.');
@@ -305,7 +305,7 @@
 
                     const result = await UI.promptSelect({
                         title: '입학 신청 승인',
-                        label: '배정할 반을 선택해 주세요.',
+                        label: `${kidName} 배정할 반을 선택해 주세요.`,
                         options,
                         confirmText: '승인',
                         cancelText: '취소'
@@ -320,10 +320,10 @@
                 }
             },
 
-            async uiRejectKid(applicationId) {
+            async uiRejectKid(applicationId, kidName = '원아') {
                 const result = await UI.promptTextarea({
                     title: '입학 신청 거절',
-                    label: '거절 사유(선택)',
+                    label: `${kidName} 거절 사유(선택)`,
                     placeholder: '예) 현재 정원 초과로 입학이 어렵습니다.',
                     confirmText: '거절',
                     cancelText: '취소',
@@ -476,7 +476,38 @@
         window.Notifications = {
             refresh: notifyRefresh,
             open: (notificationId, linkUrl) => window.Applications.openNotification(notificationId, linkUrl),
-            markAllRead: () => window.Applications.markAllNotificationsRead()
+            markRead: async (notificationId) => {
+                if (!notificationId) return;
+                await requestJson(`/api/v1/notifications/${notificationId}/read`, 'PUT');
+                notifyRefresh();
+            },
+            markAllRead: async () => {
+                const ok = await UI.confirm({
+                    title: '전체 읽음 처리',
+                    text: '모든 알림을 읽음 처리할까요?',
+                    confirmText: '처리',
+                    cancelText: '취소',
+                    icon: 'warning'
+                });
+                if (!ok) return;
+
+                await requestJson('/api/v1/notifications/read-all', 'PUT');
+                notifyRefresh();
+            },
+            remove: async (notificationId) => {
+                if (!notificationId) return;
+                const ok = await UI.confirm({
+                    title: '알림 삭제',
+                    text: '알림을 삭제할까요?',
+                    confirmText: '삭제',
+                    cancelText: '취소',
+                    icon: 'warning'
+                });
+                if (!ok) return;
+
+                await requestJson(`/api/v1/notifications/${notificationId}`, 'DELETE');
+                notifyRefresh();
+            }
         };
 
         // HTMX로 조각이 바뀌면 폼 바인딩 재시도
