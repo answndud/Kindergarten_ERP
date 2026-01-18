@@ -73,7 +73,7 @@
 
                         <div x-show="open" x-transition class="absolute right-0 mt-2 z-50">
                             <div id="notification-list"
-                                 hx-get="/notifications/fragments/list?limit=10"
+                                 hx-get="/notifications/fragments/list?limit=10&unreadOnly=true"
                                  hx-trigger="load, notifications-changed from:body, every 30s"
                                  hx-swap="outerHTML"></div>
                         </div>
@@ -186,198 +186,7 @@
                 await requestJson(`/api/v1/kindergarten-applications/${applicationId}/approve`, 'PUT');
                 refreshApplications();
                 notifyRefresh();
-            },
-            async cancelTeacher(applicationId) {
-                await requestJson(`/api/v1/kindergarten-applications/${applicationId}/cancel`, 'PUT');
-                refreshApplications();
-                notifyRefresh();
-            },
-            async rejectTeacher(applicationId, reason) {
-                await requestJson(`/api/v1/kindergarten-applications/${applicationId}/reject`, 'PUT', { reason });
-                refreshApplications();
-                notifyRefresh();
-            },
-
-            async cancelKid(applicationId) {
-                await requestJson(`/api/v1/kid-applications/${applicationId}/cancel`, 'PUT');
-                refreshApplications();
-                notifyRefresh();
-            },
-            async approveKid(applicationId, classroomId) {
-                await requestJson(`/api/v1/kid-applications/${applicationId}/approve`, 'PUT', { classroomId: Number(classroomId) });
-                refreshApplications();
-                notifyRefresh();
-            },
-            async rejectKid(applicationId, reason) {
-                await requestJson(`/api/v1/kid-applications/${applicationId}/reject`, 'PUT', { reason });
-                refreshApplications();
-                notifyRefresh();
-            },
-
-            // ===== UI wrappers (SweetAlert2) =====
-            async uiApproveTeacher(applicationId, teacherName = '교사') {
-                const ok = await UI.confirm({
-                    title: '교사 지원 승인',
-                    text: `${teacherName} 선생님을 승인 처리하시겠습니까?`,
-                    confirmText: '승인',
-                    cancelText: '취소'
-                });
-                if (!ok) return;
-
-                try {
-                    await this.approveTeacher(applicationId);
-                    await UI.success('승인 처리했습니다.');
-                } catch (e) {
-                    await UI.error(e.message);
-                }
-            },
-            async uiRejectTeacher(applicationId, teacherName = '교사') {
-                const result = await UI.promptTextarea({
-                    title: '교사 지원 거절',
-                    label: `${teacherName} 선생님 거절 사유(선택)`,
-                    placeholder: '예) 현재 정원 초과로 신규 교사 모집이 어렵습니다.',
-                    confirmText: '거절',
-                    cancelText: '취소',
-                    required: false
-                });
-                if (!result.isConfirmed) return;
-
-                try {
-                    await this.rejectTeacher(applicationId, result.value || null);
-                    await UI.success('거절 처리했습니다.');
-                } catch (e) {
-                    await UI.error(e.message);
-                }
-            },
-            async uiCancelTeacher(applicationId, kindergartenName = '유치원') {
-                const ok = await UI.confirm({
-                    title: '지원 신청 취소',
-                    text: `${kindergartenName} 지원 신청을 취소하시겠습니까?`,
-                    confirmText: '취소하기',
-                    cancelText: '닫기'
-                });
-                if (!ok) return;
-
-                try {
-                    await this.cancelTeacher(applicationId);
-                    await UI.success('지원 신청을 취소했습니다.');
-                } catch (e) {
-                    await UI.error(e.message);
-                }
-            },
-
-            async uiCancelKid(applicationId, kidName = '원아') {
-                const ok = await UI.confirm({
-                    title: '입학 신청 취소',
-                    text: `${kidName} 입학 신청을 취소하시겠습니까?`,
-                    confirmText: '취소하기',
-                    cancelText: '닫기'
-                });
-                if (!ok) return;
-
-                try {
-                    await this.cancelKid(applicationId);
-                    await UI.success('입학 신청을 취소했습니다.');
-                } catch (e) {
-                    await UI.error(e.message);
-                }
-            },
-
-            async uiApproveKid(applicationId, kidName = '원아') {
-                try {
-                    if (!currentKindergartenId) {
-                        await UI.error('소속 유치원 정보가 없어 승인 처리를 할 수 없습니다.');
-                        return;
-                    }
-
-                    const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${currentKindergartenId}`);
-                    if (!classrooms.length) {
-                        await UI.alert({
-                            title: '반이 없습니다',
-                            text: '승인 처리를 하려면 먼저 반을 생성해 주세요.',
-                            icon: 'info'
-                        });
-                        return;
-                    }
-
-                    const options = {};
-                    classrooms.forEach(c => { options[String(c.id)] = c.ageGroup ? `${c.name} (${c.ageGroup})` : c.name; });
-
-                    const result = await UI.promptSelect({
-                        title: '입학 신청 승인',
-                        label: `${kidName} 배정할 반을 선택해 주세요.`,
-                        options,
-                        confirmText: '승인',
-                        cancelText: '취소'
-                    });
-
-                    if (!result.isConfirmed) return;
-
-                    await this.approveKid(applicationId, result.value);
-                    await UI.success('승인 처리했습니다.');
-                } catch (e) {
-                    await UI.error(e.message);
-                }
-            },
-
-            async uiRejectKid(applicationId, kidName = '원아') {
-                const result = await UI.promptTextarea({
-                    title: '입학 신청 거절',
-                    label: `${kidName} 거절 사유(선택)`,
-                    placeholder: '예) 현재 정원 초과로 입학이 어렵습니다.',
-                    confirmText: '거절',
-                    cancelText: '취소',
-                    required: false
-                });
-                if (!result.isConfirmed) return;
-
-                try {
-                    await this.rejectKid(applicationId, result.value || null);
-                    await UI.success('거절 처리했습니다.');
-                } catch (e) {
-                    await UI.error(e.message);
-                }
-            },
-
-            async openNotification(notificationId, linkUrl) {
-                if (notificationId) {
-                    await requestJson(`/api/v1/notifications/${notificationId}/read`, 'PUT');
-                    notifyRefresh();
-                }
-
-                if (linkUrl && linkUrl !== 'null' && linkUrl !== 'undefined' && linkUrl.trim() !== '') {
-                    window.location.href = linkUrl;
-                }
-            },
-            async markAllNotificationsRead() {
-                await requestJson('/api/v1/notifications/read-all', 'PUT');
-                notifyRefresh();
-            },
-
-            // 원장/교사용 (승인 모달) - 현재 소속 유치원 반 목록
-            async loadClassrooms(selectEl) {
-                if (!currentKindergartenId) return;
-                const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${currentKindergartenId}`);
-                setOptions(selectEl, '반을 선택하세요', classrooms);
-            },
-
-            // 신청 폼용: 전체 유치원 목록
-            async loadKindergartens(selectEl, placeholderText = '유치원을 선택하세요') {
-                const kindergartens = await fetchList('/api/v1/kindergartens');
-                setOptions(selectEl, placeholderText, kindergartens, (k) => {
-                    const address = k.address ? ` · ${k.address}` : '';
-                    return `${k.name}${address} (ID:${k.id})`;
-                });
-            },
-
-            // 신청 폼용: 특정 유치원의 반 목록
-            async loadClassroomsByKindergarten(selectEl, kindergartenId, placeholderText = '희망 반(선택)') {
-                if (!kindergartenId) {
-                    setOptions(selectEl, '유치원을 선택하면 반 목록이 표시됩니다', []);
-                    return;
-                }
-                const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${kindergartenId}`);
-                setOptions(selectEl, placeholderText, classrooms);
+                if (window.htmx) htmx.trigger(document.body, 'dashboard-stats-changed');
             },
 
             async applyTeacher(kindergartenId, message) {
@@ -387,12 +196,14 @@
                 });
                 refreshApplications();
                 notifyRefresh();
+                if (window.htmx) htmx.trigger(document.body, 'dashboard-stats-changed');
             },
 
             async applyParent(payload) {
                 await requestJson('/api/v1/kid-applications', 'POST', payload);
                 refreshApplications();
                 notifyRefresh();
+                if (window.htmx) htmx.trigger(document.body, 'dashboard-stats-changed');
             },
 
             async initPendingForms() {
@@ -481,19 +292,7 @@
                 await requestJson(`/api/v1/notifications/${notificationId}/read`, 'PUT');
                 notifyRefresh();
             },
-            markAllRead: async () => {
-                const ok = await UI.confirm({
-                    title: '전체 읽음 처리',
-                    text: '모든 알림을 읽음 처리할까요?',
-                    confirmText: '처리',
-                    cancelText: '취소',
-                    icon: 'warning'
-                });
-                if (!ok) return;
-
-                await requestJson('/api/v1/notifications/read-all', 'PUT');
-                notifyRefresh();
-            },
+            markAllRead: () => window.Applications.markAllNotificationsRead(),
             remove: async (notificationId) => {
                 if (!notificationId) return;
                 const ok = await UI.confirm({

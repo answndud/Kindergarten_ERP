@@ -311,7 +311,7 @@ public class KidApplicationService {
     }
 
     private void notifyParentAboutRejection(Member parent, String kidName, Kindergarten kindergarten, String reason) {
-        String content = kidName + "의 " + kindergarten.getName() + " 입신이 거절되었습니다.";
+        String content = kidName + "의 " + kindergarten.getName() + " 입학이 거절되었습니다.";
         if (reason != null && !reason.isEmpty()) {
             content += "\n사유: " + reason;
         }
