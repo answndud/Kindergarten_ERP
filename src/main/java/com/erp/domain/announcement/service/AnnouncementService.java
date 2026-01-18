@@ -6,7 +6,10 @@ import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.announcement.repository.AnnouncementRepository;
 import com.erp.domain.kindergarten.service.KindergartenService;
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.service.MemberService;
+import com.erp.domain.notification.entity.NotificationType;
+import com.erp.domain.notification.service.NotificationService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 공지사항 서비스
@@ -28,6 +33,7 @@ public class AnnouncementService {
     private final AnnouncementRepository announcementRepository;
     private final KindergartenService kindergartenService;
     private final MemberService memberService;
+    private final NotificationService notificationService;
 
     /**
      * 공지사항 생성
@@ -51,6 +57,26 @@ public class AnnouncementService {
         }
 
         Announcement saved = announcementRepository.save(announcement);
+
+        List<Member> receivers = memberService.getMembersByKindergartenAndRoles(
+                kindergarten.getId(),
+                List.of(MemberRole.PRINCIPAL, MemberRole.TEACHER, MemberRole.PARENT)
+        );
+        if (!receivers.isEmpty()) {
+            String title = "새 공지사항: " + saved.getTitle();
+            String content = saved.getContent();
+            List<Long> receiverIds = new java.util.ArrayList<>();
+            for (Member receiver : receivers) {
+                receiverIds.add(receiver.getId());
+            }
+            notificationService.notifyWithLink(receiverIds,
+                    NotificationType.ANNOUNCEMENT_CREATED,
+                    title,
+                    content,
+                    "/announcements"
+            );
+        }
+
         return saved.getId();
     }
 

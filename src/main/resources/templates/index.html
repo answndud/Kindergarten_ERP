@@ -59,33 +59,10 @@
                              <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
                         </div>
                         <span class="sr-only">KinderCare</span>
-                    </a>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Desktop Navigation -->
-                <nav class="hidden md:flex items-center gap-3">
-                    <!-- 알림 버튼 -->
-                    <div class="relative" x-data="{ open: false }" th:if="${currentMember != null}">
-                        <button type="button"
-                                @click="open = !open"
-                                @click.outside="open = false"
-                                class="p-2.5 text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors relative">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                            </svg>
-                            <span id="notification-badge"
-                                  hx-get="/notifications/fragments/badge"
-                                  hx-trigger="load, notifications-changed from:body, every 30s"
-                                  hx-swap="outerHTML"
-                                  class="absolute -top-1 -right-1"></span>
-                        </button>
-
-                        <div x-show="open" x-transition class="absolute right-0 mt-2 z-50">
-                            <div id="notification-list"
-                                 hx-get="/notifications/fragments/list?limit=10"
-                                 hx-trigger="load, notifications-changed from:body, every 30s"
-                                 hx-swap="outerHTML"></div>
-                        </div>
                     </div>
 
                     <!-- 사용자 드롭다운 -->
@@ -161,8 +138,26 @@
             </div>
 
              <!-- Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6" x-data="dashboardStats()">
-                    <a href="/kids" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
+                <div x-data="dashboardStats()" x-init="init()">
+                    <div class="flex flex-wrap items-center gap-2 mb-4">
+                        <span class="text-xs text-gray-500">기간</span>
+                        <button type="button"
+                                class="px-3 py-1 text-xs font-medium rounded-full border transition"
+                                :class="period === 'week' ? 'bg-primary-50 text-primary-700 border-primary-100' : 'text-gray-600 border-gray-200 hover:text-primary-700'"
+                                @click="setPeriod('week')">
+                            최근 7일
+                        </button>
+                        <button type="button"
+                                class="px-3 py-1 text-xs font-medium rounded-full border transition"
+                                :class="period === 'month' ? 'bg-primary-50 text-primary-700 border-primary-100' : 'text-gray-600 border-gray-200 hover:text-primary-700'"
+                                @click="setPeriod('month')">
+                            최근 30일
+                        </button>
+                        <span class="text-[11px] text-gray-400">기준: KST (GMT+9)</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <a href="/kids" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-xs text-gray-500 mb-1">원아 관리</p>
@@ -183,63 +178,64 @@
                         </div>
                     </a>
 
-                    <a href="/attendance" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 mb-1">출석률</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.attendanceRate + '%'">-</p>
+                        <a href="/attendance" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500 mb-1">출석률</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.attendanceRate + '%'">-</p>
+                                </div>
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </a>
+                        </a>
 
-                    <a href="/applications/pending" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 mb-1">승인 대기</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.applicationsPending">-</p>
+                        <a href="/applications/pending" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500 mb-1">승인 대기</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.applicationsPending">-</p>
+                                </div>
+                                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                                    <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </a>
+                        </a>
 
-                    <a href="/notepad" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 mb-1">새 알림장</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.notepads">-</p>
+                        <a href="/notepad" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500 mb-1">새 알림장</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.notepads">-</p>
+                                </div>
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </a>
+                        </a>
 
-                    <a href="/announcements" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 mb-1">공지사항</p>
-                                <p class="text-2xl font-bold text-gray-900" x-text="stats.announcements">-</p>
+                        <a href="/announcements" class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow group">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-gray-500 mb-1">공지사항</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.announcements">-</p>
+                                </div>
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </a>
+                        </a>
+
+                    </div>
                 </div>
-            </div>
 
 
         <!-- Profile Info -->
@@ -393,6 +389,8 @@
      <script>
         function dashboardStats() {
             return {
+                period: 'week',
+                loading: false,
                 stats: {
                     notepads: 0,
                     attendanceRate: 0,
@@ -400,6 +398,32 @@
                     announcements: 0
                 },
                 async init() {
+                    await this.loadStats();
+                },
+                async setPeriod(value) {
+                    if (this.period === value || this.loading) return;
+                    this.period = value;
+                    await this.loadStats();
+                },
+                getRangeDays() {
+                    return this.period === 'month' ? 30 : 7;
+                },
+                getKstBaseDate(date = new Date()) {
+                    const formatter = new Intl.DateTimeFormat('en-CA', {
+                        timeZone: 'Asia/Seoul',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+                    const [year, month, day] = formatter.format(date).split('-').map(Number);
+                    return new Date(Date.UTC(year, month - 1, day));
+                },
+                toDateString(date) {
+                    return date.toISOString().slice(0, 10);
+                },
+                async loadStats() {
+                    if (this.loading) return;
+                    this.loading = true;
                     try {
                         const res = await fetch('/api/v1/members/me', { credentials: 'same-origin' });
                         if (!res.ok) return;
@@ -408,27 +432,61 @@
                         const kindergartenId = me.data.kindergartenId;
                         if (!kindergartenId) return;
 
-                        // 1) 오늘 알림장 수
-                        const today = new Date();
-                        const todayStr = today.toLocaleDateString('sv-SE');
+                        const nowKst = this.getKstBaseDate();
+                        const endDate = this.toDateString(nowKst);
+                        const rangeDays = this.getRangeDays();
+                        const startDateObj = new Date(nowKst);
+                        startDateObj.setDate(startDateObj.getDate() - (rangeDays - 1));
+                        const startDate = this.toDateString(startDateObj);
+
+                        // 1) 기간 알림장 수
                         const notepadsRes = await fetch(`/api/v1/notepads?page=0&size=200`, { credentials: 'same-origin' });
                         if (notepadsRes.ok) {
                             const d = await notepadsRes.json().catch(() => ({}));
-                            this.stats.notepads = (d.data?.content || []).filter(n => n.createdAt && n.createdAt.startsWith(todayStr)).length;
+                            this.stats.notepads = (d.data?.content || []).filter(n => n.createdAt && n.createdAt.slice(0, 10) >= startDate && n.createdAt.slice(0, 10) <= endDate).length;
                         }
 
-                        // 2) 오늘 출석률
-                        const attRes = await fetch(`/api/v1/attendance/daily?date=${todayStr}`, { credentials: 'same-origin' });
-                        if (attRes.ok) {
-                            const d = await attRes.json().catch(() => ({}));
-                            const list = d.data || [];
-                            if (list.length > 0) {
-                                const present = list.filter(r => r.status === 'PRESENT').length;
-                                this.stats.attendanceRate = Math.round((present / list.length) * 100);
+                        // 2) 기간 출석률 (반별 평균)
+                        const classroomsRes = await fetch(`/api/v1/classrooms?kindergartenId=${kindergartenId}`, { credentials: 'same-origin' });
+                        if (classroomsRes.ok) {
+                            const classroomsData = await classroomsRes.json().catch(() => ({}));
+                            const classrooms = classroomsData.data || [];
+                            if (classrooms.length > 0) {
+                                let totalPresent = 0;
+                                let totalCount = 0;
+
+                                for (let dayOffset = 0; dayOffset < rangeDays; dayOffset += 1) {
+                                    const date = new Date(startDateObj);
+                                    date.setDate(startDateObj.getDate() + dayOffset);
+                                    const dateStr = this.toDateString(date);
+
+                                    const dayResponses = await Promise.all(
+                                        classrooms.map(c =>
+                                            fetch(`/api/v1/attendance/daily?date=${dateStr}&classroomId=${c.id}`, { credentials: 'same-origin' })
+                                                .then(resp => resp.ok ? resp.json().catch(() => ({})) : null)
+                                        )
+                                    );
+
+                                    dayResponses.forEach((payload) => {
+                                        if (!payload) return;
+                                        const list = payload.data || [];
+                                        if (list.length === 0) return;
+                                        const present = list.filter(r => r.status === 'PRESENT' || r.status === 'LATE').length;
+                                        totalPresent += present;
+                                        totalCount += list.length;
+                                    });
+                                }
+
+                                if (totalCount > 0) {
+                                    this.stats.attendanceRate = Math.round((totalPresent / totalCount) * 100);
+                                } else {
+                                    this.stats.attendanceRate = 0;
+                                }
                             }
                         }
 
-                        // 3) 승인 대기 수
+                        // 3) 승인 대기 수 (현상 유지)
+                        this.stats.applicationsPending = 0;
                         if (me.data.role === 'PRINCIPAL' || me.data.role === 'TEACHER') {
                             const kidRes = await fetch(`/api/v1/kid-applications/pending?kindergartenId=${kindergartenId}`, { credentials: 'same-origin' });
                             if (kidRes.ok) {
@@ -445,14 +503,16 @@
                             }
                         }
 
-                        // 4) 오늘 공지사항 수
+                        // 4) 기간 공지사항 수
                         const annRes = await fetch(`/api/v1/announcements?kindergartenId=${kindergartenId}&page=0&size=200`, { credentials: 'same-origin' });
                         if (annRes.ok) {
                             const d = await annRes.json().catch(() => ({}));
-                            this.stats.announcements = (d.data?.content || []).filter(a => a.createdAt && a.createdAt.startsWith(todayStr)).length;
+                            this.stats.announcements = (d.data?.content || []).filter(a => a.createdAt && a.createdAt.slice(0, 10) >= startDate && a.createdAt.slice(0, 10) <= endDate).length;
                         }
                     } catch (e) {
                         console.error('대시보드 통계 로드 실패:', e);
+                    } finally {
+                        this.loading = false;
                     }
                 }
             };

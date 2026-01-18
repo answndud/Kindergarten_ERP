@@ -90,6 +90,27 @@ public class NotificationService {
     }
 
     /**
+     * 링크 포함 알림 생성 (수신자 리스트)
+     */
+    @Transactional
+    public void notifyWithLink(List<Long> receiverIds, NotificationType type, String title, String content, String linkUrl) {
+        if (receiverIds == null || receiverIds.isEmpty()) {
+            return;
+        }
+
+        List<Member> receivers = memberRepository.findAllById(receiverIds);
+        if (receivers.isEmpty()) {
+            return;
+        }
+
+        List<Notification> notifications = new java.util.ArrayList<>();
+        for (Member receiver : receivers) {
+            notifications.add(Notification.createWithLink(receiver, type, title, content, linkUrl));
+        }
+        notificationRepository.saveAll(notifications);
+    }
+
+    /**
      * 연관 엔티티 포함 알림 생성 (내부용)
      */
     @Transactional

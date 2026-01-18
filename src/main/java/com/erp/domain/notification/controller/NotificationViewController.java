@@ -39,6 +39,7 @@ public class NotificationViewController {
         if (userDetails == null) {
             model.addAttribute("notifications", java.util.List.of());
             model.addAttribute("unreadOnly", unreadOnly);
+            model.addAttribute("unreadCount", 0);
             return "notifications/fragments/list :: list";
         }
 
@@ -49,6 +50,7 @@ public class NotificationViewController {
         }
 
         model.addAttribute("unreadOnly", unreadOnly);
+        model.addAttribute("unreadCount", notificationService.getUnreadCount(userDetails.getMemberId()).count());
         return "notifications/fragments/list :: list";
     }
 }

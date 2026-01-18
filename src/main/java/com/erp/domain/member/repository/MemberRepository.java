@@ -57,6 +57,13 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
                                                   @Param("role") MemberRole role);
 
     /**
+     * 유치원별 다중 역할 회원 목록
+     */
+    @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role IN :roles AND m.deletedAt IS NULL")
+    List<Member> findAllByKindergartenIdAndRoles(@Param("kindergartenId") Long kindergartenId,
+                                                 @Param("roles") List<MemberRole> roles);
+
+    /**
      * ID로 회원 조회 (유치원 포함)
      * 뷰에서 사용할 때 LazyInitializationException 방지용
      */

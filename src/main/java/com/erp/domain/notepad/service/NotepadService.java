@@ -1,8 +1,12 @@
 package com.erp.domain.notepad.service;
 
 import com.erp.domain.classroom.service.ClassroomService;
+import com.erp.domain.kid.entity.Kid;
+import com.erp.domain.kid.entity.ParentKid;
+import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.kid.service.KidService;
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.service.MemberService;
 import com.erp.domain.notepad.dto.request.NotepadRequest;
 import com.erp.domain.notepad.dto.response.NotepadDetailResponse;
@@ -10,6 +14,8 @@ import com.erp.domain.notepad.dto.response.NotepadResponse;
 import com.erp.domain.notepad.entity.Notepad;
 import com.erp.domain.notepad.entity.NotepadReadConfirm;
 import com.erp.domain.notepad.repository.NotepadRepository;
+import com.erp.domain.notification.entity.NotificationType;
+import com.erp.domain.notification.service.NotificationService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 알림장 서비스
@@ -33,7 +41,9 @@ public class NotepadService {
     private final NotepadRepository notepadRepository;
     private final ClassroomService classroomService;
     private final KidService kidService;
+    private final KidRepository kidRepository;
     private final MemberService memberService;
+    private final NotificationService notificationService;
 
     /**
      * 반별 알림장 생성
@@ -50,25 +60,9 @@ public class NotepadService {
 
         Notepad notepad = Notepad.createClassroomNotepad(classroom, writer, title, content);
         Notepad saved = notepadRepository.save(notepad);
+        notifyParentsAboutNotepad(saved, writer);
         return saved.getId();
-    }
 
-    /**
-     * 원생별 알림장 생성
-     */
-    @Transactional
-    public Long createKidNotepad(Long kidId, Long writerId, String title, String content) {
-        // 원생 조회
-        var kid = kidService.getKid(kidId);
-        // 작성자 조회
-        Member writer = memberService.getMemberById(writerId);
-
-        // 교사/원장 역할 확인
-        validateWriterRole(writer);
-
-        Notepad notepad = Notepad.createKidNotepad(kid, writer, title, content);
-        Notepad saved = notepadRepository.save(notepad);
-        return saved.getId();
     }
 
     /**
@@ -80,12 +74,13 @@ public class NotepadService {
         Member writer = memberService.getMemberById(writerId);
 
         // 원장 역할 확인
-        if (writer.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
+        if (writer.getRole() != MemberRole.PRINCIPAL) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
         Notepad notepad = Notepad.createGlobalNotepad(writer, title, content);
         Notepad saved = notepadRepository.save(notepad);
+        notifyParentsAboutNotepad(saved, writer);
         return saved.getId();
     }
 
@@ -94,9 +89,9 @@ public class NotepadService {
      */
     @Transactional
     public Long createNotepad(NotepadRequest request, Long writerId) {
-        log.debug("알림장 생성 요청 - classroomId: {}, kidId: {}, title: {}", 
+        log.debug("알림장 생성 요청 - classroomId: {}, kidId: {}, title: {}",
                   request.getClassroomId(), request.getKidId(), request.getTitle());
-        
+
         Member writer = memberService.getMemberById(writerId);
         validateWriterRole(writer);
 
@@ -127,7 +122,57 @@ public class NotepadService {
         }
 
         Notepad saved = notepadRepository.save(notepad);
+        notifyParentsAboutNotepad(saved, writer);
         return saved.getId();
+    }
+
+    private void notifyParentsAboutNotepad(Notepad notepad, Member writer) {
+        if (notepad == null || writer == null) {
+            return;
+        }
+
+        String title = "알림장: " + notepad.getTitle();
+        String content = notepad.getContent();
+        String linkUrl = "/notepad/" + notepad.getId();
+
+        if (notepad.isKidNotepad() && notepad.getKid() != null) {
+            List<ParentKid> parentKids = kidRepository.findParentsByKidId(notepad.getKid().getId());
+            List<Long> receiverIds = parentKids.stream()
+                    .map(pk -> pk.getParent().getId())
+                    .distinct()
+                    .toList();
+            notificationService.notifyWithLink(receiverIds, NotificationType.NOTEPAD_CREATED, title, content, linkUrl);
+            return;
+        }
+
+        if (notepad.isClassroomNotepad() && notepad.getClassroom() != null) {
+            Long classroomId = notepad.getClassroom().getId();
+            List<Kid> kids = kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId);
+            Set<Long> receiverIds = kids.stream()
+                    .flatMap(kid -> kidRepository.findParentsByKidId(kid.getId()).stream())
+                    .map(pk -> pk.getParent().getId())
+                    .collect(Collectors.toSet());
+            notificationService.notifyWithLink(receiverIds.stream().toList(), NotificationType.NOTEPAD_CREATED, title, content, linkUrl);
+            return;
+        }
+
+        if (notepad.isGlobalNotepad()) {
+            Long kindergartenId = writer.getKindergarten() != null ? writer.getKindergarten().getId() : null;
+            if (kindergartenId == null) {
+                return;
+            }
+            List<Member> parents = memberService.getMembersByKindergartenAndRoles(
+                    kindergartenId,
+                    List.of(MemberRole.PARENT)
+            );
+            if (!parents.isEmpty()) {
+                List<Long> receiverIds = new java.util.ArrayList<>();
+                for (Member parent : parents) {
+                    receiverIds.add(parent.getId());
+                }
+                notificationService.notifyWithLink(receiverIds, NotificationType.NOTEPAD_CREATED, title, content, linkUrl);
+            }
+        }
     }
 
     /**
