@@ -28,15 +28,22 @@
                     미읽음
                 </button>
             </div>
-            <button type="button"
-                    class="text-xs text-gray-600 hover:text-primary-600"
-                    onclick="Notifications.markAllRead().catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
-                모두 읽음
-            </button>
+            <div class="flex items-center gap-3">
+                <span class="text-[11px] text-gray-400" th:text="${'미읽음 ' + unreadCount}">미읽음 0</span>
+                <button type="button"
+                        class="text-xs text-gray-600 hover:text-primary-600"
+                        onclick="Notifications.markAllRead().catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
+                    모두 읽음
+                </button>
+            </div>
         </div>
 
         <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="p-4 text-sm text-gray-500">
             새로운 알림이 없습니다.
+        </div>
+
+        <div th:if="${notifications != null and !#lists.isEmpty(notifications) and unreadOnly}" class="px-4 py-2 text-[11px] text-gray-500 bg-gray-50">
+            미읽음만 표시 중입니다.
         </div>
 
         <div th:if="${notifications != null and !#lists.isEmpty(notifications)}" class="max-h-96 overflow-y-auto">

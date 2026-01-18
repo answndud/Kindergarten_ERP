@@ -50,10 +50,11 @@
                             </button>
 
                             <div x-show="open" x-transition class="absolute right-0 mt-2 z-50">
-                                <div id="notification-list"
-                                     hx-get="/notifications/fragments/list?limit=10"
-                                     hx-trigger="load, notifications-changed from:body, every 30s"
-                                     hx-swap="outerHTML"></div>
+                                 <div id="notification-list"
+                                      hx-get="/notifications/fragments/list?limit=10&unreadOnly=true"
+                                      hx-trigger="load, notifications-changed from:body, every 30s"
+                                      hx-swap="outerHTML"></div>
+
                             </div>
                         </div>
 

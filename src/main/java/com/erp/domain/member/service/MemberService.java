@@ -72,6 +72,13 @@ public class MemberService {
     }
 
     /**
+     * 유치원별 다중 역할 회원 조회
+     */
+    public java.util.List<Member> getMembersByKindergartenAndRoles(Long kindergartenId, java.util.List<MemberRole> roles) {
+        return memberRepository.findAllByKindergartenIdAndRoles(kindergartenId, roles);
+    }
+
+    /**
      * ID로 회원 조회 (유치원 포함)
      * 뷰에서 사용할 때 LazyInitializationException 방지용
      */
