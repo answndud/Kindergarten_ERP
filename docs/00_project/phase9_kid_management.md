@@ -105,6 +105,8 @@ DELETE /api/v1/kids/{id}/parents/{parentId} - 학부모 연결 해제 (PRINCIPAL
 - **추가**: 원생 목록에서 반 변경 모달 (원장 전용)
 - **추가**: 반 목록에 원생 수 표시, 정렬 옵션(이름/나이/최근)
 - **개선**: 유치원 ID 기준 전체 조회 API 지원
+- **추가**: 원생 목록 클라이언트 페이지네이션/총원 표시
+- **개선**: 학부모 연결 모달에서 추가 가능한 학부모만 표시
 
 ## Files Created/Modified
 
@@ -114,7 +116,6 @@ DELETE /api/v1/kids/{id}/parents/{parentId} - 학부모 연결 해제 (PRINCIPAL
 - `docs/00_project/phase9_kid_management.md` - 설계/결정 로그
 
 ## Known Limitations
-- 원생 목록에 페이징이 없음 (전체 목록 조회 시 성능 이슈 가능)
 - 원생 상세 페이지 없음 (목록에서 바로 편집/삭제)
 
 ## Testing Status (2026-01-15)

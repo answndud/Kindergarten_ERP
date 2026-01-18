@@ -399,6 +399,9 @@
                 },
                 async init() {
                     await this.loadStats();
+                    document.body.addEventListener('dashboard-stats-changed', () => {
+                        this.loadStats();
+                    });
                 },
                 async setPeriod(value) {
                     if (this.period === value || this.loading) return;

@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,6 +34,32 @@ public class MemberApiController {
     ) {
         Member member = memberService.getMemberById(userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(MemberResponse.from(member)));
+    }
+
+    /**
+     * 학부모 목록 조회 (원장/교사)
+     */
+    @GetMapping("/parents")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<java.util.List<MemberResponse>>> getParents(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Member member = memberService.getMemberById(userDetails.getMemberId());
+        if (member.getKindergarten() == null) {
+            return ResponseEntity.ok(ApiResponse.success(java.util.List.of()));
+        }
+
+        java.util.List<Member> parents = memberService.getMembersByKindergartenAndRoles(
+                member.getKindergarten().getId(),
+                java.util.List.of(com.erp.domain.member.entity.MemberRole.PARENT)
+        );
+
+        java.util.List<MemberResponse> responses = new java.util.ArrayList<>();
+        for (Member parent : parents) {
+            responses.add(MemberResponse.from(parent));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     /**
