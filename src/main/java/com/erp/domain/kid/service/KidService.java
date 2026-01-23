@@ -74,10 +74,29 @@ public class KidService {
     }
 
     /**
+     * 반별 원생 목록 조회 (페이지)
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Kid> getKidsByClassroom(Long classroomId,
+                                                                         org.springframework.data.domain.Pageable pageable) {
+        classroomService.getClassroom(classroomId);
+        return kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId, pageable);
+    }
+
+    /**
      * 유치원 원생 목록 조회
      */
     public List<Kid> getKidsByKindergarten(Long kindergartenId) {
         return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId);
+    }
+
+    /**
+     * 유치원 원생 목록 조회 (페이지)
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Kid> getKidsByKindergarten(Long kindergartenId,
+                                                                            org.springframework.data.domain.Pageable pageable) {
+        return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId, pageable);
     }
 
     /**
@@ -91,10 +110,46 @@ public class KidService {
     }
 
     /**
+     * 반별 원생 목록 조회 (이름 검색, 페이지)
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Kid> searchKidsByName(Long classroomId,
+                                                                       String name,
+                                                                       org.springframework.data.domain.Pageable pageable) {
+        classroomService.getClassroom(classroomId);
+        return kidRepository.findByClassroomIdAndNameContaining(classroomId, name, pageable);
+    }
+
+    /**
      * 유치원 원생 목록 조회 (이름 검색)
      */
     public List<Kid> searchKidsByKindergarten(Long kindergartenId, String name) {
         return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name);
+    }
+
+    /**
+     * 유치원 원생 목록 조회 (이름 검색, 페이지)
+     */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Kid> searchKidsByKindergarten(Long kindergartenId,
+                                                                              String name,
+                                                                              org.springframework.data.domain.Pageable pageable) {
+        return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name, pageable);
+    }
+
+    /**
+     * 유치원 반별 원생 수 집계
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<Long, Long> getClassroomCounts(Long kindergartenId) {
+        java.util.List<Object[]> rows = kidRepository.countByKindergartenGroupedByClassroom(kindergartenId);
+        java.util.Map<Long, Long> result = new java.util.HashMap<>();
+        for (Object[] row : rows) {
+            Long classroomId = (Long) row[0];
+            Long count = (Long) row[1];
+            result.put(classroomId, count);
+        }
+        return result;
     }
 
     /**
@@ -180,6 +235,7 @@ public class KidService {
     /**
      * 원생 상세 조회 (학부모 정보 포함)
      */
+    @Transactional(readOnly = true)
     public com.erp.domain.kid.dto.response.KidDetailResponse getKidDetail(Long id) {
         Kid kid = getKid(id);
         List<ParentKid> parentKids = kidRepository.findParentsByKidId(id);

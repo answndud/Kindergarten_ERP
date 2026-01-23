@@ -48,15 +48,20 @@ public class ApplicationViewController {
         model.addAttribute("kindergartenName", member.getKindergarten() != null ? member.getKindergarten().getName() : null);
 
         if (member.getRole() == MemberRole.PRINCIPAL) {
-            Long kindergartenId = requireKindergartenId(member);
+            if (member.getKindergarten() == null) {
+                model.addAttribute("teacherPending", List.of());
+                model.addAttribute("kidPending", List.of());
+            } else {
+                Long kindergartenId = requireKindergartenId(member);
 
-            List<KindergartenApplicationResponse> teacherPending =
-                    kindergartenApplicationService.getPendingApplications(kindergartenId, member.getId());
-            List<KidApplicationResponse> kidPending =
-                    kidApplicationService.getPendingApplications(kindergartenId, member.getId());
+                List<KindergartenApplicationResponse> teacherPending =
+                        kindergartenApplicationService.getPendingApplications(kindergartenId, member.getId());
+                List<KidApplicationResponse> kidPending =
+                        kidApplicationService.getPendingApplications(kindergartenId, member.getId());
 
-            model.addAttribute("teacherPending", teacherPending);
-            model.addAttribute("kidPending", kidPending);
+                model.addAttribute("teacherPending", teacherPending);
+                model.addAttribute("kidPending", kidPending);
+            }
         }
 
         if (member.getRole() == MemberRole.TEACHER) {

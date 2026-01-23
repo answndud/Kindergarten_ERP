@@ -268,7 +268,7 @@ public class KindergartenApplicationService {
                 NotificationType.KINDERGARTEN_APPLICATION_APPROVED,
                 "유치원 지원 승인",
                 kindergarten.getName() + "에 지원이 승인되었습니다.",
-                "/dashboard"
+                "/"
         );
     }
 
@@ -282,7 +282,7 @@ public class KindergartenApplicationService {
                 NotificationType.KINDERGARTEN_APPLICATION_REJECTED,
                 "유치원 지원 거절",
                 content,
-                "/applications/my"
+                "/applications/pending"
         );
     }
 }

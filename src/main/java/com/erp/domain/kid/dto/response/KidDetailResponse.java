@@ -45,14 +45,21 @@ public record KidDetailResponse(
      * Kid 엔티티를 DTO로 변환
      */
     public static KidDetailResponse from(com.erp.domain.kid.entity.Kid kid, List<ParentKid> parentKids) {
+        Long classroomId = null;
+        String classroomName = null;
+        if (kid.getClassroom() != null) {
+            classroomId = kid.getClassroom().getId();
+            classroomName = kid.getClassroom().getName();
+        }
+
         List<ParentInfo> parentInfos = parentKids.stream()
                 .map(ParentInfo::from)
                 .toList();
 
         return new KidDetailResponse(
                 kid.getId(),
-                kid.getClassroom().getId(),
-                kid.getClassroom().getName(),
+                classroomId,
+                classroomName,
                 kid.getName(),
                 kid.getBirthDate(),
                 kid.getAge(),

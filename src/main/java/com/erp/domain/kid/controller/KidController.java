@@ -3,6 +3,7 @@ package com.erp.domain.kid.controller;
 import com.erp.domain.kid.dto.request.AssignParentRequest;
 import com.erp.domain.kid.dto.request.KidRequest;
 import com.erp.domain.kid.dto.request.UpdateClassroomRequest;
+import com.erp.domain.kid.dto.response.ClassroomKidCountResponse;
 import com.erp.domain.kid.dto.response.KidDetailResponse;
 import com.erp.domain.kid.dto.response.KidResponse;
 import com.erp.domain.kid.entity.Kid;
@@ -89,6 +90,74 @@ public class KidController {
 
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * 반별 원생 수 조회
+     */
+    @GetMapping("/classroom-counts")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<List<ClassroomKidCountResponse>>> getClassroomCounts(
+            @RequestParam Long kindergartenId) {
+        java.util.Map<Long, Long> counts = kidService.getClassroomCounts(kindergartenId);
+        List<ClassroomKidCountResponse> responses = counts.entrySet().stream()
+                .map(entry -> ClassroomKidCountResponse.of(entry.getKey(), entry.getValue()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * 원생 목록 조회 (페이지)
+     */
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<KidResponse>>> getKidsPage(
+            @RequestParam(required = false) Long classroomId,
+            @RequestParam(required = false) Long kindergartenId,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(defaultValue = "name") String sort) {
+
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        int safePage = Math.max(page, 0);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                safePage,
+                safeSize,
+                resolveSort(sort)
+        );
+
+        org.springframework.data.domain.Page<Kid> kidsPage;
+
+        if (classroomId != null) {
+            if (name != null && !name.isBlank()) {
+                kidsPage = kidService.searchKidsByName(classroomId, name, pageable);
+            } else {
+                kidsPage = kidService.getKidsByClassroom(classroomId, pageable);
+            }
+        } else if (kindergartenId != null) {
+            if (name != null && !name.isBlank()) {
+                kidsPage = kidService.searchKidsByKindergarten(kindergartenId, name, pageable);
+            } else {
+                kidsPage = kidService.getKidsByKindergarten(kindergartenId, pageable);
+            }
+        } else {
+            kidsPage = org.springframework.data.domain.Page.empty(pageable);
+        }
+
+        org.springframework.data.domain.Page<KidResponse> responses = kidsPage.map(KidResponse::from);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(responses));
+    }
+
+    private org.springframework.data.domain.Sort resolveSort(String sortKey) {
+        if ("recent".equalsIgnoreCase(sortKey)) {
+            return org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
+        }
+        if ("age".equalsIgnoreCase(sortKey)) {
+            return org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "birthDate");
+        }
+        return org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name");
     }
 
     /**

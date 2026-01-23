@@ -306,7 +306,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_APPROVED,
                 "입학 승인",
                 kidName + "의 " + kindergarten.getName() + " 입학이 승인되었습니다.",
-                "/kids"
+                "/applications/pending"
         );
     }
 
@@ -320,7 +320,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_REJECTED,
                 "입학 거절",
                 content,
-                "/applications/my"
+                "/applications/pending"
         );
     }
 

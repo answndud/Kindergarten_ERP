@@ -24,10 +24,17 @@ public record KidResponse(
      * Kid 엔티티를 DTO로 변환
      */
     public static KidResponse from(com.erp.domain.kid.entity.Kid kid) {
+        Long classroomId = null;
+        String classroomName = null;
+        if (kid.getClassroom() != null) {
+            classroomId = kid.getClassroom().getId();
+            classroomName = kid.getClassroom().getName();
+        }
+
         return new KidResponse(
                 kid.getId(),
-                kid.getClassroom().getId(),
-                kid.getClassroom().getName(),
+                classroomId,
+                classroomName,
                 kid.getName(),
                 kid.getBirthDate(),
                 kid.getAge(),
