@@ -108,6 +108,12 @@ DELETE /api/v1/kids/{id}/parents/{parentId} - 학부모 연결 해제 (PRINCIPAL
 - **추가**: 원생 목록 클라이언트 페이지네이션/총원 표시
 - **개선**: 학부모 연결 모달에서 추가 가능한 학부모만 표시
 
+### 2026-01-23: 마무리 개선
+- **추가**: 원생 상세 페이지(`/kids/{id}`) 추가
+- **추가**: 원생 목록 서버 페이지네이션 API(`/api/v1/kids/page`)
+- **개선**: 검색 Enter 실행/페이지 이동 UX 보강
+- **추가**: 반별 원생 수 API(`/api/v1/kids/classroom-counts`)로 목록 성능 개선
+
 ## Files Created/Modified
 
 ### Created:
@@ -116,7 +122,7 @@ DELETE /api/v1/kids/{id}/parents/{parentId} - 학부모 연결 해제 (PRINCIPAL
 - `docs/00_project/phase9_kid_management.md` - 설계/결정 로그
 
 ## Known Limitations
-- 원생 상세 페이지 없음 (목록에서 바로 편집/삭제)
+- 원생 목록의 서버 페이지네이션은 상세 검색 정렬 기준에 따라 추가 개선 필요
 
 ## Testing Status (2026-01-15)
 

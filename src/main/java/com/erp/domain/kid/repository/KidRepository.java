@@ -35,10 +35,32 @@ public interface KidRepository extends JpaRepository<Kid, Long> {
     long countByClassroomIdAndDeletedAtIsNull(@Param("classroomId") Long classroomId);
 
     /**
+     * 유치원별 반별 원생 수 집계
+     */
+    @Query("SELECT k.classroom.id, COUNT(k) FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL GROUP BY k.classroom.id")
+    java.util.List<Object[]> countByKindergartenGroupedByClassroom(@Param("kindergartenId") Long kindergartenId);
+
+    /**
+     * 반별 원생 목록 조회 (페이지)
+     */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "classroom")
+    org.springframework.data.domain.Page<Kid> findByClassroomIdAndDeletedAtIsNull(Long classroomId,
+                                                                                 org.springframework.data.domain.Pageable pageable);
+
+    /**
      * 유치원별 원생 목록 조회
      */
     @Query("SELECT k FROM Kid k JOIN FETCH k.classroom c WHERE c.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL ORDER BY k.name")
     List<Kid> findByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
+
+    /**
+     * 유치원별 원생 목록 조회 (페이지)
+     */
+    @Query("SELECT k FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "classroom")
+    org.springframework.data.domain.Page<Kid> findByKindergartenIdAndDeletedAtIsNull(
+            @Param("kindergartenId") Long kindergartenId,
+            org.springframework.data.domain.Pageable pageable);
 
     /**
      * 유치원별 원생 검색
@@ -47,10 +69,30 @@ public interface KidRepository extends JpaRepository<Kid, Long> {
     List<Kid> findByKindergartenIdAndNameContaining(@Param("kindergartenId") Long kindergartenId, @Param("name") String name);
 
     /**
+     * 유치원별 원생 검색 (페이지)
+     */
+    @Query("SELECT k FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL AND k.name LIKE %:name%")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "classroom")
+    org.springframework.data.domain.Page<Kid> findByKindergartenIdAndNameContaining(
+            @Param("kindergartenId") Long kindergartenId,
+            @Param("name") String name,
+            org.springframework.data.domain.Pageable pageable);
+
+    /**
      * 이름으로 원생 검색 (반별)
      */
     @Query("SELECT k FROM Kid k JOIN FETCH k.classroom WHERE k.classroom.id = :classroomId AND k.deletedAt IS NULL AND k.name LIKE %:name% ORDER BY k.name")
     List<Kid> findByClassroomIdAndNameContaining(@Param("classroomId") Long classroomId, @Param("name") String name);
+
+    /**
+     * 이름으로 원생 검색 (반별, 페이지)
+     */
+    @Query("SELECT k FROM Kid k WHERE k.classroom.id = :classroomId AND k.deletedAt IS NULL AND k.name LIKE %:name%")
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "classroom")
+    org.springframework.data.domain.Page<Kid> findByClassroomIdAndNameContaining(
+            @Param("classroomId") Long classroomId,
+            @Param("name") String name,
+            org.springframework.data.domain.Pageable pageable);
 
     /**
      * 특정 학부모의 원생 목록 조회

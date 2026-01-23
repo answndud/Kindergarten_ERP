@@ -143,10 +143,12 @@
     const isPrincipal = currentRole === 'PRINCIPAL';
     let kindergartenId = initialKindergartenId;
     let classroomsCache = [];
-    let kidsCache = [];
+    let classroomCounts = {};
     let currentPage = 1;
     const pageSize = 8;
     let totalPages = 1;
+    let pendingAction = null;
+    let pendingKidId = null;
 
     async function fetchMe() {
         const response = await fetch('/api/v1/members/me', { credentials: 'same-origin' });
@@ -162,15 +164,6 @@
         return kindergartenId;
     }
 
-    function buildClassroomCounts(kids) {
-        return (kids || []).reduce((acc, kid) => {
-            const classroomId = kid.classroomId;
-            if (!classroomId) return acc;
-            acc[classroomId] = (acc[classroomId] || 0) + 1;
-            return acc;
-        }, {});
-    }
-
     function renderClassroomOptions(select, classrooms, counts = {}) {
         if (!select) return;
         select.innerHTML = '<option value="">전체</option>' + (classrooms || [])
@@ -181,31 +174,35 @@
             .join('');
     }
 
-    async function ensureKidsCache(force = false) {
+    async function loadClassroomCounts() {
         const id = await ensureKindergartenId();
-        if (!id) return [];
-        if (kidsCache.length > 0 && !force) return kidsCache;
-
-        const response = await fetch(`/api/v1/kids?kindergartenId=${id}`, { credentials: 'same-origin' });
-        if (!response.ok) {
-            kidsCache = [];
-            return kidsCache;
-        }
-
-        const result = await response.json().catch(() => ({}));
-        kidsCache = result.data || [];
-        return kidsCache;
+        if (!id) return {};
+        const response = await fetch(`/api/v1/kids/classroom-counts?kindergartenId=${id}`, { credentials: 'same-origin' });
+        if (!response.ok) return {};
+        const payload = await response.json().catch(() => ({}));
+        const list = payload.data || [];
+        const counts = {};
+        list.forEach(item => {
+            counts[item.classroomId] = item.count;
+        });
+        classroomCounts = counts;
+        return counts;
     }
 
-    async function fetchKids(params) {
-        const response = await fetch(`/api/v1/kids?${params}`, { credentials: 'same-origin' });
-        if (!response.ok) return [];
+    async function fetchKidsPage(params) {
+        const response = await fetch(`/api/v1/kids/page?${params}`, { credentials: 'same-origin' });
+        if (!response.ok) return { items: [], totalElements: 0, totalPages: 1 };
         const result = await response.json().catch(() => ({}));
-        return result.data || [];
+        const data = result.data || {};
+        return {
+            items: data.content || [],
+            totalElements: data.totalElements || 0,
+            totalPages: data.totalPages || 1
+        };
     }
 
-    function updatePagination(totalCount) {
-        totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    function updatePagination(totalCount, pageCount = totalPages) {
+        totalPages = Math.max(1, pageCount || Math.ceil(totalCount / pageSize));
         const prevBtn = document.getElementById('kid-prev');
         const nextBtn = document.getElementById('kid-next');
         const indicator = document.getElementById('kid-page-indicator');
@@ -233,15 +230,20 @@
         loadKids({ page: currentPage });
     }
 
-    function sortKids(kids, sortKey) {
-        const list = [...kids];
-        if (sortKey === 'age') {
-            return list.sort((a, b) => (b.age || 0) - (a.age || 0));
+    async function handlePendingAction() {
+        if (!pendingAction || !pendingKidId) return;
+        const action = pendingAction;
+        const kidId = Number(pendingKidId);
+        pendingAction = null;
+        pendingKidId = null;
+
+        if (action === 'edit') {
+            await showEditKidModal(kidId);
         }
-        if (sortKey === 'recent') {
-            return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        if (action === 'parents') {
+            await showParentManageModal(kidId);
         }
-        return list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ko'));
     }
 
     async function loadClassrooms() {
@@ -262,7 +264,7 @@
         const result = await response.json().catch(() => ({}));
         classroomsCache = result.data || [];
 
-        const counts = buildClassroomCounts(kidsCache);
+        const counts = await loadClassroomCounts();
         renderClassroomOptions(select, classroomsCache, counts);
     }
 
@@ -279,35 +281,39 @@
             return;
         }
 
-        const params = new URLSearchParams({ kindergartenId: id });
+        const params = new URLSearchParams({
+            kindergartenId: id,
+            page: Math.max(page - 1, 0),
+            size: pageSize,
+            sort: sortKey
+        });
         if (classroomId) params.append('classroomId', classroomId);
         if (name) params.append('name', name.trim());
 
-        const [kids] = await Promise.all([
-            fetchKids(params),
-            refreshCounts || (!classroomId && !name) ? ensureKidsCache(true) : ensureKidsCache()
+        const [pageData] = await Promise.all([
+            fetchKidsPage(params),
+            refreshCounts ? loadClassroomCounts() : Promise.resolve(classroomCounts)
         ]);
 
-        const counts = buildClassroomCounts(kidsCache);
+        const kids = pageData.items || [];
+
         if (classroomsCache.length > 0) {
-            renderClassroomOptions(document.getElementById('classroom-filter'), classroomsCache, counts);
+            renderClassroomOptions(document.getElementById('classroom-filter'), classroomsCache, classroomCounts);
         }
 
         if (!kids.length) {
             container.innerHTML = '<div class="text-center py-8 text-gray-500">원생이 없습니다.</div>';
-            updatePagination(0);
+            updatePagination(0, 1);
             return;
         }
 
-        const sortedKids = sortKids(kids, sortKey);
-        const totalCount = sortedKids.length;
-        currentPage = Math.min(Math.max(page, 1), Math.max(1, Math.ceil(totalCount / pageSize)));
-        const startIndex = (currentPage - 1) * pageSize;
-        const pagedKids = sortedKids.slice(startIndex, startIndex + pageSize);
+        const totalCount = pageData.totalElements || kids.length;
+        totalPages = pageData.totalPages || 1;
+        currentPage = Math.min(Math.max(page, 1), totalPages);
 
-        updatePagination(totalCount);
+        updatePagination(totalCount, totalPages);
 
-        container.innerHTML = pagedKids.map(k => {
+        container.innerHTML = kids.map(k => {
             const age = k.age ? `(${k.age}세)` : '';
             const changeClassroomButton = isPrincipal
                 ? `<button type="button" data-id="${k.id}" data-name="${k.name}" data-classroom-id="${k.classroomId}" onclick="openChangeClassroom(this)" class="px-3 py-1.5 text-sm bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all">반 변경</button>`
@@ -324,6 +330,9 @@
                     </div>
                     <div class="flex gap-2">
                         ${changeClassroomButton}
+                        <a href="/kids/${k.id}" class="px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all">
+                            상세
+                        </a>
                         <button type="button" onclick="showParentManageModal(${k.id})" class="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all">
                             학부모 관리
                         </button>
@@ -337,6 +346,8 @@
                 </div>
             `;
         }).join('');
+
+        await handlePendingAction();
     }
 
     function resetFilters() {
@@ -432,7 +443,7 @@
         }
 
         await UI.success('반이 변경되었습니다.');
-        kidsCache = [];
+        classroomCounts = {};
         await loadKids({ refreshCounts: true, page: currentPage });
     }
 
@@ -552,7 +563,7 @@
         }
 
         await UI.success('원생이 추가되었습니다.');
-        kidsCache = [];
+        classroomCounts = {};
         currentPage = 1;
         await loadKids({ refreshCounts: true, page: 1 });
         await loadClassrooms();
@@ -677,7 +688,7 @@
             }
 
             await UI.success('원생이 삭제되었습니다.');
-            kidsCache = [];
+            classroomCounts = {};
             await loadKids({ refreshCounts: true, page: currentPage });
         }
     }
@@ -843,7 +854,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-        await ensureKidsCache(true);
+        const params = new URLSearchParams(window.location.search);
+        pendingAction = params.get('action');
+        pendingKidId = params.get('kidId');
         await loadClassrooms();
         await loadKids({ page: 1 });
     });
