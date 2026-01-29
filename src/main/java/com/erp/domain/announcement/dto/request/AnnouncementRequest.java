@@ -1,8 +1,10 @@
 package com.erp.domain.announcement.dto.request;
 
+import com.erp.domain.member.entity.MemberRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,4 +40,9 @@ public class AnnouncementRequest {
      * 중요 공지 여부
      */
     private Boolean isImportant;
+
+    /**
+     * 알림 대상 역할 (선택, 없으면 전체)
+     */
+    private List<MemberRole> targetRoles;
 }

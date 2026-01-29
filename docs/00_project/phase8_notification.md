@@ -211,6 +211,7 @@ HTMX + Alpine.js로 알림 배지 구현
 2. **드롭다운**: 벨 클릭 시 알림 목록 표시
 3. **읽음 처리**: 클릭 시 읽음 표시 + 배지 제거
 4. **전체 읽음**: "모두 읽음" 버튼
+5. **알림 센터**: 전체 알림 페이지 + 유형 필터 제공
 
 ### 구현 방식
 ```html
@@ -230,6 +231,7 @@ HTMX + Alpine.js로 알림 배지 구현
 - 2025-01-14: HTMX 주기적 갱신 채택
 - 2026-01-14: 이벤트 기반 즉시 갱신(`notifications-changed`) 추가
 - 2026-01-17: 드롭다운에서 미읽음 필터/개별 읽음/삭제 액션 추가
+- 2026-01-29: 알림 센터 페이지 추가 + 유형 필터/배지 표시 고도화
 
 ---
 
@@ -304,6 +306,66 @@ INDEX idx_receiver_created (receiver_id, created_at DESC)
 
 ### 변경 이력
 - 2025-01-14: 복합 인덱스 채택
+
+---
+
+## 11. 운영 효율/성능 개선 (2026-01-29)
+
+### 공지/알림장 대상 선택
+- 공지사항 작성 시 `targetRoles`(원장/교사/학부모) 선택 가능
+- 알림장 작성 시 **전체/반/개별 원생**을 한 화면에서 선택
+- 운영자가 불필요한 대상에게 발송하지 않도록 UX 개선
+
+### 성능 개선 포인트 (면접 설명용)
+1. **목록 조회 쿼리 범위 제한**
+   - 기존 전체 조회 후 메모리에서 `subList` 하던 방식을 `PageRequest` 기반 조회로 변경
+   - `findByReceiverId...Pageable` 형태로 DB에서 직접 limit
+   - 예상 효과: 알림 데이터가 커져도 읽기 요청이 일정 시간에 수렴
+2. **대량 알림 저장 배치 처리**
+   - `notification.delivery.batch-size`(기본 500) 단위로 ID를 분할
+   - 각 배치마다 `saveAll`로 INSERT 최소화
+   - 예상 효과: 알림 수천 건 발생 시 DB connection/flush 부하 감소
+3. **외부 채널 실패 격리**
+   - 이메일/푸시/앱 발송은 별도 디스패처에서 예외를 흡수
+   - 앱 알림 실패가 in-app 알림 저장 트랜잭션을 방해하지 않음
+4. **알림 UI 비용 축소**
+   - `notifications-changed` 이벤트 기반으로 필요한 순간만 부분 갱신
+   - 드롭다운/알림 센터 모두 같은 프래그먼트를 재사용
+
+### 변경 이력
+- 2026-01-29: 대상 선택 UI + 배치 저장 + 페이징 조회 적용
+
+---
+
+## 12. 외부 채널 옵션 (메일/푸시/앱)
+
+### 결정
+외부 채널은 **옵션**으로 제공하고 기본값은 비활성화한다.
+
+### 설정 키
+```yaml
+notification:
+  delivery:
+    batch-size: 500
+    email:
+      enabled: false
+      from: no-reply@kindercare.local
+      subject-prefix: "[KinderCare]"
+    push:
+      enabled: false
+      webhook-url: "https://..."
+    app:
+      enabled: false
+      webhook-url: "https://..."
+```
+
+### 발송 방식
+- **Email**: Spring Mail 기반 텍스트 메일 발송
+- **Push/App**: Webhook JSON POST (외부 게이트웨이 연동용)
+- 미설정 시 자동 무시 + 로그 경고 수준
+
+### 변경 이력
+- 2026-01-29: 외부 채널 디스패치 옵션 추가
 
 ---
 

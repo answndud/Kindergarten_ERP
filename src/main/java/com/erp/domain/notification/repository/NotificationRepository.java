@@ -2,6 +2,7 @@ package com.erp.domain.notification.repository;
 
 import com.erp.domain.notification.entity.Notification;
 import com.erp.domain.notification.entity.NotificationType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +19,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * 수신자별 알림 목록 조회 (최신순)
      */
     List<Notification> findByReceiverIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId);
+
+    /**
+     * 수신자별 알림 목록 조회 (페이징)
+     */
+    List<Notification> findByReceiverIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId, Pageable pageable);
 
     /**
      * 수신자별 알림 목록 조회 (limit 적용)
@@ -37,6 +43,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByReceiverIdAndTypeAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId, NotificationType type);
 
     /**
+     * 특정 타입의 알림 조회 (페이징)
+     */
+    List<Notification> findByReceiverIdAndTypeAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId, NotificationType type, Pageable pageable);
+
+    /**
      * 연관 엔티티별 알림 조회
      */
     @Query("SELECT n FROM Notification n WHERE n.receiver.id = :receiverId AND n.relatedEntityType = :entityType AND n.relatedEntityId = :entityId AND n.deletedAt IS NULL")
@@ -48,6 +59,16 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * 안 읽은 알림 목록
      */
     List<Notification> findByReceiverIdAndIsReadFalseAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId);
+
+    /**
+     * 안 읽은 알림 목록 (페이징)
+     */
+    List<Notification> findByReceiverIdAndIsReadFalseAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId, Pageable pageable);
+
+    /**
+     * 안 읽은 알림 목록 (타입)
+     */
+    List<Notification> findByReceiverIdAndTypeAndIsReadFalseAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId, NotificationType type, Pageable pageable);
 
     /**
      * 특정 시간 이후의 알림 조회

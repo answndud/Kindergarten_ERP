@@ -58,9 +58,10 @@ public class AnnouncementService {
 
         Announcement saved = announcementRepository.save(announcement);
 
+        List<MemberRole> targetRoles = resolveTargetRoles(request.getTargetRoles());
         List<Member> receivers = memberService.getMembersByKindergartenAndRoles(
                 kindergarten.getId(),
-                List.of(MemberRole.PRINCIPAL, MemberRole.TEACHER, MemberRole.PARENT)
+                targetRoles
         );
         if (!receivers.isEmpty()) {
             String title = "새 공지사항: " + saved.getTitle();
@@ -222,5 +223,12 @@ public class AnnouncementService {
      */
     public AnnouncementResponse toResponse(Announcement announcement) {
         return AnnouncementResponse.from(announcement);
+    }
+
+    private List<MemberRole> resolveTargetRoles(List<MemberRole> targetRoles) {
+        if (targetRoles == null || targetRoles.isEmpty()) {
+            return List.of(MemberRole.PRINCIPAL, MemberRole.TEACHER, MemberRole.PARENT);
+        }
+        return targetRoles;
     }
 }
