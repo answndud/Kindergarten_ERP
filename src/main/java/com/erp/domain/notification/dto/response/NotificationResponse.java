@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public record NotificationResponse(
         Long id,
         NotificationType type,
+        String typeDescription,
         String title,
         String content,
         String linkUrl,
@@ -21,6 +22,7 @@ public record NotificationResponse(
         return new NotificationResponse(
                 notification.getId(),
                 notification.getType(),
+                notification.getType() != null ? notification.getType().getDescription() : null,
                 notification.getTitle(),
                 notification.getContent(),
                 notification.getLinkUrl(),

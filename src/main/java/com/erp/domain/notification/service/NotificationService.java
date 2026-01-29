@@ -2,6 +2,7 @@ package com.erp.domain.notification.service;
 
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.repository.MemberRepository;
+import com.erp.domain.notification.config.NotificationDeliveryProperties;
 import com.erp.domain.notification.dto.request.NotificationCreateRequest;
 import com.erp.domain.notification.dto.response.NotificationResponse;
 import com.erp.domain.notification.dto.response.UnreadCountResponse;
@@ -12,7 +13,7 @@ import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,8 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final MemberRepository memberRepository;
+    private final NotificationDispatchService notificationDispatchService;
+    private final NotificationDeliveryProperties deliveryProperties;
 
     /**
      * 알림 생성
@@ -62,7 +65,9 @@ public class NotificationService {
             );
         }
 
-        return notificationRepository.save(notification).getId();
+        Notification saved = notificationRepository.save(notification);
+        notificationDispatchService.dispatch(saved);
+        return saved.getId();
     }
 
     /**
@@ -74,7 +79,9 @@ public class NotificationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         Notification notification = Notification.create(receiver, type, title, content);
-        return notificationRepository.save(notification).getId();
+        Notification saved = notificationRepository.save(notification);
+        notificationDispatchService.dispatch(saved);
+        return saved.getId();
     }
 
     /**
@@ -86,7 +93,9 @@ public class NotificationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         Notification notification = Notification.createWithLink(receiver, type, title, content, linkUrl);
-        return notificationRepository.save(notification).getId();
+        Notification saved = notificationRepository.save(notification);
+        notificationDispatchService.dispatch(saved);
+        return saved.getId();
     }
 
     /**
@@ -98,16 +107,23 @@ public class NotificationService {
             return;
         }
 
-        List<Member> receivers = memberRepository.findAllById(receiverIds);
-        if (receivers.isEmpty()) {
-            return;
-        }
+        int batchSize = resolveBatchSize();
+        int total = receiverIds.size();
+        for (int start = 0; start < total; start += batchSize) {
+            int end = Math.min(start + batchSize, total);
+            List<Long> chunk = receiverIds.subList(start, end);
+            List<Member> receivers = memberRepository.findAllById(chunk);
+            if (receivers.isEmpty()) {
+                continue;
+            }
 
-        List<Notification> notifications = new java.util.ArrayList<>();
-        for (Member receiver : receivers) {
-            notifications.add(Notification.createWithLink(receiver, type, title, content, linkUrl));
+            List<Notification> notifications = new java.util.ArrayList<>();
+            for (Member receiver : receivers) {
+                notifications.add(Notification.createWithLink(receiver, type, title, content, linkUrl));
+            }
+            List<Notification> saved = notificationRepository.saveAll(notifications);
+            notificationDispatchService.dispatch(saved);
         }
-        notificationRepository.saveAll(notifications);
     }
 
     /**
@@ -122,7 +138,9 @@ public class NotificationService {
         Notification notification = Notification.createWithRelatedEntity(
                 receiver, type, title, content, relatedEntityType, relatedEntityId
         );
-        return notificationRepository.save(notification).getId();
+        Notification saved = notificationRepository.save(notification);
+        notificationDispatchService.dispatch(saved);
+        return saved.getId();
     }
 
     /**
@@ -130,10 +148,22 @@ public class NotificationService {
      */
     @Transactional(readOnly = true)
     public List<NotificationResponse> getNotifications(Long receiverId, int limit) {
-        List<Notification> notifications = notificationRepository.findRecentByReceiverId(receiverId);
-        if (limit > 0 && notifications.size() > limit) {
-            notifications = notifications.subList(0, limit);
-        }
+        int resolvedLimit = resolveLimit(limit, 20);
+        List<Notification> notifications = notificationRepository
+                .findByReceiverIdAndDeletedAtIsNullOrderByCreatedAtDesc(receiverId, PageRequest.of(0, resolvedLimit));
+        return notifications.stream()
+                .map(NotificationResponse::from)
+                .toList();
+    }
+
+    /**
+     * 알림 목록 조회 (타입 필터)
+     */
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getNotificationsByType(Long receiverId, NotificationType type, int limit) {
+        int resolvedLimit = resolveLimit(limit, 20);
+        List<Notification> notifications = notificationRepository
+                .findByReceiverIdAndTypeAndDeletedAtIsNullOrderByCreatedAtDesc(receiverId, type, PageRequest.of(0, resolvedLimit));
         return notifications.stream()
                 .map(NotificationResponse::from)
                 .toList();
@@ -206,8 +236,30 @@ public class NotificationService {
      */
     @Transactional(readOnly = true)
     public List<NotificationResponse> getUnreadNotifications(Long receiverId) {
+        return getUnreadNotifications(receiverId, 50);
+    }
+
+    /**
+     * 안 읽은 알림 목록 (limit)
+     */
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getUnreadNotifications(Long receiverId, int limit) {
+        int resolvedLimit = resolveLimit(limit, 50);
         List<Notification> notifications = notificationRepository
-                .findByReceiverIdAndIsReadFalseAndDeletedAtIsNullOrderByCreatedAtDesc(receiverId);
+                .findByReceiverIdAndIsReadFalseAndDeletedAtIsNullOrderByCreatedAtDesc(receiverId, PageRequest.of(0, resolvedLimit));
+        return notifications.stream()
+                .map(NotificationResponse::from)
+                .toList();
+    }
+
+    /**
+     * 안 읽은 알림 목록 (타입 필터)
+     */
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getUnreadNotificationsByType(Long receiverId, NotificationType type, int limit) {
+        int resolvedLimit = resolveLimit(limit, 50);
+        List<Notification> notifications = notificationRepository
+                .findByReceiverIdAndTypeAndIsReadFalseAndDeletedAtIsNullOrderByCreatedAtDesc(receiverId, type, PageRequest.of(0, resolvedLimit));
         return notifications.stream()
                 .map(NotificationResponse::from)
                 .toList();
@@ -220,5 +272,17 @@ public class NotificationService {
     public int cleanupOldReadNotifications(Long receiverId, int daysToKeep) {
         LocalDateTime beforeDate = LocalDateTime.now().minusDays(daysToKeep);
         return notificationRepository.softDeleteOldReadNotifications(receiverId, beforeDate, LocalDateTime.now());
+    }
+
+    private int resolveBatchSize() {
+        int batchSize = deliveryProperties.getBatchSize();
+        return batchSize > 0 ? batchSize : 500;
+    }
+
+    private int resolveLimit(int limit, int fallback) {
+        if (limit <= 0) {
+            return fallback;
+        }
+        return Math.min(limit, 100);
     }
 }

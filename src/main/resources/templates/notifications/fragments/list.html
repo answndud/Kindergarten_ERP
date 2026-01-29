@@ -3,10 +3,11 @@
 <body>
 <th:block th:fragment="list">
     <div id="notification-list"
-         th:attr="hx-get=@{/notifications/fragments/list(limit=${unreadOnly} ? 50 : 10, unreadOnly=${unreadOnly})}"
+         th:attr="hx-get=@{/notifications/fragments/list(limit=${unreadOnly} ? 50 : 10, unreadOnly=${unreadOnly}, type=${type}, showFilters=${showFilters})}"
          hx-trigger="notifications-changed from:body, every 30s"
          hx-swap="outerHTML"
-         class="w-80 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+         th:classappend="${showFilters} ? 'w-full' : 'w-80'"
+         class="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
 
         <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -14,7 +15,7 @@
                 <button type="button"
                         th:classappend="${!unreadOnly} ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-primary-600'"
                         class="text-[11px] px-2 py-0.5 rounded-full border border-transparent"
-                        hx-get="/notifications/fragments/list?limit=10&unreadOnly=false"
+                        th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=false, type=${type}, showFilters=${showFilters})}"
                         hx-target="#notification-list"
                         hx-swap="outerHTML">
                     전체
@@ -22,7 +23,7 @@
                 <button type="button"
                         th:classappend="${unreadOnly} ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-primary-600'"
                         class="text-[11px] px-2 py-0.5 rounded-full border border-transparent"
-                        hx-get="/notifications/fragments/list?limit=10&unreadOnly=true"
+                        th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=true, type=${type}, showFilters=${showFilters})}"
                         hx-target="#notification-list"
                         hx-swap="outerHTML">
                     미읽음
@@ -38,6 +39,30 @@
             </div>
         </div>
 
+        <div th:if="${showFilters}" class="px-4 py-3 border-b border-gray-100 bg-gray-50">
+            <div class="text-[11px] text-gray-500 mb-2">알림 유형 필터</div>
+            <div class="flex flex-wrap gap-2">
+                <button type="button"
+                        class="text-[11px] px-2 py-1 rounded-full border"
+                        th:classappend="${type == null} ? 'bg-primary-50 text-primary-700 border-primary-100' : 'bg-white text-gray-600 border-gray-200 hover:text-primary-600'"
+                        th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=${unreadOnly}, showFilters=true)}"
+                        hx-target="#notification-list"
+                        hx-swap="outerHTML">
+                    전체 유형
+                </button>
+                <button type="button"
+                        th:each="t : ${notificationTypes}"
+                        class="text-[11px] px-2 py-1 rounded-full border"
+                        th:classappend="${type != null and type.name() == t.name()} ? 'bg-primary-50 text-primary-700 border-primary-100' : 'bg-white text-gray-600 border-gray-200 hover:text-primary-600'"
+                        th:text="${t.description}"
+                        th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=${unreadOnly}, type=${t}, showFilters=true)}"
+                        hx-target="#notification-list"
+                        hx-swap="outerHTML">
+                    알림 유형
+                </button>
+            </div>
+        </div>
+
         <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="p-4 text-sm text-gray-500">
             새로운 알림이 없습니다.
         </div>
@@ -46,18 +71,22 @@
             미읽음만 표시 중입니다.
         </div>
 
-        <div th:if="${notifications != null and !#lists.isEmpty(notifications)}" class="max-h-96 overflow-y-auto">
+        <div th:if="${notifications != null and !#lists.isEmpty(notifications)}" th:classappend="${showFilters} ? '' : 'max-h-96 overflow-y-auto'">
             <button type="button"
                     th:each="n : ${notifications}"
                     class="w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50"
-                    th:classappend="${n.isRead()} ? 'opacity-70' : ''"
+                    th:classappend="${n.isRead()} ? 'opacity-70' : 'bg-white'"
                     th:attr="data-id=${n.id()},data-link=${n.linkUrl()}"
                     onclick="Notifications.open(this.dataset.id, this.dataset.link).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
                 <div class="flex items-start gap-3">
                     <span class="mt-1 w-2 h-2 rounded-full"
                           th:classappend="${n.isRead()} ? 'bg-gray-300' : 'bg-red-500'"></span>
                     <div class="min-w-0 flex-1">
-                        <div class="text-sm font-medium text-gray-900" th:text="${n.title()}">제목</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary-50 text-primary-700"
+                                  th:text="${n.typeDescription() != null ? n.typeDescription() : n.type()}">유형</span>
+                            <div class="text-sm font-medium text-gray-900" th:text="${n.title()}">제목</div>
+                        </div>
                         <div class="mt-1 text-xs text-gray-600 line-clamp-2" th:text="${n.content()}">내용</div>
                         <div class="mt-2 text-[11px] text-gray-400" th:text="${#temporals.format(n.createdAt(), 'yyyy-MM-dd HH:mm')}">시간</div>
                     </div>
@@ -76,6 +105,11 @@
                     </div>
                 </div>
             </button>
+        </div>
+
+        <div th:if="${!showFilters}" class="px-4 py-3 text-sm text-gray-600 flex items-center justify-between">
+            <span>전체 알림 보기</span>
+            <a href="/notifications" class="text-primary-600 hover:text-primary-700">알림 센터</a>
         </div>
     </div>
 </th:block>

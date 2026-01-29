@@ -44,3 +44,17 @@ logging:
     com.erp: DEBUG
     org.hibernate.SQL: DEBUG
 
+# 알림 발송 설정 (외부 채널은 선택 사항)
+notification:
+  delivery:
+    batch-size: 500
+    email:
+      enabled: false
+      from: ${NOTIFICATION_EMAIL_FROM:no-reply@kindercare.local}
+      subject-prefix: "[KinderCare]"
+    push:
+      enabled: false
+      webhook-url: ${NOTIFICATION_PUSH_WEBHOOK:}
+    app:
+      enabled: false
+      webhook-url: ${NOTIFICATION_APP_WEBHOOK:}
