@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>공지사항 - 유치원 ERP</title>
-
+    <title th:text="${title}">유치원 ERP</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -29,11 +29,11 @@
             }
         }
     </script>
-
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    
     <style>
         body { font-family: 'Pretendard', sans-serif; }
         .bg-gradient-primary { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); }
@@ -41,20 +41,27 @@
 </head>
 <body class="bg-gray-50">
 
-    <!-- Header -->
-    <header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex-shrink-0">
-                    <a href="/" class="flex items-center gap-2">
-                        <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                             <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
-                        </div>
-                        <span class="sr-only">KinderCare</span>
-                    </a>
-                </div>
-                <nav class="flex items-center gap-4">
-                    <a href="/" class="text-gray-600 hover:text-primary-600 font-medium">홈</a>
+<!-- Include Header -->
+<th:block th:replace="~{layout/base :: _}" th:with="title='공지사항 - 유치원 ERP'"/>
+<div th:replace="~{layout/base :: content}"></div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="md:hidden fixed bottom-4 right-4 z-50 p-3 rounded-lg bg-white shadow-lg border border-gray-200" onclick="toggleMobileMenu()">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7m7 6h7" />
+        </svg>
+    </button>
+
+    <!-- Mobile Navigation Menu -->
+    <nav id="mobileMenu" class="md:hidden fixed bottom-0 left-0 right-0 z-40 w-full bg-white border-t border-gray-200 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 space-y-2">
+            <a href="/dashboard" class="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">대시보드</a>
+            <a href="/attendance" class="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">출결관리</a>
+            <a href="/notepad" class="block px-4 py-3 rounded-lg bg-gray-100 text-primary-700">알림장</a>
+            <a href="/announcements" class="block px-4 py-3 rounded-lg bg-gray-100 text-yellow-700">공지사항</a>
+            
+            <div class="border-t border-gray-200 pt-3 mt-3">
+                <div class="flex items-center justify-between px-4">
                     <div class="flex items-center gap-2">
                         <span class="text-sm text-gray-700" th:text="${currentMember?.name}">사용자</span>
                         <span class="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full" th:text="${currentMember?.role?.title}">역할</span>
@@ -62,13 +69,21 @@
                     <form action="/logout" method="post">
                         <button type="submit" class="text-sm text-red-600 hover:text-red-700">로그아웃</button>
                     </form>
-                </nav>
+                </div>
             </div>
-        </div>
-    </header>
+        </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+    </script>
+</th:block>
+<th:block th:replace="~{layout/base :: _}" th:with="title='공지사항 - 유치원 ERP'"/>
+<div th:replace="~{layout/base :: content}"></div>
         <!-- Page Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
