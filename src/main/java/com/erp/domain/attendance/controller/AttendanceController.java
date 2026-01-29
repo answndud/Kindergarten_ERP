@@ -1,10 +1,13 @@
 package com.erp.domain.attendance.controller;
 
 import com.erp.domain.attendance.dto.request.AttendanceRequest;
+import com.erp.domain.attendance.dto.request.BulkAttendanceRequest;
 import com.erp.domain.attendance.dto.request.DropOffRequest;
 import com.erp.domain.attendance.dto.request.PickUpRequest;
 import com.erp.domain.attendance.dto.response.AttendanceResponse;
+import com.erp.domain.attendance.dto.response.BulkAttendanceResponse;
 import com.erp.domain.attendance.dto.response.DailyAttendanceResponse;
+import com.erp.domain.attendance.dto.response.MonthlyAttendanceReportResponse;
 import com.erp.domain.attendance.dto.response.MonthlyStatisticsResponse;
 import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.service.AttendanceService;
@@ -43,6 +46,28 @@ public class AttendanceController {
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "출석이 등록되었습니다"));
+    }
+
+    /**
+     * 출석 등록/수정 (Upsert)
+     */
+    @PostMapping("/upsert")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<AttendanceResponse>> upsert(
+            @Valid @RequestBody AttendanceRequest request) {
+        AttendanceResponse response = attendanceService.upsertAttendance(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "출석이 저장되었습니다"));
+    }
+
+    /**
+     * 반별 일괄 출석 처리
+     */
+    @PostMapping("/bulk")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<BulkAttendanceResponse>> bulkUpdate(
+            @Valid @RequestBody BulkAttendanceRequest request) {
+        int updated = attendanceService.bulkUpdateAttendance(request);
+        return ResponseEntity.ok(ApiResponse.success(new BulkAttendanceResponse(updated), "일괄 출석 처리가 완료되었습니다"));
     }
 
     /**
@@ -106,6 +131,19 @@ public class AttendanceController {
 
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * 반별 월간 리포트
+     */
+    @GetMapping("/classroom/{classroomId}/monthly-report")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<MonthlyAttendanceReportResponse>> getMonthlyReport(
+            @PathVariable Long classroomId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        MonthlyAttendanceReportResponse response = attendanceService.getMonthlyReportByClassroom(classroomId, year, month);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**

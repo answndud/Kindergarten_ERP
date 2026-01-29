@@ -5,6 +5,11 @@ import com.erp.domain.classroom.repository.ClassroomRepository;
 import com.erp.domain.kid.entity.Gender;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.repository.KidRepository;
+import com.erp.domain.kid.repository.ParentKidRepository;
+import com.erp.domain.attendance.repository.AttendanceRepository;
+import com.erp.domain.notepad.repository.NotepadRepository;
+import com.erp.domain.announcement.repository.AnnouncementRepository;
+import jakarta.persistence.EntityManager;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
 import com.erp.domain.member.entity.Member;
@@ -27,15 +32,27 @@ public class TestData {
     private final KindergartenRepository kindergartenRepository;
     private final ClassroomRepository classroomRepository;
     private final KidRepository kidRepository;
+    private final ParentKidRepository parentKidRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final NotepadRepository notepadRepository;
+    private final AnnouncementRepository announcementRepository;
+    private final EntityManager entityManager;
 
     public TestData(MemberRepository memberRepository, PasswordEncoder passwordEncoder,
                   KindergartenRepository kindergartenRepository, ClassroomRepository classroomRepository,
-                  KidRepository kidRepository) {
+                  KidRepository kidRepository, ParentKidRepository parentKidRepository,
+                  AttendanceRepository attendanceRepository, NotepadRepository notepadRepository,
+                  AnnouncementRepository announcementRepository, EntityManager entityManager) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.kindergartenRepository = kindergartenRepository;
         this.classroomRepository = classroomRepository;
         this.kidRepository = kidRepository;
+        this.parentKidRepository = parentKidRepository;
+        this.attendanceRepository = attendanceRepository;
+        this.notepadRepository = notepadRepository;
+        this.announcementRepository = announcementRepository;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -99,9 +116,18 @@ public class TestData {
      * 모든 테스트 데이터 정리
      */
     public void cleanup() {
-        kidRepository.deleteAll();
-        classroomRepository.deleteAll();
-        kindergartenRepository.deleteAll();
-        memberRepository.deleteAll();
+        entityManager.flush();
+        entityManager.clear();
+
+        entityManager.createNativeQuery("DELETE FROM NOTEPAD_READ_CONFIRM").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM NOTIFICATION").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM ATTENDANCE").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM NOTEPAD").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM ANNOUNCEMENT").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM PARENT_KID").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM KID").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM CLASSROOM").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM MEMBER").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM KINDERGARTEN").executeUpdate();
     }
 }

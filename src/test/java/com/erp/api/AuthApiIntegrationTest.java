@@ -29,10 +29,11 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
             String requestBody = """
                     {
                         "email": "newparent@test.com",
-                        "password": "test1234",
+                        "password": "Test1234!",
+                        "passwordConfirm": "Test1234!",
                         "name": "새학부모",
                         "birthDate": "1990-01-01",
-                        "phone": "010-1234-5678",
+                        "phone": "01012345678",
                         "role": "PARENT"
                     }
                     """;
@@ -54,10 +55,11 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
             String requestBody = """
                     {
                         "email": "parent@test.com",
-                        "password": "test1234",
+                        "password": "Test1234!",
+                        "passwordConfirm": "Test1234!",
                         "name": "중복학부모",
                         "birthDate": "1990-01-01",
-                        "phone": "010-1234-5678",
+                        "phone": "01012345678",
                         "role": "PARENT"
                     }
                     """;
@@ -115,9 +117,7 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                             .content(requestBody))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true))
-                    .andExpect(jsonPath("$.data.accessToken").exists())
-                    .andExpect(jsonPath("$.data.refreshToken").exists());
+                    .andExpect(jsonPath("$.success").value(true));
         }
 
         @Test

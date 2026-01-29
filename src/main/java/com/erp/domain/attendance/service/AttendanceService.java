@@ -1,10 +1,13 @@
 package com.erp.domain.attendance.service;
 
 import com.erp.domain.attendance.dto.request.AttendanceRequest;
+import com.erp.domain.attendance.dto.request.BulkAttendanceRequest;
 import com.erp.domain.attendance.dto.request.DropOffRequest;
 import com.erp.domain.attendance.dto.request.PickUpRequest;
 import com.erp.domain.attendance.dto.response.AttendanceResponse;
 import com.erp.domain.attendance.dto.response.DailyAttendanceResponse;
+import com.erp.domain.attendance.dto.response.MonthlyAttendanceKidReportResponse;
+import com.erp.domain.attendance.dto.response.MonthlyAttendanceReportResponse;
 import com.erp.domain.attendance.dto.response.MonthlyStatisticsResponse;
 import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.entity.AttendanceStatus;
@@ -43,27 +46,22 @@ public class AttendanceService {
         kidService.getKid(request.getKidId());
 
         // 중복 확인
-        if (attendanceRepository.findByKidIdAndDate(request.getKidId(), request.getDate()).isPresent()) {
-            throw new BusinessException(ErrorCode.ATTENDANCE_ALREADY_EXISTS);
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(request.getKidId(), request.getDate())
+                .orElse(null);
+
+        if (attendance == null) {
+            attendance = Attendance.create(
+                    kidService.getKid(request.getKidId()),
+                    request.getDate(),
+                    request.getStatus()
+            );
         }
 
-        // 출석 생성
-        Attendance attendance = Attendance.create(
-                kidService.getKid(request.getKidId()),
-                request.getDate(),
-                request.getStatus()
-        );
-
-        // 시간과 메모 설정
-        if (request.getDropOffTime() != null) {
-            attendance.recordDropOff(request.getDropOffTime());
-        }
-        if (request.getPickUpTime() != null) {
-            attendance.recordPickUp(request.getPickUpTime());
-        }
-        if (request.getNote() != null) {
-            attendance.updateAttendance(request.getStatus(), request.getNote());
-        }
+        applyStatus(attendance,
+                request.getStatus(),
+                request.getNote(),
+                request.getDropOffTime(),
+                request.getPickUpTime());
 
         Attendance saved = attendanceRepository.save(attendance);
         return saved.getId();
@@ -118,15 +116,61 @@ public class AttendanceService {
     @Transactional
     public void updateAttendance(Long id, AttendanceRequest request) {
         Attendance attendance = getAttendance(id);
+        applyStatus(attendance,
+                request.getStatus(),
+                request.getNote(),
+                request.getDropOffTime(),
+                request.getPickUpTime());
+    }
 
-        attendance.updateAttendance(request.getStatus(), request.getNote());
+    /**
+     * 출석 등록/수정 (Upsert)
+     */
+    @Transactional
+    public AttendanceResponse upsertAttendance(AttendanceRequest request) {
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(request.getKidId(), request.getDate())
+                .orElseGet(() -> Attendance.create(kidService.getKid(request.getKidId()), request.getDate(), request.getStatus()));
 
-        if (request.getDropOffTime() != null) {
-            attendance.recordDropOff(request.getDropOffTime());
+        applyStatus(attendance,
+                request.getStatus(),
+                request.getNote(),
+                request.getDropOffTime(),
+                request.getPickUpTime());
+
+        Attendance saved = attendanceRepository.save(attendance);
+        return AttendanceResponse.from(saved);
+    }
+
+    /**
+     * 반별 일괄 출석 처리
+     */
+    @Transactional
+    public int bulkUpdateAttendance(BulkAttendanceRequest request) {
+        List<Long> kidIds;
+        if (request.getKidIds() == null || request.getKidIds().isEmpty()) {
+            kidIds = kidService.getKidsByClassroom(request.getClassroomId()).stream()
+                    .map(com.erp.domain.kid.entity.Kid::getId)
+                    .toList();
+        } else {
+            kidIds = request.getKidIds();
         }
-        if (request.getPickUpTime() != null) {
-            attendance.recordPickUp(request.getPickUpTime());
+
+        int updated = 0;
+        for (Long kidId : kidIds) {
+            Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, request.getDate())
+                    .orElseGet(() -> Attendance.create(kidService.getKid(kidId), request.getDate(), request.getStatus()));
+
+            applyStatus(attendance,
+                    request.getStatus(),
+                    request.getNote(),
+                    request.getDropOffTime(),
+                    request.getPickUpTime());
+
+            attendanceRepository.save(attendance);
+            updated++;
         }
+
+        return updated;
     }
 
     /**
@@ -137,6 +181,10 @@ public class AttendanceService {
         // 원생 존재 확인
         kidService.getKid(kidId);
 
+        java.time.LocalTime dropOffTime = request.getDropOffTime() != null
+                ? request.getDropOffTime()
+                : java.time.LocalTime.now();
+
         // 기존 출석 확인
         Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
                 .orElseGet(() -> {
@@ -144,12 +192,12 @@ public class AttendanceService {
                     Attendance newAttendance = Attendance.createDropOff(
                             kidService.getKid(kidId),
                             date,
-                            request.getDropOffTime()
+                            dropOffTime
                     );
                     return attendanceRepository.save(newAttendance);
                 });
 
-        attendance.recordDropOff(request.getDropOffTime());
+        attendance.recordDropOff(dropOffTime);
     }
 
     /**
@@ -160,10 +208,14 @@ public class AttendanceService {
         // 원생 존재 확인
         kidService.getKid(kidId);
 
+        java.time.LocalTime pickUpTime = request.getPickUpTime() != null
+                ? request.getPickUpTime()
+                : java.time.LocalTime.now();
+
         Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
 
-        attendance.recordPickUp(request.getPickUpTime());
+        attendance.recordPickUp(pickUpTime);
     }
 
     /**
@@ -289,11 +341,41 @@ public class AttendanceService {
      * 일별 출석 현황 (반별)
      */
     public List<DailyAttendanceResponse> getDailyAttendanceByClassroom(Long classroomId, LocalDate date) {
+        List<com.erp.domain.kid.entity.Kid> kids = kidService.getKidsByClassroom(classroomId);
         List<Attendance> attendances = getAttendancesByClassroomAndDate(classroomId, date);
+        java.util.Map<Long, Attendance> attendanceMap = attendances.stream()
+                .collect(java.util.stream.Collectors.toMap(a -> a.getKid().getId(), a -> a));
 
-        return attendances.stream()
-                .map(DailyAttendanceResponse::from)
+        return kids.stream()
+                .map(kid -> DailyAttendanceResponse.from(kid, attendanceMap.get(kid.getId())))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 반별 월간 리포트
+     */
+    public MonthlyAttendanceReportResponse getMonthlyReportByClassroom(Long classroomId, int year, int month) {
+        var classroom = classroomService.getClassroom(classroomId);
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<com.erp.domain.kid.entity.Kid> kids = kidService.getKidsByClassroom(classroomId);
+        List<Attendance> attendances = attendanceRepository.findByClassroomIdAndDateBetween(classroomId, startDate, endDate);
+        java.util.Map<Long, List<Attendance>> grouped = attendances.stream()
+                .collect(java.util.stream.Collectors.groupingBy(a -> a.getKid().getId()));
+
+        List<MonthlyAttendanceKidReportResponse> kidReports = kids.stream()
+                .map(kid -> buildKidReport(kid, grouped.getOrDefault(kid.getId(), List.of())))
+                .toList();
+
+        return new MonthlyAttendanceReportResponse(
+                classroom.getId(),
+                classroom.getName(),
+                year,
+                month,
+                kidReports
+        );
     }
 
     /**
@@ -301,5 +383,74 @@ public class AttendanceService {
      */
     public AttendanceResponse toResponse(Attendance attendance) {
         return AttendanceResponse.from(attendance);
+    }
+
+    private void applyStatus(Attendance attendance,
+                             AttendanceStatus status,
+                             String note,
+                             java.time.LocalTime dropOffTime,
+                             java.time.LocalTime pickUpTime) {
+        if (status == AttendanceStatus.ABSENT) {
+            attendance.markAbsent(note);
+            return;
+        }
+        if (status == AttendanceStatus.SICK_LEAVE) {
+            attendance.markSickLeave(note);
+            return;
+        }
+        if (status == AttendanceStatus.LATE) {
+            attendance.markLate(dropOffTime, note);
+            return;
+        }
+        if (status == AttendanceStatus.EARLY_LEAVE) {
+            attendance.markEarlyLeave(pickUpTime, note);
+            return;
+        }
+
+        attendance.updateAttendance(status, note);
+        if (dropOffTime != null) {
+            attendance.recordDropOff(dropOffTime);
+        }
+        if (pickUpTime != null) {
+            attendance.recordPickUp(pickUpTime);
+        }
+    }
+
+    private MonthlyAttendanceKidReportResponse buildKidReport(com.erp.domain.kid.entity.Kid kid,
+                                                              List<Attendance> attendances) {
+        int presentDays = 0;
+        int absentDays = 0;
+        int lateDays = 0;
+        int earlyLeaveDays = 0;
+        int sickLeaveDays = 0;
+
+        for (Attendance attendance : attendances) {
+            AttendanceStatus status = attendance.getStatus();
+            if (status == AttendanceStatus.PRESENT) {
+                presentDays++;
+            } else if (status == AttendanceStatus.ABSENT) {
+                absentDays++;
+            } else if (status == AttendanceStatus.LATE) {
+                lateDays++;
+                presentDays++;
+            } else if (status == AttendanceStatus.EARLY_LEAVE) {
+                earlyLeaveDays++;
+                presentDays++;
+            } else if (status == AttendanceStatus.SICK_LEAVE) {
+                sickLeaveDays++;
+                absentDays++;
+            }
+        }
+
+        return new MonthlyAttendanceKidReportResponse(
+                kid.getId(),
+                kid.getName(),
+                presentDays,
+                absentDays,
+                lateDays,
+                earlyLeaveDays,
+                sickLeaveDays,
+                attendances.size()
+        );
     }
 }
