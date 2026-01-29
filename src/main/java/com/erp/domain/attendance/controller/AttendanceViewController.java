@@ -94,6 +94,15 @@ public class AttendanceViewController {
     }
 
     /**
+     * 월간 리포트 페이지
+     */
+    @GetMapping("/attendance/monthly")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public String monthlyReport() {
+        return "attendance/monthly";
+    }
+
+    /**
      * 출석 등록
      */
     @PostMapping("/attendance")

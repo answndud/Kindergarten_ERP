@@ -11,9 +11,12 @@ import java.time.LocalTime;
 public record DailyAttendanceResponse(
         Long kidId,
         String kidName,
+        Long attendanceId,
         AttendanceStatus status,
+        String statusDescription,
         LocalTime dropOffTime,
-        LocalTime pickUpTime
+        LocalTime pickUpTime,
+        String note
 ) {
     /**
      * Attendance 엔티티를 간단 DTO로 변환
@@ -22,9 +25,29 @@ public record DailyAttendanceResponse(
         return new DailyAttendanceResponse(
                 attendance.getKid().getId(),
                 attendance.getKid().getName(),
+                attendance.getId(),
                 attendance.getStatus(),
+                attendance.getStatus() != null ? attendance.getStatus().getDescription() : null,
                 attendance.getDropOffTime(),
-                attendance.getPickUpTime()
+                attendance.getPickUpTime(),
+                attendance.getNote()
         );
+    }
+
+    public static DailyAttendanceResponse from(com.erp.domain.kid.entity.Kid kid,
+                                               com.erp.domain.attendance.entity.Attendance attendance) {
+        if (attendance == null) {
+            return new DailyAttendanceResponse(
+                    kid.getId(),
+                    kid.getName(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+        return from(attendance);
     }
 }

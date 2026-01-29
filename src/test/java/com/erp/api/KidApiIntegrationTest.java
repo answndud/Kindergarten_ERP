@@ -5,6 +5,7 @@ import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
 import com.erp.domain.classroom.repository.ClassroomRepository;
 import com.erp.domain.kid.repository.KidRepository;
@@ -174,13 +175,15 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
         @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
         @DisplayName("원생 정보 수정 - 성공 (원장)")
         void updateKid_Success_Principal() throws Exception {
-            String requestBody = """
+            String requestBody = String.format("""
                     {
+                        "classroomId": 1,
                         "name": "수정된 이름",
                         "birthDate": "2020-01-01",
-                        "gender": "MALE"
+                        "gender": "MALE",
+                        "admissionDate": "%s"
                     }
-                    """;
+                    """, LocalDate.now());
 
             mockMvc.perform(put("/api/v1/kids/1")
                             .with(csrf())
@@ -196,13 +199,15 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
         @WithMockUser(username = "teacher@test.com", roles = {"TEACHER"})
         @DisplayName("원생 정보 수정 - 성공 (교사)")
         void updateKid_Success_Teacher() throws Exception {
-            String requestBody = """
+            String requestBody = String.format("""
                     {
+                        "classroomId": 1,
                         "name": "수정된 이름",
                         "birthDate": "2020-01-01",
-                        "gender": "FEMALE"
+                        "gender": "FEMALE",
+                        "admissionDate": "%s"
                     }
-                    """;
+                    """, LocalDate.now());
 
             mockMvc.perform(put("/api/v1/kids/1")
                             .with(csrf())
@@ -264,12 +269,14 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
         @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
         @DisplayName("학부모 연결 - 성공")
         void assignParent_Success() throws Exception {
-            String requestBody = """
+            Member extraParent = testData.createTestMember("parent2@test.com", "추가 학부모", MemberRole.PARENT, "test1234");
+
+            String requestBody = String.format("""
                     {
-                        "parentId": 3,
+                        "parentId": %d,
                         "relationship": "FATHER"
                     }
-                    """;
+                    """, extraParent.getId());
 
             mockMvc.perform(post("/api/v1/kids/1/parents")
                             .with(csrf())
