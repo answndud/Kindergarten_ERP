@@ -59,4 +59,16 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
      */
     @Query("SELECT a FROM Announcement a LEFT JOIN FETCH a.kindergarten k LEFT JOIN FETCH a.writer w WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.isImportant DESC, a.createdAt DESC")
     java.util.List<Announcement> findByKindergartenIdWithRelations(@Param("kindergartenId") Long kindergartenId);
+
+    /**
+     * 유치원별 공지사항 수
+     */
+    @Query("SELECT COUNT(a) FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
+    long countByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
+
+    /**
+     * 유치원별 공지사항 목록 조회 (리스트)
+     */
+    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.isImportant DESC, a.createdAt DESC")
+    java.util.List<Announcement> findByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
 }

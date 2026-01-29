@@ -69,4 +69,16 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      */
     @Query("SELECT m FROM Member m LEFT JOIN FETCH m.kindergarten WHERE m.id = :id AND m.deletedAt IS NULL")
     Optional<Member> findByIdWithKindergarten(@Param("id") Long id);
+
+    /**
+     * 유치원별 특정 역할 회원 수
+     */
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role = :role AND m.deletedAt IS NULL")
+    long countByKindergartenIdAndRole(@Param("kindergartenId") Long kindergartenId, @Param("role") MemberRole role);
+
+    /**
+     * 유치원별 총 회원 수
+     */
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.deletedAt IS NULL")
+    long countByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
 }

@@ -111,4 +111,16 @@ public interface KidRepository extends JpaRepository<Kid, Long> {
      */
     @Query("SELECT pk FROM ParentKid pk WHERE pk.kid.id = :kidId")
     List<ParentKid> findParentsByKidId(@Param("kidId") Long kidId);
+
+    /**
+     * 유치원별 원생 수 조회
+     */
+    @Query("SELECT COUNT(k) FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL")
+    long countByClassroomKindergartenId(@Param("kindergartenId") Long kindergartenId);
+
+    /**
+     * 유치원별 원생 목록 조회
+     */
+    @Query("SELECT k FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL")
+    List<Kid> findByClassroomKindergartenId(@Param("kindergartenId") Long kindergartenId);
 }
