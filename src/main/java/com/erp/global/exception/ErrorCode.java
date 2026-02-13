@@ -61,6 +61,10 @@ public enum ErrorCode {
     NOTIFICATION_NOT_FOUND(404, "NT001", "알림을 찾을 수 없습니다"),
     NOTIFICATION_ACCESS_DENIED(403, "NT002", "알림 조회 권한이 없습니다"),
 
+    // ========== Calendar ==========
+    CALENDAR_EVENT_NOT_FOUND(404, "CA001", "일정을 찾을 수 없습니다"),
+    CALENDAR_ACCESS_DENIED(403, "CA002", "일정 접근 권한이 없습니다"),
+
     // ========== Application ==========
     APPLICATION_NOT_FOUND(404, "AP001", "지원서를 찾을 수 없습니다"),
     APPLICATION_NOT_PENDING(400, "AP002", "처리 가능한 상태가 아닙니다"),
