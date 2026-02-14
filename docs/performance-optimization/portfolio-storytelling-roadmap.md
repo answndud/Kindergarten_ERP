@@ -31,6 +31,7 @@ N+1 제거와 집계 쿼리/캐시/인덱스 튜닝을 단계적으로 적용해
 - [x] Dashboard 통계 최적화 1차 적용
 - [x] Redis refresh token 조회 경로 개선
 - [x] 인덱스 튜닝 migration + EXPLAIN 비교
+- [x] k6 부하 테스트 스크립트/가이드 추가
 
 ## Phase 0. Baseline (반드시 먼저)
 
