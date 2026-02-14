@@ -1,9 +1,11 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -12,6 +14,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * 인증 API 통합 테스트
@@ -168,8 +171,68 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
         @Test
         @DisplayName("토큰 갱신 - 성공")
         void refreshToken_Success() throws Exception {
-            // TODO: 리프레시 토큰 발급 후 갱신 테스트 구현
-            // 현재는 기본 구조만 작성
+            String loginBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "test1234"
+                    }
+                    """;
+
+            Cookie refreshCookie = mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginBody))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getCookie("refresh_token");
+
+            assertNotNull(refreshCookie);
+
+            Mockito.when(redisTemplate.opsForValue().get("refresh:parent@test.com"))
+                    .thenReturn(refreshCookie.getValue());
+
+            mockMvc.perform(post("/api/v1/auth/refresh")
+                            .with(csrf())
+                            .cookie(refreshCookie))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+        }
+
+        @Test
+        @DisplayName("토큰 갱신 - 실패 (Redis 토큰 불일치)")
+        void refreshToken_Fail_TokenMismatch() throws Exception {
+            String loginBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "test1234"
+                    }
+                    """;
+
+            Cookie refreshCookie = mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(loginBody))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getCookie("refresh_token");
+
+            assertNotNull(refreshCookie);
+
+            Mockito.when(redisTemplate.opsForValue().get("refresh:parent@test.com"))
+                    .thenReturn("mismatch-token");
+
+            mockMvc.perform(post("/api/v1/auth/refresh")
+                            .with(csrf())
+                            .cookie(refreshCookie))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("A005"));
         }
     }
 }

@@ -66,6 +66,9 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
     @Query("SELECT COUNT(a) FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
     long countByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
 
+    @Query("SELECT COALESCE(SUM(a.viewCount), 0) FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
+    long sumViewCountByKindergartenId(@Param("kindergartenId") Long kindergartenId);
+
     /**
      * 유치원별 공지사항 목록 조회 (리스트)
      */

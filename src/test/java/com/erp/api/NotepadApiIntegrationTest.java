@@ -206,5 +206,24 @@ class NotepadApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
         }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("알림장 목록 조회 - 읽음 수 반영")
+        void getClassroomNotepads_ReadCountReflected() throws Exception {
+            mockMvc.perform(post("/api/v1/notepads/1/read")
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            mockMvc.perform(get("/api/v1/notepads/classroom/1")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.content[0].readCount").value(1));
+        }
     }
 }
