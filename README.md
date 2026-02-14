@@ -298,6 +298,7 @@ docker-compose down -v
 |------|--------:|--------:|----------|
 | Notepad 목록 조회 | queries 22, 15ms | queries 4, 4ms | 읽음 수 N+1 제거, 다건 집계 쿼리 전환 |
 | Dashboard 통계 | queries 13, 14ms | queries 10, 2ms | 집계 쿼리 통합, 불필요한 목록 로딩 제거 |
+| Dashboard 반복 조회 | queries 10, 10ms | queries 0, 0ms | 60초 TTL 캐시 적용 (`dashboardStatistics`) |
 
 ### 실행계획(EXPLAIN) 개선
 

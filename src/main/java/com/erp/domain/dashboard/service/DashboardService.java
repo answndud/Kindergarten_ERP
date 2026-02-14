@@ -8,6 +8,7 @@ import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class DashboardService {
     private final AttendanceRepository attendanceRepository;
     private final AnnouncementRepository announcementRepository;
 
+    @Cacheable(cacheNames = "dashboardStatistics", key = "#kindergarten.id")
     public DashboardStatisticsResponse getDashboardStatistics(Kindergarten kindergarten) {
         long kindergartenId = kindergarten.getId();
 
