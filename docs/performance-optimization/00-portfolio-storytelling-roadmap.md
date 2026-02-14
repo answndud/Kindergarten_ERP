@@ -1,5 +1,20 @@
 # Portfolio Storytelling Roadmap (Spring Boot Backend)
 
+## 문서 안내
+
+성능 최적화 문서는 아래 순서로 읽으면 흐름이 가장 자연스럽습니다.
+
+1. `20-performance-story-script.md`
+2. `07-redis-adoption-story-script.md`
+3. `03-notepad-readcount-nplusone.md`
+4. `04-dashboard-stats.md`
+5. `05-index-tuning-dashboard-notepad.md`
+6. `11-load-test-k6.md`
+7. `17-jpa-fetching.md`
+8. `18-soft-delete-flyway.md`
+9. `15-frontend-ssr-htmx.md`
+10. `14-notifications.md`
+
 ## Why This Document
 
 이 문서는 "처음엔 성능이 좋지 않았지만, 체계적으로 개선했다"는 포트폴리오 스토리를
@@ -168,3 +183,9 @@ N+1 제거와 집계 쿼리/캐시/인덱스 튜닝을 단계적으로 적용해
 - 코드 변경 이유가 문서에 연결되어 있음
 - 트레이드오프/한계가 명시되어 있음
 - 면접용 1분 요약 스크립트가 작성되어 있음
+
+## Measurement Policy (Mandatory)
+
+- 같은 시나리오/같은 데이터/같은 환경에서 전/후를 비교한다.
+- 최소 지표는 `p95 응답 시간`, `평균 응답 시간`, `요청당 쿼리 수`를 포함한다.
+- 정량 수치가 없는 성능 개선은 "완료"가 아니라 "후보"로 기록한다.
