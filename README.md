@@ -17,6 +17,7 @@
 - [프로젝트 구조](#-프로젝트-구조)
 - [시작하기](#-시작하기)
 - [API 문서](#-api-문서)
+- [성능 개선 스토리](#-성능-개선-스토리)
 - [문서](#-문서)
 
 ---
@@ -286,6 +287,34 @@ docker-compose down -v
 
 ---
 
+## 🚀 성능 개선 스토리
+
+이 프로젝트는 "처음부터 빠른 시스템"보다
+"기능 구현 후 병목을 발견하고, 수치로 검증하며 개선"하는 과정을 포트폴리오로 구성했습니다.
+
+### 개선 요약
+
+| 대상 | 개선 전 | 개선 후 | 핵심 개선 |
+|------|--------:|--------:|----------|
+| Notepad 목록 조회 | queries 22, 15ms | queries 4, 4ms | 읽음 수 N+1 제거, 다건 집계 쿼리 전환 |
+| Dashboard 통계 | queries 13, 14ms | queries 10, 2ms | 집계 쿼리 통합, 불필요한 목록 로딩 제거 |
+
+### 실행계획(EXPLAIN) 개선
+
+- Notepad/Announcement 목록: `ALL + filesort` -> `ref/index`
+- Attendance 집계: `ALL` -> `range`
+
+### 상세 문서
+
+- [포트폴리오 로드맵](docs/performance-optimization/portfolio-storytelling-roadmap.md)
+- [Notepad N+1 개선](docs/performance-optimization/notepad-readcount-nplusone.md)
+- [Dashboard 통계 최적화](docs/performance-optimization/dashboard-stats.md)
+- [Redis/JWT 경로 최적화](docs/performance-optimization/redis-jwt.md)
+- [인덱스 튜닝 + EXPLAIN 비교](docs/performance-optimization/index-tuning-dashboard-notepad.md)
+- [면접 답변 스크립트](docs/00_project/2026-02-14-performance-story-script.md)
+
+---
+
 ## 📚 문서
 
 | 문서 | 설명 |
@@ -314,4 +343,3 @@ docker-compose down -v
 ---
 
 **Made with ❤️ for Kindergartens**
-
