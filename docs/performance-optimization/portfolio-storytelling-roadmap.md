@@ -33,6 +33,7 @@ N+1 제거와 집계 쿼리/캐시/인덱스 튜닝을 단계적으로 적용해
 - [x] Redis refresh token 조회 경로 개선
 - [x] 인덱스 튜닝 migration + EXPLAIN 비교
 - [x] k6 부하 테스트 스크립트/가이드 추가
+- [x] k6 실측값 기록 (Notepad p95 45.32ms / Dashboard p95 27.88ms, Error 0.00%)
 
 ## Phase 0. Baseline (반드시 먼저)
 

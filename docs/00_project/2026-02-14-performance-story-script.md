@@ -100,6 +100,7 @@ EXPLAIN에서 ALL/filesort 제거 여부를 확인했습니다.
 
 - Notepad 목록: queries 22 -> 4, elapsed 15ms -> 4ms
 - Dashboard 통계: queries 13 -> 10, elapsed 14ms -> 2ms
+- k6 동시성 테스트: Notepad p95 45.32ms, Dashboard p95 27.88ms, 에러율 0.00%
 
 ## 관련 문서
 

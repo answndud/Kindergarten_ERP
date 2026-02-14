@@ -55,8 +55,28 @@ k6 run scripts/performance/k6-auth-notepad-dashboard.js
 
 | Scenario | VU | Duration | Avg | p95 | Error Rate |
 |---|---:|---:|---:|---:|---:|
-| Notepad list | 10 | 30s | TBD | TBD | TBD |
-| Dashboard stats | 5 | 30s | TBD | TBD | TBD |
+| Notepad list | 10 | 30s | 20.72ms | 45.32ms | 0.00% |
+| Dashboard stats | 5 | 30s | 12.46ms | 27.88ms | 0.00% |
+
+## 실제 실행 기록 (2026-02-14)
+
+- 실행 커맨드(도커 k6)
+
+```bash
+docker run --rm -v "/Users/alex/project/kindergarten_ERP/erp:/workspace" -w /workspace \
+  -e BASE_URL=http://host.docker.internal:8080 \
+  -e PARENT_EMAIL=parent1@test.com -e PARENT_PASSWORD='test1234!' \
+  -e PRINCIPAL_EMAIL=principal@test.com -e PRINCIPAL_PASSWORD='test1234!' \
+  -e CLASSROOM_ID=1 \
+  grafana/k6 run scripts/performance/k6-auth-notepad-dashboard.js \
+  --summary-export /workspace/build/k6-summary.json
+```
+
+- 전체 HTTP 지표
+  - `http_req_duration` p95: 294.44ms
+  - `http_req_failed`: 0.00%
+  - `http_reqs`: 748 (약 24.27 req/s)
+- 결과 파일: `build/k6-summary.json`
 
 ## 포트폴리오 작성 팁
 
