@@ -20,24 +20,36 @@
 
 ## Documents
 
-- `portfolio-storytelling-roadmap.md`: 포트폴리오용 성능 개선 로드맵(우선순위/측정표/면접 포인트)
-- `notepad-readcount-nplusone.md`: 알림장 목록 N+1 개선 1차 적용 기록
-- `index-tuning-dashboard-notepad.md`: Dashboard/Notepad 인덱스 튜닝 및 EXPLAIN 비교
-- `load-test-k6.md`: k6 기반 동시성 부하 테스트 가이드
-- `notifications.md`: 알림 시스템 성능/UX 개선 요약
-- `list-loading.md`: 목록/HTMX 로딩 전략 개선
-- `dashboard-stats.md`: 대시보드 통계 계산 개선
-- `redis-jwt.md`: Redis + JWT 쿠키 기반 인증 성능/보안 선택 이유
-- `jpa-fetching.md`: OSIV off, batch fetch, QueryDSL 선택 이유
-- `soft-delete-flyway.md`: Soft delete, Flyway 도입 이유와 성능 관점
-- `frontend-ssr-htmx.md`: SSR + HTMX + Alpine.js 선택 이유
+- `00-portfolio-storytelling-roadmap.md`: 포트폴리오용 성능 개선 로드맵(우선순위/측정표/면접 포인트)
+- `01-baseline-measurement-report.md`: 공통 기준선(Before/After) 측정 리포트
+- `02-mysql-validation-report.md`: MySQL EXPLAIN 교차 검증 리포트
+- `03-notepad-readcount-nplusone.md`: 알림장 목록 N+1 개선 1차 적용 기록
+- `04-dashboard-stats.md`: 대시보드 통계 계산 개선
+- `05-index-tuning-dashboard-notepad.md`: Dashboard/Notepad 인덱스 튜닝 및 EXPLAIN 비교
+- `06-redis-jwt.md`: Redis + JWT 쿠키 기반 인증 성능/보안 선택 이유
+- `07-redis-adoption-story-script.md`: Redis 도입 실패/개선/성과 스크립트
+- `08-cache-policy-and-invalidation.md`: 캐시 TTL/키/무효화 정책 표준
+- `09-query-inventory-and-owner.md`: 핵심 쿼리 인벤토리 및 오너십 관리
+- `10-performance-regression-checklist.md`: PR 성능 회귀 점검 체크리스트
+- `11-load-test-k6.md`: k6 기반 동시성 부하 테스트 가이드
+- `12-p95-p99-load-test-report.md`: 부하 테스트 실측 리포트(가이드 분리)
+- `13-list-loading.md`: 목록/HTMX 로딩 전략 개선
+- `14-notifications.md`: 알림 시스템 성능/UX 개선 요약
+- `15-frontend-ssr-htmx.md`: SSR + HTMX + Alpine.js 선택 이유
+- `16-frontend-perceived-performance-metrics.md`: 프론트 체감 성능 지표(TTFB/UI)
+- `17-jpa-fetching.md`: OSIV off, batch fetch, QueryDSL 선택 이유
+- `18-soft-delete-flyway.md`: Soft delete, Flyway 도입 이유와 성능 관점
+- `19-redis-failure-and-recovery-runbook.md`: Redis 장애 대응/복구 런북
+- `20-performance-story-script.md`: N+1 -> 집계 -> 인덱스 개선 스토리 스크립트
+- `21-performance-interview-playbook.md`: 일반/압박 Q&A + 모의면접 통합 플레이북
+- `22-code-test-evidence-map.md`: 문서-코드-테스트 1:1 근거 매핑
+- `23-one-page-interview-cheatsheet.md`: 면접 직전 1장 요약본
 
 ## Recommended Reading Order
 
-1. `portfolio-storytelling-roadmap.md`로 전체 전략/순서를 먼저 이해
-2. 기능별 문서(`list-loading.md`, `dashboard-stats.md`, `notifications.md`)로 개선 사례 확인
-3. 기반 설계 문서(`jpa-fetching.md`, `redis-jwt.md`, `soft-delete-flyway.md`)로 선택 이유 정리
-4. 각 문서의 예상 질문/답변을 면접 스크립트로 압축
+1. 파일명 앞 번호 순서대로 읽기 (`00` -> `23`)
+2. 실전용은 `20-performance-story-script.md` -> `21-performance-interview-playbook.md` 순서 권장
+3. 면접 직전은 `23-one-page-interview-cheatsheet.md`로 최종 압축
 
 ## Measurement Policy (Mandatory)
 
@@ -50,6 +62,6 @@
 
 성능 개선 PR 또는 작업 단위 완료 시 아래를 반드시 갱신합니다.
 
-- 개선 대상 문서 (예: `list-loading.md`)
-- 로드맵 현황 (`portfolio-storytelling-roadmap.md`)
+- 개선 대상 문서 (예: `13-list-loading.md`)
+- 로드맵 현황 (`00-portfolio-storytelling-roadmap.md`)
 - 필요 시 트러블슈팅 (`docs/retrospective/`)
