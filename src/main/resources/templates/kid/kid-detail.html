@@ -47,9 +47,9 @@
             <p class="text-gray-600" th:text="${kid.name} + ' 원생의 상세 정보입니다.'">원생 상세</p>
         </div>
         <div class="flex items-center gap-2">
-            <button type="button" onclick="openEditKidModal()" class="px-4 py-2 text-sm font-medium text-primary-700 border border-primary-100 rounded-lg hover:bg-primary-50">
+            <a th:href="@{'/kids/' + ${kid.id} + '/edit'}" href="/kids/0/edit" class="px-4 py-2 text-sm font-medium text-primary-700 border border-primary-100 rounded-lg hover:bg-primary-50">
                 편집
-            </button>
+            </a>
             <button type="button" onclick="openParentManageModal()" class="px-4 py-2 text-sm font-medium text-indigo-700 border border-indigo-100 rounded-lg hover:bg-indigo-50">
                 학부모 관리
             </button>

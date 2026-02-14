@@ -107,9 +107,7 @@ public class NotepadViewController {
      */
     @GetMapping("/notepad/write")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
-    public String writeForm(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
-        // TODO: Load classrooms and kids for the current user's kindergarten
-        // For now, the template will fetch these via API calls
+    public String writeForm() {
         return "notepad/write";
     }
 
