@@ -108,3 +108,4 @@ EXPLAIN에서 ALL/filesort 제거 여부를 확인했습니다.
 - `docs/performance-optimization/redis-jwt.md`
 - `docs/performance-optimization/index-tuning-dashboard-notepad.md`
 - `docs/performance-optimization/portfolio-storytelling-roadmap.md`
+- `docs/00_project/2026-02-14-performance-interview-qa.md`
