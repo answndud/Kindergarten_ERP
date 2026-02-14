@@ -13,6 +13,7 @@ import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.entity.AttendanceStatus;
 import com.erp.domain.attendance.repository.AttendanceRepository;
 import com.erp.domain.classroom.service.ClassroomService;
+import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.kid.service.KidService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
@@ -36,6 +37,7 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final KidService kidService;
     private final ClassroomService classroomService;
+    private final DashboardService dashboardService;
 
     /**
      * 출석 등록
@@ -64,6 +66,7 @@ public class AttendanceService {
                 request.getPickUpTime());
 
         Attendance saved = attendanceRepository.save(attendance);
+        evictDashboardStatisticsByAttendance(saved);
         return saved.getId();
     }
 
@@ -121,6 +124,7 @@ public class AttendanceService {
                 request.getNote(),
                 request.getDropOffTime(),
                 request.getPickUpTime());
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -138,6 +142,7 @@ public class AttendanceService {
                 request.getPickUpTime());
 
         Attendance saved = attendanceRepository.save(attendance);
+        evictDashboardStatisticsByAttendance(saved);
         return AttendanceResponse.from(saved);
     }
 
@@ -167,6 +172,7 @@ public class AttendanceService {
                     request.getPickUpTime());
 
             attendanceRepository.save(attendance);
+            evictDashboardStatisticsByAttendance(attendance);
             updated++;
         }
 
@@ -198,6 +204,7 @@ public class AttendanceService {
                 });
 
         attendance.recordDropOff(dropOffTime);
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -216,6 +223,7 @@ public class AttendanceService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
 
         attendance.recordPickUp(pickUpTime);
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -235,6 +243,7 @@ public class AttendanceService {
                 });
 
         attendance.markAbsent(note);
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -254,6 +263,7 @@ public class AttendanceService {
                 });
 
         attendance.markLate(dropOffTime, note);
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -265,6 +275,7 @@ public class AttendanceService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
 
         attendance.markEarlyLeave(pickUpTime, note);
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -284,6 +295,7 @@ public class AttendanceService {
                 });
 
         attendance.markSickLeave(note);
+        evictDashboardStatisticsByAttendance(attendance);
     }
 
     /**
@@ -292,6 +304,7 @@ public class AttendanceService {
     @Transactional
     public void deleteAttendance(Long id) {
         Attendance attendance = getAttendance(id);
+        evictDashboardStatisticsByAttendance(attendance);
         attendanceRepository.delete(attendance);
     }
 
@@ -452,5 +465,10 @@ public class AttendanceService {
                 sickLeaveDays,
                 attendances.size()
         );
+    }
+
+    private void evictDashboardStatisticsByAttendance(Attendance attendance) {
+        Long kindergartenId = attendance.getKid().getClassroom().getKindergarten().getId();
+        dashboardService.evictDashboardStatisticsCache(kindergartenId);
     }
 }

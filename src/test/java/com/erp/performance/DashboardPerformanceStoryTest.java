@@ -1,8 +1,11 @@
 package com.erp.performance;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.announcement.dto.request.AnnouncementRequest;
 import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.attendance.entity.AttendanceStatus;
+import com.erp.domain.attendance.service.AttendanceService;
+import com.erp.domain.announcement.service.AnnouncementService;
 import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.member.entity.MemberRole;
@@ -35,6 +38,12 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private AttendanceService attendanceService;
+
+    @Autowired
+    private AnnouncementService announcementService;
 
     @Test
     @DisplayName("통계 집계 경로 - 레거시 대비 쿼리 수/응답시간 비교")
@@ -74,6 +83,40 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
 
         assertTrue(secondCall.queryCount < firstCall.queryCount,
                 "cache hit path must use fewer queries than cache miss path");
+    }
+
+    @Test
+    @DisplayName("출석 변경 시 대시보드 캐시 무효화 - todayAttendanceCount 반영")
+    void dashboardCacheEvictedOnAttendanceWrite() {
+        clearDashboardCache();
+
+        var before = dashboardService.getDashboardStatistics(kindergarten);
+        attendanceService.markAbsent(kid.getId(), LocalDate.now(), "캐시 무효화 테스트");
+        var after = dashboardService.getDashboardStatistics(kindergarten);
+
+        assertTrue(after.todayAttendanceCount() > before.todayAttendanceCount(),
+                "attendance write should evict dashboard cache and refresh todayAttendanceCount");
+    }
+
+    @Test
+    @DisplayName("공지 변경 시 대시보드 캐시 무효화 - totalAnnouncements 반영")
+    void dashboardCacheEvictedOnAnnouncementWrite() {
+        clearDashboardCache();
+
+        var before = dashboardService.getDashboardStatistics(kindergarten);
+
+        AnnouncementRequest request = new AnnouncementRequest();
+        request.setKindergartenId(kindergarten.getId());
+        request.setTitle("캐시 무효화 공지");
+        request.setContent("대시보드 캐시 무효화 검증용 공지입니다.");
+        request.setIsImportant(false);
+
+        announcementService.createAnnouncement(request, principalMember.getId());
+
+        var after = dashboardService.getDashboardStatistics(kindergarten);
+
+        assertTrue(after.totalAnnouncements() > before.totalAnnouncements(),
+                "announcement write should evict dashboard cache and refresh totalAnnouncements");
     }
 
     private void legacyDashboardStatistics(Long kindergartenId) {

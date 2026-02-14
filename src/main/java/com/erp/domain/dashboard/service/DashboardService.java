@@ -8,6 +8,7 @@ import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,11 @@ public class DashboardService {
                 totalAnnouncements,
                 todayAttendanceCount
         );
+    }
+
+    @Transactional
+    @CacheEvict(cacheNames = "dashboardStatistics", key = "#kindergartenId")
+    public void evictDashboardStatisticsCache(Long kindergartenId) {
     }
 
     private double calculateAttendanceRate(long kindergartenId, long totalKids, int days) {
