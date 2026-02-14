@@ -119,7 +119,7 @@ DELETE /api/v1/kids/{id}/parents/{parentId} - 학부모 연결 해제 (PRINCIPAL
 ### Created:
 - `src/main/java/com/erp/domain/kid/controller/KidViewController.java` - ViewController
 - `src/main/resources/templates/kid/kids.html` - 메인 페이지 (218줄)
-- `docs/00_project/phase9_kid_management.md` - 설계/결정 로그
+- `docs/phase/phase9_kid_management.md` - 설계/결정 로그
 
 ## Known Limitations
 - 원생 목록의 서버 페이지네이션은 상세 검색 정렬 기준에 따라 추가 개선 필요

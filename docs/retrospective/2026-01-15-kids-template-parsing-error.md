@@ -82,7 +82,7 @@ curl -v http://localhost:8080/kids
 
 ## Related Files
 - `src/main/resources/templates/fragments/header.html` - line 64 수정
-- `docs/00_project/phase9_kid_management.md` - 테스트 상태 업데이트
+- `docs/phase/phase9_kid_management.md` - 테스트 상태 업데이트
 
 ## Status
 ✅ 해결 완료 - `/kids` 페이지 접근 가능

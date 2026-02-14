@@ -204,17 +204,17 @@ export REDIS_PASSWORD=
 - `docs/project_idea.md`: Detailed implementation guide
 - `docs/project_summary.md`: Analysis of reference project (AiBayo)
 - `docs/springboot_tutorial.md`: Spring Boot patterns and best practices
-- `docs/00_project/`: **Design decision logs for portfolio interviews**
+- `docs/phase/`: **Design decision logs for portfolio interviews**
 
 ## Design Decision Documentation
 
 This project is for **backend developer portfolio interviews**. Every technical decision must be documented for interview preparation.
 
 ### Documentation Structure
-Create decision logs in `docs/00_project/` for each feature/phase:
+Create decision logs in `docs/phase/` for each feature/phase:
 
 ```
-docs/00_project/
+docs/phase/
 ├── phase0_setup.md           # Project setup decisions
 ├── phase1_auth.md            # Authentication & JWT decisions
 ├── phase2_kindergarten.md    # Kindergarten & Classroom decisions

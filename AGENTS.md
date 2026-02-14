@@ -147,7 +147,7 @@ docker compose -f docker/docker-compose.yml down
 
 ## 9) Docs Rules (Mandatory)
 
-- 주요 기능 추가/변경 시 `docs/00_project/`에 결정 로그 작성.
+- 주요 기능 추가/변경 시 `docs/phase/`에 결정 로그 작성.
 - 트러블슈팅/회고는 `docs/retrospective/`에 기록.
 - 성능 최적화는 `docs/performance-optimization/`에 전/후 비교를 기록.
 

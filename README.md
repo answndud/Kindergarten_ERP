@@ -313,13 +313,7 @@ docker-compose down -v
 
 ### 상세 문서
 
-- [포트폴리오 로드맵](docs/performance-optimization/portfolio-storytelling-roadmap.md)
-- [Notepad N+1 개선](docs/performance-optimization/notepad-readcount-nplusone.md)
-- [Dashboard 통계 최적화](docs/performance-optimization/dashboard-stats.md)
-- [Redis/JWT 경로 최적화](docs/performance-optimization/redis-jwt.md)
-- [인덱스 튜닝 + EXPLAIN 비교](docs/performance-optimization/index-tuning-dashboard-notepad.md)
-- [k6 부하 테스트 가이드](docs/performance-optimization/load-test-k6.md)
-- [면접 답변 스크립트](docs/00_project/2026-02-14-performance-story-script.md)
+- 성능 최적화 문서는 저장소의 `docs/performance-optimization` 폴더에서 번호 순서(`00`부터)로 확인하세요.
 
 ---
 
@@ -327,14 +321,8 @@ docker-compose down -v
 
 | 문서 | 설명 |
 |------|------|
-| [project_idea.md](docs/project_idea.md) | 프로젝트 설계서 (상세 구현 가이드) |
-| [project_diary.md](docs/project_diary.md) | 개발 일지 (면접 대비) |
-| [project_summary.md](docs/project_summary.md) | 기존 프로젝트 분석 |
-| [springboot_tutorial.md](docs/springboot_tutorial.md) | Spring Boot 튜토리얼 |
-| [2026-02-14-performance-story-script.md](docs/00_project/2026-02-14-performance-story-script.md) | 성능 개선 발표/면접 스크립트 |
-| [2026-02-14-performance-interview-qa.md](docs/00_project/2026-02-14-performance-interview-qa.md) | 성능 면접 Q&A (10문항) |
-| [2026-02-14-performance-pressure-qa.md](docs/00_project/2026-02-14-performance-pressure-qa.md) | 성능 압박 면접 Q&A (반박형) |
-| [2026-02-14-performance-mock-interview-playbook.md](docs/00_project/2026-02-14-performance-mock-interview-playbook.md) | 성능 모의면접 진행 플레이북 |
+| 프로젝트 문서 | `docs/` 폴더 참고 |
+| 성능 최적화 문서 | `docs/performance-optimization/` 폴더 참고 (번호 순서) |
 
 ---
 
