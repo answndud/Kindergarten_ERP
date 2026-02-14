@@ -325,6 +325,7 @@ docker-compose down -v
 | [springboot_tutorial.md](docs/springboot_tutorial.md) | Spring Boot 튜토리얼 |
 | [2026-02-14-performance-story-script.md](docs/00_project/2026-02-14-performance-story-script.md) | 성능 개선 발표/면접 스크립트 |
 | [2026-02-14-performance-interview-qa.md](docs/00_project/2026-02-14-performance-interview-qa.md) | 성능 면접 Q&A (10문항) |
+| [2026-02-14-performance-pressure-qa.md](docs/00_project/2026-02-14-performance-pressure-qa.md) | 성능 압박 면접 Q&A (반박형) |
 
 ---
 
