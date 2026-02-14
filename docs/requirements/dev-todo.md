@@ -40,38 +40,35 @@
 - [x] 알림장 작성 시 알림 생성 (초안 구현됨, 반영향/테스트 필요)
   - `NotepadService.createNotepad()`에 원생별 알림 시 `kid.getParents()`를 통해 학부모에게 알림 생성 로직 추가
   - `Kid.getParents()`가 없어 `parents` 리스트를 사용하여 학부모 ID 추출 및 알림 발송
-- 알림 배지/리스트 자동 갱신
-  - 현재는 `notifications-changed` 이벤트 기반 HTMX 프래그먼트 갱신이 동작
-  - 서버에서 이벤트를 발행(WebSocket/SSE)하거나 단순 폴링 방식 유지 결정
-- [ ] 알림 배지/리스트 자동 갱신
-  - 현재 `notifications-changed` 이벤트 기반 HTMX 프래그먼트 갱신이 동작하는지 확인
-  - 서버에서 이벤트를 발행(WebSocket/SSE)하거나, 단순 폴링 방식 유지 결정
+- [x] 알림 배지/리스트 자동 갱신
+  - 전략 확정: **폴링 유지 + 이벤트 기반 즉시 갱신**
+  - `app.js`에서 30초 주기 자동 갱신 + `visibilitychange/focus` 시 즉시 갱신
+  - 알림 드롭다운 오픈 시 `notifications-changed` 트리거로 목록 즉시 동기화
 
 ### 3. 원생(Kid) 관리 기능
 - [ ] 원생 목록/조회 화면
   - `/kids` (ViewController) + API(`KidApiController`) 구현
   - 반별 원생 목록, 이름/생년월일 검색
-- [ ] 원생 생성/편집 화면
-  - `/kids/new`, `/kids/{id}/edit` 폼
-  - `KidApiController`의 `POST /kids`, `PUT /kids/{id}` 연결
+- [x] 원생 생성/편집 화면
+  - `/kids/new`, `/kids/{id}/edit` 페이지 추가 (`kid/kid-form.html`)
+  - `POST /api/v1/kids`, `PUT /api/v1/kids/{id}` API 연동
 - [ ] 학부모-자녀 관계(ParentKid) 관리
   - 학부모가 자녀를 조회할 수 있는 API/화면 확인
   - 자녀 입학 신청 시 `ParentKid` 생성 로직 검토
 
 ### 4. 교사 유치원 선택 기능 연결
-- [ ] `/kindergarten/select`에서 “교사-유치원 연결” API 구현
-  - 현재는 TODO로 되어 있음; `KindergartenApiController`에 연결 엔드포인트 추가
-  - 교사가 유치원을 선택/변경할 수 있는 흐름 구현
+- [x] `/kindergarten/select`에서 교사 지원 신청 연결
+  - 선택 화면에서 `/api/v1/kindergarten-applications` POST 호출
+  - 선택 메시지 입력(SweetAlert2) + 신청 성공 시 `/applications/pending` 이동
 
 ## Frontend TODO from code
-- [ ] 알림장 작성 페이지의 반/원생 로딩 정리
-  - `NotepadViewController`에서 서버 주입 vs API 로드 방식 확정
-  - 현재는 이미 SweetAlert2 팝업으로 구현됨; 불필요한 주입 제거 필요 시 정리
+- [x] 알림장 작성 페이지의 반/원생 로딩 정리
+  - `NotepadViewController`의 TODO 제거, API 로드 전략으로 확정
+  - 화면(`notepad/write`)에서 반/원생을 API로 동적 로딩
 
 ## Consistency / Docs
-- [ ] README/docs의 엔드포인트 문서와 실제 컨트롤러 매핑 정합성 점검
-  - 특히 `/api/v1/attendance/*`, `/api/v1/notepads/*`
-  - 각 엔드포인트의 파라미터/권한/응답 포맷 일치성 확인
+- [x] 주요 API 통합 테스트 보강
+  - `CalendarApiIntegrationTest` 추가
+  - `NotificationApiIntegrationTest` 추가
 - [ ] 최근 회고 문서 업데이트
   - `docs/retrospective/`에 이번 SweetAlert2 마이그레이션/알림장 복구/대시보드 동기화 회고 추가
-

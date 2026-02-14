@@ -4,7 +4,7 @@
 <th:block th:fragment="list">
     <div id="notification-list"
          th:attr="hx-get=@{/notifications/fragments/list(limit=${unreadOnly} ? 50 : 10, unreadOnly=${unreadOnly}, type=${type}, showFilters=${showFilters})}"
-         hx-trigger="notifications-changed from:body, every 30s"
+         hx-trigger="notifications-changed from:body"
          hx-swap="outerHTML"
          th:classappend="${showFilters} ? 'w-full' : 'w-80'"
          class="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">

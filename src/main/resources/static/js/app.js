@@ -188,10 +188,32 @@ window.UI = window.UI || {
 
 // 알림 (공통)
 window.Notifications = window.Notifications || {
+    _pollTimerId: null,
+
     refresh() {
         if (window.htmx) {
             htmx.trigger(document.body, 'notifications-changed');
         }
+    },
+
+    startAutoRefresh(intervalMs = 30000) {
+        if (this._pollTimerId) {
+            return;
+        }
+
+        this._pollTimerId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                this.refresh();
+            }
+        }, intervalMs);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.refresh();
+            }
+        });
+
+        window.addEventListener('focus', () => this.refresh());
     },
 
     async requestJson(url, method, body) {
@@ -262,6 +284,7 @@ window.Notifications = window.Notifications || {
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function () {
     console.log('유치원 ERP initialized');
+    window.Notifications.startAutoRefresh();
 });
 
 document.addEventListener('submit', async (e) => {

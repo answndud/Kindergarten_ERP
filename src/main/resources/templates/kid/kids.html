@@ -97,9 +97,9 @@
                     <p class="text-xs text-gray-500 mt-1" id="kid-summary">총 0명</p>
                 </div>
                 <div class="flex gap-2">
-                    <button type="button" onclick="showCreateKidModal()" class="px-4 py-2 bg-gradient-primary text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all">
+                    <a href="/kids/new" class="px-4 py-2 bg-gradient-primary text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all">
                         원생 추가
-                    </button>
+                    </a>
                     <button type="button" onclick="loadKids({ page: currentPage })" class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-all">
                         새로고침
                     </button>
@@ -336,9 +336,9 @@
                         <button type="button" onclick="showParentManageModal(${k.id})" class="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all">
                             학부모 관리
                         </button>
-                        <button type="button" onclick="showEditKidModal(${k.id})" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
+                        <a href="/kids/${k.id}/edit" class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
                             편집
-                        </button>
+                        </a>
                         <button type="button" data-id="${k.id}" data-name="${k.name}" onclick="openDeleteKid(this)" class="px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all">
                             삭제
                         </button>

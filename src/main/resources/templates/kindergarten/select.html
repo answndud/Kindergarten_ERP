@@ -91,12 +91,35 @@
             if (!ok) return;
 
             try {
-                // TODO: 교사-유치원 연결 API 호출 필요
-                await UI.alert({
-                    title: '준비 중인 기능입니다',
-                    text: '유치원 선택 기능은 곧 제공될 예정입니다.',
-                    icon: 'info'
+                const note = await UI.promptTextarea({
+                    title: '지원 메시지 (선택)',
+                    label: '원장님에게 전달할 메시지를 입력해 주세요',
+                    placeholder: '예) 담임 배정이 가능하면 빠르게 합류하고 싶습니다.'
                 });
+
+                if (note && note.isDismissed) {
+                    return;
+                }
+
+                const response = await fetch('/api/v1/kindergarten-applications', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        kindergartenId: id,
+                        message: (note && note.value && note.value.trim()) ? note.value.trim() : null
+                    })
+                });
+
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.success === false) {
+                    throw new Error(result.message || '유치원 지원 요청에 실패했습니다.');
+                }
+
+                await UI.success('지원이 접수되었습니다. 승인 전까지 대기 페이지로 이동합니다.');
+                window.location.href = '/applications/pending';
             } catch (error) {
                 console.error('Error:', error);
                 await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');

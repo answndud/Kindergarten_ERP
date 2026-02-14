@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${kid != null} ? '원생 수정 - 유치원 ERP' : '원생 등록 - 유치원 ERP'">원생 폼</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900" th:text="${kid != null} ? '원생 정보 수정' : '원생 등록'">원생 등록</h1>
+        <p class="text-gray-600 text-sm mt-1" th:text="${kid != null} ? '원생 정보를 수정합니다.' : '새 원생 정보를 입력해 주세요.'">설명</p>
+    </div>
+
+    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <form id="kid-form" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">이름 *</label>
+                <input id="name" name="name" type="text" required
+                       class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                       th:value="${kid != null} ? ${kid.name} : ''">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="birthDate" class="block text-sm font-medium text-gray-700 mb-1">생년월일 *</label>
+                    <input id="birthDate" name="birthDate" type="date" required
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           th:value="${kid != null} ? ${kid.birthDate} : ''">
+                </div>
+                <div>
+                    <label for="admissionDate" class="block text-sm font-medium text-gray-700 mb-1">입소일 *</label>
+                    <input id="admissionDate" name="admissionDate" type="date" required
+                           class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           th:value="${kid != null} ? ${kid.admissionDate} : ''">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">성별 *</label>
+                    <select id="gender" name="gender" required
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">선택</option>
+                        <option value="MALE" th:selected="${kid != null and kid.gender != null and kid.gender.name() == 'MALE'}">남</option>
+                        <option value="FEMALE" th:selected="${kid != null and kid.gender != null and kid.gender.name() == 'FEMALE'}">여</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="classroomId" class="block text-sm font-medium text-gray-700 mb-1">반 *</label>
+                    <select id="classroomId" name="classroomId" required
+                            class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">반을 선택하세요</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-4 flex items-center justify-end gap-2 border-t border-gray-200 mt-6">
+                <a href="/kids" class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">취소</a>
+                <button type="submit" class="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700" th:text="${kid != null} ? '수정' : '등록'">등록</button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:src="@{/js/app.js}" src="/js/app.js"></script>
+
+<script th:inline="javascript">
+    const formMode = /*[[${kid != null}]]*/ false ? 'edit' : 'create';
+    const kidData = /*[[${kid}]]*/ null;
+    let kindergartenId = /*[[${currentMember?.kindergartenId}]]*/ null;
+
+    async function ensureKindergartenId() {
+        if (kindergartenId) return kindergartenId;
+        const response = await fetch('/api/v1/members/me', { credentials: 'same-origin' });
+        if (!response.ok) return null;
+        const payload = await response.json().catch(() => ({}));
+        kindergartenId = payload?.data?.kindergartenId || null;
+        return kindergartenId;
+    }
+
+    async function loadClassrooms() {
+        const id = await ensureKindergartenId();
+        const select = document.getElementById('classroomId');
+        if (!id) {
+            select.innerHTML = '<option value="">소속 유치원이 없습니다</option>';
+            return;
+        }
+
+        const response = await fetch(`/api/v1/classrooms?kindergartenId=${id}`, { credentials: 'same-origin' });
+        const payload = await response.json().catch(() => ({}));
+        const classrooms = payload.data || [];
+
+        select.innerHTML = '<option value="">반을 선택하세요</option>' + classrooms
+            .map(c => `<option value="${c.id}">${c.name}</option>`)
+            .join('');
+
+        if (kidData && kidData.classroomId) {
+            select.value = String(kidData.classroomId);
+        }
+    }
+
+    function collectFormData() {
+        const name = document.getElementById('name').value.trim();
+        const birthDate = document.getElementById('birthDate').value;
+        const admissionDate = document.getElementById('admissionDate').value;
+        const gender = document.getElementById('gender').value;
+        const classroomId = document.getElementById('classroomId').value;
+
+        if (!name || !birthDate || !admissionDate || !gender || !classroomId) {
+            throw new Error('모든 필수 값을 입력해 주세요.');
+        }
+
+        return {
+            name,
+            birthDate,
+            admissionDate,
+            gender,
+            classroomId: Number(classroomId)
+        };
+    }
+
+    async function submitKidForm(event) {
+        event.preventDefault();
+
+        try {
+            const body = collectFormData();
+            const url = formMode === 'edit' ? `/api/v1/kids/${kidData.id}` : '/api/v1/kids';
+            const method = formMode === 'edit' ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.success === false) {
+                throw new Error(payload.message || '요청 처리에 실패했습니다.');
+            }
+
+            await UI.success(formMode === 'edit' ? '원생 정보가 수정되었습니다.' : '원생이 등록되었습니다.');
+            if (formMode === 'edit') {
+                window.location.href = `/kids/${kidData.id}`;
+                return;
+            }
+            window.location.href = '/kids';
+        } catch (error) {
+            await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadClassrooms();
+
+        if (!kidData) {
+            const admission = document.getElementById('admissionDate');
+            if (admission && !admission.value) {
+                admission.valueAsDate = new Date();
+            }
+        }
+
+        document.getElementById('kid-form').addEventListener('submit', submitKidForm);
+    });
+</script>
+</body>
+</html>

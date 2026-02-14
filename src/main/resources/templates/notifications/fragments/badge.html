@@ -4,7 +4,7 @@
 <th:block th:fragment="badge">
     <span id="notification-badge"
           hx-get="/notifications/fragments/badge"
-          hx-trigger="notifications-changed from:body, every 30s"
+          hx-trigger="notifications-changed from:body"
           hx-swap="outerHTML"
           class="absolute -top-1 -right-1">
         <span th:if="${unreadCount > 0}"
