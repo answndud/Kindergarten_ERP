@@ -1,5 +1,11 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { Trend, Rate } from 'k6/metrics';
+
+const notepadDuration = new Trend('notepad_list_duration', true);
+const dashboardDuration = new Trend('dashboard_stats_duration', true);
+const notepadErrors = new Rate('notepad_list_errors');
+const dashboardErrors = new Rate('dashboard_stats_errors');
 
 export const options = {
   scenarios: {
@@ -59,6 +65,9 @@ export function notepadListScenario() {
     'notepad list success true': (r) => r.body.includes('"success":true'),
   });
 
+  notepadDuration.add(res.timings.duration);
+  notepadErrors.add(res.status !== 200);
+
   sleep(1);
 }
 
@@ -72,6 +81,9 @@ export function dashboardScenario() {
   check(res, {
     'dashboard status is 200': (r) => r.status === 200,
   });
+
+  dashboardDuration.add(res.timings.duration);
+  dashboardErrors.add(res.status !== 200);
 
   sleep(1);
 }

@@ -305,6 +305,12 @@ docker-compose down -v
 - Notepad/Announcement 목록: `ALL + filesort` -> `ref/index`
 - Attendance 집계: `ALL` -> `range`
 
+### 동시성 부하 테스트(k6)
+
+- Notepad list (VU 10, 30초): avg 20.72ms, p95 45.32ms, error 0.00%
+- Dashboard stats (VU 5, 30초): avg 12.46ms, p95 27.88ms, error 0.00%
+- 전체 p95(`http_req_duration`): 294.44ms
+
 ### 상세 문서
 
 - [포트폴리오 로드맵](docs/performance-optimization/portfolio-storytelling-roadmap.md)
