@@ -13,6 +13,7 @@
 - 공지 열람률 계산을 공지 목록 로딩 대신 `SUM(view_count)` 집계 쿼리로 전환.
 - 원생 목록 로딩 대신 전체 원생 수 count를 재사용해 계산 비용 축소.
 - 대시보드 통계 결과에 60초 TTL 캐시(`dashboardStatistics`)를 적용.
+- 출석/공지 쓰기 경로에서 대시보드 캐시를 선택적으로 무효화해 정합성 유지.
 
 ## 효과(정성)
 - 날짜 경계 혼선이 줄어 통계 신뢰도 상승.
@@ -31,6 +32,13 @@
 | Dashboard statistics (cache miss -> hit) | 10 | 0 | 10ms | 0ms |
 
 > 측정 로그: `build/test-results/test/TEST-com.erp.performance.DashboardPerformanceStoryTest.xml`
+
+## 정합성 검증
+
+- `DashboardPerformanceStoryTest.dashboardCacheEvictedOnAttendanceWrite`
+  - 출석 쓰기 후 `todayAttendanceCount`가 즉시 갱신되는지 검증
+- `DashboardPerformanceStoryTest.dashboardCacheEvictedOnAnnouncementWrite`
+  - 공지 생성 후 `totalAnnouncements`가 즉시 갱신되는지 검증
 
 ## 선택 이유
 - 사용자/운영 기준 시간대(KST)를 명확히 해 데이터 일관성을 확보.

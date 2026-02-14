@@ -4,6 +4,7 @@ import com.erp.domain.announcement.dto.request.AnnouncementRequest;
 import com.erp.domain.announcement.dto.response.AnnouncementResponse;
 import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.announcement.repository.AnnouncementRepository;
+import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.kindergarten.service.KindergartenService;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
@@ -34,6 +35,7 @@ public class AnnouncementService {
     private final KindergartenService kindergartenService;
     private final MemberService memberService;
     private final NotificationService notificationService;
+    private final DashboardService dashboardService;
 
     /**
      * 공지사항 생성
@@ -57,6 +59,7 @@ public class AnnouncementService {
         }
 
         Announcement saved = announcementRepository.save(announcement);
+        evictDashboardStatistics(saved);
 
         List<MemberRole> targetRoles = resolveTargetRoles(request.getTargetRoles());
         List<Member> receivers = memberService.getMembersByKindergartenAndRoles(
@@ -91,6 +94,7 @@ public class AnnouncementService {
 
         // 조회수 증가
         announcement.incrementViewCount();
+        evictDashboardStatistics(announcement);
 
         return announcement;
     }
@@ -178,6 +182,7 @@ public class AnnouncementService {
         if (request.getIsImportant() != null) {
             announcement.setImportant(request.getIsImportant());
         }
+        evictDashboardStatistics(announcement);
     }
 
     /**
@@ -192,6 +197,7 @@ public class AnnouncementService {
         validateWriterRole(requester);
 
         announcement.softDelete();
+        evictDashboardStatistics(announcement);
     }
 
     /**
@@ -206,6 +212,7 @@ public class AnnouncementService {
         validateWriterRole(requester);
 
         announcement.toggleImportant();
+        evictDashboardStatistics(announcement);
     }
 
     /**
@@ -230,5 +237,9 @@ public class AnnouncementService {
             return List.of(MemberRole.PRINCIPAL, MemberRole.TEACHER, MemberRole.PARENT);
         }
         return targetRoles;
+    }
+
+    private void evictDashboardStatistics(Announcement announcement) {
+        dashboardService.evictDashboardStatisticsCache(announcement.getKindergarten().getId());
     }
 }
