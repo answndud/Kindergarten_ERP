@@ -311,6 +311,7 @@ docker-compose down -v
 - [Dashboard 통계 최적화](docs/performance-optimization/dashboard-stats.md)
 - [Redis/JWT 경로 최적화](docs/performance-optimization/redis-jwt.md)
 - [인덱스 튜닝 + EXPLAIN 비교](docs/performance-optimization/index-tuning-dashboard-notepad.md)
+- [k6 부하 테스트 가이드](docs/performance-optimization/load-test-k6.md)
 - [면접 답변 스크립트](docs/00_project/2026-02-14-performance-story-script.md)
 
 ---
@@ -326,6 +327,7 @@ docker-compose down -v
 | [2026-02-14-performance-story-script.md](docs/00_project/2026-02-14-performance-story-script.md) | 성능 개선 발표/면접 스크립트 |
 | [2026-02-14-performance-interview-qa.md](docs/00_project/2026-02-14-performance-interview-qa.md) | 성능 면접 Q&A (10문항) |
 | [2026-02-14-performance-pressure-qa.md](docs/00_project/2026-02-14-performance-pressure-qa.md) | 성능 압박 면접 Q&A (반박형) |
+| [2026-02-14-performance-mock-interview-playbook.md](docs/00_project/2026-02-14-performance-mock-interview-playbook.md) | 성능 모의면접 진행 플레이북 |
 
 ---
 

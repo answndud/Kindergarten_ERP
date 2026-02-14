@@ -23,6 +23,7 @@
 - `portfolio-storytelling-roadmap.md`: 포트폴리오용 성능 개선 로드맵(우선순위/측정표/면접 포인트)
 - `notepad-readcount-nplusone.md`: 알림장 목록 N+1 개선 1차 적용 기록
 - `index-tuning-dashboard-notepad.md`: Dashboard/Notepad 인덱스 튜닝 및 EXPLAIN 비교
+- `load-test-k6.md`: k6 기반 동시성 부하 테스트 가이드
 - `notifications.md`: 알림 시스템 성능/UX 개선 요약
 - `list-loading.md`: 목록/HTMX 로딩 전략 개선
 - `dashboard-stats.md`: 대시보드 통계 계산 개선
