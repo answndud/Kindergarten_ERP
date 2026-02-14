@@ -29,6 +29,7 @@ N+1 제거와 집계 쿼리/캐시/인덱스 튜닝을 단계적으로 적용해
 - [x] Notepad N+1 개선 1차 코드 반영
 - [x] Baseline/After 정량 측정값 채우기 (Notepad, Dashboard)
 - [x] Dashboard 통계 최적화 1차 적용
+- [x] Dashboard 60초 TTL 캐시 적용 및 cache hit 검증
 - [x] Redis refresh token 조회 경로 개선
 - [x] 인덱스 튜닝 migration + EXPLAIN 비교
 - [x] k6 부하 테스트 스크립트/가이드 추가

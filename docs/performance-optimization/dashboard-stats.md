@@ -12,6 +12,7 @@
 - 출석률 계산을 `PRESENT + LATE` 단일 집계 쿼리로 통합.
 - 공지 열람률 계산을 공지 목록 로딩 대신 `SUM(view_count)` 집계 쿼리로 전환.
 - 원생 목록 로딩 대신 전체 원생 수 count를 재사용해 계산 비용 축소.
+- 대시보드 통계 결과에 60초 TTL 캐시(`dashboardStatistics`)를 적용.
 
 ## 효과(정성)
 - 날짜 경계 혼선이 줄어 통계 신뢰도 상승.
@@ -27,6 +28,7 @@
 | Scenario | Before queries | After queries | Before elapsed | After elapsed |
 |---|---:|---:|---:|---:|
 | Dashboard statistics aggregation | 13 | 10 | 14ms | 2ms |
+| Dashboard statistics (cache miss -> hit) | 10 | 0 | 10ms | 0ms |
 
 > 측정 로그: `build/test-results/test/TEST-com.erp.performance.DashboardPerformanceStoryTest.xml`
 
@@ -34,6 +36,7 @@
 - 사용자/운영 기준 시간대(KST)를 명확히 해 데이터 일관성을 확보.
 - 간단한 기간 토글로 추가 UI/UX 비용을 줄임.
 - "화면 로직은 유지하고, 집계 경로만 교체"해 리스크를 낮추면서 성능을 개선.
+- 반복 조회가 많은 대시보드 특성에 맞춰 짧은 TTL 캐시를 적용해 피크 구간 부하를 완화.
 
 ## 예상 질문/답변
 1) Q: 왜 기간 필터를 7일/30일로 제한했나요?

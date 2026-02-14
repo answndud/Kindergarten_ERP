@@ -13,6 +13,8 @@ import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,6 +33,9 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     @Test
     @DisplayName("통계 집계 경로 - 레거시 대비 쿼리 수/응답시간 비교")
     void compareLegacyVsOptimizedDashboardStatistics() {
@@ -39,9 +44,11 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
 
         // warm-up
         legacyDashboardStatistics(kindergarten.getId());
+        clearDashboardCache();
         dashboardService.getDashboardStatistics(kindergarten);
 
         Measurement legacy = measure(statistics, () -> legacyDashboardStatistics(kindergarten.getId()));
+        clearDashboardCache();
         Measurement optimized = measure(statistics, () -> dashboardService.getDashboardStatistics(kindergarten));
 
         System.out.printf("[PERF] dashboard-legacy    - queries=%d, elapsedMs=%d%n", legacy.queryCount, legacy.elapsedMs);
@@ -49,6 +56,24 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
 
         assertTrue(optimized.queryCount < legacy.queryCount,
                 "optimized dashboard path must use fewer queries than legacy path");
+    }
+
+    @Test
+    @DisplayName("대시보드 캐시 적용 - 동일 키 재조회 시 쿼리 감소")
+    void dashboardCacheHit_ReducesQueries() {
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+
+        clearDashboardCache();
+
+        Measurement firstCall = measure(statistics, () -> dashboardService.getDashboardStatistics(kindergarten));
+        Measurement secondCall = measure(statistics, () -> dashboardService.getDashboardStatistics(kindergarten));
+
+        System.out.printf("[PERF] dashboard-cache-miss - queries=%d, elapsedMs=%d%n", firstCall.queryCount, firstCall.elapsedMs);
+        System.out.printf("[PERF] dashboard-cache-hit  - queries=%d, elapsedMs=%d%n", secondCall.queryCount, secondCall.elapsedMs);
+
+        assertTrue(secondCall.queryCount < firstCall.queryCount,
+                "cache hit path must use fewer queries than cache miss path");
     }
 
     private void legacyDashboardStatistics(Long kindergartenId) {
@@ -122,5 +147,12 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
     }
 
     private record Measurement(long queryCount, long elapsedMs) {
+    }
+
+    private void clearDashboardCache() {
+        Cache cache = cacheManager.getCache("dashboardStatistics");
+        if (cache != null) {
+            cache.clear();
+        }
     }
 }
