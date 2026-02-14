@@ -3,6 +3,7 @@ package com.erp.domain.notepad.service;
 import com.erp.domain.classroom.service.ClassroomService;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.entity.ParentKid;
+import com.erp.domain.kid.repository.ParentKidRepository;
 import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.kid.service.KidService;
 import com.erp.domain.member.entity.Member;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,7 @@ public class NotepadService {
     private final ClassroomService classroomService;
     private final KidService kidService;
     private final KidRepository kidRepository;
+    private final ParentKidRepository parentKidRepository;
     private final MemberService memberService;
     private final NotificationService notificationService;
 
@@ -148,9 +151,15 @@ public class NotepadService {
         if (notepad.isClassroomNotepad() && notepad.getClassroom() != null) {
             Long classroomId = notepad.getClassroom().getId();
             List<Kid> kids = kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId);
-            Set<Long> receiverIds = kids.stream()
-                    .flatMap(kid -> kidRepository.findParentsByKidId(kid.getId()).stream())
-                    .map(pk -> pk.getParent().getId())
+            List<Long> kidIds = kids.stream()
+                    .map(Kid::getId)
+                    .toList();
+
+            if (kidIds.isEmpty()) {
+                return;
+            }
+
+            Set<Long> receiverIds = parentKidRepository.findDistinctParentIdsByKidIds(kidIds).stream()
                     .collect(Collectors.toSet());
             notificationService.notifyWithLink(receiverIds.stream().toList(), NotificationType.NOTEPAD_CREATED, title, content, linkUrl);
             return;
@@ -204,8 +213,7 @@ public class NotepadService {
      * 유치원별 알림장 목록 조회 (페이지)
      */
     public Page<NotepadResponse> getNotepadsByKindergarten(Long kindergartenId, Pageable pageable) {
-        return notepadRepository.findByKindergartenId(kindergartenId, pageable)
-                .map(notepad -> NotepadResponse.from(notepad, 0));
+        return mapWithReadCounts(notepadRepository.findByKindergartenId(kindergartenId, pageable));
     }
 
     /**
@@ -215,8 +223,7 @@ public class NotepadService {
         // 반 존재 확인
         classroomService.getClassroom(classroomId);
 
-        return notepadRepository.findClassroomNotepads(classroomId, pageable)
-                .map(notepad -> NotepadResponse.from(notepad, 0));
+        return mapWithReadCounts(notepadRepository.findClassroomNotepads(classroomId, pageable));
     }
 
     /**
@@ -226,8 +233,7 @@ public class NotepadService {
         // 원생 존재 확인
         kidService.getKid(kidId);
 
-        return notepadRepository.findKidNotepads(kidId, pageable)
-                .map(notepad -> NotepadResponse.from(notepad, 0));
+        return mapWithReadCounts(notepadRepository.findKidNotepads(kidId, pageable));
     }
 
     /**
@@ -237,11 +243,7 @@ public class NotepadService {
         classroomService.getClassroom(classroomId);
         kidService.getKid(kidId);
 
-        return notepadRepository.findNotepadsForParent(classroomId, kidId, pageable)
-                .map(notepad -> {
-                    int readCount = notepadRepository.findReadConfirmsByNotepadId(notepad.getId()).size();
-                    return NotepadResponse.from(notepad, readCount);
-                });
+        return mapWithReadCounts(notepadRepository.findNotepadsForParent(classroomId, kidId, pageable));
     }
 
     /**
@@ -264,8 +266,7 @@ public class NotepadService {
                 .distinct()
                 .toList();
 
-        return notepadRepository.findNotepadsForParentKids(classroomIds, kidIds, pageable)
-                .map(notepad -> NotepadResponse.from(notepad, 0));
+        return mapWithReadCounts(notepadRepository.findNotepadsForParentKids(classroomIds, kidIds, pageable));
     }
 
 
@@ -338,7 +339,32 @@ public class NotepadService {
      * 알림장 Response 변환
      */
     public NotepadResponse toResponse(Notepad notepad) {
-        int readCount = notepadRepository.findReadConfirmsByNotepadId(notepad.getId()).size();
+        int readCount = loadReadCountMap(List.of(notepad.getId())).getOrDefault(notepad.getId(), 0);
         return NotepadResponse.from(notepad, readCount);
+    }
+
+    private Page<NotepadResponse> mapWithReadCounts(Page<Notepad> notepads) {
+        List<Long> notepadIds = notepads.getContent().stream()
+                .map(Notepad::getId)
+                .toList();
+        Map<Long, Integer> readCountMap = loadReadCountMap(notepadIds);
+
+        return notepads.map(notepad -> NotepadResponse.from(
+                notepad,
+                readCountMap.getOrDefault(notepad.getId(), 0)
+        ));
+    }
+
+    private Map<Long, Integer> loadReadCountMap(List<Long> notepadIds) {
+        if (notepadIds == null || notepadIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+
+        Map<Long, Integer> readCountMap = new java.util.HashMap<>();
+        List<NotepadRepository.NotepadReadCount> readCounts = notepadRepository.countReadConfirmsByNotepadIds(notepadIds);
+        for (NotepadRepository.NotepadReadCount readCount : readCounts) {
+            readCountMap.put(readCount.getNotepadId(), Math.toIntExact(readCount.getReadCount()));
+        }
+        return readCountMap;
     }
 }

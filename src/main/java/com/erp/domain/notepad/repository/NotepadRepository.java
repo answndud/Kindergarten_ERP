@@ -19,6 +19,11 @@ import java.util.Optional;
 @Repository
 public interface NotepadRepository extends JpaRepository<Notepad, Long> {
 
+    interface NotepadReadCount {
+        Long getNotepadId();
+        long getReadCount();
+    }
+
     /**
      * 유치원별 알림장 목록 조회 (최신순)
      */
@@ -90,6 +95,12 @@ public interface NotepadRepository extends JpaRepository<Notepad, Long> {
      */
     @Query("SELECT rc FROM NotepadReadConfirm rc WHERE rc.notepad.id = :notepadId")
     List<NotepadReadConfirm> findReadConfirmsByNotepadId(@Param("notepadId") Long notepadId);
+
+    @Query("SELECT rc.notepad.id AS notepadId, COUNT(rc) AS readCount " +
+            "FROM NotepadReadConfirm rc " +
+            "WHERE rc.notepad.id IN :notepadIds " +
+            "GROUP BY rc.notepad.id")
+    List<NotepadReadCount> countReadConfirmsByNotepadIds(@Param("notepadIds") List<Long> notepadIds);
 
     /**
      * 특정 학부모가 읽은 알림장 목록

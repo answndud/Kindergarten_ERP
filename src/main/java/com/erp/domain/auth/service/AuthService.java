@@ -17,7 +17,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh:";
 
     private final MemberService memberService;
     private final AuthenticationManager authenticationManager;
@@ -69,8 +70,7 @@ public class AuthService {
             String refreshToken = jwtTokenProvider.createRefreshToken(email, member.getRole().getKey());
 
             // 4. Refresh Token을 Redis에 저장
-            String tokenId = UUID.randomUUID().toString();
-            String refreshTokenKey = "refresh:" + email + ":" + tokenId;
+            String refreshTokenKey = getRefreshTokenKey(email);
             redisTemplate.opsForValue().set(
                     refreshTokenKey,
                     refreshToken,
@@ -93,8 +93,8 @@ public class AuthService {
      * 로그아웃
      */
     public void logout(String email, HttpServletResponse response) {
-        // 1. Redis에서 Refresh Token 삭제 (모든 토큰)
-        redisTemplate.delete(redisTemplate.keys("refresh:" + email + ":*"));
+        // 1. Redis에서 Refresh Token 삭제
+        redisTemplate.delete(getRefreshTokenKey(email));
 
         // 2. 쿠키 삭제
         expireCookie(response, jwtTokenProvider.getAccessTokenCookieName());
@@ -113,9 +113,13 @@ public class AuthService {
         // 2. 이메일 추출
         String email = jwtTokenProvider.getEmail(refreshToken);
 
-        // 3. Redis에서 Refresh Token 존재 확인
-        Boolean exists = redisTemplate.hasKey("refresh:" + email + ":*");
-        if (exists == null || !exists) {
+        // 3. Redis에서 Refresh Token 일치 확인
+        String refreshTokenKey = getRefreshTokenKey(email);
+        Object savedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
+        if (!(savedRefreshToken instanceof String storedToken)) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+        if (!storedToken.equals(refreshToken)) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
@@ -153,5 +157,9 @@ public class AuthService {
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
+    }
+
+    private String getRefreshTokenKey(String email) {
+        return REFRESH_TOKEN_KEY_PREFIX + email;
     }
 }
