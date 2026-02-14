@@ -323,6 +323,8 @@ docker-compose down -v
 | [project_diary.md](docs/project_diary.md) | 개발 일지 (면접 대비) |
 | [project_summary.md](docs/project_summary.md) | 기존 프로젝트 분석 |
 | [springboot_tutorial.md](docs/springboot_tutorial.md) | Spring Boot 튜토리얼 |
+| [2026-02-14-performance-story-script.md](docs/00_project/2026-02-14-performance-story-script.md) | 성능 개선 발표/면접 스크립트 |
+| [2026-02-14-performance-interview-qa.md](docs/00_project/2026-02-14-performance-interview-qa.md) | 성능 면접 Q&A (10문항) |
 
 ---
 
