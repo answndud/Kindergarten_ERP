@@ -113,7 +113,7 @@ public class AuthApiController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MemberResponse>> getCurrentMember(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        com.erp.domain.member.entity.Member member = memberService.getMemberById(userDetails.getMemberId());
+        com.erp.domain.member.entity.Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(MemberResponse.from(member)));

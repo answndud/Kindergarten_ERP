@@ -9,50 +9,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
                         primary: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            200: '#99f6e4',
-                            300: '#5eead4',
-                            400: '#2dd4bf',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                            800: '#115e59',
-                            900: '#134e4a',
+                            50: '#F3FBF7',
+                            100: '#E2F5EB',
+                            200: '#C7EBD9',
+                            300: '#A4DEC2',
+                            400: '#79CCA5',
+                            500: '#56B88C',
+                            600: '#3F9C73',
+                            700: '#327D5E',
+                            800: '#26624A',
+                            900: '#1D4D3A',
                         }
                     }
                 }
             }
         }
     </script>
-
-    <!-- Google Fonts - Pretendard -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Custom CSS -->
-    <style>
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'system-ui', 'Roboto', 'sans-serif';
-        }
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen">
 
     <!-- Header -->
     <header th:replace="~{fragments/header :: header}"></header>
 
     <!-- Main Content -->
-    <main class="py-8">
+    <main class="app-main section-enter">
         <div th:replace="${content}"></div>
     </main>
 

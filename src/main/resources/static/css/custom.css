@@ -1,13 +1,37 @@
-/**
- * 유치원 ERP - 커스텀 CSS
- * Tailwind CSS로 커버되지 않는 스타일
- */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
-/* ========================================
-   기본 설정
-   ======================================== */
+/* Kindergarten ERP - Global Design System */
+
+:root {
+    --font-brand: "Space Grotesk", "Noto Sans KR", "Pretendard", sans-serif;
+    --bg-base: #eef3ef;
+    --bg-soft: #f7faf8;
+    --surface: #ffffff;
+    --surface-tint: #f7fbf9;
+    --text-main: #152117;
+    --text-subtle: #4b5f50;
+    --line-soft: #d4e2d7;
+
+    --primary-100: #d8f0df;
+    --primary-300: #7ec09a;
+    --primary-500: #2d8a62;
+    --primary-700: #1f5a41;
+
+    --accent-100: #ffecc7;
+    --accent-400: #f2b441;
+
+    --radius-sm: 0.75rem;
+    --radius-md: 1rem;
+    --radius-lg: 1.4rem;
+
+    --shadow-soft: 0 10px 30px rgba(21, 39, 28, 0.08);
+    --shadow-float: 0 24px 46px rgba(24, 48, 34, 0.14);
+}
+
 * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #aac8b4 #e5eee7;
 }
 
 html {
@@ -15,320 +39,308 @@ html {
 }
 
 body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-brand);
+    color: var(--text-main);
+    background:
+        radial-gradient(1200px 500px at -8% -14%, rgba(126, 192, 154, 0.30) 0%, transparent 58%),
+        radial-gradient(900px 420px at 108% -18%, rgba(242, 180, 65, 0.24) 0%, transparent 56%),
+        linear-gradient(180deg, #f6fbf8 0%, var(--bg-base) 100%);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ========================================
-   Alpine.js x-cloak
-   ======================================== */
-[x-cloak] {
-    display: none !important;
+body.bg-gray-50 {
+    background:
+        radial-gradient(1100px 460px at 6% -6%, rgba(126, 192, 154, 0.24) 0%, transparent 52%),
+        radial-gradient(880px 360px at 100% -12%, rgba(242, 180, 65, 0.16) 0%, transparent 55%),
+        linear-gradient(180deg, #f7fbf8 0%, var(--bg-base) 100%) !important;
 }
 
-/* ========================================
-   HTMX 로딩 인디케이터
-   ======================================== */
-.htmx-indicator {
-    display: none;
+.bg-white {
+    background-color: rgba(255, 255, 255, 0.92) !important;
 }
 
-.htmx-request .htmx-indicator {
-    display: inline;
+.bg-gray-50 {
+    background-color: var(--bg-soft) !important;
 }
 
-.htmx-request.htmx-indicator {
-    display: inline;
+.border-gray-100,
+.border-gray-200,
+.divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--line-soft) !important;
 }
 
-/* ========================================
-   HTMX 스왑 애니메이션
-   ======================================== */
-.fade-in {
-    animation: fadeIn 0.3s ease-in-out;
+.text-gray-900 {
+    color: var(--text-main) !important;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
+.text-gray-800 {
+    color: #273629 !important;
+}
+
+.text-gray-700 {
+    color: #344939 !important;
+}
+
+.text-gray-600,
+.text-gray-500 {
+    color: var(--text-subtle) !important;
+}
+
+.text-primary-600,
+.text-primary-700,
+.hover\:text-primary-600:hover,
+.hover\:text-primary-700:hover {
+    color: var(--primary-500) !important;
+}
+
+.bg-primary-100 {
+    background-color: var(--primary-100) !important;
+}
+
+.bg-primary-50 {
+    background-color: #edf7f1 !important;
+}
+
+.bg-gradient-primary {
+    color: #ffffff;
+    background: linear-gradient(130deg, var(--primary-500) 0%, #236145 62%, #1c4d38 100%) !important;
+    box-shadow: 0 12px 26px rgba(36, 95, 69, 0.35);
+}
+
+.bg-gradient-primary:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.04);
+}
+
+.rounded-lg {
+    border-radius: var(--radius-sm) !important;
+}
+
+.rounded-xl {
+    border-radius: var(--radius-md) !important;
+}
+
+.rounded-2xl {
+    border-radius: var(--radius-lg) !important;
+}
+
+.shadow-sm {
+    box-shadow: var(--shadow-soft) !important;
+}
+
+.shadow-lg,
+.shadow-xl {
+    box-shadow: var(--shadow-float) !important;
+}
+
+input,
+select,
+textarea {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: var(--line-soft) !important;
+    color: var(--text-main);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #86a18f;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+    transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid #7dbf98;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 3px rgba(125, 191, 152, 0.22);
+}
+
+/* App shell */
+.app-header {
+    backdrop-filter: blur(14px);
+    background: rgba(250, 253, 251, 0.80);
+    border-bottom: 1px solid rgba(182, 205, 189, 0.46);
+}
+
+.app-main {
+    width: min(1200px, 100% - 2rem);
+    margin: 2.2rem auto;
+}
+
+.app-surface {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.90) 0%, rgba(249, 252, 250, 0.92) 100%);
+    border: 1px solid rgba(183, 207, 192, 0.52);
+    box-shadow: var(--shadow-soft);
+    border-radius: 1.5rem;
+}
+
+.app-nav-link {
+    font-size: .93rem;
+    color: #355241;
+    font-weight: 600;
+    padding: .5rem .75rem;
+    border-radius: .75rem;
+}
+
+.app-nav-link:hover {
+    background: #edf6f0;
+    color: var(--primary-700);
+}
+
+.app-nav-link.active {
+    background: #dff0e6;
+    color: #1f5a41;
+}
+
+.section-enter {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: sectionIn .46s ease forwards;
+}
+
+.section-enter:nth-of-type(2) {
+    animation-delay: .06s;
+}
+
+.section-enter:nth-of-type(3) {
+    animation-delay: .12s;
+}
+
+.section-enter:nth-of-type(4) {
+    animation-delay: .18s;
+}
+
+@keyframes sectionIn {
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-/* ========================================
-   스크롤바 스타일링
-   ======================================== */
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    padding: .28rem .62rem;
+    border-radius: 999px;
+    font-size: .74rem;
+    font-weight: 700;
+    background: #e7f4ec;
+    color: var(--primary-700);
+}
+
+[data-tone="accent"] {
+    background: #fff3d8;
+    color: #8f5d04;
+}
+
+/* auth pages */
+.auth-screen {
+    background:
+        radial-gradient(circle at 8% 8%, rgba(126, 192, 154, .32) 0, rgba(221, 243, 232, 0) 32%),
+        radial-gradient(circle at 95% 0, rgba(242, 180, 65, .23) 0, rgba(234, 247, 241, 0) 36%),
+        linear-gradient(180deg, #f7fbf8 0%, #eef5f0 100%);
+}
+
+.auth-card {
+    border-color: var(--line-soft) !important;
+    box-shadow: var(--shadow-soft);
+}
+
+.auth-card:hover {
+    box-shadow: var(--shadow-float);
+}
+
+/* utilities */
+.hover\:bg-gray-50:hover {
+    background-color: #edf6f0 !important;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table thead {
+    background: #edf6f0;
+}
+
+table thead th {
+    color: #395341;
+}
+
+table tbody tr:hover {
+    background: #f6faf8;
+}
+
+.modal-backdrop {
+    background-color: rgba(17, 28, 20, 0.46);
+    backdrop-filter: blur(5px);
+}
+
+.toast {
+    animation: slideInRight .3s ease-out, fadeOut .3s ease-in 2.7s forwards;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-20px); }
+}
+
+/* HTMX / Alpine */
+[x-cloak] {
+    display: none !important;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    display: inline;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
+    background: #e5eee7;
+    border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-    transition: background 0.2s ease;
+    background: #a7c2af;
+    border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #7d9f8b;
 }
 
-/* Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 #f1f5f9;
-}
-
-/* ========================================
-   토스트 메시지
-   ======================================== */
-.toast {
-    animation: slideInRight 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-}
-
-/* ========================================
-   테이블 스타일
-   ======================================== */
-.table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* ========================================
-   모달 백드롭
-   ======================================== */
-.modal-backdrop {
-    background-color: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(4px);
-}
-
-/* ========================================
-   로딩 스피너
-   ======================================== */
-.spinner {
-    border: 3px solid #f3f4f6;
-    border-top: 3px solid #14b8a6;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 0.8s linear infinite;
-}
-
-.spinner-lg {
-    width: 40px;
-    height: 40px;
-    border-width: 4px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* ========================================
-   버튼 호버 효과
-   ======================================== */
-.btn-hover {
-    transition: all 0.2s ease-in-out;
-}
-
-.btn-hover:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
-}
-
-.btn-hover:active {
-    transform: translateY(0);
-}
-
-/* ========================================
-   카드 호버 효과
-   ======================================== */
-.card-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* ========================================
-   포커스 스타일 (접근성)
-   ======================================== */
-input:focus,
-textarea:focus,
-select:focus,
-button:focus {
-    outline: none;
-}
-
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible,
-button:focus-visible,
-a:focus-visible {
-    outline: 2px solid #14b8a6;
-    outline-offset: 2px;
-}
-
-/* ========================================
-   링크 스타일
-   ======================================== */
-a {
-    transition: color 0.2s ease;
-}
-
-/* ========================================
-   프린트 스타일
-   ======================================== */
-@media print {
-    .no-print {
-        display: none !important;
+@media (max-width: 768px) {
+    .app-main {
+        width: calc(100% - 1rem);
+        margin: 1rem auto 5.5rem;
     }
 
-    body {
-        background: white !important;
+    .app-surface {
+        border-radius: 1.15rem;
     }
-
-    a[href]:after {
-        content: " (" attr(href) ")";
-    }
-}
-
-/* ========================================
-   다크 모드 지준 (준비중)
-   ======================================== */
-@media (prefers-color-scheme: dark) {
-    /* 다크 모드 스타일은 추후 구현 */
-}
-
-/* ========================================
-   애니메이션 유틸리티
-   ======================================== */
-.animate-on-scroll {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.animate-on-scroll.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* ========================================
-   글래스모피즘 효과
-   ======================================== */
-.glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* ========================================
-   그라디언트 텍스트
-   ======================================== */
-.gradient-text {
-    background: linear-gradient(135deg, #14b8a6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* ========================================
-   쉐이크 애니메이션 (에러 등)
-   ======================================== */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-    20%, 40%, 60%, 80% { transform: translateX(4px); }
-}
-
-.shake {
-    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-/* ========================================
-   펄스 애니메이션
-   ======================================== */
-@keyframes pulse-ring {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7);
-    }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 10px rgba(20, 184, 166, 0);
-    }
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
-    }
-}
-
-.pulse-ring {
-    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* ========================================
-   리본 뱃지
-   ======================================== */
-.ribbon {
-    position: relative;
-    overflow: hidden;
-}
-
-.ribbon::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 40px 40px 0;
-    border-color: transparent #14b8a6 transparent transparent;
-}
-
-.ribbon::after {
-    content: attr(data-badge);
-    position: absolute;
-    top: 8px;
-    right: -30px;
-    transform: rotate(45deg);
-    font-size: 10px;
-    font-weight: bold;
-    color: white;
 }

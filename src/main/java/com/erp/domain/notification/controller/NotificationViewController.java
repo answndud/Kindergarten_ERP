@@ -40,10 +40,10 @@ public class NotificationViewController {
     @GetMapping("/notifications/fragments/list")
     public String list(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "false") boolean unreadOnly,
-            @RequestParam(required = false) NotificationType type,
-            @RequestParam(defaultValue = "false") boolean showFilters,
+            @RequestParam(name = "limit", defaultValue = "10") int limit,
+            @RequestParam(name = "unreadOnly", defaultValue = "false") boolean unreadOnly,
+            @RequestParam(name = "type", required = false) NotificationType type,
+            @RequestParam(name = "showFilters", defaultValue = "false") boolean showFilters,
             Model model) {
 
         if (userDetails == null) {

@@ -32,7 +32,7 @@ public class MemberApiController {
     public ResponseEntity<ApiResponse<MemberResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Member member = memberService.getMemberById(userDetails.getMemberId());
+        Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(MemberResponse.from(member)));
     }
 
@@ -71,7 +71,7 @@ public class MemberApiController {
             @Valid @RequestBody UpdateProfileRequest request
     ) {
         memberService.updateProfile(userDetails.getMemberId(), request.getName(), request.getPhone());
-        Member updatedMember = memberService.getMemberById(userDetails.getMemberId());
+        Member updatedMember = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(MemberResponse.from(updatedMember)));
     }
 

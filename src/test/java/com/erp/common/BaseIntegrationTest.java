@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -37,6 +36,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.mockito.Mockito;
@@ -94,10 +94,10 @@ public abstract class BaseIntegrationTest {
     protected TestData testData;
 
     // Redis는 테스트에서 사용하지 않도록 mock 처리
-    @MockBean
+    @MockitoBean
     protected RedisConnectionFactory redisConnectionFactory;
 
-    @MockBean
+    @MockitoBean
     protected RedisTemplate<String, Object> redisTemplate;
 
     protected Member principalMember;
@@ -115,11 +115,13 @@ public abstract class BaseIntegrationTest {
         testData.cleanup();
         resetIdentity();
 
-        ValueOperations<String, Object> valueOperations = Mockito.mock(ValueOperations.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, Object> valueOperations =
+                (ValueOperations<String, Object>) Mockito.mock(ValueOperations.class);
         Mockito.when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         Mockito.when(redisTemplate.hasKey(Mockito.anyString())).thenReturn(true);
         Mockito.when(redisTemplate.keys(Mockito.anyString())).thenReturn(Collections.emptySet());
-        Mockito.when(redisTemplate.delete(Mockito.anyCollection())).thenReturn(0L);
+        Mockito.when(redisTemplate.delete(Mockito.<String>anyCollection())).thenReturn(0L);
         Mockito.when(redisTemplate.delete(Mockito.anyString())).thenReturn(true);
 
         // 테스트 데이터 초기화

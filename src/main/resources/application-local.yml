@@ -18,10 +18,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate  # Flyway 사용하므로 validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   # Redis 설정
   data:
@@ -45,9 +45,9 @@ jwt:
   cookie-secure: false
 
 # 로깅 설정 (개발용 - 상세)
-logging:
-  level:
-    root: INFO
-    com.erp: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE  # 바인딩 파라미터 출력
+#logging:
+#  level:
+#    root: INFO
+#    com.erp: DEBUG
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.orm.jdbc.bind: TRACE  # 바인딩 파라미터 출력

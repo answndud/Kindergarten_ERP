@@ -2,157 +2,174 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
 <body>
 <th:block th:fragment="header">
-    <!-- Header -->
-    <header class="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200">
+    <header class="app-header sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <div class="flex-shrink-0">
-                    <a href="/" class="flex items-center gap-2 group">
-                        <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                            <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
-                        </div>
-                        <span class="sr-only">KinderCare</span>
-                    </a>
-                </div>
-
-                <!-- Desktop Navigation -->
-                <nav class="hidden md:flex items-center gap-4">
-                    <!-- 인증 전 -->
-                    <div th:if="${#authentication == null or #authentication.name == 'anonymousUser'}" class="flex items-center gap-3">
-                        <a href="/login" class="py-2 px-4 text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors rounded-lg hover:bg-gray-50">
-                            로그인
-                        </a>
-                        <a href="/signup" class="py-2.5 px-5 text-sm font-medium text-white bg-gradient-primary rounded-lg hover:opacity-90 transition-opacity shadow-lg hover:shadow-xl">
-                            회원가입
-                        </a>
+            <div class="h-16 flex items-center justify-between gap-4">
+                <a href="/" class="flex items-center gap-3 group">
+                    <span class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg group-hover:shadow-xl">
+                        <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
+                    </span>
+                    <div class="hidden sm:block leading-tight">
+                        <p class="text-sm font-bold tracking-tight text-gray-900">KinderCare ERP</p>
+                        <p class="text-[11px] text-gray-500">Kindergarten Operations</p>
                     </div>
+                </a>
 
-                    <!-- 인증 후 -->
-                    <div th:if="${#authentication != null and #authentication.name != 'anonymousUser'}" class="flex items-center gap-3">
-                        <!-- 알림 버튼 -->
-                        <div class="relative" x-data="{ open: false }">
-                            <button type="button"
-                                    @click="open = !open; if (open && window.htmx) { htmx.trigger(document.body, 'notifications-changed'); }"
-                                    @click.outside="open = false"
-                                    class="p-2.5 text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors relative">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                                </svg>
-                                <span id="notification-badge"
-                                      hx-get="/notifications/fragments/badge"
-                                      hx-trigger="load, notifications-changed from:body"
-                                      hx-swap="outerHTML"
-                                      class="absolute -top-1 -right-1"></span>
-                            </button>
-
-                            <div x-show="open" x-transition class="absolute right-0 mt-2 z-50">
-                                 <div id="notification-list"
-                                       hx-get="/notifications/fragments/list?limit=10&unreadOnly=true"
-                                       hx-trigger="load, notifications-changed from:body"
-                                       hx-swap="outerHTML"></div>
-
-                            </div>
-                        </div>
-
-                        <!-- 사용자 드롭다운 -->
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" @click.outside="open = false" type="button" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                                <div class="w-9 h-9 bg-gradient-primary rounded-full flex items-center justify-center">
-                                    <span class="text-sm font-semibold text-white" th:text="${#authentication.name?.toUpperCase()?.charAt(0)}">U</span>
-                                </div>
-                                <span class="hidden lg:block text-sm font-medium text-gray-700" th:text="${#authentication.name}">user@example.com</span>
-                                <svg class="w-4 h-4 text-gray-400" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
-                                </svg>
-                            </button>
-
-                            <!-- Dropdown Menu -->
-                            <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-50">
-                                <a href="/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                    프로필
-                                </a>
-                                <a href="/settings" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                    설정
-                                </a>
-                                <div class="border-t border-gray-200 my-1"></div>
-                                <form th:action="@{/logout}" method="post">
-                                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                        </svg>
-                                        로그아웃
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                <nav class="hidden md:flex items-center gap-1" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">
+                    <a href="/dashboard" class="app-nav-link js-nav-link" data-nav-pattern="/dashboard">대시보드</a>
+                    <a href="/attendance" class="app-nav-link js-nav-link" data-nav-pattern="/attendance">출결</a>
+                    <a href="/notepad" class="app-nav-link js-nav-link" data-nav-pattern="/notepad">알림장</a>
+                    <a href="/announcements" class="app-nav-link js-nav-link" data-nav-pattern="/announcement,/announcements">공지</a>
+                    <a href="/calendar" class="app-nav-link js-nav-link" data-nav-pattern="/calendar">캘린더</a>
                 </nav>
 
-                <!-- Mobile menu button -->
-                <div class="md:hidden">
-                    <button type="button" x-data="{ mobileOpen: false }" @click="mobileOpen = !mobileOpen" class="p-2.5 inline-flex justify-center items-center gap-2 rounded-lg text-gray-600 hover:text-primary-600 hover:bg-gray-50 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 6h18M3 18h18"/>
-                        </svg>
-                    </button>
+                <div class="hidden md:flex items-center gap-2" th:if="${#authentication == null or #authentication.name == 'anonymousUser'}">
+                    <a href="/login" class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">로그인</a>
+                    <a href="/signup" class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-primary text-white">회원가입</a>
                 </div>
+
+                <div class="hidden md:flex items-center gap-2" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">
+                    <div class="relative">
+                        <button type="button"
+                                id="headerNotificationBtn"
+                                class="p-2.5 rounded-lg text-gray-600 hover:text-primary-700 hover:bg-gray-50 relative"
+                                aria-label="알림">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span id="notification-badge"
+                                  hx-get="/notifications/fragments/badge"
+                                  hx-trigger="load, notifications-changed from:body"
+                                  hx-swap="outerHTML"
+                                  class="absolute -top-1 -right-1"></span>
+                        </button>
+
+                        <div id="headerNotificationPanel" class="hidden absolute right-0 mt-2 z-50">
+                            <div id="notification-list"
+                                 hx-get="/notifications/fragments/list?limit=10&unreadOnly=true"
+                                 hx-trigger="load, notifications-changed from:body"
+                                 hx-swap="outerHTML"></div>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <button type="button"
+                                id="headerUserBtn"
+                                class="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-gray-50">
+                            <span class="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-bold text-white"
+                                  th:text="${#strings.toUpperCase(#strings.substring(currentMember?.name ?: 'U', 0, 1))}">U</span>
+                            <div class="text-left leading-tight">
+                                <p class="text-sm font-semibold text-gray-900" th:text="${currentMember?.name ?: #authentication.name}">사용자</p>
+                                <p class="text-[11px] text-gray-500" th:text="${currentMember?.role?.title ?: '사용자'}">역할</p>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/>
+                            </svg>
+                        </button>
+
+                        <div id="headerUserPanel" class="hidden absolute right-0 mt-2 w-56 app-surface py-2 z-50">
+                            <a href="/profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">프로필</a>
+                            <a href="/settings" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">설정</a>
+                            <a href="/applications/pending" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">승인/신청</a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <form th:action="@{/logout}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">로그아웃</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="headerMobileBtn" class="md:hidden p-2.5 rounded-lg hover:bg-gray-50" aria-label="메뉴">
+                    <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 6h18M3 18h18" />
+                    </svg>
+                </button>
             </div>
         </div>
 
-        <!-- Mobile Menu -->
-        <div x-data="{ mobileOpen: false }" x-show="mobileOpen" @click.outside="mobileOpen = false" x-transition class="md:hidden hidden bg-white border-t border-gray-200">
-            <nav class="px-4 py-4 space-y-1">
-                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    대시보드
-                </a>
-                <a href="/kids" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 011 0 7.75"/>
-                    </svg>
-                    원생관리
-                </a>
-                <a href="/attendance" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-                        <line x1="16" x2="16" y1="2" y2="6"/>
-                        <line x1="8" x2="8" y1="2" y2="6"/>
-                        <line x1="3" x2="21" y1="10" y2="10"/>
-                    </svg>
-                    출결관리
-                </a>
-                <a href="/calendar" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 2v4m8-4v4M3 10h18"/>
-                    </svg>
-                    일정
-                </a>
-                <a href="/notepad" class="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                    알림장
-                </a>
-            </nav>
+        <div id="headerMobilePanel" class="hidden md:hidden border-t border-gray-200 bg-white/95 backdrop-blur px-4 py-4 space-y-2">
+            <a href="/dashboard" class="block app-nav-link js-nav-link" data-nav-pattern="/dashboard">대시보드</a>
+            <a href="/attendance" class="block app-nav-link js-nav-link" data-nav-pattern="/attendance">출결</a>
+            <a href="/notepad" class="block app-nav-link js-nav-link" data-nav-pattern="/notepad">알림장</a>
+            <a href="/announcements" class="block app-nav-link js-nav-link" data-nav-pattern="/announcement,/announcements">공지</a>
+            <a href="/calendar" class="block app-nav-link js-nav-link" data-nav-pattern="/calendar">캘린더</a>
+            <a href="/profile" class="block app-nav-link js-nav-link" data-nav-pattern="/profile" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">프로필</a>
+            <a href="/settings" class="block app-nav-link js-nav-link" data-nav-pattern="/settings" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">설정</a>
+            <a href="/applications/pending" class="block app-nav-link js-nav-link" data-nav-pattern="/applications" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">승인/신청</a>
+            <form th:if="${#authentication != null and #authentication.name != 'anonymousUser'}" th:action="@{/logout}" method="post" class="pt-2 border-t border-gray-200">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="w-full text-left px-4 py-2 app-nav-link text-red-600 hover:bg-red-50">로그아웃</button>
+            </form>
+            <div class="flex items-center gap-2 px-4 pt-2" th:if="${#authentication == null or #authentication.name == 'anonymousUser'}">
+                <a href="/login" class="app-nav-link">로그인</a>
+                <a href="/signup" class="px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-primary text-white">회원가입</a>
+            </div>
         </div>
     </header>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileBtn = document.getElementById('headerMobileBtn');
+            const mobilePanel = document.getElementById('headerMobilePanel');
+            const userBtn = document.getElementById('headerUserBtn');
+            const userPanel = document.getElementById('headerUserPanel');
+            const notificationBtn = document.getElementById('headerNotificationBtn');
+            const notificationPanel = document.getElementById('headerNotificationPanel');
+
+            const closePanel = (panel) => {
+                if (panel) panel.classList.add('hidden');
+            };
+
+            const togglePanel = (panel) => {
+                if (!panel) return;
+                panel.classList.toggle('hidden');
+            };
+
+            if (mobileBtn) {
+                mobileBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    togglePanel(mobilePanel);
+                });
+            }
+
+            if (userBtn) {
+                userBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    closePanel(notificationPanel);
+                    togglePanel(userPanel);
+                });
+            }
+
+            if (notificationBtn) {
+                notificationBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    closePanel(userPanel);
+                    togglePanel(notificationPanel);
+                    if (window.htmx && notificationPanel && !notificationPanel.classList.contains('hidden')) {
+                        htmx.trigger(document.body, 'notifications-changed');
+                    }
+                });
+            }
+
+            document.addEventListener('click', (event) => {
+                if (userPanel && userBtn && !userPanel.contains(event.target) && !userBtn.contains(event.target)) {
+                    closePanel(userPanel);
+                }
+
+                if (notificationPanel && notificationBtn && !notificationPanel.contains(event.target) && !notificationBtn.contains(event.target)) {
+                    closePanel(notificationPanel);
+                }
+
+                if (mobilePanel && mobileBtn && !mobilePanel.contains(event.target) && !mobileBtn.contains(event.target)) {
+                    closePanel(mobilePanel);
+                }
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

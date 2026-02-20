@@ -86,6 +86,45 @@ window.fetch = function (input, init = {}) {
     });
 };
 
+function normalizePath(path) {
+    if (!path) {
+        return '/';
+    }
+    if (path.length > 1 && path.endsWith('/')) {
+        return path.slice(0, -1);
+    }
+    return path;
+}
+
+function isMatchingNavPath(currentPath, pattern) {
+    if (!pattern) {
+        return false;
+    }
+    const normalizedPattern = normalizePath(pattern);
+    if (normalizedPattern === '/') {
+        return currentPath === '/';
+    }
+    return currentPath === normalizedPattern || currentPath.startsWith(`${normalizedPattern}/`);
+}
+
+function applyActiveNavLinks() {
+    const currentPath = normalizePath(window.location.pathname);
+    const links = document.querySelectorAll('.js-nav-link[data-nav-pattern]');
+
+    links.forEach((link) => {
+        const rawPatterns = (link.getAttribute('data-nav-pattern') || '')
+            .split(',')
+            .map((pattern) => pattern.trim())
+            .filter(Boolean);
+
+        const active = rawPatterns.some((pattern) => isMatchingNavPath(currentPath, pattern));
+        link.classList.toggle('active', active);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', applyActiveNavLinks);
+document.addEventListener('htmx:afterSwap', applyActiveNavLinks);
+
 // HTMX 이벤트 로깅 (개발용)
 document.addEventListener('htmx:beforeRequest', function (evt) {
     console.log('HTMX Request:', evt.detail.xhr);

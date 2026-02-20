@@ -20,6 +20,42 @@
 
 ## 2. 시작하기
 
+### 개발 환경 실행 방법 (중요)
+
+- 이 프로젝트는 **터미널에서 Gradle로 실행**하는 것을 권장합니다.
+- 권장 실행 명령어:
+
+```bash
+./gradlew clean bootRun --args='--spring.profiles.active=local'
+```
+
+- 간단 실행(이미 빌드된 상태):
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+- 중지: 터미널에서 `Ctrl + C`
+
+#### 왜 터미널 실행을 권장하나요?
+
+- VSCode/IDE Run 버튼은 일부 환경에서 IDE 전용 컴파일 산출물(`bin/main`)로 실행되어,
+  Lombok/Annotation Processing 불일치로 런타임 에러가 날 수 있습니다.
+- Gradle(`bootRun`)은 프로젝트 표준 빌드 경로(`build/classes`)를 사용하므로 가장 안정적입니다.
+
+#### 실행 전 준비 (최초 1회)
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+- MySQL/Redis가 떠 있어야 정상 실행됩니다.
+- 종료 시:
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
 ### 공통 진입
 
 1. `/signup` 에서 역할을 선택해 회원가입
@@ -34,6 +70,18 @@
 - 그 외: `/`
 
 즉, 가입 후 바로 모든 기능이 열리지 않고, **승인/배정 단계**가 먼저 진행됩니다.
+
+### 로컬 더미데이터 테스트 계정
+
+- 활성 프로필이 `local`이면 DataLoader가 아래 시드 계정을 기준으로 더미데이터를 관리합니다.
+- `principal@test.com`, `principal2@test.com` 시드 계정이 이미 있으면 중복 생성을 건너뜁니다.
+- 공통 비밀번호: `test1234!`
+
+| 역할 | 아이디(이메일) |
+|---|---|
+| 원장(PRINCIPAL) | `principal@test.com`, `principal2@test.com` |
+| 선생님(TEACHER) | `teacher1@test.com`, `teacher2@test.com`, `teacher3@test.com`, `teacher4@test.com` |
+| 학부모(PARENT) | `parent1@test.com`, `parent2@test.com`, `parent3@test.com`, `parent4@test.com`, `parent5@test.com`, `parent6@test.com` |
 
 ---
 
