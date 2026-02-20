@@ -68,29 +68,16 @@ public class AuthService {
 
             // 2. 회원 정보 조회
             Member member = memberService.getMemberByEmail(email);
-
-            // 3. 토큰 생성
-            String accessToken = jwtTokenProvider.createAccessToken(email, member.getRole().getKey());
-            String refreshToken = jwtTokenProvider.createRefreshToken(email, member.getRole().getKey());
-
-            // 4. Refresh Token을 Redis에 저장
-            String refreshTokenKey = getRefreshTokenKey(email);
-            redisTemplate.opsForValue().set(
-                    refreshTokenKey,
-                    refreshToken,
-                    7,
-                    TimeUnit.DAYS
-            );
-
-            // 5. 쿠키에 토큰 저장
-            addCookie(response, jwtTokenProvider.getAccessTokenCookieName(), accessToken,
-                    (int) (jwtTokenProvider.getAccessTokenValidity() / 1000));
-            addCookie(response, jwtTokenProvider.getRefreshTokenCookieName(), refreshToken,
-                    (int) (jwtTokenProvider.getRefreshTokenValidity() / 1000));
+            issueTokens(member, response);
 
         } catch (AuthenticationException e) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+    }
+
+    public void loginBySocial(Member member, HttpServletResponse response) {
+        authLoginBootstrapService.afterAuthenticated(member.getEmail());
+        issueTokens(member, response);
     }
 
     /**
@@ -166,5 +153,25 @@ public class AuthService {
 
     private String getRefreshTokenKey(String email) {
         return REFRESH_TOKEN_KEY_PREFIX + email;
+    }
+
+    private void issueTokens(Member member, HttpServletResponse response) {
+        String email = member.getEmail();
+
+        String accessToken = jwtTokenProvider.createAccessToken(email, member.getRole().getKey());
+        String refreshToken = jwtTokenProvider.createRefreshToken(email, member.getRole().getKey());
+
+        String refreshTokenKey = getRefreshTokenKey(email);
+        redisTemplate.opsForValue().set(
+                refreshTokenKey,
+                refreshToken,
+                7,
+                TimeUnit.DAYS
+        );
+
+        addCookie(response, jwtTokenProvider.getAccessTokenCookieName(), accessToken,
+                (int) (jwtTokenProvider.getAccessTokenValidity() / 1000));
+        addCookie(response, jwtTokenProvider.getRefreshTokenCookieName(), refreshToken,
+                (int) (jwtTokenProvider.getRefreshTokenValidity() / 1000));
     }
 }

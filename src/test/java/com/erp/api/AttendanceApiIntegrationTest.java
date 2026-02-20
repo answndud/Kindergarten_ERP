@@ -128,6 +128,18 @@ class AttendanceApiIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @WithMockUser(username = "teacher@test.com", roles = {"TEACHER"})
+        @DisplayName("반별 일별 출석 현황 조회 - 실패 (반 ID 누락)")
+        void getDailyAttendance_Fail_MissingClassroomId() throws Exception {
+            mockMvc.perform(get("/api/v1/attendance/daily")
+                            .param("date", "2025-01-13"))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("C001"));
+        }
+
+        @Test
         @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
         @DisplayName("원생별 월간 출석 목록 조회 - 성공")
         void getMonthlyAttendances_Success() throws Exception {

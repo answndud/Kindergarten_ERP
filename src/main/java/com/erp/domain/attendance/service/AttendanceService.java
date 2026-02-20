@@ -151,6 +151,7 @@ public class AttendanceService {
      */
     @Transactional
     public int bulkUpdateAttendance(BulkAttendanceRequest request) {
+        var classroom = classroomService.getClassroom(request.getClassroomId());
         List<Long> kidIds;
         if (request.getKidIds() == null || request.getKidIds().isEmpty()) {
             kidIds = kidService.getKidsByClassroom(request.getClassroomId()).stream()
@@ -172,8 +173,11 @@ public class AttendanceService {
                     request.getPickUpTime());
 
             attendanceRepository.save(attendance);
-            evictDashboardStatisticsByAttendance(attendance);
             updated++;
+        }
+
+        if (updated > 0) {
+            dashboardService.evictDashboardStatisticsCache(classroom.getKindergarten().getId());
         }
 
         return updated;

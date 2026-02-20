@@ -169,3 +169,19 @@ docker compose -f docker/docker-compose.yml down
   4) 개선 후 동일 시나리오 재측정
   5) 결과/트레이드오프 문서화
 - 문서에는 정량(숫자) + 정성(왜 이 선택을 했는지) 둘 다 포함한다.
+
+## 12) Execution Planning & Progress Tracking Rule (Mandatory)
+
+- 모든 개발 작업은 시작 전에 루트의 `PLAN.md`, `PROGRESS.md`를 먼저 확인한다.
+- 새 세션/다른 에이전트가 이어받을 때도 동일하게 `PLAN.md`, `PROGRESS.md`를 SSOT로 사용한다.
+- 작업 시작 시 `PLAN.md`에 아래 내용을 먼저 작성/갱신한다.
+  1) 목표/범위
+  2) 세부 작업 단계
+  3) 검증 계획(테스트/수동 시나리오)
+  4) 리스크 및 대응
+- 작업 진행 중에는 `PROGRESS.md`를 실시간으로 갱신한다.
+  - 상태: `TODO` / `IN_PROGRESS` / `DONE` / `BLOCKED`
+  - 각 항목에 시간, 수행 내용, 다음 액션을 남긴다.
+- 계획이 변경되면 `PLAN.md`를 먼저 업데이트하고, 변경 사유를 `PROGRESS.md`에 기록한다.
+- 기능 구현 완료 시 `PROGRESS.md`에 최종 검증 결과(실행 명령, 통과/실패, 후속 과제)를 남긴다.
+- 본 규칙은 OAuth2 작업 포함, 이후 모든 개발 프로세스에 기본 적용한다.

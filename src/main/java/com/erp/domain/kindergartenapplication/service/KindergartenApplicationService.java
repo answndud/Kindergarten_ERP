@@ -111,9 +111,7 @@ public class KindergartenApplicationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 원장이 해당 유치원의 소유자인지 확인
-        if (!principal.getKindergarten().getId().equals(application.getKindergarten().getId())) {
-            throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
-        }
+        validatePrincipalAccess(principal, application.getKindergarten().getId());
 
         // 지원서 승인
         application.approve(principal);
@@ -127,7 +125,7 @@ public class KindergartenApplicationService {
         notifyTeacherAboutApproval(teacher, application.getKindergarten());
 
         // 다른 대기 중인 지원서 자동 거절
-        rejectOtherPendingApplications(teacher.getId(), application.getKindergarten().getId(), principal);
+        rejectOtherPendingApplications(application.getId(), teacher.getId(), principal);
     }
 
     /**
@@ -146,9 +144,7 @@ public class KindergartenApplicationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 원장이 해당 유치원의 소유자인지 확인
-        if (!principal.getKindergarten().getId().equals(application.getKindergarten().getId())) {
-            throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
-        }
+        validatePrincipalAccess(principal, application.getKindergarten().getId());
 
         application.reject(request.reason(), principal);
 
@@ -192,9 +188,7 @@ public class KindergartenApplicationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 권한 확인
-        if (!principal.getKindergarten().getId().equals(kindergartenId)) {
-            throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
-        }
+        validatePrincipalAccess(principal, kindergartenId);
 
         List<KindergartenApplication> applications = applicationRepository.findPendingApplicationsByKindergartenId(kindergartenId);
         return applications.stream()
@@ -238,11 +232,11 @@ public class KindergartenApplicationService {
     /**
      * 다른 대기 중인 지원서 자동 거절
      */
-    private void rejectOtherPendingApplications(Long teacherId, Long kindergartenId, Member principal) {
+    private void rejectOtherPendingApplications(Long approvedApplicationId, Long teacherId, Member principal) {
         List<KindergartenApplication> otherApplications = applicationRepository
-                .findPendingApplicationsByKindergartenId(kindergartenId)
+                .findPendingApplicationsByTeacherId(teacherId)
                 .stream()
-                .filter(app -> !app.getTeacher().getId().equals(teacherId))
+                .filter(app -> !app.getId().equals(approvedApplicationId))
                 .toList();
 
         for (KindergartenApplication app : otherApplications) {
@@ -260,6 +254,12 @@ public class KindergartenApplicationService {
                         teacher.getName() + " 교사가 " + kindergarten.getName() + "에 지원했습니다.",
                         "/applications/pending"
                 ));
+    }
+
+    private void validatePrincipalAccess(Member principal, Long kindergartenId) {
+        if (principal.getKindergarten() == null || !principal.getKindergarten().getId().equals(kindergartenId)) {
+            throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
+        }
     }
 
     private void notifyTeacherAboutApproval(Member teacher, Kindergarten kindergarten) {

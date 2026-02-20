@@ -52,6 +52,22 @@ class PageAccessIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @DisplayName("구글 OAuth2 시작 URL - 접근 가능")
+        void oauth2GoogleAuthorization_Accessible() throws Exception {
+            mockMvc.perform(get("/oauth2/authorization/google"))
+                    .andDo(print())
+                    .andExpect(status().is3xxRedirection());
+        }
+
+        @Test
+        @DisplayName("카카오 OAuth2 시작 URL - 접근 가능")
+        void oauth2KakaoAuthorization_Accessible() throws Exception {
+            mockMvc.perform(get("/oauth2/authorization/kakao"))
+                    .andDo(print())
+                    .andExpect(status().is3xxRedirection());
+        }
+
+        @Test
         @DisplayName("알림장 페이지 - 리다이렉트 (로그인 필요)")
         void notepadPage_RedirectsToLogin() throws Exception {
             mockMvc.perform(get("/notepad"))

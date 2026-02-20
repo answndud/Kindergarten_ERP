@@ -65,7 +65,33 @@ class AnnouncementApiIntegrationTest extends BaseIntegrationTest {
                             .content(requestBody))
                     .andDo(print())
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.success").value(true));
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.writerName").value("김선생"));
+        }
+
+        @Test
+        @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
+        @DisplayName("공지사항 생성 - 실패 (다른 유치원에는 작성 불가)")
+        void createAnnouncement_Fail_DifferentKindergarten() throws Exception {
+            var anotherKindergarten = testData.createKindergarten();
+
+            String requestBody = """
+                    {
+                        "kindergartenId": %d,
+                        "title": "다른 유치원 공지",
+                        "content": "권한 검증",
+                        "isImportant": false
+                    }
+                    """.formatted(anotherKindergarten.getId());
+
+            mockMvc.perform(post("/api/v1/announcements")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("AP007"));
         }
 
         @Test

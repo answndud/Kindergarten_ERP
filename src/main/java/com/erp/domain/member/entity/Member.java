@@ -30,8 +30,15 @@ public class Member extends BaseEntity {
     /**
      * 비밀번호 (BCrypt 암호화)
      */
-    @Column(name = "password", nullable = false)
+    @Column(name = "password")
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    private MemberAuthProvider authProvider = MemberAuthProvider.LOCAL;
+
+    @Column(name = "provider_id", length = 100)
+    private String providerId;
 
     /**
      * 이름
@@ -85,6 +92,8 @@ public class Member extends BaseEntity {
         member.name = name;
         member.phone = phone;
         member.role = role;
+        member.authProvider = MemberAuthProvider.LOCAL;
+        member.providerId = null;
         member.status = MemberStatus.ACTIVE; // 기본 활성
         return member;
     }
@@ -93,11 +102,15 @@ public class Member extends BaseEntity {
      * 소셜 로그인 회원 생성 (비밀번호 없음)
      */
     public static Member createSocial(String email, String name,
-                                      MemberRole role, String providerId) {
+                                      MemberRole role, MemberAuthProvider provider,
+                                      String providerId) {
         Member member = new Member();
         member.email = email;
+        member.password = null;
         member.name = name;
         member.role = role;
+        member.authProvider = provider;
+        member.providerId = providerId;
         member.status = MemberStatus.ACTIVE;
         return member;
     }
