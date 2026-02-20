@@ -35,10 +35,12 @@ spring:
     enabled: true
     clean-disabled: true  # 운영에서는 clean 절대 금지
 
+jwt:
+  cookie-secure: true
+
 # 로깅 설정 (운영 - 최소화)
 logging:
   level:
     root: WARN
     com.erp: INFO
     org.hibernate.SQL: WARN
-

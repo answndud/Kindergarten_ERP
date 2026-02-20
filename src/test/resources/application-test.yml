@@ -45,6 +45,7 @@ jwt:
   secret: test-secret-key-for-testing-purpose-only-must-be-at-least-256-bits-long-for-jwt-token-generation-and-validation
   access-token-validity: 900000    # 15 minutes
   refresh-token-validity: 604800000 # 7 days
+  cookie-secure: false
 
 # Logging
 logging:

@@ -38,4 +38,14 @@ public class JwtProperties {
      * Refresh Token 쿠키 이름
      */
     private String refreshTokenCookieName = "refresh_token";
+
+    /**
+     * JWT 쿠키 Secure 플래그
+     */
+    private boolean cookieSecure = true;
+
+    /**
+     * JWT 쿠키 SameSite 속성
+     */
+    private String cookieSameSite = "Strict";
 }

@@ -162,6 +162,23 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.code").value("A001"));
         }
+
+        @Test
+        @DisplayName("로그인 - 실패 (CSRF 토큰 없음)")
+        void login_Fail_WithoutCsrfToken() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "test1234"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+        }
     }
 
     @Nested
