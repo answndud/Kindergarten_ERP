@@ -3,11 +3,88 @@
  * HTMX 및 Alpine.js 전역 설정
  */
 
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
+const CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
+const CSRF_UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+function getCookieValue(name) {
+    const cookiePrefix = `${name}=`;
+    const cookies = document.cookie ? document.cookie.split(';') : [];
+
+    for (const rawCookie of cookies) {
+        const cookie = rawCookie.trim();
+        if (cookie.startsWith(cookiePrefix)) {
+            return decodeURIComponent(cookie.substring(cookiePrefix.length));
+        }
+    }
+
+    return null;
+}
+
+function isSameOrigin(url) {
+    try {
+        const target = new URL(url, window.location.origin);
+        return target.origin === window.location.origin;
+    } catch (e) {
+        return false;
+    }
+}
+
+function shouldAttachCsrfToken(method, url) {
+    return CSRF_UNSAFE_METHODS.has(method) && isSameOrigin(url);
+}
+
 // HTMX 설정
 document.addEventListener('htmx:configRequest', function (evt) {
-    // 모든 요청에 CSRF 토큰 추가 (추후 Spring Security 적용 시)
-    // evt.detail.headers['X-CSRF-TOKEN'] = csrfToken;
+    const method = (evt.detail.verb || 'GET').toUpperCase();
+    const url = evt.detail.path || window.location.href;
+
+    if (!shouldAttachCsrfToken(method, url)) {
+        return;
+    }
+
+    const csrfToken = getCookieValue(CSRF_COOKIE_NAME);
+    if (csrfToken) {
+        evt.detail.headers[CSRF_HEADER_NAME] = csrfToken;
+    }
 });
+
+const originalFetch = window.fetch.bind(window);
+window.fetch = function (input, init = {}) {
+    const method = (init.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+    const url = input instanceof Request ? input.url : String(input);
+
+    if (!shouldAttachCsrfToken(method, url)) {
+        return originalFetch(input, init);
+    }
+
+    const csrfToken = getCookieValue(CSRF_COOKIE_NAME);
+    if (!csrfToken) {
+        return originalFetch(input, init);
+    }
+
+    if (input instanceof Request) {
+        const headers = new Headers(input.headers);
+        if (!headers.has(CSRF_HEADER_NAME)) {
+            headers.set(CSRF_HEADER_NAME, csrfToken);
+        }
+        const requestWithCsrf = new Request(input, {
+            ...init,
+            headers
+        });
+        return originalFetch(requestWithCsrf);
+    }
+
+    const headers = new Headers(init.headers || {});
+    if (!headers.has(CSRF_HEADER_NAME)) {
+        headers.set(CSRF_HEADER_NAME, csrfToken);
+    }
+
+    return originalFetch(input, {
+        ...init,
+        headers
+    });
+};
 
 // HTMX 이벤트 로깅 (개발용)
 document.addEventListener('htmx:beforeRequest', function (evt) {

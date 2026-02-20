@@ -6,6 +6,7 @@ import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.security.jwt.JwtTokenProvider;
 import com.erp.global.security.user.CustomUserDetails;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ public class AuthApiController {
 
     private final AuthService authService;
     private final MemberService memberService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * 회원가입
@@ -127,7 +129,7 @@ public class AuthApiController {
         }
 
         for (Cookie cookie : cookies) {
-            if ("refresh_token".equals(cookie.getName())) {
+            if (jwtTokenProvider.getRefreshTokenCookieName().equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }

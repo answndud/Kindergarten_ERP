@@ -250,24 +250,26 @@ CorsConfigurationSource로 CORS 설정
 
 ---
 
-## 10. CSRF 비활성화
+## 10. CSRF 보호 전략
 
 ### 결정
-JWT 사용 시 CSRF 비활성화
+쿠키 기반 JWT 환경에서는 CSRF를 활성화하고 토큰 기반으로 검증
 
 ### 이유
-1. **JWT로 보호**: CSRF는 세션 기반 공격, JWT는 영향 없음
-2. **쿠키 기반**: HTTP-only 쿠키로 XSS 방지, CSRF는 우선순위 낮음
-3. **간편성**: 매번 CSRF 토큰 전송 불필요
+1. **쿠키 자동 전송 리스크 대응**: 브라우저가 쿠키를 자동 전송하므로 CSRF 검증이 필요함
+2. **방어 심화**: SameSite + Secure + CSRF 토큰을 조합해 위협면을 줄임
+3. **표준화**: Spring Security 표준(`CookieCsrfTokenRepository`)으로 일관된 검증
 
-### 설정
+### 설정 예시
 ```java
-.httpBasic(Customizer.withDefaults())
-.csrf(csrf -> csrf.disable())
+.csrf(csrf -> csrf
+    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+)
 ```
 
 ### 변경 이력
-- 2024-12-28: CSRF 비활성화
+- 2024-12-28: CSRF 비활성화 (초기)
+- 2026-02-20: 쿠키 기반 JWT 환경에 맞춰 CSRF 토큰 검증 방식으로 전환
 
 ---
 
@@ -321,7 +323,7 @@ private String password;
 > A: Access Token의 유효기간이 짧으면 보안은 좋지만 사용자 경험이 안 좋아집니다. 15분마다 로그인하면 불편하니까, Refresh Token으로 Access Token을 갱신해주는 방식을 선택했습니다. Refresh Token은 Redis에 저장해서 탈취 시 즉시 폐기할 수 있게 했습니다.
 
 ### Q: JWT를 쿠키에 저장하면 CSRF 공격에 취약하지 않나요?
-> A: 맞습니다. 그래서 HTTP-only 쿠키를 사용해서 XSS 공격은 방지하고, SameSite 설정을 Strict로 해서 CSRF를 최소화했습니다. 또한 운영 환경에서는 HTTPS만 허용하도록 Secure 플래그를 설정할 예정입니다.
+> A: 맞습니다. 그래서 SameSite/HTTPS(Secure)와 함께 CSRF 토큰 검증을 적용합니다. HTTP-only 쿠키는 XSS 경감에 도움이 되지만 CSRF를 대체하지는 않으므로, 쿠키 기반 JWT에서는 CSRF 토큰을 함께 사용합니다.
 
 ### Q: 비밀번호는 왜 BCrypt로 암호화했나요?
 > A: BCrypt는 솔트를 자동으로 생성하고, cost factor로 강도를 조절할 수 있어서 선택했습니다. SHA-256 같은 단방향 해시는 솔트를 직접 관리해야 하는데, BCrypt는 그런 과정이 없어서 실수를 줄일 수 있습니다.

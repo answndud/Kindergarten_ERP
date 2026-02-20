@@ -4,8 +4,8 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.jwt.JwtProperties;
 import com.erp.global.security.jwt.JwtTokenProvider;
-import com.erp.global.security.user.CustomUserDetailsService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +31,7 @@ public class AuthService {
     private final MemberService memberService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProperties jwtProperties;
     private final RedisTemplate<String, Object> redisTemplate;
 
     /**
@@ -140,10 +141,10 @@ public class AuthService {
     private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 로컬 개발용 (운영은 true)
+        cookie.setSecure(jwtProperties.isCookieSecure());
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
-        cookie.setAttribute("SameSite", "Strict");
+        cookie.setAttribute("SameSite", jwtProperties.getCookieSameSite());
         response.addCookie(cookie);
     }
 
@@ -153,9 +154,10 @@ public class AuthService {
     private void expireCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, null);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false);
+        cookie.setSecure(jwtProperties.isCookieSecure());
         cookie.setPath("/");
         cookie.setMaxAge(0);
+        cookie.setAttribute("SameSite", jwtProperties.getCookieSameSite());
         response.addCookie(cookie);
     }
 

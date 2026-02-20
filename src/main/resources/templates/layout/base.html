@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:fragment="_">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -67,7 +67,7 @@
                         <span class="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full" th:text="${currentMember?.role?.title}">역할</span>
                     </div>
                     
-                    <form action="/logout" method="post">
+                    <form th:action="@{/logout}" method="post">
                         <button type="submit" class="text-sm text-red-600 hover:text-red-700">로그아웃</button>
                     </form>
                 </nav>
@@ -97,10 +97,11 @@
                         <span class="text-sm text-gray-700" th:text="${currentMember?.name}">사용자</span>
                         <span class="text-xs px-2 py-1 bg-primary-100 text-primary-700 rounded-full" th:text="${currentMember?.role?.title}">역할</span>
                     </div>
-                    <form action="/logout" method="post">
+                    <form th:action="@{/logout}" method="post">
                         <button type="submit" class="text-sm text-red-600 hover:text-red-700">로그아웃</button>
                     </form>
                 </div>
+            </div>
         </div>
     </nav>
 
@@ -113,3 +114,8 @@
         }
     </script>
 </th:block>
+
+<th:block th:fragment="content"></th:block>
+
+</body>
+</html>
