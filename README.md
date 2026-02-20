@@ -47,51 +47,53 @@
 
 ## ✨ 주요 기능
 
-### Phase 1: 인증 시스템
+### 인증 시스템
 - ✅ 회원가입 (이메일/비밀번호)
 - ✅ 로그인 (JWT 기반)
+- ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 역할 기반 접근 제어
 
-### Phase 2: 유치원 & 반 관리
+### 유치원/반/원생 관리
 - ✅ 유치원 등록/수정
 - ✅ 반 생성/수정/삭제
 - ✅ 교사 배정
 - ✅ 원생 등록/관리
+- ✅ 학부모-원생 연결
 
-### Phase 3: 출석 관리
+### 출석 관리
 - ✅ 일별 출석 체크
 - ✅ 등/하원 시간 기록
 - ✅ 결석 사유 입력
 - ✅ 월별 출석 통계
+- ✅ 반별 월간 리포트
 
-### Phase 4: 알림장
+### 알림장
 - ✅ 알림장 작성 (교사)
 - ✅ 알림장 확인 (학부모)
 - ✅ 읽음 확인
 
-### Phase 5: 공지사항
+### 공지사항
 - ✅ 공지 작성/수정/삭제
 - ✅ 중요 공지 설정
+- ✅ 검색/인기 공지 조회
 
-### Phase 6: 지원/승인
+### 지원/승인 워크플로우
 - ✅ 교사 유치원 지원
 - ✅ 학부모 입학 신청
 - ✅ 승인/거절 워크플로우
 
-### Phase 7: 알림 시스템
+### 알림 시스템
 - ✅ 알림 생성/조회
 - ✅ 읽음 처리
 - ✅ 드롭다운 UI
 
-### Phase 8: 원생 관리
-- ✅ 원생 CRUD
-- ✅ 반별 조회
-- ✅ 학부모 연결
+### 일정/캘린더
+- ✅ 유치원/반 단위 일정 CRUD
+- ✅ 오늘/다가오는 일정 조회
 
-### Phase 9~12: 예정 기능
-- 📝 Phase 9: 일정/캘린더 (설계 완료)
-- 📝 Phase 10: 식단 관리 (설계 완료)
-- 📝 Phase 11: 출석 통계/리포트 (설계 완료)
+### 대시보드
+- ✅ 출석/회원/공지 지표 조회 API
+- ✅ 통계 캐시 기반 대시보드 화면
 
 ---
 
@@ -106,6 +108,7 @@
 | QueryDSL | 5.0.0 | 동적 쿼리 |
 | Spring Security | - | 인증/인가 |
 | JWT (jjwt) | 0.12.6 | 토큰 인증 |
+| OAuth2 Client | - | Google/Kakao 로그인 |
 
 ### Database
 | 기술 | 버전 | 용도 |
@@ -142,7 +145,7 @@ erp/
 │   │   │   ├── global/              # 전역 설정
 │   │   │   │   ├── config/          # 설정 클래스
 │   │   │   │   ├── exception/       # 예외 처리
-│   │   │   │   ├── security/        # 보안 (JWT)
+│   │   │   │   ├── security/        # 보안 (JWT/OAuth2)
 │   │   │   │   └── common/          # 공통 클래스
 │   │   │   └── domain/              # 도메인별 패키지
 │   │   │       ├── member/          # 회원
@@ -152,7 +155,12 @@ erp/
 │   │   │       ├── kid/             # 원생
 │   │   │       ├── attendance/      # 출석
 │   │   │       ├── notepad/         # 알림장
-│   │   │       └── announcement/    # 공지사항
+│   │   │       ├── announcement/    # 공지사항
+│   │   │       ├── notification/    # 알림
+│   │   │       ├── calendar/        # 일정
+│   │   │       ├── dashboard/       # 대시보드
+│   │   │       ├── kidapplication/  # 원생 입학 신청
+│   │   │       └── kindergartenapplication/ # 교사 지원
 │   │   └── resources/
 │   │       ├── application.yml
 │   │       ├── application-local.yml
@@ -189,8 +197,7 @@ cd kindergarten-erp
 
 ```bash
 # MySQL + Redis 컨테이너 시작
-cd docker
-docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # 상태 확인
 docker ps
@@ -199,9 +206,6 @@ docker ps
 ### 3. 애플리케이션 실행
 
 ```bash
-# 프로젝트 루트로 이동
-cd ..
-
 # 빌드 및 실행
 ./gradlew bootRun
 
@@ -220,11 +224,10 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
 
 ```bash
 # Docker 컨테이너 종료
-cd docker
-docker-compose down
+docker compose -f docker/docker-compose.yml down
 
 # 데이터 포함 완전 삭제
-docker-compose down -v
+docker compose -f docker/docker-compose.yml down -v
 ```
 
 ---
@@ -238,13 +241,24 @@ docker-compose down -v
 | POST | `/api/v1/auth/login` | 로그인 |
 | POST | `/api/v1/auth/logout` | 로그아웃 |
 | POST | `/api/v1/auth/refresh` | 토큰 갱신 |
+| GET | `/api/v1/auth/me` | 현재 로그인 회원 조회 |
+
+### 회원 (Member)
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/v1/members/me` | 내 정보 조회 |
+| PATCH | `/api/v1/members/profile` | 프로필 수정 |
+| PATCH | `/api/v1/members/password` | 비밀번호 변경 |
+| DELETE | `/api/v1/members/withdraw` | 회원 탈퇴 |
 
 ### 유치원 (Kindergarten)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | POST | `/api/v1/kindergartens` | 유치원 등록 |
+| GET | `/api/v1/kindergartens` | 유치원 목록 |
 | GET | `/api/v1/kindergartens/{id}` | 유치원 조회 |
 | PUT | `/api/v1/kindergartens/{id}` | 유치원 수정 |
+| DELETE | `/api/v1/kindergartens/{id}` | 유치원 삭제 |
 
 ### 반 (Classroom)
 | Method | Endpoint | 설명 |
@@ -253,6 +267,8 @@ docker-compose down -v
 | POST | `/api/v1/classrooms` | 반 생성 |
 | PUT | `/api/v1/classrooms/{id}` | 반 수정 |
 | DELETE | `/api/v1/classrooms/{id}` | 반 삭제 |
+| PUT | `/api/v1/classrooms/{id}/teacher` | 담임 배정 |
+| DELETE | `/api/v1/classrooms/{id}/teacher` | 담임 해제 |
 
 ### 원생 (Kid)
 | Method | Endpoint | 설명 |
@@ -261,13 +277,16 @@ docker-compose down -v
 | POST | `/api/v1/kids` | 원생 등록 |
 | PUT | `/api/v1/kids/{id}` | 원생 수정 |
 | DELETE | `/api/v1/kids/{id}` | 원생 삭제 |
+| GET | `/api/v1/kids/my-kids` | 내 원생 목록(학부모) |
 
 ### 출석 (Attendance)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/attendance/daily` | 일별 출석 조회 |
-| POST | `/api/v1/attendance` | 출석 등록/수정 |
-| GET | `/api/v1/attendance/monthly` | 월별 통계 |
+| POST | `/api/v1/attendance/upsert` | 출석 등록/수정 |
+| POST | `/api/v1/attendance/bulk` | 출석 일괄 반영 |
+| GET | `/api/v1/attendance/kid/{kidId}/monthly` | 월간 출석 목록 |
+| GET | `/api/v1/attendance/classroom/{classroomId}/monthly-report` | 반별 월간 리포트 |
 
 ### 알림장 (Notepad)
 | Method | Endpoint | 설명 |
@@ -284,6 +303,40 @@ docker-compose down -v
 | POST | `/api/v1/announcements` | 공지 작성 |
 | PUT | `/api/v1/announcements/{id}` | 공지 수정 |
 | DELETE | `/api/v1/announcements/{id}` | 공지 삭제 |
+| GET | `/api/v1/announcements/search` | 공지 제목 검색 |
+| PATCH | `/api/v1/announcements/{id}/important` | 중요 공지 토글 |
+
+### 지원/신청 (Application)
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| POST | `/api/v1/kindergarten-applications` | 교사 유치원 지원 |
+| GET | `/api/v1/kindergarten-applications/my` | 내 교사 지원서 목록 |
+| PUT | `/api/v1/kindergarten-applications/{id}/approve` | 교사 지원서 승인 |
+| PUT | `/api/v1/kindergarten-applications/{id}/reject` | 교사 지원서 거절 |
+| POST | `/api/v1/kid-applications` | 학부모 입학 신청 |
+| GET | `/api/v1/kid-applications/my` | 내 입학 신청 목록 |
+| PUT | `/api/v1/kid-applications/{id}/approve` | 입학 신청 승인 |
+| PUT | `/api/v1/kid-applications/{id}/reject` | 입학 신청 거절 |
+
+### 알림 (Notification)
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/v1/notifications` | 알림 목록 조회 |
+| GET | `/api/v1/notifications/unread-count` | 안 읽은 개수 조회 |
+| PUT | `/api/v1/notifications/{id}/read` | 알림 읽음 처리 |
+
+### 일정 (Calendar)
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/v1/calendar/events` | 일정 목록 조회 |
+| POST | `/api/v1/calendar/events` | 일정 등록 |
+| PUT | `/api/v1/calendar/events/{id}` | 일정 수정 |
+| DELETE | `/api/v1/calendar/events/{id}` | 일정 삭제 |
+
+### 대시보드 (Dashboard)
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/v1/dashboard/statistics` | 대시보드 통계 조회 |
 
 ---
 

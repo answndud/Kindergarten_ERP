@@ -12,6 +12,7 @@ import com.erp.domain.attendance.dto.response.MonthlyStatisticsResponse;
 import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.service.AttendanceService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -105,7 +106,8 @@ public class AttendanceController {
 
         if (classroomId == null) {
             return ResponseEntity
-                    .ok(ApiResponse.success(List.of(), "반 ID는 필수입니다"));
+                    .badRequest()
+                    .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE, "반 ID는 필수입니다"));
         }
 
         List<DailyAttendanceResponse> responses = attendanceService.getDailyAttendanceByClassroom(classroomId, date);

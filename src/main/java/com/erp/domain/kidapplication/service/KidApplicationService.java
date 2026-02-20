@@ -134,7 +134,8 @@ public class KidApplicationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 권한 확인: 해당 유치원의 원장 또는 교사
-        if (!processor.getKindergarten().getId().equals(application.getKindergarten().getId())) {
+        if (processor.getKindergarten() == null ||
+                !processor.getKindergarten().getId().equals(application.getKindergarten().getId())) {
             throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
         }
 
@@ -189,7 +190,8 @@ public class KidApplicationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 권한 확인
-        if (!processor.getKindergarten().getId().equals(application.getKindergarten().getId())) {
+        if (processor.getKindergarten() == null ||
+                !processor.getKindergarten().getId().equals(application.getKindergarten().getId())) {
             throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
         }
 

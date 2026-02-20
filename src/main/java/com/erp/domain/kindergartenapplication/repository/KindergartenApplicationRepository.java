@@ -66,4 +66,7 @@ public interface KindergartenApplicationRepository extends JpaRepository<Kinderg
      * 교사의 대기 중인 지원서가 있는지 확인
      */
     boolean existsByTeacherIdAndStatusAndDeletedAtIsNull(Long teacherId, ApplicationStatus status);
+
+    @Query("SELECT a FROM KindergartenApplication a WHERE a.teacher.id = :teacherId AND a.status = 'PENDING' AND a.deletedAt IS NULL")
+    List<KindergartenApplication> findPendingApplicationsByTeacherId(@Param("teacherId") Long teacherId);
 }

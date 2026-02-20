@@ -49,6 +49,7 @@ public class AnnouncementService {
 
         // 작성자 역할 확인 (원장 또는 교사)
         validateWriterRole(writer);
+        validateSameKindergarten(writer, kindergarten.getId());
 
         // 공지사항 생성
         Announcement announcement;
@@ -175,6 +176,7 @@ public class AnnouncementService {
         // 수정 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
         validateWriterRole(requester);
+        validateSameKindergarten(requester, announcement.getKindergarten().getId());
 
         announcement.update(request.getTitle(), request.getContent());
 
@@ -195,6 +197,7 @@ public class AnnouncementService {
         // 삭제 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
         validateWriterRole(requester);
+        validateSameKindergarten(requester, announcement.getKindergarten().getId());
 
         announcement.softDelete();
         evictDashboardStatistics(announcement);
@@ -210,6 +213,7 @@ public class AnnouncementService {
         // 토글 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
         validateWriterRole(requester);
+        validateSameKindergarten(requester, announcement.getKindergarten().getId());
 
         announcement.toggleImportant();
         evictDashboardStatistics(announcement);
@@ -222,6 +226,12 @@ public class AnnouncementService {
         if (writer.getRole() != com.erp.domain.member.entity.MemberRole.TEACHER &&
             writer.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+    }
+
+    private void validateSameKindergarten(Member member, Long targetKindergartenId) {
+        if (member.getKindergarten() == null || !member.getKindergarten().getId().equals(targetKindergartenId)) {
+            throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
         }
     }
 

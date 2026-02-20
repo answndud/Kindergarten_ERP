@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -20,6 +21,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  */
 @DisplayName("인증 API 테스트")
 class AuthApiIntegrationTest extends BaseIntegrationTest {
+
+    @Test
+    @DisplayName("인증되지 않은 API 요청 - 401 공통 응답 포맷 반환")
+    void unauthorizedApiRequest_ReturnsStandardErrorResponse() throws Exception {
+        clearAuthentication();
+
+        mockMvc.perform(get("/api/v1/attendance/1"))
+                .andDo(print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("A001"));
+    }
 
     @Nested
     @DisplayName("회원가입 API")

@@ -5,13 +5,15 @@ import com.erp.domain.announcement.dto.response.AnnouncementResponse;
 import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.announcement.service.AnnouncementService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.user.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -31,10 +33,9 @@ public class AnnouncementController {
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<AnnouncementResponse>> create(
             @Valid @RequestBody AnnouncementRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 임시로 writerId를 1로 설정 (추후 SecurityContext에서 실제 사용자 ID 가져오기)
-        Long writerId = 1L;
+        Long writerId = requireMemberId(userDetails);
 
         Long id = announcementService.createAnnouncement(request, writerId);
 
@@ -132,10 +133,9 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<AnnouncementResponse>> updateAnnouncement(
             @PathVariable Long id,
             @Valid @RequestBody AnnouncementRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 임시로 writerId를 1로 설정
-        Long writerId = 1L;
+        Long writerId = requireMemberId(userDetails);
 
         announcementService.updateAnnouncement(id, request, writerId);
 
@@ -152,10 +152,9 @@ public class AnnouncementController {
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<Void>> deleteAnnouncement(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 임시로 requesterId를 1로 설정
-        Long requesterId = 1L;
+        Long requesterId = requireMemberId(userDetails);
 
         announcementService.deleteAnnouncement(id, requesterId);
 
@@ -170,10 +169,9 @@ public class AnnouncementController {
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<AnnouncementResponse>> toggleImportant(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // 임시로 requesterId를 1로 설정
-        Long requesterId = 1L;
+        Long requesterId = requireMemberId(userDetails);
 
         announcementService.toggleImportant(id, requesterId);
 
@@ -181,5 +179,12 @@ public class AnnouncementController {
 
         return ResponseEntity
                 .ok(ApiResponse.success(announcementService.toResponse(announcement), "중요 공지 설정이 변경되었습니다"));
+    }
+
+    private Long requireMemberId(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getMemberId() == null) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+        return userDetails.getMemberId();
     }
 }

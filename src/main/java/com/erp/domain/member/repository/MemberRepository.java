@@ -1,6 +1,7 @@
 package com.erp.domain.member.repository;
 
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,8 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      * 이메일로 회원 조회
      */
     Optional<Member> findByEmail(String email);
+
+    Optional<Member> findByAuthProviderAndProviderId(MemberAuthProvider authProvider, String providerId);
 
     /**
      * 이메일 중복 확인

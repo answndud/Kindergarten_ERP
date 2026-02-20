@@ -1,9 +1,10 @@
 package com.erp.global.config;
 
-import com.erp.domain.member.entity.MemberRole;
 import com.erp.global.security.CustomAuthenticationEntryPoint;
 import com.erp.global.security.jwt.JwtFilter;
 import com.erp.global.security.jwt.JwtTokenProvider;
+import com.erp.global.security.oauth2.CustomOAuth2UserService;
+import com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import com.erp.global.security.user.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,13 +38,19 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
                           CustomUserDetailsService userDetailsService,
-                          CustomAuthenticationEntryPoint authenticationEntryPoint) {
+                          CustomAuthenticationEntryPoint authenticationEntryPoint,
+                          CustomOAuth2UserService customOAuth2UserService,
+                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
     }
 
     /**
@@ -112,9 +119,9 @@ public class SecurityConfig {
                 // HTTP Basic 비활성화
                 .httpBasic(basic -> basic.disable())
 
-                // 세션 관리 정책: STATELESS (JWT 사용)
+                // 세션 관리 정책: OAuth2 핸드셰이크를 위해 필요한 경우만 세션 사용
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 // URL별 접근 권한 설정
@@ -124,6 +131,8 @@ public class SecurityConfig {
                                 "/",
                                 "/login",
                                 "/signup",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
@@ -165,6 +174,14 @@ public class SecurityConfig {
                                 jwtTokenProvider.getAccessTokenCookieName(),
                                 jwtTokenProvider.getRefreshTokenCookieName()
                         )
+                )
+
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler((request, response, exception) ->
+                                response.sendRedirect("/login?error=social_login_failed"))
                 )
 
                 // JWT 필터 추가 (UsernamePasswordAuthenticationFilter 앞에)
