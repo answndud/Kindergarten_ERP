@@ -13,16 +13,16 @@
                 extend: {
                     colors: {
                         primary: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            200: '#99f6e4',
-                            300: '#5eead4',
-                            400: '#2dd4bf',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                            800: '#115e59',
-                            900: '#134e4a',
+                            50: '#F3FBF7',
+                            100: '#E2F5EB',
+                            200: '#C7EBD9',
+                            300: '#A4DEC2',
+                            400: '#79CCA5',
+                            500: '#56B88C',
+                            600: '#3F9C73',
+                            700: '#327D5E',
+                            800: '#26624A',
+                            900: '#1D4D3A',
                         }
                     }
                 }
@@ -39,11 +39,12 @@
             font-family: 'Pretendard', sans-serif;
         }
         .bg-gradient-primary {
-            background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+            background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%);
         }
     </style>
+    <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4"
+<body class="auth-screen bg-gray-50 min-h-screen flex items-center justify-center p-4 sm:p-6"
       x-data="{
           email: '',
           password: '',
@@ -82,7 +83,7 @@
       }">
 
     <!-- Login Container -->
-    <div class="w-full max-w-md">
+    <div class="auth-shell auth-shell-login w-full max-w-xl">
         <!-- Logo -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center gap-3 mb-4">
@@ -95,7 +96,7 @@
         </div>
 
         <!-- Login Card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div class="auth-card bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-10">
             <!-- Error Alert -->
             <div x-show="error" x-cloak
                  class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">

@@ -52,16 +52,16 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     /**
      * 유치원별 특정 역할 회원 목록
      */
-    @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role = :role AND m.deletedAt IS NULL")
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.kindergarten k WHERE k.id = :kindergartenId AND m.role = :role AND m.deletedAt IS NULL")
     List<Member> findAllByKindergartenIdAndRole(@Param("kindergartenId") Long kindergartenId,
-                                                  @Param("role") MemberRole role);
+                                                   @Param("role") MemberRole role);
 
     /**
      * 유치원별 다중 역할 회원 목록
      */
-    @Query("SELECT m FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.role IN :roles AND m.deletedAt IS NULL")
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.kindergarten k WHERE k.id = :kindergartenId AND m.role IN :roles AND m.deletedAt IS NULL")
     List<Member> findAllByKindergartenIdAndRoles(@Param("kindergartenId") Long kindergartenId,
-                                                 @Param("roles") List<MemberRole> roles);
+                                                  @Param("roles") List<MemberRole> roles);
 
     /**
      * ID로 회원 조회 (유치원 포함)

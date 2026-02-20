@@ -33,6 +33,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AuthLoginBootstrapService authLoginBootstrapService;
 
     /**
      * 회원가입
@@ -62,6 +63,8 @@ public class AuthService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
+
+            authLoginBootstrapService.afterAuthenticated(email);
 
             // 2. 회원 정보 조회
             Member member = memberService.getMemberByEmail(email);

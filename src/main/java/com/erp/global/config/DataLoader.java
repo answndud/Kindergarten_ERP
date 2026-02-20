@@ -55,6 +55,9 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class DataLoader implements CommandLineRunner {
 
+    private static final String SEED_PRINCIPAL_A_EMAIL = "principal@test.com";
+    private static final String SEED_PRINCIPAL_B_EMAIL = "principal2@test.com";
+
     private final PasswordEncoder passwordEncoder;
     private final KindergartenRepository kindergartenRepository;
     private final MemberRepository memberRepository;
@@ -72,9 +75,10 @@ public class DataLoader implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // 기존 데이터 확인 - 없을 때만 생성
-        if (memberRepository.count() > 0) {
-            log.info("Dummy data already exists. Skipping data loading.");
+        // 시드 계정이 이미 있으면 중복 생성 방지
+        if (memberRepository.existsByEmail(SEED_PRINCIPAL_A_EMAIL)
+                || memberRepository.existsByEmail(SEED_PRINCIPAL_B_EMAIL)) {
+            log.info("Seed principals already exist. Skipping data loading.");
             log.info("Test password: {}", TEST_PASSWORD);
             return;
         }

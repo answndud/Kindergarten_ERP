@@ -5,7 +5,6 @@ import com.erp.global.security.CustomAuthenticationEntryPoint;
 import com.erp.global.security.jwt.JwtFilter;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import com.erp.global.security.user.CustomUserDetailsService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -32,12 +32,19 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider,
+                          CustomUserDetailsService userDetailsService,
+                          CustomAuthenticationEntryPoint authenticationEntryPoint) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userDetailsService = userDetailsService;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+    }
 
     /**
      * 비밀번호 인코더 (BCrypt)
@@ -86,6 +93,8 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
+
         http
                 // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -93,6 +102,8 @@ public class SecurityConfig {
                 // CSRF 보호 (쿠키 기반 JWT 사용)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers("/logout")
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler)
                 )
 
                 // 폼 로그인 비활성화 (JWT 사용)
@@ -150,7 +161,10 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
                         .invalidateHttpSession(true)
-                        .deleteCookies("jwt")
+                        .deleteCookies(
+                                jwtTokenProvider.getAccessTokenCookieName(),
+                                jwtTokenProvider.getRefreshTokenCookieName()
+                        )
                 )
 
                 // JWT 필터 추가 (UsernamePasswordAuthenticationFilter 앞에)

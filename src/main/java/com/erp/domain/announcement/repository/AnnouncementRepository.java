@@ -19,31 +19,55 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
     /**
      * 유치원별 공지사항 목록 조회 (삭제되지 않은 것만, 최신순)
      */
-    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.isImportant DESC, a.createdAt DESC")
+    @Query(value = "SELECT a FROM Announcement a " +
+            "LEFT JOIN FETCH a.kindergarten k " +
+            "LEFT JOIN FETCH a.writer w " +
+            "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL " +
+            "ORDER BY a.isImportant DESC, a.createdAt DESC",
+           countQuery = "SELECT COUNT(a) FROM Announcement a " +
+                   "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
     Page<Announcement> findByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
 
     /**
      * 유치원별 중요 공지사항 목록 조회
      */
-    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.isImportant = true ORDER BY a.createdAt DESC")
+    @Query(value = "SELECT a FROM Announcement a " +
+            "LEFT JOIN FETCH a.kindergarten k " +
+            "LEFT JOIN FETCH a.writer w " +
+            "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.isImportant = true " +
+            "ORDER BY a.createdAt DESC",
+           countQuery = "SELECT COUNT(a) FROM Announcement a " +
+                   "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.isImportant = true")
     Page<Announcement> findImportantByKindergartenId(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
 
     /**
      * ID로 조회 (삭제되지 않은 것만)
      */
-    @Query("SELECT a FROM Announcement a WHERE a.id = :id AND a.deletedAt IS NULL")
+    @Query("SELECT a FROM Announcement a LEFT JOIN FETCH a.kindergarten k LEFT JOIN FETCH a.writer w WHERE a.id = :id AND a.deletedAt IS NULL")
     Optional<Announcement> findByIdAndDeletedAtIsNull(@Param("id") Long id);
 
     /**
      * 제목으로 검색 (유치원별)
      */
-    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.title LIKE %:title% ORDER BY a.createdAt DESC")
+    @Query(value = "SELECT a FROM Announcement a " +
+            "LEFT JOIN FETCH a.kindergarten k " +
+            "LEFT JOIN FETCH a.writer w " +
+            "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.title LIKE %:title% " +
+            "ORDER BY a.createdAt DESC",
+           countQuery = "SELECT COUNT(a) FROM Announcement a " +
+                   "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL AND a.title LIKE %:title%")
     Page<Announcement> findByKindergartenIdAndTitleContaining(@Param("kindergartenId") Long kindergartenId, @Param("title") String title, Pageable pageable);
 
     /**
      * 조회수 상위 공지사항
      */
-    @Query("SELECT a FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL ORDER BY a.viewCount DESC")
+    @Query(value = "SELECT a FROM Announcement a " +
+            "LEFT JOIN FETCH a.kindergarten k " +
+            "LEFT JOIN FETCH a.writer w " +
+            "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL " +
+            "ORDER BY a.viewCount DESC",
+           countQuery = "SELECT COUNT(a) FROM Announcement a " +
+                   "WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
     Page<Announcement> findMostViewedByKindergartenId(@Param("kindergartenId") Long kindergartenId, Pageable pageable);
 
     /**

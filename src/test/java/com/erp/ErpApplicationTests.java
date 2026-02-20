@@ -2,9 +2,9 @@ package com.erp;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * 애플리케이션 컨텍스트 로드 테스트
@@ -13,7 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class ErpApplicationTests {
 
-    @MockBean
+    @MockitoBean
     private RedisTemplate<String, Object> redisTemplate;
 
     @Test

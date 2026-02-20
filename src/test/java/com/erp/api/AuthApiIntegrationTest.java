@@ -10,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -141,6 +140,25 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.code").value("A001"));
+        }
+
+        @Test
+        @DisplayName("로그인 - 성공 (헤더 기반 CSRF 토큰)")
+        void login_Success_WithHeaderCsrfToken() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "test1234"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf().asHeader())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
         }
 
         @Test

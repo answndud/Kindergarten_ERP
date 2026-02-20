@@ -2,33 +2,29 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
 <body>
 <th:block th:fragment="footer">
-    <!-- Footer -->
-    <footer class="mt-auto border-t border-gray-200 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                <!-- Logo -->
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
-                        <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
-                    </div>
-                    <span class="sr-only">KinderCare</span>
+    <footer class="mt-12 border-t border-gray-200 bg-white/80 backdrop-blur">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-sm">
+                    <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-gray-900">KinderCare ERP</p>
+                    <p class="text-xs text-gray-500">Simple is Best</p>
                 </div>
-
-                <!-- Links -->
-                <nav class="flex items-center gap-6 text-sm text-gray-600">
-                    <a href="#" class="hover:text-primary-600 transition-colors">이용약관</a>
-                    <a href="#" class="hover:text-primary-600 transition-colors">개인정보처리방침</a>
-                    <a href="#" class="hover:text-primary-600 transition-colors">문의하기</a>
-                </nav>
-
-                <!-- Copyright -->
-                <p class="text-sm text-gray-500">
-                    © 2024 유치원 ERP. All rights reserved.
-                </p>
             </div>
+
+            <nav class="flex items-center gap-5 text-sm">
+                <a href="#" class="text-gray-600 hover:text-primary-700">이용약관</a>
+                <a href="#" class="text-gray-600 hover:text-primary-700">개인정보처리방침</a>
+                <a href="#" class="text-gray-600 hover:text-primary-700">문의하기</a>
+            </nav>
+
+            <p class="text-xs text-gray-500">© 2026 Kindergarten ERP. All rights reserved.</p>
         </div>
     </footer>
 </th:block>
