@@ -7,7 +7,6 @@ import com.erp.domain.kindergarten.repository.KindergartenRepository;
 import com.erp.domain.kid.entity.Gender;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.entity.ParentKid;
-import com.erp.domain.kid.entity.Relationship;
 import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.kid.repository.ParentKidRepository;
 import com.erp.domain.kidapplication.dto.request.ApproveKidApplicationRequest;
@@ -158,7 +157,7 @@ public class KidApplicationService {
         Kid savedKid = kidRepository.save(kid);
 
         // ParentKid 관계 생성
-        ParentKid parentKid = ParentKid.create(kid, application.getParent(), Relationship.FATHER);
+        ParentKid parentKid = ParentKid.create(kid, application.getParent(), request.relationshipOrDefault());
         parentKidRepository.save(parentKid);
 
         // 입학 신청 승인 처리

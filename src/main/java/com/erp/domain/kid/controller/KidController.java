@@ -9,6 +9,7 @@ import com.erp.domain.kid.dto.response.KidResponse;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.service.KidService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +66,12 @@ public class KidController {
             @RequestParam(required = false) Long kindergartenId,
             @RequestParam(required = false) String name) {
 
+        if (classroomId == null && kindergartenId == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE, "classroomId 또는 kindergartenId 중 하나는 필수입니다"));
+        }
+
         List<Kid> kids;
 
         if (classroomId != null) {
@@ -80,7 +87,6 @@ public class KidController {
                 kids = kidService.getKidsByKindergarten(kindergartenId);
             }
         } else {
-            // 전체 조회는 추후 구현
             kids = List.of();
         }
 

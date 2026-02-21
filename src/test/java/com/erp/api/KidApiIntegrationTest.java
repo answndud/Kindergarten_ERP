@@ -157,6 +157,17 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @WithMockUser(username = "teacher@test.com", roles = {"TEACHER"})
+        @DisplayName("원생 목록 조회 - 실패 (필터 누락)")
+        void getKids_Fail_WhenFilterMissing() throws Exception {
+            mockMvc.perform(get("/api/v1/kids"))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("C001"));
+        }
+
+        @Test
         @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
         @DisplayName("학부모의 원생 목록 조회 - 성공")
         void getMyKids_Success() throws Exception {

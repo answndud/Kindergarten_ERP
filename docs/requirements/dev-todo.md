@@ -46,13 +46,13 @@
   - 알림 드롭다운 오픈 시 `notifications-changed` 트리거로 목록 즉시 동기화
 
 ### 3. 원생(Kid) 관리 기능
-- [ ] 원생 목록/조회 화면
+- [x] 원생 목록/조회 화면
   - `/kids` (ViewController) + API(`KidApiController`) 구현
   - 반별 원생 목록, 이름/생년월일 검색
 - [x] 원생 생성/편집 화면
   - `/kids/new`, `/kids/{id}/edit` 페이지 추가 (`kid/kid-form.html`)
   - `POST /api/v1/kids`, `PUT /api/v1/kids/{id}` API 연동
-- [ ] 학부모-자녀 관계(ParentKid) 관리
+- [x] 학부모-자녀 관계(ParentKid) 관리
   - 학부모가 자녀를 조회할 수 있는 API/화면 확인
   - 자녀 입학 신청 시 `ParentKid` 생성 로직 검토
 
@@ -72,3 +72,10 @@
   - `NotificationApiIntegrationTest` 추가
 - [ ] 최근 회고 문서 업데이트
   - `docs/retrospective/`에 이번 SweetAlert2 마이그레이션/알림장 복구/대시보드 동기화 회고 추가
+
+## Next Focus (2026-02-21)
+- [x] API 문서(README)와 실제 컨트롤러 매핑 재동기화
+- [x] CORS 허용 메서드 PATCH 반영
+- [x] 목록 API 필수 필터 누락 시 400 응답 명시화 (`/api/v1/kids`, `/api/v1/classrooms`)
+- [x] 입학 신청 승인 시 ParentKid 관계값 요청 기반 반영
+- [x] 지원/교실/유치원 API 통합 테스트 보강

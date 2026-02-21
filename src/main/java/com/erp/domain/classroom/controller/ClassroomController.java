@@ -5,6 +5,7 @@ import com.erp.domain.classroom.dto.response.ClassroomResponse;
 import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.classroom.service.ClassroomService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -61,14 +62,13 @@ public class ClassroomController {
     public ResponseEntity<ApiResponse<List<ClassroomResponse>>> getClassrooms(
             @RequestParam(required = false) Long kindergartenId) {
 
-        List<Classroom> classrooms;
-
-        if (kindergartenId != null) {
-            classrooms = classroomService.getClassroomsByKindergarten(kindergartenId);
-        } else {
-            // 전체 조회는 추후 구현
-            classrooms = List.of();
+        if (kindergartenId == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE, "kindergartenId는 필수입니다"));
         }
+
+        List<Classroom> classrooms = classroomService.getClassroomsByKindergarten(kindergartenId);
 
         List<ClassroomResponse> responses = classrooms.stream()
                 .map(ClassroomResponse::from)
