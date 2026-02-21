@@ -1,35 +1,50 @@
 # PLAN.md
 
 ## 작업명
-- 문서 동기화 배치 (README / CURRENT_FEATURES)
+- 후속 개선 배치 (문서 정합화 + API 안정성 + 테스트 보강)
 
 ## 1) 목표 / 범위
-- 직전 코드 변경 사항(P0/P1)과 현재 구현 상태를 기준으로 `README.md`, `CURRENT_FEATURES.md`를 최신화한다.
-- README의 "예정 기능"/API 표/구조 설명을 실제 코드(캘린더, OAuth2, 지원/알림/대시보드) 기준으로 정정한다.
-- `CURRENT_FEATURES.md`의 구식 Phase 설명(0~2, 다음 Phase 예정)을 제거하고 실제 테스트 가능한 시나리오 중심으로 재작성한다.
-- 이번 배치에서는 코드 로직/테스트 코드는 변경하지 않는다(문서만 수정).
+- 점검 결과로 식별된 P0/P1/P2 개선 과제를 한 배치로 처리한다.
+- 문서 정합화: `README.md` API 표와 실제 컨트롤러 매핑을 재동기화한다.
+- 보안/호환성: `SecurityConfig` CORS 허용 메서드에 `PATCH`를 반영한다.
+- API 명확성: `ClassroomController`, `KidController`의 필수 필터 누락 요청을 명시적 400으로 처리한다.
+- 데이터 품질: `KidApplication` 승인 시 ParentKid 관계를 고정값(FATHER)에서 요청 기반으로 전환한다.
+- 테스트 보강: 지원 워크플로우/교실/유치원 API에 대한 통합 테스트를 추가한다.
+- 문서 백로그 정리: `docs/project_plan.md`, `docs/requirements/dev-todo.md`를 현재 상태 기준으로 정리한다.
 
 ## 2) 세부 작업 단계
-1. 현행 기능/엔드포인트 확인
-   - 도메인 컨트롤러, SecurityConfig, Flyway 마이그레이션 기준으로 구현 기능 목록 재수집
+1. 문서/API 매핑 정합화
+   - 컨트롤러 매핑 기준으로 README API 표 누락 항목 보완
+   - 현재 구현과 다른/모호한 설명 제거
 
-2. README 정합화
-   - 주요 기능 섹션을 구현 완료 기준으로 재정렬
-   - API 문서 표에 캘린더/알림/지원/대시보드 등 누락 항목 추가
-   - 프로젝트 구조/기술 스택 설명에서 OAuth2 반영
+2. API/보안 코드 보강
+   - CORS 허용 메서드에 PATCH 반영
+   - kids/classrooms 목록 API의 필터 누락 요청에 대한 예외 코드 정의 및 400 응답 적용
+   - KidApplication 승인 DTO/서비스를 확장해 ParentKid 관계를 요청값으로 저장
 
-3. CURRENT_FEATURES 재작성
-   - 실행 방법, 계정/역할별 테스트 시나리오, API 샘플을 현재 기준으로 간결하게 정리
-   - 더 이상 유효하지 않은 "다음 Phase 예정" 내용 제거
+3. 테스트 보강
+   - 지원 워크플로우 API 통합 테스트(성공/권한 실패) 추가
+   - classroom/kindergarten API 통합 테스트 추가(핵심 시나리오)
+
+4. 백로그/계획 문서 정리
+   - `docs/requirements/dev-todo.md` 체크 상태 갱신
+   - `docs/project_plan.md`를 현재 기준(완료/운영 중/후속 과제)으로 요약 정리
 
 ## 3) 검증 계획
-- 문서 변경 정합성 점검
-  - README의 기능/엔드포인트가 컨트롤러 매핑과 일치하는지 확인
-  - CURRENT_FEATURES의 실행/테스트 시나리오가 현재 보안 설정과 충돌하지 않는지 확인
-- 빌드/테스트는 문서 배치이므로 생략(코드 변경 없음)
+- 코드 컴파일/테스트
+  - `./gradlew compileJava compileTestJava`
+  - `./gradlew test --tests "com.erp.api.ClassroomApiIntegrationTest"`
+  - `./gradlew test --tests "com.erp.api.KindergartenApiIntegrationTest"`
+  - `./gradlew test --tests "com.erp.api.KidApplicationApiIntegrationTest"`
+  - `./gradlew test --tests "com.erp.api.KindergartenApplicationApiIntegrationTest"`
+- 문서 정합성 점검
+  - README API 표와 주요 컨트롤러 매핑 교차 확인
+  - dev-todo/project_plan의 상태 표현이 현재 구현과 충돌하지 않는지 확인
 
 ## 4) 리스크 및 대응
-- 문서 과도 축약 시 기존 참고 정보 유실 위험
-  - 대응: 핵심 시나리오/주요 endpoint는 유지하고, 구식 정보만 제거
-- API 표가 실제와 부분 불일치할 위험
-  - 대응: 컨트롤러 매핑 기준으로 최종 교차 검토
+- 목록 API의 400 전환으로 기존 프런트 요청과 충돌할 위험
+  - 대응: 템플릿/스크립트 호출부를 확인하고, 필요한 경우 요청 파라미터 기본 주입
+- ParentKid 관계 필드 추가로 기존 클라이언트 요청 호환성 저하 위험
+  - 대응: 요청 DTO 기본값(FATHER)을 두어 하위 호환 유지
+- 테스트 추가 시 시드/권한 전제 차이로 flaky 위험
+  - 대응: 기존 BaseIntegrationTest 패턴 재사용, 역할별 계정 생성/인증 헬퍼 활용

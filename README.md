@@ -247,6 +247,7 @@ docker compose -f docker/docker-compose.yml down -v
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/members/me` | 내 정보 조회 |
+| GET | `/api/v1/members/parents` | 학부모 목록 조회 |
 | PATCH | `/api/v1/members/profile` | 프로필 수정 |
 | PATCH | `/api/v1/members/password` | 비밀번호 변경 |
 | DELETE | `/api/v1/members/withdraw` | 회원 탈퇴 |
@@ -264,6 +265,7 @@ docker compose -f docker/docker-compose.yml down -v
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/classrooms` | 반 목록 조회 |
+| GET | `/api/v1/classrooms/{id}` | 반 단건 조회 |
 | POST | `/api/v1/classrooms` | 반 생성 |
 | PUT | `/api/v1/classrooms/{id}` | 반 수정 |
 | DELETE | `/api/v1/classrooms/{id}` | 반 삭제 |
@@ -274,27 +276,50 @@ docker compose -f docker/docker-compose.yml down -v
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/kids` | 원생 목록 |
+| GET | `/api/v1/kids/{id}` | 원생 상세 |
+| GET | `/api/v1/kids/page` | 원생 목록(페이지) |
+| GET | `/api/v1/kids/classroom-counts` | 반별 원생 수 조회 |
 | POST | `/api/v1/kids` | 원생 등록 |
 | PUT | `/api/v1/kids/{id}` | 원생 수정 |
+| PUT | `/api/v1/kids/{id}/classroom` | 반 배정 변경 |
+| POST | `/api/v1/kids/{id}/parents` | 학부모 연결 |
+| DELETE | `/api/v1/kids/{id}/parents/{parentId}` | 학부모 연결 해제 |
 | DELETE | `/api/v1/kids/{id}` | 원생 삭제 |
 | GET | `/api/v1/kids/my-kids` | 내 원생 목록(학부모) |
 
 ### 출석 (Attendance)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
+| POST | `/api/v1/attendance` | 출석 생성 |
 | GET | `/api/v1/attendance/daily` | 일별 출석 조회 |
 | POST | `/api/v1/attendance/upsert` | 출석 등록/수정 |
 | POST | `/api/v1/attendance/bulk` | 출석 일괄 반영 |
+| GET | `/api/v1/attendance/{id}` | 출석 단건 조회 |
+| GET | `/api/v1/attendance/kid/{kidId}` | 원생 날짜별 조회 |
 | GET | `/api/v1/attendance/kid/{kidId}/monthly` | 월간 출석 목록 |
+| GET | `/api/v1/attendance/kid/{kidId}/statistics` | 월간 출석 통계 |
 | GET | `/api/v1/attendance/classroom/{classroomId}/monthly-report` | 반별 월간 리포트 |
+| PUT | `/api/v1/attendance/{id}` | 출석 수정 |
+| POST | `/api/v1/attendance/kid/{kidId}/drop-off` | 등원 처리 |
+| POST | `/api/v1/attendance/kid/{kidId}/pick-up` | 하원 처리 |
+| POST | `/api/v1/attendance/kid/{kidId}/absent` | 결석 처리 |
+| POST | `/api/v1/attendance/kid/{kidId}/late` | 지각 처리 |
+| POST | `/api/v1/attendance/kid/{kidId}/early-leave` | 조퇴 처리 |
+| POST | `/api/v1/attendance/kid/{kidId}/sick-leave` | 병결 처리 |
+| DELETE | `/api/v1/attendance/{id}` | 출석 삭제 |
 
 ### 알림장 (Notepad)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/notepads` | 알림장 목록 |
+| GET | `/api/v1/notepads/{id}` | 알림장 상세 |
+| GET | `/api/v1/notepads/classroom/{classroomId}` | 반별 알림장 목록 |
+| GET | `/api/v1/notepads/kid/{kidId}` | 원생별 알림장 목록 |
+| GET | `/api/v1/notepads/parent` | 학부모용 알림장 목록 |
 | POST | `/api/v1/notepads` | 알림장 작성 |
 | PUT | `/api/v1/notepads/{id}` | 알림장 수정 |
 | DELETE | `/api/v1/notepads/{id}` | 알림장 삭제 |
+| POST | `/api/v1/notepads/{id}/read` | 알림장 읽음 처리 |
 
 ### 공지사항 (Announcement)
 | Method | Endpoint | 설명 |
@@ -311,24 +336,37 @@ docker compose -f docker/docker-compose.yml down -v
 |--------|----------|------|
 | POST | `/api/v1/kindergarten-applications` | 교사 유치원 지원 |
 | GET | `/api/v1/kindergarten-applications/my` | 내 교사 지원서 목록 |
+| GET | `/api/v1/kindergarten-applications/pending` | 유치원 대기 지원서 목록 |
+| GET | `/api/v1/kindergarten-applications/{id}` | 교사 지원서 상세 |
 | PUT | `/api/v1/kindergarten-applications/{id}/approve` | 교사 지원서 승인 |
 | PUT | `/api/v1/kindergarten-applications/{id}/reject` | 교사 지원서 거절 |
+| PUT | `/api/v1/kindergarten-applications/{id}/cancel` | 교사 지원서 취소 |
 | POST | `/api/v1/kid-applications` | 학부모 입학 신청 |
 | GET | `/api/v1/kid-applications/my` | 내 입학 신청 목록 |
+| GET | `/api/v1/kid-applications/pending` | 유치원 대기 입학 신청 목록 |
+| GET | `/api/v1/kid-applications/{id}` | 입학 신청 상세 |
 | PUT | `/api/v1/kid-applications/{id}/approve` | 입학 신청 승인 |
 | PUT | `/api/v1/kid-applications/{id}/reject` | 입학 신청 거절 |
+| PUT | `/api/v1/kid-applications/{id}/cancel` | 입학 신청 취소 |
 
 ### 알림 (Notification)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/notifications` | 알림 목록 조회 |
+| GET | `/api/v1/notifications/{id}` | 알림 상세 조회 |
+| GET | `/api/v1/notifications/unread` | 미읽음 알림 목록 |
 | GET | `/api/v1/notifications/unread-count` | 안 읽은 개수 조회 |
 | PUT | `/api/v1/notifications/{id}/read` | 알림 읽음 처리 |
+| PUT | `/api/v1/notifications/read-all` | 알림 전체 읽음 처리 |
+| DELETE | `/api/v1/notifications/{id}` | 알림 삭제 |
 
 ### 일정 (Calendar)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | GET | `/api/v1/calendar/events` | 일정 목록 조회 |
+| GET | `/api/v1/calendar/events/{id}` | 일정 상세 조회 |
+| GET | `/api/v1/calendar/events/today` | 오늘 일정 조회 |
+| GET | `/api/v1/calendar/events/upcoming` | 다가오는 일정 조회 |
 | POST | `/api/v1/calendar/events` | 일정 등록 |
 | PUT | `/api/v1/calendar/events/{id}` | 일정 수정 |
 | DELETE | `/api/v1/calendar/events/{id}` | 일정 삭제 |
