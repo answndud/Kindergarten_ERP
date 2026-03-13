@@ -1,6 +1,7 @@
 package com.erp.global.security.oauth2;
 
 import com.erp.domain.auth.service.AuthService;
+import com.erp.domain.auth.service.SocialAccountLinkService;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -37,6 +38,12 @@ class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock
     private AuthService authService;
+
+    @Mock
+    private SocialAccountLinkService socialAccountLinkService;
+
+    @Mock
+    private OAuth2LinkSessionService oauth2LinkSessionService;
 
     @InjectMocks
     private OAuth2AuthenticationSuccessHandler successHandler;
@@ -77,12 +84,52 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 .thenReturn(Optional.empty());
         when(memberRepository.existsByEmail("existing@test.com"))
                 .thenReturn(true);
+        when(oauth2LinkSessionService.load(request)).thenReturn(Optional.empty());
 
         successHandler.onAuthenticationSuccess(request, response, authentication);
 
         assertThat(response.getRedirectedUrl()).isEqualTo("/login?error=social_account_conflict");
         assertThat(request.getSession(false)).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(authService, never()).loginBySocial(any(), any());
+    }
+
+    @Test
+    @DisplayName("OAuth2 로그인: link intent가 있으면 신규 가입 대신 현재 계정에 provider를 연결한다")
+    void onAuthenticationSuccess_LinksProviderToCurrentMember_WhenLinkIntentExists() throws Exception {
+        DefaultOAuth2User principal = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_PARENT")),
+                Map.of(
+                        "sub", "google-sub-123",
+                        "email", "linked@test.com",
+                        "name", "연결회원"
+                ),
+                "sub"
+        );
+        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+                principal,
+                principal.getAuthorities(),
+                "google"
+        );
+
+        MockHttpSession session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(oauth2LinkSessionService.load(request))
+                .thenReturn(Optional.of(new OAuth2LinkSessionService.SocialLinkIntent(1L, MemberAuthProvider.GOOGLE)));
+
+        successHandler.onAuthenticationSuccess(request, response, authentication);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo("/settings?socialLinkStatus=success&provider=google");
+        assertThat(request.getSession(false)).isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(socialAccountLinkService).linkSocialAccount(1L, MemberAuthProvider.GOOGLE, "google-sub-123");
         verify(authService, never()).loginBySocial(any(), any());
     }
 }

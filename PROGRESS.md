@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:24 | DONE | `/auth/social/link/{provider}`와 `OAuth2LinkSessionService`를 추가해 settings 기반 명시적 소셜 연결 시작점을 구현. `OAuth2AuthenticationSuccessHandler`는 link intent 존재 시 현재 회원 provider 연결로 분기하고 성공/실패 모두 세션을 정리하도록 정리 | settings 상태/UI 및 테스트 보강 |
+| 2026-03-13 20:24 | DONE | `settings.html`에 소셜 연결 카드, linked provider 표시, 소셜 전용 계정의 비밀번호 변경 불가 안내를 반영. `ViewEndpointTest`와 `OAuth2AuthenticationSuccessHandlerTest`에 link 시작/성공/화면 상태 회귀 테스트 추가 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:24 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"` 통과. `README.md`, `docs/phase/phase28_explicit_social_account_linking.md` 반영 | add/commit/push 진행 |
+| 2026-03-13 20:19 | IN_PROGRESS | 새 후속 배치 시작. OAuth2 충돌 차단 이후 흐름을 재점검한 결과, 기존 계정에 소셜 로그인 연결을 명시적으로 수행할 정상 경로가 없고 settings 화면도 소셜 전용 계정 상태를 반영하지 못하는 공백 확인 | `PLAN.md` 갱신 후 link intent/session 기반 연결 플로우 설계 |
+| 2026-03-13 20:19 | IN_PROGRESS | `PLAN.md`를 후속 고도화 9차(명시적 소셜 계정 연결 플로우 추가) 기준으로 갱신. 이번 배치는 link 시작점, OAuth2 callback 분기, settings 상태/메시지 정합화에 집중 | Member/Auth/OAuth2/settings/view test 수정 |
 | 2026-03-13 20:12 | DONE | `OAuth2AuthenticationSuccessHandler`에 social account conflict 분기와 실패 시 임시 세션 정리 로직을 추가. `AuthViewController`/`login.html`은 충돌과 일반 실패를 구분해 제목/메시지/다음 행동을 렌더링하도록 정리 | handler/view 테스트 및 문서 반영 |
 | 2026-03-13 20:12 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"` 통과. `README.md`, `docs/phase/phase27_oauth2_account_conflict_policy.md` 반영 | add/commit/push 진행 |
 | 2026-03-13 20:08 | IN_PROGRESS | 새 후속 배치 시작. OAuth2 성공 핸들러를 재점검한 결과, 기존 이메일 충돌 시 `IllegalStateException`을 일반 실패로 삼켜 로그인 화면에 모호한 오류만 노출하는 정책/UX 공백 확인 | `PLAN.md` 갱신 후 충돌 사유 분리와 로그인 뷰 메시지 정책 구현 |
@@ -81,5 +86,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: OAuth2 계정 충돌 정책/UX 정합화 검증 완료
+- 활성 작업: 명시적 소셜 계정 연결 플로우 추가 검증 완료
 - 블로커: 없음

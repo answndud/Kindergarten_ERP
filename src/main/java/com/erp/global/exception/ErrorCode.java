@@ -24,6 +24,8 @@ public enum ErrorCode {
     ACCESS_DENIED(403, "A004", "접근 권한이 없습니다"),
     REFRESH_TOKEN_NOT_FOUND(404, "A005", "리프레시 토큰을 찾을 수 없습니다"),
     AUTH_RATE_LIMITED(429, "A006", "인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요"),
+    SOCIAL_ACCOUNT_ALREADY_LINKED(409, "A007", "이미 다른 계정에 연결된 소셜 계정입니다"),
+    SOCIAL_PROVIDER_SLOT_OCCUPIED(409, "A008", "이미 다른 소셜 로그인 방식이 연결되어 있습니다"),
 
     // ========== Member ==========
     EMAIL_ALREADY_EXISTS(409, "M001", "이미 사용 중인 이메일입니다"),

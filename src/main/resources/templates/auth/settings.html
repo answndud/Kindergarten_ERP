@@ -53,6 +53,26 @@
             <p class="text-gray-600">계정 설정 및 비밀번호를 관리하세요</p>
         </div>
 
+        <div th:if="${socialLinkAlertMessage}"
+             class="mb-6 rounded-2xl border p-4"
+             th:classappend="${
+                 socialLinkAlertTone == 'success' ? ' bg-emerald-50 border-emerald-200' :
+                 (socialLinkAlertTone == 'info' ? ' bg-sky-50 border-sky-200' : ' bg-amber-50 border-amber-200')
+             }">
+            <p class="text-sm font-semibold"
+               th:classappend="${
+                   socialLinkAlertTone == 'success' ? ' text-emerald-800' :
+                   (socialLinkAlertTone == 'info' ? ' text-sky-800' : ' text-amber-800')
+               }"
+               th:text="${socialLinkAlertTitle}">소셜 계정 연결 안내</p>
+            <p class="mt-1 text-sm"
+               th:classappend="${
+                   socialLinkAlertTone == 'success' ? ' text-emerald-700' :
+                   (socialLinkAlertTone == 'info' ? ' text-sky-700' : ' text-amber-700')
+               }"
+               th:text="${socialLinkAlertMessage}">소셜 계정 연결 상태를 확인하세요.</p>
+        </div>
+
         <!-- Settings Sections -->
         <div class="space-y-6">
             <!-- Account Info -->
@@ -79,15 +99,57 @@
                         <span class="text-gray-600">역할</span>
                         <span class="font-medium text-gray-900" th:text="${currentMember?.role?.title}">-</span>
                     </div>
+                    <div class="flex justify-between py-2 border-t border-gray-100 pt-4">
+                        <span class="text-gray-600">연결된 소셜 로그인</span>
+                        <span class="font-medium text-gray-900" th:text="${linkedSocialProviderLabel ?: '없음'}">없음</span>
+                    </div>
+                    <div class="flex justify-between py-2">
+                        <span class="text-gray-600">비밀번호 로그인</span>
+                        <span class="font-medium text-gray-900" th:text="${passwordChangeAvailable ? '사용 가능' : '소셜 전용 계정'}">사용 가능</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">소셜 로그인 연결</h2>
+                        <p class="text-sm text-gray-600">설정 화면에서 직접 연결한 계정만 허용합니다. 현재는 소셜 로그인 1개만 연결할 수 있습니다.</p>
+                    </div>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                          th:text="${linkedSocialProviderLabel != null ? '연결됨: ' + linkedSocialProviderLabel : '미연결'}">미연결</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <a th:if="${!googleLinked and !socialLinkLimitReached}"
+                       href="/auth/social/link/google"
+                       class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
+                        <span>Google 연결</span>
+                    </a>
+                    <div th:if="${googleLinked or socialLinkLimitReached}"
+                         class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
+                        <span th:text="${googleLinked ? 'Google 연결됨' : 'Google 연결 불가'}">Google 연결됨</span>
+                    </div>
+
+                    <a th:if="${!kakaoLinked and !socialLinkLimitReached}"
+                       href="/auth/social/link/kakao"
+                       class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
+                        <span>Kakao 연결</span>
+                    </a>
+                    <div th:if="${kakaoLinked or socialLinkLimitReached}"
+                         class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
+                        <span th:text="${kakaoLinked ? 'Kakao 연결됨' : 'Kakao 연결 불가'}">Kakao 연결됨</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Password Change -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-2">비밀번호 변경</h2>
-                <p class="text-sm text-gray-600 mb-4">보안을 위해 정기적으로 비밀번호를 변경하세요</p>
+                <p th:if="${passwordChangeAvailable}" class="text-sm text-gray-600 mb-4">보안을 위해 정기적으로 비밀번호를 변경하세요</p>
+                <p th:if="${!passwordChangeAvailable}" class="text-sm text-gray-600 mb-4">현재 계정은 소셜 로그인 전용입니다. 비밀번호 변경은 로컬 비밀번호가 있는 계정에서만 가능합니다.</p>
 
-                <form id="passwordForm" class="space-y-4">
+                <form th:if="${passwordChangeAvailable}" id="passwordForm" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">현재 비밀번호</label>
                         <input type="password" id="currentPassword" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
@@ -105,6 +167,10 @@
                         비밀번호 변경
                     </button>
                 </form>
+
+                <div th:if="${!passwordChangeAvailable}" class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                    소셜 계정으로 가입한 경우에는 먼저 로컬 비밀번호 설정 기능이 필요합니다. 현재 프로젝트는 소셜 연결 정책과 인증 경계에 집중하고 있어 해당 기능은 후속 과제로 분리했습니다.
+                </div>
             </div>
 
             <!-- Notification Settings -->
@@ -166,7 +232,7 @@
     <!-- Custom JS (UI helpers) -->
     <script th:src="@{/js/app.js}"></script>
  
-     <script>
+    <script th:if="${passwordChangeAvailable}">
         document.getElementById('passwordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 

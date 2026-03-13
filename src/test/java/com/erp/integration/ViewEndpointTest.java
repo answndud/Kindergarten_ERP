@@ -7,6 +7,7 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
+import com.erp.global.security.user.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,9 +24,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -102,6 +107,52 @@ class ViewEndpointTest extends TestcontainersSupport {
     void testSettingsPageWithoutAuth() throws Exception {
         mockMvc.perform(get("/settings"))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void testSocialLinkStartRedirectsToOauthAuthorization() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("연결 유치원", "서울시", "010-2222-3333", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member localMember = Member.create(
+                "link-local@test.com",
+                "encoded-password",
+                "로컬회원",
+                "01033334444",
+                MemberRole.PARENT
+        );
+        localMember.assignKindergarten(kindergarten);
+        memberRepository.save(localMember);
+
+        mockMvc.perform(get("/auth/social/link/google").with(user(new CustomUserDetails(localMember))))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/oauth2/authorization/google"))
+                .andExpect(request().sessionAttribute("oauth2_link_member_id", localMember.getId()))
+                .andExpect(request().sessionAttribute("oauth2_link_provider", "GOOGLE"));
+    }
+
+    @Test
+    void testSettingsPageForSocialOnlyAccountHidesPasswordForm() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("소셜 설정 유치원", "서울시", "010-4444-5555", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member socialMember = Member.createSocial(
+                "settings-social@test.com",
+                "소셜설정회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "settings-google-123"
+        );
+        socialMember.assignKindergarten(kindergarten);
+        memberRepository.save(socialMember);
+
+        mockMvc.perform(get("/settings").with(user(new CustomUserDetails(socialMember))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("연결됨: Google")))
+                .andExpect(content().string(containsString("소셜 로그인 전용")))
+                .andExpect(content().string(not(containsString("현재 비밀번호"))));
     }
 
     @Test
