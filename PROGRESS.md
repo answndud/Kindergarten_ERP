@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 22:00 | DONE | `eadc70e` (`feat: add observability baseline and auth audit queries`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
+| 2026-03-13 22:00 | DONE | GitHub Actions run `23051763705` 성공 확인. `Fast Checks` 1m31s, `Integration Suite` 2m42s, artifact 업로드 정상 확인 | 후속 과제 정리 |
 | 2026-03-13 21:54 | DONE | `docs/interview/interview_one_pager.md`, `docs/interview/demo_3min_scenario.md`를 추가하고 README 문서 섹션을 인터뷰 바로 보기 + 상세 결정 로그 구조로 재정리 | 운영 관측성/감사 로그 조회 구현 최종 검증 |
 | 2026-03-13 21:54 | DONE | `spring-boot-starter-actuator`, health/info 노출, liveness/readiness probe, `CorrelationIdFilter`, `RequestLoggingFilter`, logback correlation id 패턴을 반영해 운영 관측성 baseline을 추가 | 감사 로그 조회 API와 테스트 최종 검증 |
 | 2026-03-13 21:54 | DONE | 원장 전용 `/api/v1/auth/audit-logs` API와 `AuthAuditLogQueryService`/repository query를 추가. 같은 유치원 소속 member 기반 로그만 조회하고 eventType/result/provider/email/date 필터를 지원하도록 정리 | phase 문서와 최종 로컬 검증 로그 기록 |
@@ -121,6 +123,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: 인터뷰 패키징 + 운영 관측성 + 감사 로그 조회 API
+- 현재 단계: `DONE`
+- 활성 작업: 없음
 - 블로커: 없음
