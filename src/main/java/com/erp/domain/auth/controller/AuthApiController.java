@@ -6,6 +6,7 @@ import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import com.erp.global.security.user.CustomUserDetails;
 import jakarta.servlet.http.Cookie;
@@ -28,6 +29,7 @@ public class AuthApiController {
     private final AuthService authService;
     private final MemberService memberService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ClientIpResolver clientIpResolver;
 
     /**
      * 회원가입
@@ -70,7 +72,7 @@ public class AuthApiController {
         authService.login(
                 request.getEmail(),
                 request.getPassword(),
-                resolveClientIp(httpServletRequest),
+                clientIpResolver.resolve(httpServletRequest),
                 response
         );
 
@@ -105,7 +107,7 @@ public class AuthApiController {
                     .body(ApiResponse.error(com.erp.global.exception.ErrorCode.TOKEN_INVALID));
         }
 
-        authService.refreshAccessToken(refreshToken, resolveClientIp(request), response);
+        authService.refreshAccessToken(refreshToken, clientIpResolver.resolve(request), response);
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "토큰이 갱신되었습니다"));
@@ -139,19 +141,5 @@ public class AuthApiController {
         }
 
         return null;
-    }
-
-    private String resolveClientIp(HttpServletRequest request) {
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
-        }
-
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
-        }
-
-        return request.getRemoteAddr();
     }
 }

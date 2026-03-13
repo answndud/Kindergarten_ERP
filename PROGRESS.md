@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:14 | DONE | `ClientIpResolver`/`ClientIpProperties` 추가 후 로그인/refresh API를 trusted proxy 기준 client IP 해석으로 전환. untrusted remote는 `remoteAddr`만 사용하고, loopback 및 설정된 proxy만 전달 헤더를 신뢰하도록 정리 | Auth 통합 테스트 및 문서화 |
+| 2026-03-13 20:17 | DONE | `AuthApiIntegrationTest`에 spoofed `X-Forwarded-For` 무시, trusted loopback proxy에서 전달 헤더 반영 시나리오를 추가 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:18 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase24_auth_client_ip_trust_model.md` 반영 | 사용자 승인 시 add/commit/push |
+| 2026-03-13 20:07 | IN_PROGRESS | 새 후속 배치 시작. 인증 rate limit 재점검 결과 `AuthApiController`가 `X-Forwarded-For`, `X-Real-IP`를 무조건 신뢰해 임의 클라이언트도 헤더 조작으로 IP 제한을 우회할 수 있는 문제 확인 | `PLAN.md` 갱신 후 client IP resolver 설계/구현 |
+| 2026-03-13 20:09 | IN_PROGRESS | `PLAN.md`를 후속 고도화 5차(인증 Client IP 신뢰 모델 하드닝) 기준으로 갱신. 이번 배치는 trusted proxy 기준 정립, auth 테스트 보강, 인터뷰용 문서화에 집중 | resolver/properties 추가 및 Auth controller/test 수정 |
 | 2026-03-13 19:58 | DONE | `CalendarEventRepository`/`CalendarEventService`에 반복 일정 후보 조회와 occurrence 확장 로직을 반영하고, 학부모의 유치원 전체 일정 조회를 허용하도록 권한 정합화 | 캘린더 통합 테스트 및 문서화 |
 | 2026-03-13 20:01 | DONE | `CalendarApiIntegrationTest`를 재작성해 반복 일정 조회 성공, 학부모 유치원 일정 조회 성공, 교차 유치원 상세 차단, 잘못된 반복 입력 실패를 검증 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:03 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.CalendarApiIntegrationTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase23_calendar_recurrence_access_alignment.md` 반영 | 사용자 승인 시 add/commit/push |
@@ -62,5 +67,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 캘린더 반복 일정/권한 정합성 보강 마무리, 사용자 승인 대기
+- 활성 작업: 인증 Client IP 신뢰 모델 하드닝 마무리, 사용자 승인 대기
 - 블로커: 없음

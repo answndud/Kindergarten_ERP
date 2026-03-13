@@ -1,42 +1,42 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 4차 (캘린더 반복 일정/권한 정합성 보강)
+- 후속 고도화 5차 (인증 Client IP 신뢰 모델 하드닝)
 
 ## 1) 목표 / 범위
-- 캘린더 도메인에서 문서와 실제 구현이 어긋난 부분을 정리한다.
-- 반복 일정(`repeatType`, `repeatEndDate`)이 목록/오늘/다가오는 조회에서 실제로 동작하도록 구현한다.
-- 유치원 전체 일정의 학부모 조회 정책을 문서 의도에 맞게 정리하고, 권한 회귀 테스트와 인터뷰용 문서를 함께 남긴다.
+- 인증 rate limit에서 사용하는 Client IP 해석 로직을 신뢰 가능한 프록시 기준으로 정리한다.
+- 임의 클라이언트가 `X-Forwarded-For`, `X-Real-IP`를 조작해 로그인/refresh rate limit을 우회하지 못하게 한다.
+- 인터뷰에서 설명 가능한 운영형 보안 결정으로 문서화하고 회귀 테스트를 추가한다.
 
 ## 2) 세부 작업 단계
-1. 캘린더 구현/문서 정합성 점검
-   - `CalendarEventService`, repository, API 테스트를 점검한다.
-   - 문서상 반복 일정/유치원 전체 일정 조회 규칙과 현재 구현 차이를 정리한다.
+1. 현재 IP 해석 경로 점검
+   - `AuthApiController`, rate limit 테스트, 설정 파일을 검토한다.
+   - 어떤 조건에서 전달 헤더를 신뢰할지 정책을 결정한다.
 
-2. 반복 일정 조회 구현
-   - 반복 일정이 조회 범위에 걸릴 때 occurrence가 실제 응답으로 확장되도록 구현한다.
-   - 반복 입력 검증(`repeatType != NONE` 시 `repeatEndDate` 필수 등)을 추가한다.
+2. Client IP resolver 구현
+   - trusted proxy 여부를 판단하는 resolver/properties를 추가한다.
+   - trusted proxy인 경우에만 `X-Forwarded-For`, `X-Real-IP`를 사용하도록 변경한다.
 
-3. 권한/가시성 정합화
-   - 학부모도 같은 유치원의 `KINDERGARTEN` 일정은 조회 가능하도록 정리한다.
-   - 교차 유치원 일정 상세 접근 실패 회귀 테스트를 추가한다.
+3. 회귀 테스트 추가
+   - 임의 remote address에서 조작된 forwarded header가 무시되는지 검증한다.
+   - loopback 또는 trusted proxy에서는 전달 헤더가 반영되는지 검증한다.
 
 4. 문서화 및 검증
-   - `README.md`, `docs/phase/`에 구현 배경과 면접 포인트를 정리한다.
+   - `README.md`, `docs/phase/`에 보안 의도와 운영 트레이드오프를 정리한다.
    - `./gradlew compileJava compileTestJava`
-   - `./gradlew test --tests "com.erp.api.CalendarApiIntegrationTest"`
+   - `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`
    - `git diff --check`
 
 ## 3) 검증 계획
 - 로컬 검증
   - `./gradlew compileJava compileTestJava`
-  - `./gradlew test --tests "com.erp.api.CalendarApiIntegrationTest"`
+  - `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- 반복 일정 조회를 서비스에서 잘못 확장하면 같은 일정이 누락되거나 중복될 수 있음
-  - 대응: 주간 반복/유치원 전체/교차 유치원 접근 실패를 통합 테스트로 고정
-- 기존 데이터 중 `repeatType != NONE`인데 `repeatEndDate`가 비어 있을 수 있음
-  - 대응: 신규 입력은 엄격히 막고, 조회는 null-safe 하게 처리해 기존 데이터로 인한 장애를 피함
-- 응답 계약을 크게 바꾸면 화면이 깨질 수 있음
-  - 대응: 기존 `CalendarEventResponse` 구조는 유지하고, occurrence 확장 시 날짜 필드만 바꾼다
+- 프록시 신뢰 기준을 너무 엄격하게 잡으면 실제 reverse proxy 환경에서 원본 IP를 못 읽을 수 있음
+  - 대응: loopback은 기본 신뢰하고, 추가 trusted proxy는 설정으로 열어둔다
+- forwarded header 파싱을 잘못 구현하면 정상 요청이 `unknown`으로 묶일 수 있음
+  - 대응: 유효하지 않은 헤더는 무시하고 `remoteAddr`로 안전하게 fallback 한다
+- 테스트가 구현 세부에 과도하게 묶이면 유지보수가 어려움
+  - 대응: rate limit 결과(429/미발생) 기준으로 검증하고 내부 key 문자열에는 의존하지 않는다

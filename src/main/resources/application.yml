@@ -60,3 +60,8 @@ notification:
     app:
       enabled: false
       webhook-url: ${NOTIFICATION_APP_WEBHOOK:}
+
+app:
+  security:
+    client-ip:
+      trusted-proxies: []
