@@ -240,6 +240,7 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
     }
 
     private void resetIdentity() {
+        resetTableIdentity("announcement_view");
         resetTableIdentity("attendance");
         resetTableIdentity("notepad");
         resetTableIdentity("announcement");

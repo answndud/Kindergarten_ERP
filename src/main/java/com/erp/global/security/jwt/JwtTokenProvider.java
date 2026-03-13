@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * JWT 토큰 생성 및 검증
@@ -38,27 +39,31 @@ public class JwtTokenProvider {
     /**
      * Access Token 생성
      */
-    public String createAccessToken(String email, String role) {
-        return createToken(email, role, jwtProperties.getAccessTokenValidity());
+    public String createAccessToken(Long memberId, String email, String role, String sessionId) {
+        return createToken(memberId, email, role, sessionId, "access", jwtProperties.getAccessTokenValidity());
     }
 
     /**
      * Refresh Token 생성
      */
-    public String createRefreshToken(String email, String role) {
-        return createToken(email, role, jwtProperties.getRefreshTokenValidity());
+    public String createRefreshToken(Long memberId, String email, String role, String sessionId) {
+        return createToken(memberId, email, role, sessionId, "refresh", jwtProperties.getRefreshTokenValidity());
     }
 
     /**
      * JWT 토큰 생성
      */
-    private String createToken(String email, String role, long validity) {
+    private String createToken(Long memberId, String email, String role, String sessionId, String tokenType, long validity) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + validity);
 
         return Jwts.builder()
                 .subject(email)
+                .claim("memberId", memberId)
                 .claim("role", role)
+                .claim("sessionId", sessionId)
+                .claim("tokenType", tokenType)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)
@@ -77,6 +82,32 @@ public class JwtTokenProvider {
      */
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    /**
+     * 토큰에서 회원 ID 추출
+     */
+    public Long getMemberId(String token) {
+        Number memberId = getClaims(token).get("memberId", Number.class);
+        return memberId != null ? memberId.longValue() : null;
+    }
+
+    /**
+     * 토큰에서 세션 ID 추출
+     */
+    public String getSessionId(String token) {
+        return getClaims(token).get("sessionId", String.class);
+    }
+
+    /**
+     * 토큰 타입 추출
+     */
+    public String getTokenType(String token) {
+        return getClaims(token).get("tokenType", String.class);
+    }
+
+    public boolean isRefreshToken(String token) {
+        return "refresh".equals(getTokenType(token));
     }
 
     /**

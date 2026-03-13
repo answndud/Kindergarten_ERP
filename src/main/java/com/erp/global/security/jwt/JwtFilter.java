@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.GenericFilterBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +45,14 @@ public class JwtFilter extends GenericFilterBean {
         String token = resolveToken(httpRequest);
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            // 토큰이 유효하면 인증 정보 설정
-            Authentication authentication = getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("JWT 인증 성공: {}", jwtTokenProvider.getEmail(token));
+            try {
+                Authentication authentication = getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("JWT 인증 성공: {}", jwtTokenProvider.getEmail(token));
+            } catch (UsernameNotFoundException e) {
+                SecurityContextHolder.clearContext();
+                log.debug("JWT 인증 실패 - 사용자 조회 불가: {}", e.getMessage());
+            }
         }
 
         chain.doFilter(request, response);

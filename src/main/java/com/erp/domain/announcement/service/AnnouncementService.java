@@ -4,6 +4,7 @@ import com.erp.domain.announcement.dto.request.AnnouncementRequest;
 import com.erp.domain.announcement.dto.response.AnnouncementResponse;
 import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.announcement.repository.AnnouncementRepository;
+import com.erp.domain.announcement.repository.AnnouncementViewRepository;
 import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.kindergarten.service.KindergartenService;
 import com.erp.domain.member.entity.Member;
@@ -15,6 +16,7 @@ import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,7 @@ import java.util.List;
 public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
+    private final AnnouncementViewRepository announcementViewRepository;
     private final KindergartenService kindergartenService;
     private final MemberService memberService;
     private final NotificationService notificationService;
@@ -109,7 +112,7 @@ public class AnnouncementService {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateAnnouncementReadAccess(requester, announcement);
 
-        announcement.incrementViewCount();
+        recordView(announcement, requester);
         evictDashboardStatistics(announcement);
         return announcement;
     }
@@ -308,5 +311,19 @@ public class AnnouncementService {
 
     private void evictDashboardStatistics(Announcement announcement) {
         dashboardService.evictDashboardStatisticsCache(announcement.getKindergarten().getId());
+    }
+
+    private void recordView(Announcement announcement, Member requester) {
+        announcement.incrementViewCount();
+
+        if (announcementViewRepository.existsByAnnouncementIdAndViewerId(announcement.getId(), requester.getId())) {
+            return;
+        }
+
+        try {
+            announcementViewRepository.save(com.erp.domain.announcement.entity.AnnouncementView.create(announcement, requester));
+        } catch (DataIntegrityViolationException ignored) {
+            // 고유 열람은 1회만 집계한다.
+        }
     }
 }

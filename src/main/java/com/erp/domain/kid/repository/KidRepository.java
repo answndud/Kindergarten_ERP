@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +17,12 @@ import java.util.Optional;
  */
 @Repository
 public interface KidRepository extends JpaRepository<Kid, Long> {
+
+    interface DashboardKidSummaryProjection {
+        LocalDate getAdmissionDate();
+
+        LocalDateTime getDeletedAt();
+    }
 
     /**
      * 반별 원생 목록 조회 (삭제되지 않은 원생만)
@@ -117,6 +125,10 @@ public interface KidRepository extends JpaRepository<Kid, Long> {
      */
     @Query("SELECT COUNT(k) FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId AND k.deletedAt IS NULL")
     long countByClassroomKindergartenId(@Param("kindergartenId") Long kindergartenId);
+
+    @Query("SELECT k.admissionDate AS admissionDate, k.deletedAt AS deletedAt " +
+            "FROM Kid k WHERE k.classroom.kindergarten.id = :kindergartenId")
+    List<DashboardKidSummaryProjection> findDashboardKidSummaries(@Param("kindergartenId") Long kindergartenId);
 
     /**
      * 유치원별 원생 목록 조회

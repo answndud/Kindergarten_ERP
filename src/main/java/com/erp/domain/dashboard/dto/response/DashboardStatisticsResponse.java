@@ -9,7 +9,7 @@ public record DashboardStatisticsResponse(
         int totalParents,            // 총 학부모 수
         double attendanceRate7Days,  // 최근 7일 출석률 (%)
         double attendanceRate30Days, // 최근 30일 출석률 (%)
-        double announcementReadRate, // 공지 열람률 (%)
+        double announcementReadRate, // 공지 고유 열람률 (%)
         int totalAnnouncements,      // 총 공지 수
         int todayAttendanceCount     // 오늘 출석한 원생 수
 ) {

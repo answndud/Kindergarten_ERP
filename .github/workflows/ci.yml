@@ -17,8 +17,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test With Testcontainers
+  fast-checks:
+    name: Fast Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Run fast test suite
+        run: ./gradlew --no-daemon fastTest
+
+      - name: Upload fast test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast-test-reports
+          path: |
+            build/reports/tests/fastTest
+            build/test-results/fastTest
+          if-no-files-found: ignore
+
+  integration-tests:
+    name: Integration Suite
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -41,15 +75,15 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew
 
-      - name: Run full test suite
-        run: ./gradlew --no-daemon test
+      - name: Run integration test suite
+        run: ./gradlew --no-daemon integrationTest
 
-      - name: Upload test reports
+      - name: Upload integration test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: integration-test-reports
           path: |
-            build/reports/tests/test
-            build/test-results/test
+            build/reports/tests/integrationTest
+            build/test-results/integrationTest
           if-no-files-found: ignore

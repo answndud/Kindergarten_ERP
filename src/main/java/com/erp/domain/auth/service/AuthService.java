@@ -1,6 +1,7 @@
 package com.erp.domain.auth.service;
 
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 /**
  * 인증 서비스
@@ -26,7 +28,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh:";
+    private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh:session:";
+    private static final String REFRESH_SESSION_SET_KEY_PREFIX = "refresh:sessions:";
 
     private final MemberService memberService;
     private final AuthenticationManager authenticationManager;
@@ -83,11 +86,8 @@ public class AuthService {
     /**
      * 로그아웃
      */
-    public void logout(String email, HttpServletResponse response) {
-        // 1. Redis에서 Refresh Token 삭제
-        redisTemplate.delete(getRefreshTokenKey(email));
-
-        // 2. 쿠키 삭제
+    public void logout(String refreshToken, HttpServletResponse response) {
+        revokeSession(refreshToken);
         expireCookie(response, jwtTokenProvider.getAccessTokenCookieName());
         expireCookie(response, jwtTokenProvider.getRefreshTokenCookieName());
     }
@@ -96,16 +96,8 @@ public class AuthService {
      * Access Token 갱신
      */
     public void refreshAccessToken(String refreshToken, HttpServletResponse response) {
-        // 1. Refresh Token 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new BusinessException(ErrorCode.TOKEN_INVALID);
-        }
-
-        // 2. 이메일 추출
-        String email = jwtTokenProvider.getEmail(refreshToken);
-
-        // 3. Redis에서 Refresh Token 일치 확인
-        String refreshTokenKey = getRefreshTokenKey(email);
+        TokenSessionClaims claims = extractRefreshTokenClaims(refreshToken);
+        String refreshTokenKey = getRefreshTokenKey(claims.memberId(), claims.sessionId());
         Object savedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
         if (!(savedRefreshToken instanceof String storedToken)) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
@@ -114,15 +106,34 @@ public class AuthService {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
-        // 4. 회원 정보 조회
-        Member member = memberService.getMemberByEmail(email);
+        Member member = memberService.getMemberById(claims.memberId());
+        validateRefreshTargetMember(member, claims.email());
 
-        // 5. 새 Access Token 생성
-        String newAccessToken = jwtTokenProvider.createAccessToken(email, member.getRole().getKey());
+        String newAccessToken = jwtTokenProvider.createAccessToken(
+                member.getId(),
+                member.getEmail(),
+                member.getRole().getKey(),
+                claims.sessionId()
+        );
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(
+                member.getId(),
+                member.getEmail(),
+                member.getRole().getKey(),
+                claims.sessionId()
+        );
 
-        // 6. 쿠키에 새 Access Token 저장
+        saveRefreshSession(member.getId(), claims.sessionId(), newRefreshToken);
+
         addCookie(response, jwtTokenProvider.getAccessTokenCookieName(), newAccessToken,
                 (int) (jwtTokenProvider.getAccessTokenValidity() / 1000));
+        addCookie(response, jwtTokenProvider.getRefreshTokenCookieName(), newRefreshToken,
+                (int) (jwtTokenProvider.getRefreshTokenValidity() / 1000));
+    }
+
+    public void revokeAllSessions(Long memberId, HttpServletResponse response) {
+        revokeAllSessions(memberId);
+        expireCookie(response, jwtTokenProvider.getAccessTokenCookieName());
+        expireCookie(response, jwtTokenProvider.getRefreshTokenCookieName());
     }
 
     /**
@@ -151,27 +162,108 @@ public class AuthService {
         response.addCookie(cookie);
     }
 
-    private String getRefreshTokenKey(String email) {
-        return REFRESH_TOKEN_KEY_PREFIX + email;
+    private String getRefreshTokenKey(Long memberId, String sessionId) {
+        return REFRESH_TOKEN_KEY_PREFIX + memberId + ":" + sessionId;
+    }
+
+    private String getRefreshSessionSetKey(Long memberId) {
+        return REFRESH_SESSION_SET_KEY_PREFIX + memberId;
     }
 
     private void issueTokens(Member member, HttpServletResponse response) {
-        String email = member.getEmail();
-
-        String accessToken = jwtTokenProvider.createAccessToken(email, member.getRole().getKey());
-        String refreshToken = jwtTokenProvider.createRefreshToken(email, member.getRole().getKey());
-
-        String refreshTokenKey = getRefreshTokenKey(email);
-        redisTemplate.opsForValue().set(
-                refreshTokenKey,
-                refreshToken,
-                7,
-                TimeUnit.DAYS
+        String sessionId = UUID.randomUUID().toString();
+        String accessToken = jwtTokenProvider.createAccessToken(
+                member.getId(),
+                member.getEmail(),
+                member.getRole().getKey(),
+                sessionId
         );
+        String refreshToken = jwtTokenProvider.createRefreshToken(
+                member.getId(),
+                member.getEmail(),
+                member.getRole().getKey(),
+                sessionId
+        );
+
+        saveRefreshSession(member.getId(), sessionId, refreshToken);
 
         addCookie(response, jwtTokenProvider.getAccessTokenCookieName(), accessToken,
                 (int) (jwtTokenProvider.getAccessTokenValidity() / 1000));
         addCookie(response, jwtTokenProvider.getRefreshTokenCookieName(), refreshToken,
                 (int) (jwtTokenProvider.getRefreshTokenValidity() / 1000));
+    }
+
+    private void saveRefreshSession(Long memberId, String sessionId, String refreshToken) {
+        long ttlMs = Math.max(jwtTokenProvider.getRemainingValidity(refreshToken), 1L);
+
+        redisTemplate.opsForValue().set(
+                getRefreshTokenKey(memberId, sessionId),
+                refreshToken,
+                ttlMs,
+                TimeUnit.MILLISECONDS
+        );
+        redisTemplate.opsForSet().add(getRefreshSessionSetKey(memberId), sessionId);
+        redisTemplate.expire(getRefreshSessionSetKey(memberId), ttlMs, TimeUnit.MILLISECONDS);
+    }
+
+    private void revokeSession(String refreshToken) {
+        if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken) || !jwtTokenProvider.isRefreshToken(refreshToken)) {
+            return;
+        }
+
+        Long memberId = jwtTokenProvider.getMemberId(refreshToken);
+        String sessionId = jwtTokenProvider.getSessionId(refreshToken);
+        if (memberId == null || sessionId == null || sessionId.isBlank()) {
+            return;
+        }
+
+        redisTemplate.delete(getRefreshTokenKey(memberId, sessionId));
+        String sessionSetKey = getRefreshSessionSetKey(memberId);
+        redisTemplate.opsForSet().remove(sessionSetKey, sessionId);
+
+        Long remainingSessions = redisTemplate.opsForSet().size(sessionSetKey);
+        if (remainingSessions == null || remainingSessions == 0) {
+            redisTemplate.delete(sessionSetKey);
+        }
+    }
+
+    private void revokeAllSessions(Long memberId) {
+        String sessionSetKey = getRefreshSessionSetKey(memberId);
+        var sessionIds = redisTemplate.opsForSet().members(sessionSetKey);
+        if (sessionIds != null) {
+            for (Object sessionId : sessionIds) {
+                if (sessionId != null) {
+                    redisTemplate.delete(getRefreshTokenKey(memberId, sessionId.toString()));
+                }
+            }
+        }
+        redisTemplate.delete(sessionSetKey);
+    }
+
+    private TokenSessionClaims extractRefreshTokenClaims(String refreshToken) {
+        if (!jwtTokenProvider.validateToken(refreshToken) || !jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+        }
+
+        Long memberId = jwtTokenProvider.getMemberId(refreshToken);
+        String email = jwtTokenProvider.getEmail(refreshToken);
+        String sessionId = jwtTokenProvider.getSessionId(refreshToken);
+
+        if (memberId == null || email == null || email.isBlank() || sessionId == null || sessionId.isBlank()) {
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+        }
+
+        return new TokenSessionClaims(memberId, email, sessionId);
+    }
+
+    private void validateRefreshTargetMember(Member member, String email) {
+        if (!member.getEmail().equals(email)
+                || member.getDeletedAt() != null
+                || member.getStatus() == MemberStatus.INACTIVE) {
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+        }
+    }
+
+    private record TokenSessionClaims(Long memberId, String email, String sessionId) {
     }
 }

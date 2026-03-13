@@ -16,6 +16,14 @@ import java.util.Optional;
  */
 public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
 
+    interface DashboardMemberCountsProjection {
+        long getTotalTeachers();
+
+        long getTotalParents();
+
+        long getTotalMembers();
+    }
+
     /**
      * 이메일로 회원 조회
      */
@@ -84,4 +92,12 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      */
     @Query("SELECT COUNT(m) FROM Member m WHERE m.kindergarten.id = :kindergartenId AND m.deletedAt IS NULL")
     long countByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
+
+    @Query("SELECT " +
+            "COALESCE(SUM(CASE WHEN m.role = com.erp.domain.member.entity.MemberRole.TEACHER THEN 1 ELSE 0 END), 0) AS totalTeachers, " +
+            "COALESCE(SUM(CASE WHEN m.role = com.erp.domain.member.entity.MemberRole.PARENT THEN 1 ELSE 0 END), 0) AS totalParents, " +
+            "COUNT(m) AS totalMembers " +
+            "FROM Member m " +
+            "WHERE m.kindergarten.id = :kindergartenId AND m.deletedAt IS NULL")
+    DashboardMemberCountsProjection findDashboardMemberCounts(@Param("kindergartenId") Long kindergartenId);
 }

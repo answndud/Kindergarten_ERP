@@ -6,6 +6,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
 [![Redis](https://img.shields.io/badge/Redis-7.x-red.svg)](https://redis.io/)
+[![Backend CI](https://github.com/answndud/Kindergarten_ERP/actions/workflows/ci.yml/badge.svg)](https://github.com/answndud/Kindergarten_ERP/actions/workflows/ci.yml)
 
 ---
 
@@ -25,6 +26,13 @@
 ## 🎯 프로젝트 소개
 
 **유치원 ERP**는 유치원 운영의 효율성을 높이기 위한 통합 관리 시스템입니다.
+
+이 저장소는 기능 구현 자체보다 아래의 백엔드 역량을 포트폴리오로 증명하는 데 초점을 맞췄습니다.
+
+- 멀티테넌시 권한 경계 하드닝
+- Redis 기반 JWT refresh session 분리와 rotation
+- MySQL/Redis Testcontainers 기반 통합 테스트
+- 정확도와 쿼리 수를 함께 관리한 대시보드 지표 개선
 
 ### 프로젝트 철학
 
@@ -50,6 +58,7 @@
 ### 인증 시스템
 - ✅ 회원가입 (이메일/비밀번호)
 - ✅ 로그인 (JWT 기반)
+- ✅ 세션 단위 Refresh Token 저장 및 Rotation
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 역할 기반 접근 제어
 
@@ -93,6 +102,8 @@
 
 ### 대시보드
 - ✅ 출석/회원/공지 지표 조회 API
+- ✅ 입소일/주말을 반영한 출석률 계산
+- ✅ 공지 고유 열람률 집계
 - ✅ 통계 캐시 기반 대시보드 화면
 
 ---
@@ -220,11 +231,17 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
 ```bash
 # 전체 테스트 실행
 ./gradlew test
+
+# 빠른 단위/서비스 테스트
+./gradlew fastTest
+
+# Testcontainers 기반 통합 테스트
+./gradlew integrationTest
 ```
 
 - 통합 테스트는 MySQL/Redis Testcontainers 기반으로 실행됩니다.
 - 로컬 테스트 실행에는 Docker Desktop 또는 Docker Engine이 필요합니다.
-- CI에서도 동일하게 `./gradlew test`를 실행하도록 구성했습니다.
+- CI는 `fastTest`와 `integrationTest`를 분리해 실행합니다.
 
 ### 4. 접속
 
@@ -252,7 +269,7 @@ docker compose -f docker/docker-compose.yml down -v
 | POST | `/api/v1/auth/signup` | 회원가입 |
 | POST | `/api/v1/auth/login` | 로그인 |
 | POST | `/api/v1/auth/logout` | 로그아웃 |
-| POST | `/api/v1/auth/refresh` | 토큰 갱신 |
+| POST | `/api/v1/auth/refresh` | 세션 기반 토큰 rotation |
 | GET | `/api/v1/auth/me` | 현재 로그인 회원 조회 |
 
 ### 회원 (Member)
@@ -400,8 +417,8 @@ docker compose -f docker/docker-compose.yml down -v
 | 대상 | 개선 전 | 개선 후 | 핵심 개선 |
 |------|--------:|--------:|----------|
 | Notepad 목록 조회 | queries 22, 15ms | queries 4, 4ms | 읽음 수 N+1 제거, 다건 집계 쿼리 전환 |
-| Dashboard 통계 | queries 13, 14ms | queries 10, 2ms | 집계 쿼리 통합, 불필요한 목록 로딩 제거 |
-| Dashboard 반복 조회 | queries 10, 10ms | queries 0, 0ms | 60초 TTL 캐시 적용 (`dashboardStatistics`) |
+| Dashboard 통계 | queries 13, 30ms | queries 5, 9ms | 정확도 보정 + 집계 쿼리 통합 |
+| Dashboard 반복 조회 | queries 5, 12ms | queries 0, 0ms | 60초 TTL 캐시 적용 (`dashboardStatistics`) |
 
 ### 실행계획(EXPLAIN) 개선
 
@@ -422,10 +439,11 @@ docker compose -f docker/docker-compose.yml down -v
 
 ## ✅ 테스트 & CI
 
-- 로컬과 CI 모두 `./gradlew test` 기준으로 검증합니다.
+- 로컬 전체 검증은 `./gradlew test`로 유지합니다.
 - 통합 테스트는 H2 mock 환경이 아니라 MySQL/Redis Testcontainers를 사용합니다.
-- GitHub Actions workflow는 `.github/workflows/ci.yml`에 정의되어 있습니다.
-- 실패 시 `build/reports/tests/test`, `build/test-results/test`를 artifact로 업로드하도록 구성했습니다.
+- GitHub Actions는 `fastTest`와 `integrationTest`를 별도 job으로 실행합니다.
+- 초기 CI 실패 원인이었던 `gradle-wrapper.jar` 추적 누락도 복구했습니다.
+- 실패 시 `fastTest`/`integrationTest` 리포트를 각각 artifact로 업로드하도록 구성했습니다.
 
 ---
 
@@ -438,6 +456,9 @@ docker compose -f docker/docker-compose.yml down -v
 | 권한 경계 하드닝 | `docs/phase/phase14_multitenant_access_hardening.md` |
 | Testcontainers 테스트 전환 | `docs/phase/phase15_testcontainers_integration_test_stack.md` |
 | GitHub Actions CI 자동화 | `docs/phase/phase16_github_actions_ci.md` |
+| JWT 세션 회전 설계 | `docs/phase/phase17_jwt_refresh_session_rotation.md` |
+| 대시보드 지표 보정 | `docs/phase/phase18_dashboard_metric_redefinition.md` |
+| CI 복구 및 job 분리 | `docs/phase/phase19_ci_fast_integration_split.md` |
 
 ---
 

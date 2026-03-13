@@ -1,42 +1,50 @@
 # PLAN.md
 
 ## 작업명
-- CI 자동화 (GitHub Actions + Testcontainers 테스트) + 인터뷰용 문서화
+- 후속 고도화 (CI 실행 확인 + JWT 세션 설계 + 대시보드 지표 보정 + CI 최적화 + 인터뷰용 문서화)
 
 ## 1) 목표 / 범위
-- 이미 전환한 MySQL/Redis Testcontainers 기반 테스트 스택을 GitHub Actions에서 자동 실행되도록 연결한다.
-- 저장소에 없는 CI 워크플로우를 새로 추가하고, 실패 시 디버깅 가능한 아티팩트 업로드까지 포함한다.
-- README와 `docs/phase/`에 CI 전략과 인터뷰용 설명 포인트를 정리한다.
-- 이번 세션 결과물은 CI 워크플로우 추가 + 문서 보강 + 설정 검증이다.
+- 직전 배치에서 추가한 GitHub Actions가 실제로 정상 동작하는지 확인하고, 필요 시 수정한다.
+- JWT refresh token 설계를 세션 단위 저장과 rotation이 가능한 구조로 개선한다.
+- 대시보드 지표 산식을 신뢰 가능한 방식으로 보정하고, 필요 시 조회용 데이터 모델을 보강한다.
+- CI를 빠른 검증과 통합 테스트로 분리해 실행 전략을 개선한다.
+- README와 `docs/phase/`를 인터뷰에서 설명하기 좋은 형태로 보강한다.
+- 이번 세션 결과물은 코드 변경 + 테스트/CI 검증 + 문서 보강이다.
 
 ## 2) 세부 작업 단계
-1. CI 현황 점검
-   - 현재 저장소의 `.github/workflows` 유무와 기존 자동화 상태 확인
-   - Testcontainers 기반 테스트를 GitHub Actions runner에서 실행하기 위한 전제 확인
+1. CI 실행 확인
+   - 방금 push된 workflow run 상태 확인
+   - 실패 시 원인 파악 후 workflow 수정
 
-2. 워크플로우 구현
-   - GitHub Actions workflow 추가
-   - Java/Gradle 캐시, `./gradlew test`, 실패 시 test report artifact 업로드 구성
-   - 수동 실행(`workflow_dispatch`)과 PR/push 트리거 구성
+2. JWT 세션 설계 개선
+   - refresh token 저장 방식을 `email` 단일 키에서 세션 단위 키로 전환
+   - refresh 시 rotation 적용
+   - 로그아웃/탈퇴 시 무효화 전략 정리
 
-3. 검증
-   - YAML 문법/구조 검토
-   - README/문서 설명과 실제 워크플로우 구성이 일치하는지 교차 점검
+3. 대시보드 지표 개선
+   - 출석률/공지 열람률 산식 검토
+   - 신뢰 가능한 집계 방식으로 코드와 테스트 보정
 
-4. 문서화
-   - `docs/phase/`에 CI 자동화 배경, GitHub Actions 설계, 면접 포인트 정리
-   - README에 테스트/CI 전략을 짧게 연결
+4. CI 최적화
+   - GitHub Actions를 빠른 검증/통합 테스트 job으로 분리
+   - artifact 및 실패 분석 동선 유지
+
+5. 문서화
+   - `docs/phase/`에 JWT 세션 설계, 대시보드 지표 보정, CI 최적화 배경과 트레이드오프 정리
+   - README와 프로젝트 설명 문구를 채용 관점으로 보강
 
 ## 3) 검증 계획
-- 워크플로우 구조 검토
-  - `.github/workflows/ci.yml` 내용 점검
-- 로컬 교차 검증
-  - README/phase 문서가 실제 실행 명령(`./gradlew test`)과 일치하는지 확인
+- GitHub Actions run 상태 확인
+- 로컬 검증
+  - `./gradlew compileJava compileTestJava`
+  - `./gradlew test`
+- 문서 교차 검증
+  - README/phase 문서가 실제 구현 및 실행 결과와 일치하는지 확인
 
 ## 4) 리스크 및 대응
-- GitHub Actions에서 Docker/Testcontainers 초기화가 느릴 위험
-  - 대응: runner 기본 Docker 환경을 활용하고 Gradle 캐시를 활성화
-- 워크플로우 실패 시 원인 파악이 어려울 위험
-  - 대응: test report와 test-results를 artifact로 업로드
-- README가 기능 나열만 하고 자동화 전략을 설명하지 못할 위험
-  - 대응: CI/Testcontainers를 포트폴리오 관점의 신뢰성 포인트로 별도 서술
+- JWT 구조 변경으로 인증 테스트와 쿠키 처리 흐름이 깨질 위험
+  - 대응: Auth API 통합 테스트와 실제 Redis 저장값 검증을 함께 갱신
+- 대시보드 지표 신뢰도 개선이 데이터 모델 변경을 요구할 위험
+  - 대응: 필요한 최소 범위의 마이그레이션과 회귀 테스트를 추가
+- CI job 분리 후 총 실행 시간이 오히려 늘 위험
+  - 대응: fast/integration 책임을 명확히 나누고 캐시/아티팩트 전략을 유지
