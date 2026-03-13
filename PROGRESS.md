@@ -7,6 +7,9 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 18:59 | IN_PROGRESS | `ff5b683` push 후 GitHub Actions run `23045682877` 확인. 새 split workflow가 `main` 기준으로 정상 시작됨 | run 완료까지 상태/실패 job 로그 확인 |
+| 2026-03-13 19:04 | DONE | GitHub Actions run `23045682877` 통과 확인. `Fast Checks` 1m45s, `Integration Suite` 4m11s, artifact 업로드 정상 확인 | runner annotation 기반 Node24 호환 경고 대응 |
+| 2026-03-13 19:06 | DONE | `.github/workflows/ci.yml`에 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` 추가, `docs/phase/phase20_github_actions_node24_compatibility.md`/`README.md` 반영, `ruby` YAML 파싱 및 `git diff --check` 통과 | 사용자 승인 시 add/commit/push |
 | 2026-03-13 18:42 | IN_PROGRESS | 사용자 요청에 따라 남은 과제를 한 배치로 전환, `PLAN.md`를 CI 확인/JWT 세션 설계/대시보드 지표/CI 최적화 기준으로 갱신 | 원격 workflow run 상태 확인 후 Auth/Dashboard 구조 점검 |
 | 2026-03-13 18:43 | DONE | `gh run`으로 첫 GitHub Actions 실패 원인 확인. `gradle-wrapper.jar`가 `.gitignore` 후행 `*.jar` 규칙에 막혀 runner에 누락되는 문제로 진단 | wrapper 추적 복구 + CI 분리 반영 |
 | 2026-03-13 18:45 | DONE | JWT claim 확장(`memberId/sessionId/tokenType/jti`), Redis 세션 키 구조 도입, refresh rotation, 현재 세션 로그아웃/전체 세션 탈퇴 revoke 반영 | 인증 회귀 테스트 및 문서화 |

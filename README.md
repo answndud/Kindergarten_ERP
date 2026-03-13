@@ -459,6 +459,7 @@ docker compose -f docker/docker-compose.yml down -v
 | JWT 세션 회전 설계 | `docs/phase/phase17_jwt_refresh_session_rotation.md` |
 | 대시보드 지표 보정 | `docs/phase/phase18_dashboard_metric_redefinition.md` |
 | CI 복구 및 job 분리 | `docs/phase/phase19_ci_fast_integration_split.md` |
+| GitHub Actions Node24 호환 | `docs/phase/phase20_github_actions_node24_compatibility.md` |
 
 ---
 
