@@ -34,7 +34,7 @@
 
 - [ ] 인덱스 추가 시 write cost 영향 검토
 - [ ] Redis/DB 장애 시 폴백 동작 점검
-- [ ] 문서(`docs/performance-optimization`) 업데이트 완료
+- [ ] 문서(`docs/portfolio/performance`) 업데이트 완료
 
 ## 회귀 판정 기준(권장)
 

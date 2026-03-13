@@ -208,10 +208,12 @@ erp/
 │   └── test/
 ├── docker/
 │   └── docker-compose.yml           # MySQL + Redis
-├── docs/                             # 프로젝트 문서
-│   ├── project_idea.md              # 설계서
-│   ├── project_diary.md             # 개발 일지
-│   └── springboot_tutorial.md       # Spring Boot 튜토리얼
+├── docs/                             # 문서 인덱스
+│   ├── README.md                    # 문서 시작점
+│   ├── guides/                      # 개발/사용 가이드
+│   ├── portfolio/                   # 인터뷰/성능 스토리
+│   ├── decisions/                   # 기능/보안/운영 결정 로그
+│   └── archive/                     # 레거시/회고/초기 설계 보관
 └── build.gradle
 ```
 
@@ -461,7 +463,7 @@ docker compose -f docker/docker-compose.yml down -v
 
 ### 상세 문서
 
-- 성능 최적화 문서는 저장소의 `docs/performance-optimization` 폴더에서 번호 순서(`00`부터)로 확인하세요.
+- 성능 최적화 문서는 저장소의 `docs/portfolio/performance` 폴더에서 번호 순서(`00`부터)로 확인하세요.
 
 ---
 
@@ -482,38 +484,39 @@ docker compose -f docker/docker-compose.yml down -v
 
 | 문서 | 설명 |
 |------|------|
-| 인터뷰 1장 요약 | `docs/interview/interview_one_pager.md` |
-| 3분 데모 시나리오 | `docs/interview/demo_3min_scenario.md` |
-| 면접 예상 질문/답변 스크립트 | `docs/interview/interview_qa_script.md` |
+| 문서 인덱스 | `docs/README.md` |
+| 인터뷰 1장 요약 | `docs/portfolio/interview/interview_one_pager.md` |
+| 3분 데모 시나리오 | `docs/portfolio/interview/demo_3min_scenario.md` |
+| 면접 예상 질문/답변 스크립트 | `docs/portfolio/interview/interview_qa_script.md` |
 
 ### 상세 결정 로그
 
 | 문서 | 설명 |
 |------|------|
-| 프로젝트 문서 | `docs/` 폴더 참고 |
-| 성능 최적화 문서 | `docs/performance-optimization/` 폴더 참고 (번호 순서) |
-| 권한 경계 하드닝 | `docs/phase/phase14_multitenant_access_hardening.md` |
-| Testcontainers 테스트 전환 | `docs/phase/phase15_testcontainers_integration_test_stack.md` |
-| GitHub Actions CI 자동화 | `docs/phase/phase16_github_actions_ci.md` |
-| JWT 세션 회전 설계 | `docs/phase/phase17_jwt_refresh_session_rotation.md` |
-| 대시보드 지표 보정 | `docs/phase/phase18_dashboard_metric_redefinition.md` |
-| CI 복구 및 job 분리 | `docs/phase/phase19_ci_fast_integration_split.md` |
-| GitHub Actions Node24 호환 | `docs/phase/phase20_github_actions_node24_compatibility.md` |
-| 인증 Rate Limit 하드닝 | `docs/phase/phase21_auth_rate_limit.md` |
-| GitHub Actions Node24 네이티브 전환 | `docs/phase/phase22_github_actions_node24_native_actions.md` |
-| 캘린더 반복 일정/권한 정합성 보강 | `docs/phase/phase23_calendar_recurrence_access_alignment.md` |
-| 인증 Client IP 신뢰 모델 하드닝 | `docs/phase/phase24_auth_client_ip_trust_model.md` |
-| 로그인 Rate Limit 정책 정교화 | `docs/phase/phase25_login_rate_limit_policy_refinement.md` |
-| OAuth2 Principal 런타임 안전성 보강 | `docs/phase/phase26_oauth2_principal_runtime_safety.md` |
-| OAuth2 계정 충돌 정책/UX 정합화 | `docs/phase/phase27_oauth2_account_conflict_policy.md` |
-| 명시적 소셜 계정 연결 플로우 | `docs/phase/phase28_explicit_social_account_linking.md` |
-| 소셜 전용 계정 로컬 비밀번호 설정 | `docs/phase/phase29_social_password_bootstrap.md` |
-| 소셜 계정 연결 해제 정책 | `docs/phase/phase30_social_account_unlink_policy.md` |
-| 소셜 계정 다중 연결 구조 정규화 | `docs/phase/phase31_member_social_account_normalization.md` |
-| 소셜 provider 식별자 불변 정책 | `docs/phase/phase32_social_provider_identity_immutability.md` |
-| 인증/소셜 감사 로그 도입 | `docs/phase/phase33_auth_social_audit_log.md` |
-| 운영 관측성 baseline | `docs/phase/phase34_operability_observability_baseline.md` |
-| 인증 감사 로그 조회 API | `docs/phase/phase35_auth_audit_query_api.md` |
+| 프로젝트 문서 인덱스 | `docs/README.md` |
+| 성능 최적화 문서 | `docs/portfolio/performance/` 폴더 참고 (번호 순서) |
+| 권한 경계 하드닝 | `docs/decisions/phase14_multitenant_access_hardening.md` |
+| Testcontainers 테스트 전환 | `docs/decisions/phase15_testcontainers_integration_test_stack.md` |
+| GitHub Actions CI 자동화 | `docs/decisions/phase16_github_actions_ci.md` |
+| JWT 세션 회전 설계 | `docs/decisions/phase17_jwt_refresh_session_rotation.md` |
+| 대시보드 지표 보정 | `docs/decisions/phase18_dashboard_metric_redefinition.md` |
+| CI 복구 및 job 분리 | `docs/decisions/phase19_ci_fast_integration_split.md` |
+| GitHub Actions Node24 호환 | `docs/decisions/phase20_github_actions_node24_compatibility.md` |
+| 인증 Rate Limit 하드닝 | `docs/decisions/phase21_auth_rate_limit.md` |
+| GitHub Actions Node24 네이티브 전환 | `docs/decisions/phase22_github_actions_node24_native_actions.md` |
+| 캘린더 반복 일정/권한 정합성 보강 | `docs/decisions/phase23_calendar_recurrence_access_alignment.md` |
+| 인증 Client IP 신뢰 모델 하드닝 | `docs/decisions/phase24_auth_client_ip_trust_model.md` |
+| 로그인 Rate Limit 정책 정교화 | `docs/decisions/phase25_login_rate_limit_policy_refinement.md` |
+| OAuth2 Principal 런타임 안전성 보강 | `docs/decisions/phase26_oauth2_principal_runtime_safety.md` |
+| OAuth2 계정 충돌 정책/UX 정합화 | `docs/decisions/phase27_oauth2_account_conflict_policy.md` |
+| 명시적 소셜 계정 연결 플로우 | `docs/decisions/phase28_explicit_social_account_linking.md` |
+| 소셜 전용 계정 로컬 비밀번호 설정 | `docs/decisions/phase29_social_password_bootstrap.md` |
+| 소셜 계정 연결 해제 정책 | `docs/decisions/phase30_social_account_unlink_policy.md` |
+| 소셜 계정 다중 연결 구조 정규화 | `docs/decisions/phase31_member_social_account_normalization.md` |
+| 소셜 provider 식별자 불변 정책 | `docs/decisions/phase32_social_provider_identity_immutability.md` |
+| 인증/소셜 감사 로그 도입 | `docs/decisions/phase33_auth_social_audit_log.md` |
+| 운영 관측성 baseline | `docs/decisions/phase34_operability_observability_baseline.md` |
+| 인증 감사 로그 조회 API | `docs/decisions/phase35_auth_audit_query_api.md` |
 
 ---
 

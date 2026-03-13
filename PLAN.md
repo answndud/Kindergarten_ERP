@@ -1,25 +1,28 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 16차 (면접 예상 질문/답변 스크립트 문서화)
+- 후속 고도화 17차 (`docs/` 정보 구조 개편)
 
 ## 1) 목표 / 범위
-- 실제 백엔드 면접에서 바로 말할 수 있는 예상 질문/답변 스크립트를 `docs/interview/`에 추가한다.
-- 기존 1장 요약, 3분 데모 문서와 자연스럽게 이어지도록 README 인터뷰 섹션을 확장한다.
-- 질문 의도, 짧은 답변, 꼬리 질문 대응 포인트까지 포함해 실전 사용성을 높인다.
+- `docs/` 하위 문서를 active/portfolio/archive 기준으로 다시 분류한다.
+- 루트의 혼재된 문서를 `guides`, `portfolio`, `decisions`, `archive` 구조로 정리한다.
+- `README.md`, `docs/README.md`, `AGENTS.md`, 개발 가이드가 새 경로를 SSOT로 가리키게 맞춘다.
+- 더 이상 현재 문서가 아닌 설계서/일지/튜토리얼/초기 TODO는 archive로 이동한다.
 
 ## 2) 세부 작업 단계
-1. 인터뷰 문서 구조 확인
-   - `docs/interview/interview_one_pager.md`, `docs/interview/demo_3min_scenario.md` 흐름을 다시 확인한다.
-   - 새 Q&A 문서가 중복이 아니라 실전 답변집 역할을 하도록 범위를 분리한다.
+1. 새 문서 체계 확정
+   - active docs: `docs/guides`, `docs/portfolio`, `docs/decisions`
+   - archive docs: `docs/archive`
 
-2. 면접 Q&A 스크립트 작성
-   - 프로젝트 소개, 권한/보안, 인증 세션, OAuth2 lifecycle, 테스트/CI, 성능, 운영 관측성, 회고 질문을 묶는다.
-   - 각 질문마다 짧은 답변과 꼬리 질문 대응 포인트를 넣는다.
+2. 실제 파일 이동
+   - `docs/interview` -> `docs/portfolio/interview`
+   - `docs/performance-optimization` -> `docs/portfolio/performance`
+   - `docs/phase` -> `docs/decisions`
+   - 루트 문서와 `requirements`, `retrospective`는 archive 또는 guides로 이동
 
-3. README 및 진행 로그 반영
-   - `README.md` 인터뷰 섹션에 Q&A 문서를 추가한다.
-   - `PROGRESS.md`에 작업 기록과 검증 결과를 남긴다.
+3. 진입점/규칙 수정
+   - `docs/README.md` 인덱스 추가
+   - `README.md`, `AGENTS.md`, `docs/guides/developer-guide.md` 경로 갱신
 
 4. 검증 및 배포
    - `git diff --check`
@@ -31,7 +34,9 @@
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- 기존 인터뷰 문서와 질문/답변 문서가 중복되면 오히려 읽기 어려워질 수 있음
-  - 대응: 1장 요약은 핵심 메시지, 데모 문서는 시연 순서, 새 문서는 예상 질문 대응으로 역할을 분리한다
-- 답변이 너무 길어지면 실전 면접에서 쓰기 어렵다
-  - 대응: 각 항목을 짧은 답변과 꼬리 질문 대응 포인트로 나눈다
+- 문서 이동 후 링크가 깨질 수 있음
+  - 대응: `README.md`, `docs/README.md`, `AGENTS.md`, 개발 가이드의 active 링크를 우선 갱신한다
+- archive로 이동한 문서를 실수로 SSOT로 다시 참조할 수 있음
+  - 대응: `docs/README.md`에서 active docs와 archive docs를 명시적으로 분리한다
+- 향후 에이전트가 예전 폴더를 계속 사용할 수 있음
+  - 대응: `AGENTS.md`의 문서화 규칙을 새 경로 기준으로 갱신한다

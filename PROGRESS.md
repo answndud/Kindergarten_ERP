@@ -1,12 +1,18 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 16차 (면접 예상 질문/답변 스크립트 문서화)
+- 후속 고도화 17차 (`docs/` 정보 구조 개편)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 22:25 | DONE | `docs/`를 active/portfolio/archive 기준으로 재분류. `guides`, `portfolio`, `decisions`, `archive` 체계를 만들고 기존 `interview`, `performance-optimization`, `phase`, `requirements`, `retrospective`, 루트 레거시 문서를 새 위치로 이동 | docs 진입점/규칙 문서 갱신 |
+| 2026-03-13 22:25 | DONE | `docs/README.md` 인덱스를 추가하고 `README.md`, `AGENTS.md`, `docs/guides/developer-guide.md`를 새 문서 체계 기준으로 갱신. active docs와 archive docs의 역할을 분리 | phase 파일명 최소 표준화 및 최종 검증 |
+| 2026-03-13 22:25 | DONE | `docs/decisions`의 단일 자릿수 phase와 OAuth2 예외 파일을 `phase00~phase09` 형태로 정리하고, active 문서의 경로 참조를 새 구조 기준으로 보정 | add/commit/push 및 원격 CI 확인 |
+| 2026-03-13 22:25 | DONE | 검증 완료: `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
+| 2026-03-13 22:16 | IN_PROGRESS | 새 후속 배치 시작. `docs/` 루트에 설계서/일지/가이드/튜토리얼이 섞여 있고, `phase/interview/performance-optimization/retrospective/requirements`가 각자 다른 기준으로 자라나 탐색 비용이 큰 상태 확인 | `PLAN.md`를 docs 정보 구조 개편 기준으로 갱신 |
+| 2026-03-13 22:17 | IN_PROGRESS | `PLAN.md`를 후속 고도화 17차 기준으로 갱신. 이번 배치는 active/portfolio/archive 재분류, 실제 파일 이동, `docs/README` 인덱스 추가, README/AGENTS/개발 가이드 경로 갱신, 검증/배포까지 포함 | 파일 이동 후 active 링크와 규칙 문서 정리 |
 | 2026-03-13 22:12 | DONE | `8d94982` (`docs: add interview qna script`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
 | 2026-03-13 22:12 | DONE | GitHub Actions run `23052007717` 성공 확인. 전체 워크플로우 2m42s로 종료 | 배치 마감 |
 | 2026-03-13 22:08 | DONE | `docs/interview/interview_qa_script.md`를 추가해 프로젝트 소개, 권한/보안, JWT 세션, OAuth2 lifecycle, 테스트/CI, 성능, 운영 관측성, 회고 질문까지 실전 면접 예상 질문/답변 스크립트로 정리 | README 인터뷰 섹션 연결 및 최종 검증 |
@@ -130,6 +136,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 없음
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: `docs/` 정보 구조 개편
 - 블로커: 없음

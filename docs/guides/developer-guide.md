@@ -1,7 +1,7 @@
 # Kindergarten ERP 개발자 가이드
 
 이 문서는 이 저장소에서 기능을 추가/수정하는 개발자를 위한 실무 가이드입니다.
-유저 관점 설명은 `docs/GUIDE.md`를 참고하세요.
+유저 관점 설명은 `docs/guides/user-guide.md`를 참고하세요.
 
 ---
 
@@ -183,9 +183,9 @@ docker compose -f docker/docker-compose.yml down
 
 기능/정책 변경 시 반드시 문서를 같이 갱신하세요.
 
-- 기능 결정/변경: `docs/phase/`
-- 트러블슈팅/회고: `docs/retrospective/`
-- 성능 개선: `docs/performance-optimization/`
+- 기능 결정/변경: `docs/decisions/`
+- 트러블슈팅/회고: `docs/archive/retrospectives/`
+- 성능 개선: `docs/portfolio/performance/`
 
 특히 성능 작업은 아래 순서를 지켜 기록합니다.
 
@@ -205,7 +205,7 @@ docker compose -f docker/docker-compose.yml down
 4. API 응답 `ApiResponse<T>` 유지
 5. 필요 시 Flyway migration 추가
 6. 통합 테스트 추가/수정
-7. `docs/phase/` 변경 로그 작성
+7. `docs/decisions/` 변경 로그 작성
 8. 성능 영향이 있으면 전/후 수치 기록
 
 ---
@@ -221,7 +221,7 @@ docker compose -f docker/docker-compose.yml down
 
 ## 12. 참고 문서
 
-- 사용자 가이드: `docs/GUIDE.md`
+- 사용자 가이드: `docs/guides/user-guide.md`
 - 프로젝트 개요: `README.md`
-- 단계별 결정 로그: `docs/phase/*.md`
-- 성능 개선 스토리: `docs/performance-optimization/README.md`
+- 단계별 결정 로그: `docs/decisions/*.md`
+- 성능 개선 스토리: `docs/portfolio/performance/README.md`
