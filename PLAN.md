@@ -35,12 +35,12 @@
    - 완료
 
 5. 검증 및 배포
-   - `./gradlew compileJava compileTestJava`
-   - 대상 통합 테스트 및 observability/view 테스트
-   - `git diff --check`
-   - add/commit/push
-   - GitHub Actions run 결과 확인
-   - 로컬 검증 완료, 원격 배포 대기
+    - `./gradlew compileJava compileTestJava`
+    - 대상 통합 테스트 및 observability/view 테스트
+    - `git diff --check`
+    - add/commit/push
+    - GitHub Actions run 결과 확인
+   - 완료
 
 ## 3) 검증 계획
 - 컴파일 검증
