@@ -33,10 +33,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.function.Supplier;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -92,6 +97,9 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
 
     @Autowired
     protected RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    protected PlatformTransactionManager transactionManager;
 
     protected Member principalMember;
     protected Member teacherMember;
@@ -212,6 +220,12 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
         return user(new CustomUserDetails(member));
     }
 
+    protected <T> T readCommitted(Supplier<T> supplier) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return transactionTemplate.execute(status -> supplier.get());
+    }
+
     private void replaceAuthenticationPrincipal() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
@@ -240,6 +254,7 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
     }
 
     private void resetIdentity() {
+        resetTableIdentity("auth_audit_log");
         resetTableIdentity("member_social_account");
         resetTableIdentity("announcement_view");
         resetTableIdentity("attendance");

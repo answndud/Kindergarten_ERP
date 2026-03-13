@@ -5,11 +5,14 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.auth.service.SocialAccountLinkService;
+import com.erp.domain.authaudit.service.AuthAuditLogService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.user.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -32,6 +35,8 @@ public class MemberApiController {
     private final MemberService memberService;
     private final AuthService authService;
     private final SocialAccountLinkService socialAccountLinkService;
+    private final AuthAuditLogService authAuditLogService;
+    private final ClientIpResolver clientIpResolver;
 
     /**
      * 내 프로필 조회
@@ -110,9 +115,31 @@ public class MemberApiController {
     @DeleteMapping("/social-link/{provider}")
     public ResponseEntity<ApiResponse<Void>> unlinkSocialAccount(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable String provider
+            @PathVariable String provider,
+            HttpServletRequest request
     ) {
-        socialAccountLinkService.unlinkSocialAccount(userDetails.getMemberId(), resolveProvider(provider));
+        MemberAuthProvider resolvedProvider = resolveProvider(provider);
+        String clientIp = clientIpResolver.resolve(request);
+
+        try {
+            socialAccountLinkService.unlinkSocialAccount(userDetails.getMemberId(), resolvedProvider);
+            authAuditLogService.recordSocialUnlinkSuccess(
+                    userDetails.getMemberId(),
+                    userDetails.getUsername(),
+                    resolvedProvider,
+                    clientIp
+            );
+        } catch (BusinessException ex) {
+            authAuditLogService.recordSocialUnlinkFailure(
+                    userDetails.getMemberId(),
+                    userDetails.getUsername(),
+                    resolvedProvider,
+                    clientIp,
+                    ex.getErrorCode().getCode()
+            );
+            throw ex;
+        }
+
         return ResponseEntity.ok(ApiResponse.success());
     }
 

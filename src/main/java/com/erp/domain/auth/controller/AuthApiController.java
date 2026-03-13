@@ -2,10 +2,12 @@ package com.erp.domain.auth.controller;
 
 import com.erp.domain.auth.dto.request.LoginRequest;
 import com.erp.domain.auth.dto.request.SignUpRequest;
+import com.erp.domain.authaudit.service.AuthAuditLogService;
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import com.erp.global.security.user.CustomUserDetails;
@@ -30,6 +32,7 @@ public class AuthApiController {
     private final MemberService memberService;
     private final JwtTokenProvider jwtTokenProvider;
     private final ClientIpResolver clientIpResolver;
+    private final AuthAuditLogService authAuditLogService;
 
     /**
      * 회원가입
@@ -100,14 +103,16 @@ public class AuthApiController {
                                                       HttpServletResponse response) {
         // 쿠키에서 Refresh Token 추출
         String refreshToken = getRefreshToken(request);
+        String clientIp = clientIpResolver.resolve(request);
 
         if (refreshToken == null) {
+            authAuditLogService.recordRefreshFailure(null, null, clientIp, ErrorCode.TOKEN_INVALID.getCode());
             return ResponseEntity
                     .badRequest()
-                    .body(ApiResponse.error(com.erp.global.exception.ErrorCode.TOKEN_INVALID));
+                    .body(ApiResponse.error(ErrorCode.TOKEN_INVALID));
         }
 
-        authService.refreshAccessToken(refreshToken, clientIpResolver.resolve(request), response);
+        authService.refreshAccessToken(refreshToken, clientIp, response);
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "토큰이 갱신되었습니다"));

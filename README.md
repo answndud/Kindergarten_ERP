@@ -60,6 +60,7 @@
 - ✅ 로그인 (JWT 기반)
 - ✅ 세션 단위 Refresh Token 저장 및 Rotation
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
+- ✅ DB 기반 로그인/refresh/소셜 연결 감사 로그
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
@@ -103,6 +104,7 @@
 - ✅ Redis 기반 auth rate limit
 - ✅ trusted proxy 기준 client IP 해석
 - ✅ 로그인 실패 전용 rate limit 정책
+- ✅ DB 기반 auth/social audit trail
 - ✅ OAuth2 principal 런타임 안전성 보강
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
 - ✅ 세션 기반 OAuth2 link intent와 단일 provider 연결 정책
@@ -493,6 +495,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 소셜 계정 연결 해제 정책 | `docs/phase/phase30_social_account_unlink_policy.md` |
 | 소셜 계정 다중 연결 구조 정규화 | `docs/phase/phase31_member_social_account_normalization.md` |
 | 소셜 provider 식별자 불변 정책 | `docs/phase/phase32_social_provider_identity_immutability.md` |
+| 인증/소셜 감사 로그 도입 | `docs/phase/phase33_auth_social_audit_log.md` |
 
 ---
 
