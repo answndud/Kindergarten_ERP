@@ -22,8 +22,10 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -54,6 +56,15 @@ class ViewEndpointTest extends TestcontainersSupport {
     void testLoginPage() throws Exception {
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void testLoginPageWithSocialAccountConflictError() throws Exception {
+        mockMvc.perform(get("/login").param("error", "social_account_conflict"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("이미 가입된 계정이 있습니다")))
+                .andExpect(content().string(containsString("소셜 계정을 자동으로 연결하지 않았습니다.")))
+                .andExpect(content().string(containsString("기존 로그인 방식으로 로그인해 주세요.")));
     }
 
     @Test

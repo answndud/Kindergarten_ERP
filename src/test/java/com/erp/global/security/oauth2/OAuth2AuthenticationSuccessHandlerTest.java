@@ -1,0 +1,88 @@
+package com.erp.global.security.oauth2;
+
+import com.erp.domain.auth.service.AuthService;
+import com.erp.domain.member.entity.MemberAuthProvider;
+import com.erp.domain.member.repository.MemberRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class OAuth2AuthenticationSuccessHandlerTest {
+
+    @Mock
+    private MemberRepository memberRepository;
+
+    @Mock
+    private AuthService authService;
+
+    @InjectMocks
+    private OAuth2AuthenticationSuccessHandler successHandler;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    @DisplayName("OAuth2 로그인: 기존 이메일과 충돌하면 자동 연결하지 않고 임시 세션을 정리한 뒤 로그인 페이지로 돌려보낸다")
+    void onAuthenticationSuccess_RedirectsToConflict_WhenEmailAlreadyExists() throws Exception {
+        DefaultOAuth2User principal = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_PARENT")),
+                Map.of(
+                        "sub", "google-sub-123",
+                        "email", "existing@test.com",
+                        "name", "기존회원"
+                ),
+                "sub"
+        );
+        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+                principal,
+                principal.getAuthorities(),
+                "google"
+        );
+
+        MockHttpSession session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(memberRepository.findByAuthProviderAndProviderId(MemberAuthProvider.GOOGLE, "google-sub-123"))
+                .thenReturn(Optional.empty());
+        when(memberRepository.existsByEmail("existing@test.com"))
+                .thenReturn(true);
+
+        successHandler.onAuthenticationSuccess(request, response, authentication);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo("/login?error=social_account_conflict");
+        assertThat(request.getSession(false)).isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(authService, never()).loginBySocial(any(), any());
+    }
+}

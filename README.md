@@ -61,6 +61,7 @@
 - ✅ 세션 단위 Refresh Token 저장 및 Rotation
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
+- ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 역할 기반 접근 제어
 
 ### 유치원/반/원생 관리
@@ -98,6 +99,7 @@
 - ✅ trusted proxy 기준 client IP 해석
 - ✅ 로그인 실패 전용 rate limit 정책
 - ✅ OAuth2 principal 런타임 안전성 보강
+- ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
 
 ### 알림 시스템
 - ✅ 알림 생성/조회
@@ -477,6 +479,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 인증 Client IP 신뢰 모델 하드닝 | `docs/phase/phase24_auth_client_ip_trust_model.md` |
 | 로그인 Rate Limit 정책 정교화 | `docs/phase/phase25_login_rate_limit_policy_refinement.md` |
 | OAuth2 Principal 런타임 안전성 보강 | `docs/phase/phase26_oauth2_principal_runtime_safety.md` |
+| OAuth2 계정 충돌 정책/UX 정합화 | `docs/phase/phase27_oauth2_account_conflict_policy.md` |
 
 ---
 

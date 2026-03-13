@@ -10,6 +10,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
@@ -38,6 +40,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                                         Authentication authentication) throws IOException, ServletException {
         try {
             if (!(authentication instanceof OAuth2AuthenticationToken oauthToken)) {
+                clearTemporaryOAuthSession(request);
                 response.sendRedirect("/login?error=social_login_failed");
                 return;
             }
@@ -55,7 +58,13 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             authService.loginBySocial(member, response);
             clearTemporaryOAuthSession(request);
             response.sendRedirect(resolveRedirect(member));
+        } catch (SocialAccountConflictException ex) {
+            clearTemporaryOAuthSession(request);
+            log.info("Rejected automatic social account linking for provider={}", ex.getAttemptedProvider());
+            response.sendRedirect("/login?error=social_account_conflict");
         } catch (Exception ex) {
+            clearTemporaryOAuthSession(request);
+            log.warn("OAuth2 login failed unexpectedly", ex);
             response.sendRedirect("/login?error=social_login_failed");
         }
     }
@@ -64,7 +73,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String email = resolveEmail(userInfo);
 
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalStateException("이미 사용 중인 이메일입니다: " + email);
+            throw new SocialAccountConflictException(userInfo.getProvider());
         }
 
         Member member = Member.createSocial(

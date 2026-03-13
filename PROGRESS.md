@@ -7,6 +7,10 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:12 | DONE | `OAuth2AuthenticationSuccessHandler`에 social account conflict 분기와 실패 시 임시 세션 정리 로직을 추가. `AuthViewController`/`login.html`은 충돌과 일반 실패를 구분해 제목/메시지/다음 행동을 렌더링하도록 정리 | handler/view 테스트 및 문서 반영 |
+| 2026-03-13 20:12 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"` 통과. `README.md`, `docs/phase/phase27_oauth2_account_conflict_policy.md` 반영 | add/commit/push 진행 |
+| 2026-03-13 20:08 | IN_PROGRESS | 새 후속 배치 시작. OAuth2 성공 핸들러를 재점검한 결과, 기존 이메일 충돌 시 `IllegalStateException`을 일반 실패로 삼켜 로그인 화면에 모호한 오류만 노출하는 정책/UX 공백 확인 | `PLAN.md` 갱신 후 충돌 사유 분리와 로그인 뷰 메시지 정책 구현 |
+| 2026-03-13 20:09 | IN_PROGRESS | `PLAN.md`를 후속 고도화 8차(OAuth2 계정 충돌 정책/UX 정합화) 기준으로 갱신. 이번 배치는 social account conflict 분기, 로그인 오류 메시지 개선, handler/view 테스트 추가에 집중 | AuthViewController/login template/success handler/test 수정 |
 | 2026-03-13 20:45 | DONE | `AuthenticatedMemberResolver` 추가 후 `RoleRedirectInterceptor`, `GlobalControllerAdvice`, `AuthViewController`를 principal 타입 독립적으로 동작하도록 정리. `CustomUserDetails` 고정 캐스팅 제거 | OAuth2 성공 후 세션 정리 및 view 테스트 추가 |
 | 2026-03-13 20:48 | DONE | `OAuth2AuthenticationSuccessHandler`에서 JWT cookie 발급 후 SecurityContext/session 정리 반영. `ViewEndpointTest`에 OAuth2 principal 기반 `/profile` 접근 성공 시나리오 추가 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:49 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ViewEndpointTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase26_oauth2_principal_runtime_safety.md` 반영. 직전 배치 원격 CI run `23047606163`도 성공 확인 | 사용자 승인 시 add/commit/push |
@@ -77,5 +81,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: OAuth2 Principal 런타임 안전성 보강 마무리, 사용자 승인 대기
+- 활성 작업: OAuth2 계정 충돌 정책/UX 정합화 검증 완료
 - 블로커: 없음
