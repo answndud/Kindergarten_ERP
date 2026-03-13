@@ -32,6 +32,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(404, "M002", "회원을 찾을 수 없습니다"),
     MEMBER_WITHDRAWN(400, "M003", "이미 탈퇴한 회원입니다"),
     PASSWORD_MISMATCH(400, "M004", "비밀번호가 일치하지 않습니다"),
+    PASSWORD_ALREADY_SET(409, "M005", "이미 로컬 비밀번호가 설정되어 있습니다"),
 
     // ========== Kindergarten ==========
     KINDERGARTEN_NOT_FOUND(404, "K001", "유치원을 찾을 수 없습니다"),

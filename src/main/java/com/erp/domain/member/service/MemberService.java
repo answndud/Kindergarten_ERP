@@ -114,6 +114,21 @@ public class MemberService {
     }
 
     /**
+     * 소셜 전용 계정의 초기 로컬 비밀번호 설정
+     */
+    @Transactional
+    public void setInitialPassword(Long memberId, String newPassword) {
+        Member member = getMemberById(memberId);
+
+        if (member.hasLocalPassword()) {
+            throw new BusinessException(ErrorCode.PASSWORD_ALREADY_SET);
+        }
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        member.changePassword(encodedPassword);
+    }
+
+    /**
      * 회원 탈퇴
      */
     @Transactional

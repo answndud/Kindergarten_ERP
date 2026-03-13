@@ -133,7 +133,7 @@ class ViewEndpointTest extends TestcontainersSupport {
     }
 
     @Test
-    void testSettingsPageForSocialOnlyAccountHidesPasswordForm() throws Exception {
+    void testSettingsPageForSocialOnlyAccountShowsBootstrapPasswordForm() throws Exception {
         Kindergarten kindergarten = kindergartenRepository.save(
                 Kindergarten.create("소셜 설정 유치원", "서울시", "010-4444-5555", LocalTime.of(9, 0), LocalTime.of(18, 0))
         );
@@ -152,6 +152,7 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("연결됨: Google")))
                 .andExpect(content().string(containsString("소셜 로그인 전용")))
+                .andExpect(content().string(containsString("로컬 비밀번호 설정")))
                 .andExpect(content().string(not(containsString("현재 비밀번호"))));
     }
 

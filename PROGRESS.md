@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:42 | DONE | `MemberService.setInitialPassword`와 `POST /api/v1/members/password/bootstrap`를 추가해 소셜 전용 계정의 초기 로컬 비밀번호 설정 경로를 구현. 이미 로컬 비밀번호가 있는 계정은 `M005`로 차단 | settings 화면/회원 테스트 보강 |
+| 2026-03-13 20:42 | DONE | `settings.html`을 로컬 비밀번호 보유 여부에 따라 "비밀번호 변경"과 "로컬 비밀번호 설정"으로 분기. `MemberApiIntegrationTest`와 `ViewEndpointTest`에 password bootstrap 성공/차단/UI 회귀 테스트 추가 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:42 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest"` 통과. `README.md`, `docs/phase/phase29_social_password_bootstrap.md` 반영 | add/commit/push 진행 |
+| 2026-03-13 20:39 | IN_PROGRESS | 새 후속 배치 시작. explicit social link 이후 흐름을 점검한 결과, 소셜 전용 계정이 settings에서 로컬 비밀번호를 설정할 정상 경로가 없고 화면도 막힌 안내 문구에서 끝나는 공백 확인 | `PLAN.md` 갱신 후 password bootstrap 정책/API/UI 설계 |
+| 2026-03-13 20:39 | IN_PROGRESS | `PLAN.md`를 후속 고도화 10차(소셜 전용 계정의 로컬 비밀번호 설정 추가) 기준으로 갱신. 이번 배치는 password bootstrap endpoint, settings 폼 분기, 회원/뷰 테스트 보강에 집중 | Member API/service/settings/view test 수정 |
 | 2026-03-13 20:24 | DONE | `/auth/social/link/{provider}`와 `OAuth2LinkSessionService`를 추가해 settings 기반 명시적 소셜 연결 시작점을 구현. `OAuth2AuthenticationSuccessHandler`는 link intent 존재 시 현재 회원 provider 연결로 분기하고 성공/실패 모두 세션을 정리하도록 정리 | settings 상태/UI 및 테스트 보강 |
 | 2026-03-13 20:24 | DONE | `settings.html`에 소셜 연결 카드, linked provider 표시, 소셜 전용 계정의 비밀번호 변경 불가 안내를 반영. `ViewEndpointTest`와 `OAuth2AuthenticationSuccessHandlerTest`에 link 시작/성공/화면 상태 회귀 테스트 추가 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:24 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"` 통과. `README.md`, `docs/phase/phase28_explicit_social_account_linking.md` 반영 | add/commit/push 진행 |
@@ -86,5 +91,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 명시적 소셜 계정 연결 플로우 추가 검증 완료
+- 활성 작업: 소셜 전용 계정의 로컬 비밀번호 설정 추가 검증 완료
 - 블로커: 없음
