@@ -9,8 +9,10 @@ import com.erp.domain.member.repository.MemberRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -51,6 +53,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                     .orElseGet(() -> registerSocialMember(userInfo));
 
             authService.loginBySocial(member, response);
+            clearTemporaryOAuthSession(request);
             response.sendRedirect(resolveRedirect(member));
         } catch (Exception ex) {
             response.sendRedirect("/login?error=social_login_failed");
@@ -92,5 +95,13 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             return "/applications/pending";
         }
         return "/";
+    }
+
+    private void clearTemporaryOAuthSession(HttpServletRequest request) {
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
     }
 }

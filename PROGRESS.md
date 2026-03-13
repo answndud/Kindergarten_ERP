@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:45 | DONE | `AuthenticatedMemberResolver` 추가 후 `RoleRedirectInterceptor`, `GlobalControllerAdvice`, `AuthViewController`를 principal 타입 독립적으로 동작하도록 정리. `CustomUserDetails` 고정 캐스팅 제거 | OAuth2 성공 후 세션 정리 및 view 테스트 추가 |
+| 2026-03-13 20:48 | DONE | `OAuth2AuthenticationSuccessHandler`에서 JWT cookie 발급 후 SecurityContext/session 정리 반영. `ViewEndpointTest`에 OAuth2 principal 기반 `/profile` 접근 성공 시나리오 추가 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:49 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ViewEndpointTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase26_oauth2_principal_runtime_safety.md` 반영. 직전 배치 원격 CI run `23047606163`도 성공 확인 | 사용자 승인 시 add/commit/push |
+| 2026-03-13 20:37 | IN_PROGRESS | 새 후속 배치 시작. 점검 결과 `RoleRedirectInterceptor`가 인증 principal을 `CustomUserDetails`로 고정 캐스팅하고 있어 OAuth2/session principal이 남는 경우 view 요청에서 `ClassCastException`이 날 수 있는 런타임 리스크 확인 | `PLAN.md` 갱신 후 공통 member resolver 설계/구현 |
+| 2026-03-13 20:39 | IN_PROGRESS | `PLAN.md`를 후속 고도화 7차(OAuth2 Principal 런타임 안전성 보강) 기준으로 갱신. 이번 배치는 principal member resolver, OAuth2 성공 후 세션 정리, 뷰 통합 테스트 보강에 집중 | interceptor/controller advice/success handler/view test 수정 |
 | 2026-03-13 20:28 | DONE | `AuthRateLimitService`를 사전 확인/실패 기록/성공 초기화 구조로 분리하고, `AuthService`에서 로그인 성공은 이메일 실패 카운터를 지우고 실패만 누적하도록 정책 정교화 | Auth 통합 테스트 및 문서화 |
 | 2026-03-13 20:31 | DONE | `AuthApiIntegrationTest`에 반복 성공 로그인 비차단, 성공 후 이메일 실패 카운터 초기화 시나리오를 추가 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:32 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase25_login_rate_limit_policy_refinement.md` 반영. 직전 배치 원격 CI run `23047455397`도 성공 확인 | 사용자 승인 시 add/commit/push |
@@ -72,5 +77,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 로그인 Rate Limit 정책 정교화 마무리, 사용자 승인 대기
+- 활성 작업: OAuth2 Principal 런타임 안전성 보강 마무리, 사용자 승인 대기
 - 블로커: 없음
