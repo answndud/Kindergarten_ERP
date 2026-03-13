@@ -65,8 +65,14 @@ public class AuthApiController {
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Void>> login(@Valid @RequestBody LoginRequest request,
+                                                    HttpServletRequest httpServletRequest,
                                                     HttpServletResponse response) {
-        authService.login(request.getEmail(), request.getPassword(), response);
+        authService.login(
+                request.getEmail(),
+                request.getPassword(),
+                resolveClientIp(httpServletRequest),
+                response
+        );
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "로그인되었습니다"));
@@ -99,7 +105,7 @@ public class AuthApiController {
                     .body(ApiResponse.error(com.erp.global.exception.ErrorCode.TOKEN_INVALID));
         }
 
-        authService.refreshAccessToken(refreshToken, response);
+        authService.refreshAccessToken(refreshToken, resolveClientIp(request), response);
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "토큰이 갱신되었습니다"));
@@ -133,5 +139,19 @@ public class AuthApiController {
         }
 
         return null;
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+
+        return request.getRemoteAddr();
     }
 }

@@ -7,6 +7,10 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 19:21 | IN_PROGRESS | `2b3f858` push 후 GitHub Actions run `23046452039` 확인 시작. 병행해서 다음 개선 후보를 점검한 결과 인증 rate limit 부재 확인 | 원격 run 완료 확인 후 auth rate limit 설계/구현 |
+| 2026-03-13 19:23 | DONE | GitHub Actions run `23046452039` 통과 확인. `Fast Checks` 1m11s, `Integration Suite` 2m29s, artifact 업로드 정상 확인. 다만 Node20 deprecation annotation은 여전히 남아 추후 action 버전 업그레이드 검토 필요 | 인증 rate limit 코드/테스트 반영 |
+| 2026-03-13 19:25 | DONE | `AuthRateLimitService` 추가, 로그인(IP 15/10분 + 이메일 5/10분) 및 refresh(IP 10/5분) rate limit 반영, `A006/429` 에러 코드 및 4xx warn 로깅 정리 | Auth 통합 테스트 및 문서화 |
+| 2026-03-13 19:26 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"` 통과. `README.md`, `docs/phase/phase21_auth_rate_limit.md` 반영 | 사용자 승인 시 add/commit/push |
 | 2026-03-13 18:59 | IN_PROGRESS | `ff5b683` push 후 GitHub Actions run `23045682877` 확인. 새 split workflow가 `main` 기준으로 정상 시작됨 | run 완료까지 상태/실패 job 로그 확인 |
 | 2026-03-13 19:04 | DONE | GitHub Actions run `23045682877` 통과 확인. `Fast Checks` 1m45s, `Integration Suite` 4m11s, artifact 업로드 정상 확인 | runner annotation 기반 Node24 호환 경고 대응 |
 | 2026-03-13 19:06 | DONE | `.github/workflows/ci.yml`에 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` 추가, `docs/phase/phase20_github_actions_node24_compatibility.md`/`README.md` 반영, `ruby` YAML 파싱 및 `git diff --check` 통과 | 사용자 승인 시 add/commit/push |
@@ -47,6 +51,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 없음
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: 원격 CI 재확인, 인증 rate limit 하드닝
 - 블로커: 없음

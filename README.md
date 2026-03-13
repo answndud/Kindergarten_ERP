@@ -59,6 +59,7 @@
 - ✅ 회원가입 (이메일/비밀번호)
 - ✅ 로그인 (JWT 기반)
 - ✅ 세션 단위 Refresh Token 저장 및 Rotation
+- ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 역할 기반 접근 제어
 
@@ -460,6 +461,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 대시보드 지표 보정 | `docs/phase/phase18_dashboard_metric_redefinition.md` |
 | CI 복구 및 job 분리 | `docs/phase/phase19_ci_fast_integration_split.md` |
 | GitHub Actions Node24 호환 | `docs/phase/phase20_github_actions_node24_compatibility.md` |
+| 인증 Rate Limit 하드닝 | `docs/phase/phase21_auth_rate_limit.md` |
 
 ---
 

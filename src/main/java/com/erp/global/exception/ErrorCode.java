@@ -23,6 +23,7 @@ public enum ErrorCode {
     TOKEN_INVALID(401, "A003", "유효하지 않은 토큰입니다"),
     ACCESS_DENIED(403, "A004", "접근 권한이 없습니다"),
     REFRESH_TOKEN_NOT_FOUND(404, "A005", "리프레시 토큰을 찾을 수 없습니다"),
+    AUTH_RATE_LIMITED(429, "A006", "인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요"),
 
     // ========== Member ==========
     EMAIL_ALREADY_EXISTS(409, "M001", "이미 사용 중인 이메일입니다"),

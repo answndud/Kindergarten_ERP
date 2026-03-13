@@ -37,6 +37,7 @@ public class AuthService {
     private final JwtProperties jwtProperties;
     private final RedisTemplate<String, Object> redisTemplate;
     private final AuthLoginBootstrapService authLoginBootstrapService;
+    private final AuthRateLimitService authRateLimitService;
 
     /**
      * 회원가입
@@ -60,8 +61,10 @@ public class AuthService {
     /**
      * 로그인
      */
-    public void login(String email, String password, HttpServletResponse response) {
+    public void login(String email, String password, String clientIp, HttpServletResponse response) {
         try {
+            authRateLimitService.validateLoginAllowed(clientIp, email);
+
             // 1. 인증 시도
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -95,7 +98,9 @@ public class AuthService {
     /**
      * Access Token 갱신
      */
-    public void refreshAccessToken(String refreshToken, HttpServletResponse response) {
+    public void refreshAccessToken(String refreshToken, String clientIp, HttpServletResponse response) {
+        authRateLimitService.validateRefreshAllowed(clientIp);
+
         TokenSessionClaims claims = extractRefreshTokenClaims(refreshToken);
         String refreshTokenKey = getRefreshTokenKey(claims.memberId(), claims.sessionId());
         Object savedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
