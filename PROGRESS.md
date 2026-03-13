@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 21:39 | DONE | `219def3` (`feat: add auth and social audit logging`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
+| 2026-03-13 21:39 | DONE | GitHub Actions run `23051105269` 성공 확인. `Fast Checks` 1m46s, `Integration Suite` 2m43s, artifact 업로드 정상 확인 | 후속 과제 정리 |
 | 2026-03-13 21:35 | DONE | `auth_audit_log` 마이그레이션, `AuthAuditLog` 엔티티/리포지토리/서비스를 추가하고 login/refresh/social link/unlink 성공·실패를 DB 감사 로그로 기록하도록 연결. 저장은 `REQUIRES_NEW` + 내부 예외 swallow/warn 처리로 분리 | 테스트 가시성 문제 정리 및 문서화 |
 | 2026-03-13 21:35 | DONE | `BaseIntegrationTest.readCommitted(...)` 헬퍼를 추가하고 `AuthApiIntegrationTest`, `MemberApiIntegrationTest`, `OAuth2AuthenticationSuccessHandlerTest`에 감사 로그 회귀 검증을 반영. 기존 테스트 트랜잭션과 별도 감사 로그 트랜잭션의 가시성 차이를 새 트랜잭션 조회로 해소 | README/phase 문서 및 최종 로컬 검증 |
 | 2026-03-13 21:35 | DONE | `README.md`, `docs/phase/phase33_auth_social_audit_log.md`에 감사 로그 도입 이유, 저장 필드, FK 미사용 이유, `REQUIRES_NEW` 선택 배경, 인터뷰 포인트를 기록 | add/commit/push 및 원격 CI 확인 |
@@ -113,6 +115,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: 인증/소셜 감사 로그 도입
+- 현재 단계: `DONE`
+- 활성 작업: 없음
 - 블로커: 없음
