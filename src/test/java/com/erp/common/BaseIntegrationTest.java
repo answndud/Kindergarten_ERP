@@ -28,20 +28,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
-import org.mockito.Mockito;
 
-import java.util.Collections;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 /**
  * 통합 테스트 기반 클래스
@@ -52,7 +49,7 @@ import java.util.Collections;
 @ActiveProfiles("test")
 @Import(TestConfig.class)
 @Transactional
-public abstract class BaseIntegrationTest {
+public abstract class BaseIntegrationTest extends TestcontainersSupport {
 
     @Autowired
     protected MockMvc mockMvc;
@@ -93,11 +90,7 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected TestData testData;
 
-    // Redis는 테스트에서 사용하지 않도록 mock 처리
-    @MockitoBean
-    protected RedisConnectionFactory redisConnectionFactory;
-
-    @MockitoBean
+    @Autowired
     protected RedisTemplate<String, Object> redisTemplate;
 
     protected Member principalMember;
@@ -114,15 +107,7 @@ public abstract class BaseIntegrationTest {
     void setUp() {
         testData.cleanup();
         resetIdentity();
-
-        @SuppressWarnings("unchecked")
-        ValueOperations<String, Object> valueOperations =
-                (ValueOperations<String, Object>) Mockito.mock(ValueOperations.class);
-        Mockito.when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        Mockito.when(redisTemplate.hasKey(Mockito.anyString())).thenReturn(true);
-        Mockito.when(redisTemplate.keys(Mockito.anyString())).thenReturn(Collections.emptySet());
-        Mockito.when(redisTemplate.delete(Mockito.<String>anyCollection())).thenReturn(0L);
-        Mockito.when(redisTemplate.delete(Mockito.anyString())).thenReturn(true);
+        clearRedis();
 
         // 테스트 데이터 초기화
         principalMember = testData.createPrincipalMember();
@@ -205,6 +190,28 @@ public abstract class BaseIntegrationTest {
         SecurityContextHolder.clearContext();
     }
 
+    protected void clearRedis() {
+        var connectionFactory = redisTemplate.getConnectionFactory();
+        if (connectionFactory == null) {
+            return;
+        }
+
+        try (var connection = connectionFactory.getConnection()) {
+            connection.serverCommands().flushDb();
+        }
+    }
+
+    protected Member createMemberInKindergarten(String email, String name, com.erp.domain.member.entity.MemberRole role,
+                                                Kindergarten targetKindergarten) {
+        Member member = testData.createTestMember(email, name, role, "test1234");
+        member.assignKindergarten(targetKindergarten);
+        return memberRepository.save(member);
+    }
+
+    protected RequestPostProcessor authenticated(Member member) {
+        return user(new CustomUserDetails(member));
+    }
+
     private void replaceAuthenticationPrincipal() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
@@ -244,7 +251,6 @@ public abstract class BaseIntegrationTest {
     }
 
     private void resetTableIdentity(String tableName) {
-        String normalized = tableName.toUpperCase();
-        jdbcTemplate.execute("ALTER TABLE " + normalized + " ALTER COLUMN ID RESTART WITH 1");
+        jdbcTemplate.execute("ALTER TABLE " + tableName + " AUTO_INCREMENT = 1");
     }
 }

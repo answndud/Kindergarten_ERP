@@ -12,11 +12,15 @@ import com.erp.domain.attendance.dto.response.MonthlyStatisticsResponse;
 import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.entity.AttendanceStatus;
 import com.erp.domain.attendance.repository.AttendanceRepository;
+import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.classroom.service.ClassroomService;
 import com.erp.domain.dashboard.service.DashboardService;
+import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.service.KidService;
+import com.erp.domain.member.entity.Member;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +42,7 @@ public class AttendanceService {
     private final KidService kidService;
     private final ClassroomService classroomService;
     private final DashboardService dashboardService;
+    private final AccessPolicyService accessPolicyService;
 
     /**
      * 출석 등록
@@ -70,12 +75,42 @@ public class AttendanceService {
         return saved.getId();
     }
 
+    @Transactional
+    public Long createAttendance(AttendanceRequest request, Long requesterId) {
+        Kid kid = getKidForManage(requesterId, request.getKidId());
+
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(request.getKidId(), request.getDate())
+                .orElse(null);
+
+        if (attendance == null) {
+            attendance = Attendance.create(
+                    kid,
+                    request.getDate(),
+                    request.getStatus()
+            );
+        }
+
+        applyStatus(attendance,
+                request.getStatus(),
+                request.getNote(),
+                request.getDropOffTime(),
+                request.getPickUpTime());
+
+        Attendance saved = attendanceRepository.save(attendance);
+        evictDashboardStatisticsByAttendance(saved);
+        return saved.getId();
+    }
+
     /**
      * 출석 조회
      */
     public Attendance getAttendance(Long id) {
         return attendanceRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+    }
+
+    public Attendance getAttendance(Long id, Long requesterId) {
+        return getAttendanceForRead(requesterId, id);
     }
 
     /**
@@ -89,6 +124,14 @@ public class AttendanceService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
     }
 
+    public Attendance getAttendanceByKidAndDate(Long kidId, LocalDate date, Long requesterId) {
+        getKidForRead(requesterId, kidId);
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+        accessPolicyService.validateAttendanceReadAccess(requester(requesterId), attendance);
+        return attendance;
+    }
+
     /**
      * 반별 날짜 출석 목록 조회
      */
@@ -96,6 +139,11 @@ public class AttendanceService {
         // 반 존재 확인
         classroomService.getClassroom(classroomId);
 
+        return attendanceRepository.findByClassroomIdAndDate(classroomId, date);
+    }
+
+    public List<Attendance> getAttendancesByClassroomAndDate(Long classroomId, LocalDate date, Long requesterId) {
+        getClassroomForRead(requesterId, classroomId);
         return attendanceRepository.findByClassroomIdAndDate(classroomId, date);
     }
 
@@ -113,12 +161,31 @@ public class AttendanceService {
         return attendanceRepository.findByKidIdAndDateBetween(kidId, startDate, endDate);
     }
 
+    public List<Attendance> getAttendancesByKidAndMonth(Long kidId, int year, int month, Long requesterId) {
+        getKidForRead(requesterId, kidId);
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        return attendanceRepository.findByKidIdAndDateBetween(kidId, startDate, endDate);
+    }
+
     /**
      * 출석 수정
      */
     @Transactional
     public void updateAttendance(Long id, AttendanceRequest request) {
         Attendance attendance = getAttendance(id);
+        applyStatus(attendance,
+                request.getStatus(),
+                request.getNote(),
+                request.getDropOffTime(),
+                request.getPickUpTime());
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
+    @Transactional
+    public void updateAttendance(Long id, AttendanceRequest request, Long requesterId) {
+        Attendance attendance = getAttendanceForManage(requesterId, id);
         applyStatus(attendance,
                 request.getStatus(),
                 request.getNote(),
@@ -134,6 +201,23 @@ public class AttendanceService {
     public AttendanceResponse upsertAttendance(AttendanceRequest request) {
         Attendance attendance = attendanceRepository.findByKidIdAndDate(request.getKidId(), request.getDate())
                 .orElseGet(() -> Attendance.create(kidService.getKid(request.getKidId()), request.getDate(), request.getStatus()));
+
+        applyStatus(attendance,
+                request.getStatus(),
+                request.getNote(),
+                request.getDropOffTime(),
+                request.getPickUpTime());
+
+        Attendance saved = attendanceRepository.save(attendance);
+        evictDashboardStatisticsByAttendance(saved);
+        return AttendanceResponse.from(saved);
+    }
+
+    @Transactional
+    public AttendanceResponse upsertAttendance(AttendanceRequest request, Long requesterId) {
+        Kid kid = getKidForManage(requesterId, request.getKidId());
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(request.getKidId(), request.getDate())
+                .orElseGet(() -> Attendance.create(kid, request.getDate(), request.getStatus()));
 
         applyStatus(attendance,
                 request.getStatus(),
@@ -183,6 +267,45 @@ public class AttendanceService {
         return updated;
     }
 
+    @Transactional
+    public int bulkUpdateAttendance(BulkAttendanceRequest request, Long requesterId) {
+        Classroom classroom = getClassroomForManage(requesterId, request.getClassroomId());
+        List<Long> kidIds;
+        if (request.getKidIds() == null || request.getKidIds().isEmpty()) {
+            kidIds = kidService.getKidsByClassroom(request.getClassroomId()).stream()
+                    .map(Kid::getId)
+                    .toList();
+        } else {
+            kidIds = request.getKidIds();
+        }
+
+        int updated = 0;
+        for (Long kidId : kidIds) {
+            Kid kid = getKidForManage(requesterId, kidId);
+            if (!classroom.getId().equals(kid.getClassroom().getId())) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "반에 속하지 않은 원생이 포함되어 있습니다");
+            }
+
+            Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, request.getDate())
+                    .orElseGet(() -> Attendance.create(kid, request.getDate(), request.getStatus()));
+
+            applyStatus(attendance,
+                    request.getStatus(),
+                    request.getNote(),
+                    request.getDropOffTime(),
+                    request.getPickUpTime());
+
+            attendanceRepository.save(attendance);
+            updated++;
+        }
+
+        if (updated > 0) {
+            dashboardService.evictDashboardStatisticsCache(classroom.getKindergarten().getId());
+        }
+
+        return updated;
+    }
+
     /**
      * 등원 기록
      */
@@ -211,6 +334,21 @@ public class AttendanceService {
         evictDashboardStatisticsByAttendance(attendance);
     }
 
+    @Transactional
+    public void recordDropOff(Long kidId, LocalDate date, DropOffRequest request, Long requesterId) {
+        Kid kid = getKidForManage(requesterId, kidId);
+
+        java.time.LocalTime dropOffTime = request.getDropOffTime() != null
+                ? request.getDropOffTime()
+                : java.time.LocalTime.now();
+
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseGet(() -> attendanceRepository.save(Attendance.createDropOff(kid, date, dropOffTime)));
+
+        attendance.recordDropOff(dropOffTime);
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
     /**
      * 하원 기록
      */
@@ -230,6 +368,22 @@ public class AttendanceService {
         evictDashboardStatisticsByAttendance(attendance);
     }
 
+    @Transactional
+    public void recordPickUp(Long kidId, LocalDate date, PickUpRequest request, Long requesterId) {
+        getKidForManage(requesterId, kidId);
+
+        java.time.LocalTime pickUpTime = request.getPickUpTime() != null
+                ? request.getPickUpTime()
+                : java.time.LocalTime.now();
+
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+
+        accessPolicyService.validateAttendanceManageAccess(requester(requesterId), attendance.getKid());
+        attendance.recordPickUp(pickUpTime);
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
     /**
      * 결석 처리
      */
@@ -245,6 +399,16 @@ public class AttendanceService {
                     );
                     return attendanceRepository.save(newAttendance);
                 });
+
+        attendance.markAbsent(note);
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
+    @Transactional
+    public void markAbsent(Long kidId, LocalDate date, String note, Long requesterId) {
+        Kid kid = getKidForManage(requesterId, kidId);
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseGet(() -> attendanceRepository.save(Attendance.create(kid, date, AttendanceStatus.ABSENT)));
 
         attendance.markAbsent(note);
         evictDashboardStatisticsByAttendance(attendance);
@@ -270,6 +434,16 @@ public class AttendanceService {
         evictDashboardStatisticsByAttendance(attendance);
     }
 
+    @Transactional
+    public void markLate(Long kidId, LocalDate date, java.time.LocalTime dropOffTime, String note, Long requesterId) {
+        Kid kid = getKidForManage(requesterId, kidId);
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseGet(() -> attendanceRepository.save(Attendance.create(kid, date, AttendanceStatus.LATE)));
+
+        attendance.markLate(dropOffTime, note);
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
     /**
      * 조퇴 처리
      */
@@ -278,6 +452,17 @@ public class AttendanceService {
         Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
 
+        attendance.markEarlyLeave(pickUpTime, note);
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
+    @Transactional
+    public void markEarlyLeave(Long kidId, LocalDate date, java.time.LocalTime pickUpTime, String note, Long requesterId) {
+        getKidForManage(requesterId, kidId);
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ATTENDANCE_NOT_FOUND));
+
+        accessPolicyService.validateAttendanceManageAccess(requester(requesterId), attendance.getKid());
         attendance.markEarlyLeave(pickUpTime, note);
         evictDashboardStatisticsByAttendance(attendance);
     }
@@ -302,12 +487,29 @@ public class AttendanceService {
         evictDashboardStatisticsByAttendance(attendance);
     }
 
+    @Transactional
+    public void markSickLeave(Long kidId, LocalDate date, String note, Long requesterId) {
+        Kid kid = getKidForManage(requesterId, kidId);
+        Attendance attendance = attendanceRepository.findByKidIdAndDate(kidId, date)
+                .orElseGet(() -> attendanceRepository.save(Attendance.create(kid, date, AttendanceStatus.SICK_LEAVE)));
+
+        attendance.markSickLeave(note);
+        evictDashboardStatisticsByAttendance(attendance);
+    }
+
     /**
      * 출석 삭제
      */
     @Transactional
     public void deleteAttendance(Long id) {
         Attendance attendance = getAttendance(id);
+        evictDashboardStatisticsByAttendance(attendance);
+        attendanceRepository.delete(attendance);
+    }
+
+    @Transactional
+    public void deleteAttendance(Long id, Long requesterId) {
+        Attendance attendance = getAttendanceForManage(requesterId, id);
         evictDashboardStatisticsByAttendance(attendance);
         attendanceRepository.delete(attendance);
     }
@@ -354,12 +556,50 @@ public class AttendanceService {
         );
     }
 
+    public MonthlyStatisticsResponse getMonthlyStatistics(Long kidId, int year, int month, Long requesterId) {
+        Kid kid = getKidForRead(requesterId, kidId);
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        long presentDays = attendanceRepository.countPresentDaysByKidIdAndDateBetween(kidId, startDate, endDate);
+        long absentDays = attendanceRepository.countAbsentDaysByKidIdAndDateBetween(kidId, startDate, endDate);
+        long lateDays = attendanceRepository.countByKidIdAndDateBetweenAndStatus(
+                kidId, startDate, endDate, AttendanceStatus.LATE);
+        long sickLeaveDays = attendanceRepository.countByKidIdAndDateBetweenAndStatus(
+                kidId, startDate, endDate, AttendanceStatus.SICK_LEAVE);
+        List<Attendance> allAttendances = attendanceRepository.findByKidIdAndDateBetween(kidId, startDate, endDate);
+
+        return new MonthlyStatisticsResponse(
+                kidId,
+                kid.getName(),
+                year,
+                month,
+                (int) presentDays,
+                (int) absentDays,
+                (int) lateDays,
+                (int) sickLeaveDays,
+                allAttendances.size()
+        );
+    }
+
     /**
      * 일별 출석 현황 (반별)
      */
     public List<DailyAttendanceResponse> getDailyAttendanceByClassroom(Long classroomId, LocalDate date) {
         List<com.erp.domain.kid.entity.Kid> kids = kidService.getKidsByClassroom(classroomId);
         List<Attendance> attendances = getAttendancesByClassroomAndDate(classroomId, date);
+        java.util.Map<Long, Attendance> attendanceMap = attendances.stream()
+                .collect(java.util.stream.Collectors.toMap(a -> a.getKid().getId(), a -> a));
+
+        return kids.stream()
+                .map(kid -> DailyAttendanceResponse.from(kid, attendanceMap.get(kid.getId())))
+                .collect(Collectors.toList());
+    }
+
+    public List<DailyAttendanceResponse> getDailyAttendanceByClassroom(Long classroomId, LocalDate date, Long requesterId) {
+        List<Kid> kids = kidService.getKidsByClassroom(classroomId, requesterId);
+        List<Attendance> attendances = getAttendancesByClassroomAndDate(classroomId, date, requesterId);
         java.util.Map<Long, Attendance> attendanceMap = attendances.stream()
                 .collect(java.util.stream.Collectors.toMap(a -> a.getKid().getId(), a -> a));
 
@@ -378,6 +618,30 @@ public class AttendanceService {
         LocalDate endDate = yearMonth.atEndOfMonth();
 
         List<com.erp.domain.kid.entity.Kid> kids = kidService.getKidsByClassroom(classroomId);
+        List<Attendance> attendances = attendanceRepository.findByClassroomIdAndDateBetween(classroomId, startDate, endDate);
+        java.util.Map<Long, List<Attendance>> grouped = attendances.stream()
+                .collect(java.util.stream.Collectors.groupingBy(a -> a.getKid().getId()));
+
+        List<MonthlyAttendanceKidReportResponse> kidReports = kids.stream()
+                .map(kid -> buildKidReport(kid, grouped.getOrDefault(kid.getId(), List.of())))
+                .toList();
+
+        return new MonthlyAttendanceReportResponse(
+                classroom.getId(),
+                classroom.getName(),
+                year,
+                month,
+                kidReports
+        );
+    }
+
+    public MonthlyAttendanceReportResponse getMonthlyReportByClassroom(Long classroomId, int year, int month, Long requesterId) {
+        Classroom classroom = getClassroomForRead(requesterId, classroomId);
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<Kid> kids = kidService.getKidsByClassroom(classroomId, requesterId);
         List<Attendance> attendances = attendanceRepository.findByClassroomIdAndDateBetween(classroomId, startDate, endDate);
         java.util.Map<Long, List<Attendance>> grouped = attendances.stream()
                 .collect(java.util.stream.Collectors.groupingBy(a -> a.getKid().getId()));
@@ -474,5 +738,45 @@ public class AttendanceService {
     private void evictDashboardStatisticsByAttendance(Attendance attendance) {
         Long kindergartenId = attendance.getKid().getClassroom().getKindergarten().getId();
         dashboardService.evictDashboardStatisticsCache(kindergartenId);
+    }
+
+    private Member requester(Long requesterId) {
+        return accessPolicyService.getRequester(requesterId);
+    }
+
+    private Kid getKidForRead(Long requesterId, Long kidId) {
+        Kid kid = kidService.getKid(kidId);
+        accessPolicyService.validateKidReadAccess(requester(requesterId), kid);
+        return kid;
+    }
+
+    private Kid getKidForManage(Long requesterId, Long kidId) {
+        Kid kid = kidService.getKid(kidId);
+        accessPolicyService.validateAttendanceManageAccess(requester(requesterId), kid);
+        return kid;
+    }
+
+    private Classroom getClassroomForRead(Long requesterId, Long classroomId) {
+        Classroom classroom = classroomService.getClassroom(classroomId);
+        accessPolicyService.validateClassroomReadAccess(requester(requesterId), classroom);
+        return classroom;
+    }
+
+    private Classroom getClassroomForManage(Long requesterId, Long classroomId) {
+        Classroom classroom = classroomService.getClassroom(classroomId);
+        accessPolicyService.validateClassroomManageAccess(requester(requesterId), classroom);
+        return classroom;
+    }
+
+    private Attendance getAttendanceForRead(Long requesterId, Long attendanceId) {
+        Attendance attendance = getAttendance(attendanceId);
+        accessPolicyService.validateAttendanceReadAccess(requester(requesterId), attendance);
+        return attendance;
+    }
+
+    private Attendance getAttendanceForManage(Long requesterId, Long attendanceId) {
+        Attendance attendance = getAttendance(attendanceId);
+        accessPolicyService.validateAttendanceManageAccess(requester(requesterId), attendance.getKid());
+        return attendance;
     }
 }

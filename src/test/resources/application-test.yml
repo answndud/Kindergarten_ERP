@@ -4,34 +4,24 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
-  # Test Database Configuration (H2)
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
-  # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
         show_sql: false
 
-  # Flyway Configuration (disabled for tests)
   flyway:
-    enabled: false
+    enabled: true
 
-  # Redis Configuration (disabled for tests - using mock)
   data:
     redis:
       repositories:
         enabled: false
-      host: localhost
-      port: 6379
       database: 0
       timeout: 3000
 
@@ -63,11 +53,6 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
-
-# H2 Console (for debugging)
-h2:
-  console:
-    enabled: true
 
 # JWT Configuration
 jwt:

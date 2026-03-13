@@ -1,6 +1,9 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.announcement.entity.Announcement;
+import com.erp.domain.member.entity.MemberRole;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @DisplayName("공지사항 API 테스트")
 class AnnouncementApiIntegrationTest extends BaseIntegrationTest {
+
+    @AfterEach
+    void cleanUp() {
+        testData.cleanup();
+    }
 
     @Nested
     @DisplayName("공지사항 생성 API")
@@ -180,6 +188,28 @@ class AnnouncementApiIntegrationTest extends BaseIntegrationTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
+        }
+
+        @Test
+        @DisplayName("공지사항 단건 조회 - 실패 (다른 유치원 학부모는 조회 불가)")
+        void getAnnouncement_Fail_DifferentKindergartenParent() throws Exception {
+            var otherKindergarten = testData.createKindergarten();
+            var otherPrincipal = createMemberInKindergarten(
+                    "announcement-other-principal@test.com",
+                    "다른 유치원 원장",
+                    MemberRole.PRINCIPAL,
+                    otherKindergarten
+            );
+            Announcement otherAnnouncement = announcementRepository.save(
+                    Announcement.create(otherKindergarten, otherPrincipal, "외부 공지", "다른 유치원 공지")
+            );
+
+            mockMvc.perform(get("/api/v1/announcements/{id}", otherAnnouncement.getId())
+                            .with(authenticated(parentMember)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("AP007"));
         }
     }
 

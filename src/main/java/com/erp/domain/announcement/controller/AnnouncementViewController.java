@@ -49,7 +49,7 @@ public class AnnouncementViewController {
         Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
         Long kindergartenId = member.getKindergarten().getId();
 
-        var announcements = announcementService.getAnnouncementsByKindergartenForView(kindergartenId);
+        var announcements = announcementService.getAnnouncementsByKindergartenForView(kindergartenId, userDetails.getMemberId());
 
         // 중요 공지만 필터링
         if (importantOnly) {
@@ -95,7 +95,7 @@ public class AnnouncementViewController {
             Model model) {
 
         // 조회수 증가 없이 조회
-        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id);
+        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id, userDetails.getMemberId());
         model.addAttribute("announcement", announcementService.toResponse(announcement));
         return "announcement/detail";
     }
@@ -110,7 +110,7 @@ public class AnnouncementViewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model) {
 
-        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id);
+        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id, userDetails.getMemberId());
         model.addAttribute("announcement", announcementService.toResponse(announcement));
         return "announcement/edit";
     }

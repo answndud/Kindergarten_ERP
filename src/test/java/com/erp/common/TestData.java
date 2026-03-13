@@ -119,15 +119,20 @@ public class TestData {
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNativeQuery("DELETE FROM NOTEPAD_READ_CONFIRM").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM NOTIFICATION").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM ATTENDANCE").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM NOTEPAD").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM ANNOUNCEMENT").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM PARENT_KID").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM KID").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM CLASSROOM").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM MEMBER").executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM KINDERGARTEN").executeUpdate();
+        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM notepad_read_confirm").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM notification").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM attendance").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM notepad").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM announcement").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM calendar_event").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM kid_application").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM kindergarten_application").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM parent_kid").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM kid").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM classroom").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM member").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM kindergarten").executeUpdate();
+        entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
     }
 }

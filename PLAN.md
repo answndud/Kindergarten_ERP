@@ -1,50 +1,42 @@
 # PLAN.md
 
 ## 작업명
-- 후속 개선 배치 (문서 정합화 + API 안정성 + 테스트 보강)
+- CI 자동화 (GitHub Actions + Testcontainers 테스트) + 인터뷰용 문서화
 
 ## 1) 목표 / 범위
-- 점검 결과로 식별된 P0/P1/P2 개선 과제를 한 배치로 처리한다.
-- 문서 정합화: `README.md` API 표와 실제 컨트롤러 매핑을 재동기화한다.
-- 보안/호환성: `SecurityConfig` CORS 허용 메서드에 `PATCH`를 반영한다.
-- API 명확성: `ClassroomController`, `KidController`의 필수 필터 누락 요청을 명시적 400으로 처리한다.
-- 데이터 품질: `KidApplication` 승인 시 ParentKid 관계를 고정값(FATHER)에서 요청 기반으로 전환한다.
-- 테스트 보강: 지원 워크플로우/교실/유치원 API에 대한 통합 테스트를 추가한다.
-- 문서 백로그 정리: `docs/project_plan.md`, `docs/requirements/dev-todo.md`를 현재 상태 기준으로 정리한다.
+- 이미 전환한 MySQL/Redis Testcontainers 기반 테스트 스택을 GitHub Actions에서 자동 실행되도록 연결한다.
+- 저장소에 없는 CI 워크플로우를 새로 추가하고, 실패 시 디버깅 가능한 아티팩트 업로드까지 포함한다.
+- README와 `docs/phase/`에 CI 전략과 인터뷰용 설명 포인트를 정리한다.
+- 이번 세션 결과물은 CI 워크플로우 추가 + 문서 보강 + 설정 검증이다.
 
 ## 2) 세부 작업 단계
-1. 문서/API 매핑 정합화
-   - 컨트롤러 매핑 기준으로 README API 표 누락 항목 보완
-   - 현재 구현과 다른/모호한 설명 제거
+1. CI 현황 점검
+   - 현재 저장소의 `.github/workflows` 유무와 기존 자동화 상태 확인
+   - Testcontainers 기반 테스트를 GitHub Actions runner에서 실행하기 위한 전제 확인
 
-2. API/보안 코드 보강
-   - CORS 허용 메서드에 PATCH 반영
-   - kids/classrooms 목록 API의 필터 누락 요청에 대한 예외 코드 정의 및 400 응답 적용
-   - KidApplication 승인 DTO/서비스를 확장해 ParentKid 관계를 요청값으로 저장
+2. 워크플로우 구현
+   - GitHub Actions workflow 추가
+   - Java/Gradle 캐시, `./gradlew test`, 실패 시 test report artifact 업로드 구성
+   - 수동 실행(`workflow_dispatch`)과 PR/push 트리거 구성
 
-3. 테스트 보강
-   - 지원 워크플로우 API 통합 테스트(성공/권한 실패) 추가
-   - classroom/kindergarten API 통합 테스트 추가(핵심 시나리오)
+3. 검증
+   - YAML 문법/구조 검토
+   - README/문서 설명과 실제 워크플로우 구성이 일치하는지 교차 점검
 
-4. 백로그/계획 문서 정리
-   - `docs/requirements/dev-todo.md` 체크 상태 갱신
-   - `docs/project_plan.md`를 현재 기준(완료/운영 중/후속 과제)으로 요약 정리
+4. 문서화
+   - `docs/phase/`에 CI 자동화 배경, GitHub Actions 설계, 면접 포인트 정리
+   - README에 테스트/CI 전략을 짧게 연결
 
 ## 3) 검증 계획
-- 코드 컴파일/테스트
-  - `./gradlew compileJava compileTestJava`
-  - `./gradlew test --tests "com.erp.api.ClassroomApiIntegrationTest"`
-  - `./gradlew test --tests "com.erp.api.KindergartenApiIntegrationTest"`
-  - `./gradlew test --tests "com.erp.api.KidApplicationApiIntegrationTest"`
-  - `./gradlew test --tests "com.erp.api.KindergartenApplicationApiIntegrationTest"`
-- 문서 정합성 점검
-  - README API 표와 주요 컨트롤러 매핑 교차 확인
-  - dev-todo/project_plan의 상태 표현이 현재 구현과 충돌하지 않는지 확인
+- 워크플로우 구조 검토
+  - `.github/workflows/ci.yml` 내용 점검
+- 로컬 교차 검증
+  - README/phase 문서가 실제 실행 명령(`./gradlew test`)과 일치하는지 확인
 
 ## 4) 리스크 및 대응
-- 목록 API의 400 전환으로 기존 프런트 요청과 충돌할 위험
-  - 대응: 템플릿/스크립트 호출부를 확인하고, 필요한 경우 요청 파라미터 기본 주입
-- ParentKid 관계 필드 추가로 기존 클라이언트 요청 호환성 저하 위험
-  - 대응: 요청 DTO 기본값(FATHER)을 두어 하위 호환 유지
-- 테스트 추가 시 시드/권한 전제 차이로 flaky 위험
-  - 대응: 기존 BaseIntegrationTest 패턴 재사용, 역할별 계정 생성/인증 헬퍼 활용
+- GitHub Actions에서 Docker/Testcontainers 초기화가 느릴 위험
+  - 대응: runner 기본 Docker 환경을 활용하고 Gradle 캐시를 활성화
+- 워크플로우 실패 시 원인 파악이 어려울 위험
+  - 대응: test report와 test-results를 artifact로 업로드
+- README가 기능 나열만 하고 자동화 전략을 설명하지 못할 위험
+  - 대응: CI/Testcontainers를 포트폴리오 관점의 신뢰성 포인트로 별도 서술

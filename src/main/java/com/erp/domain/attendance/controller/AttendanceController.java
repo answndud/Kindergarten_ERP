@@ -13,11 +13,13 @@ import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.service.AttendanceService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.user.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -39,11 +41,12 @@ public class AttendanceController {
     @PostMapping
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> create(
-            @Valid @RequestBody AttendanceRequest request) {
+            @Valid @RequestBody AttendanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Long id = attendanceService.createAttendance(request);
+        Long id = attendanceService.createAttendance(request, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendance(id);
+        Attendance attendance = attendanceService.getAttendance(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "출석이 등록되었습니다"));
@@ -55,8 +58,9 @@ public class AttendanceController {
     @PostMapping("/upsert")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> upsert(
-            @Valid @RequestBody AttendanceRequest request) {
-        AttendanceResponse response = attendanceService.upsertAttendance(request);
+            @Valid @RequestBody AttendanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AttendanceResponse response = attendanceService.upsertAttendance(request, userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(response, "출석이 저장되었습니다"));
     }
 
@@ -66,8 +70,9 @@ public class AttendanceController {
     @PostMapping("/bulk")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<BulkAttendanceResponse>> bulkUpdate(
-            @Valid @RequestBody BulkAttendanceRequest request) {
-        int updated = attendanceService.bulkUpdateAttendance(request);
+            @Valid @RequestBody BulkAttendanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        int updated = attendanceService.bulkUpdateAttendance(request, userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(new BulkAttendanceResponse(updated), "일괄 출석 처리가 완료되었습니다"));
     }
 
@@ -75,8 +80,10 @@ public class AttendanceController {
      * 출석 조회
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AttendanceResponse>> getAttendance(@PathVariable Long id) {
-        Attendance attendance = attendanceService.getAttendance(id);
+    public ResponseEntity<ApiResponse<AttendanceResponse>> getAttendance(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Attendance attendance = attendanceService.getAttendance(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance)));
@@ -88,9 +95,10 @@ public class AttendanceController {
     @GetMapping("/kid/{kidId}")
     public ResponseEntity<ApiResponse<AttendanceResponse>> getAttendanceByKidAndDate(
             @PathVariable Long kidId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance)));
@@ -102,7 +110,8 @@ public class AttendanceController {
     @GetMapping("/daily")
     public ResponseEntity<ApiResponse<List<DailyAttendanceResponse>>> getDailyAttendance(
             @RequestParam(required = false) Long classroomId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (classroomId == null) {
             return ResponseEntity
@@ -110,7 +119,7 @@ public class AttendanceController {
                     .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE, "반 ID는 필수입니다"));
         }
 
-        List<DailyAttendanceResponse> responses = attendanceService.getDailyAttendanceByClassroom(classroomId, date);
+        List<DailyAttendanceResponse> responses = attendanceService.getDailyAttendanceByClassroom(classroomId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
@@ -123,9 +132,10 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getMonthlyAttendances(
             @PathVariable Long kidId,
             @RequestParam int year,
-            @RequestParam int month) {
+            @RequestParam int month,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        List<Attendance> attendances = attendanceService.getAttendancesByKidAndMonth(kidId, year, month);
+        List<Attendance> attendances = attendanceService.getAttendancesByKidAndMonth(kidId, year, month, userDetails.getMemberId());
 
         List<AttendanceResponse> responses = attendances.stream()
                 .map(attendanceService::toResponse)
@@ -143,8 +153,9 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<MonthlyAttendanceReportResponse>> getMonthlyReport(
             @PathVariable Long classroomId,
             @RequestParam int year,
-            @RequestParam int month) {
-        MonthlyAttendanceReportResponse response = attendanceService.getMonthlyReportByClassroom(classroomId, year, month);
+            @RequestParam int month,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        MonthlyAttendanceReportResponse response = attendanceService.getMonthlyReportByClassroom(classroomId, year, month, userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -155,9 +166,10 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<MonthlyStatisticsResponse>> getMonthlyStatistics(
             @PathVariable Long kidId,
             @RequestParam int year,
-            @RequestParam int month) {
+            @RequestParam int month,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        MonthlyStatisticsResponse response = attendanceService.getMonthlyStatistics(kidId, year, month);
+        MonthlyStatisticsResponse response = attendanceService.getMonthlyStatistics(kidId, year, month, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(response));
@@ -170,11 +182,12 @@ public class AttendanceController {
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<AttendanceResponse>> updateAttendance(
             @PathVariable Long id,
-            @Valid @RequestBody AttendanceRequest request) {
+            @Valid @RequestBody AttendanceRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.updateAttendance(id, request);
+        attendanceService.updateAttendance(id, request, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendance(id);
+        Attendance attendance = attendanceService.getAttendance(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "출석 정보가 수정되었습니다"));
@@ -188,11 +201,12 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<AttendanceResponse>> recordDropOff(
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @Valid @RequestBody DropOffRequest request) {
+            @Valid @RequestBody DropOffRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.recordDropOff(kidId, date, request);
+        attendanceService.recordDropOff(kidId, date, request, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "등원이 기록되었습니다"));
@@ -206,11 +220,12 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<AttendanceResponse>> recordPickUp(
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @Valid @RequestBody PickUpRequest request) {
+            @Valid @RequestBody PickUpRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.recordPickUp(kidId, date, request);
+        attendanceService.recordPickUp(kidId, date, request, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "하원이 기록되었습니다"));
@@ -224,11 +239,12 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<AttendanceResponse>> markAbsent(
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String note) {
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.markAbsent(kidId, date, note);
+        attendanceService.markAbsent(kidId, date, note, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "결석 처리되었습니다"));
@@ -243,11 +259,12 @@ public class AttendanceController {
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) java.time.LocalTime dropOffTime,
-            @RequestParam(required = false) String note) {
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.markLate(kidId, date, dropOffTime, note);
+        attendanceService.markLate(kidId, date, dropOffTime, note, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "지각 처리되었습니다"));
@@ -262,11 +279,12 @@ public class AttendanceController {
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) java.time.LocalTime pickUpTime,
-            @RequestParam(required = false) String note) {
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.markEarlyLeave(kidId, date, pickUpTime, note);
+        attendanceService.markEarlyLeave(kidId, date, pickUpTime, note, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "조퇴 처리되었습니다"));
@@ -280,11 +298,12 @@ public class AttendanceController {
     public ResponseEntity<ApiResponse<AttendanceResponse>> markSickLeave(
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String note) {
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        attendanceService.markSickLeave(kidId, date, note);
+        attendanceService.markSickLeave(kidId, date, note, userDetails.getMemberId());
 
-        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date);
+        Attendance attendance = attendanceService.getAttendanceByKidAndDate(kidId, date, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(attendanceService.toResponse(attendance), "병결 처리되었습니다"));
@@ -295,8 +314,10 @@ public class AttendanceController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
-    public ResponseEntity<ApiResponse<Void>> deleteAttendance(@PathVariable Long id) {
-        attendanceService.deleteAttendance(id);
+    public ResponseEntity<ApiResponse<Void>> deleteAttendance(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        attendanceService.deleteAttendance(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "출석 정보가 삭제되었습니다"));

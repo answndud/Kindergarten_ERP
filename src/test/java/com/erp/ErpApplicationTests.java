@@ -2,19 +2,15 @@ package com.erp;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.erp.common.TestcontainersSupport;
 
 /**
  * 애플리케이션 컨텍스트 로드 테스트
  */
 @SpringBootTest
 @ActiveProfiles("test")
-class ErpApplicationTests {
-
-    @MockitoBean
-    private RedisTemplate<String, Object> redisTemplate;
+class ErpApplicationTests extends TestcontainersSupport {
 
     @Test
     void contextLoads() {

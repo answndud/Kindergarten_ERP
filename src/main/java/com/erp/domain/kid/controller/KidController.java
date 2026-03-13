@@ -36,11 +36,12 @@ public class KidController {
     @PostMapping
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<KidResponse>> create(
-            @Valid @RequestBody KidRequest request) {
+            @Valid @RequestBody KidRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Long id = kidService.createKid(request);
+        Long id = kidService.createKid(request, userDetails.getMemberId());
 
-        Kid kid = kidService.getKid(id);
+        Kid kid = kidService.getKid(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(KidResponse.from(kid), "원생이 등록되었습니다"));
@@ -50,8 +51,10 @@ public class KidController {
      * 원생 조회
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<KidDetailResponse>> getKid(@PathVariable Long id) {
-        KidDetailResponse response = kidService.getKidDetail(id);
+    public ResponseEntity<ApiResponse<KidDetailResponse>> getKid(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        KidDetailResponse response = kidService.getKidDetail(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(response));
@@ -64,7 +67,8 @@ public class KidController {
     public ResponseEntity<ApiResponse<List<KidResponse>>> getKids(
             @RequestParam(required = false) Long classroomId,
             @RequestParam(required = false) Long kindergartenId,
-            @RequestParam(required = false) String name) {
+            @RequestParam(required = false) String name,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (classroomId == null && kindergartenId == null) {
             return ResponseEntity
@@ -76,15 +80,15 @@ public class KidController {
 
         if (classroomId != null) {
             if (name != null && !name.isBlank()) {
-                kids = kidService.searchKidsByName(classroomId, name);
+                kids = kidService.searchKidsByName(classroomId, name, userDetails.getMemberId());
             } else {
-                kids = kidService.getKidsByClassroom(classroomId);
+                kids = kidService.getKidsByClassroom(classroomId, userDetails.getMemberId());
             }
         } else if (kindergartenId != null) {
             if (name != null && !name.isBlank()) {
-                kids = kidService.searchKidsByKindergarten(kindergartenId, name);
+                kids = kidService.searchKidsByKindergarten(kindergartenId, name, userDetails.getMemberId());
             } else {
-                kids = kidService.getKidsByKindergarten(kindergartenId);
+                kids = kidService.getKidsByKindergarten(kindergartenId, userDetails.getMemberId());
             }
         } else {
             kids = List.of();
@@ -104,8 +108,9 @@ public class KidController {
     @GetMapping("/classroom-counts")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<List<ClassroomKidCountResponse>>> getClassroomCounts(
-            @RequestParam Long kindergartenId) {
-        java.util.Map<Long, Long> counts = kidService.getClassroomCounts(kindergartenId);
+            @RequestParam Long kindergartenId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        java.util.Map<Long, Long> counts = kidService.getClassroomCounts(kindergartenId, userDetails.getMemberId());
         List<ClassroomKidCountResponse> responses = counts.entrySet().stream()
                 .map(entry -> ClassroomKidCountResponse.of(entry.getKey(), entry.getValue()))
                 .toList();
@@ -122,7 +127,8 @@ public class KidController {
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
-            @RequestParam(defaultValue = "name") String sort) {
+            @RequestParam(defaultValue = "name") String sort,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         int safeSize = Math.min(Math.max(size, 1), 50);
         int safePage = Math.max(page, 0);
@@ -136,15 +142,15 @@ public class KidController {
 
         if (classroomId != null) {
             if (name != null && !name.isBlank()) {
-                kidsPage = kidService.searchKidsByName(classroomId, name, pageable);
+                kidsPage = kidService.searchKidsByName(classroomId, name, pageable, userDetails.getMemberId());
             } else {
-                kidsPage = kidService.getKidsByClassroom(classroomId, pageable);
+                kidsPage = kidService.getKidsByClassroom(classroomId, pageable, userDetails.getMemberId());
             }
         } else if (kindergartenId != null) {
             if (name != null && !name.isBlank()) {
-                kidsPage = kidService.searchKidsByKindergarten(kindergartenId, name, pageable);
+                kidsPage = kidService.searchKidsByKindergarten(kindergartenId, name, pageable, userDetails.getMemberId());
             } else {
-                kidsPage = kidService.getKidsByKindergarten(kindergartenId, pageable);
+                kidsPage = kidService.getKidsByKindergarten(kindergartenId, pageable, userDetails.getMemberId());
             }
         } else {
             kidsPage = org.springframework.data.domain.Page.empty(pageable);
@@ -194,11 +200,12 @@ public class KidController {
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<KidResponse>> updateKid(
             @PathVariable Long id,
-            @Valid @RequestBody KidRequest request) {
+            @Valid @RequestBody KidRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        kidService.updateKid(id, request.getName(), request.getBirthDate(), request.getGender());
+        kidService.updateKid(id, request.getName(), request.getBirthDate(), request.getGender(), userDetails.getMemberId());
 
-        Kid kid = kidService.getKid(id);
+        Kid kid = kidService.getKid(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(KidResponse.from(kid), "원생 정보가 수정되었습니다"));
@@ -211,11 +218,12 @@ public class KidController {
     @PreAuthorize("hasRole('PRINCIPAL')")
     public ResponseEntity<ApiResponse<KidResponse>> updateClassroom(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateClassroomRequest request) {
+            @Valid @RequestBody UpdateClassroomRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        kidService.updateClassroom(id, request);
+        kidService.updateClassroom(id, request, userDetails.getMemberId());
 
-        Kid kid = kidService.getKid(id);
+        Kid kid = kidService.getKid(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(KidResponse.from(kid), "반이 변경되었습니다"));
@@ -228,11 +236,12 @@ public class KidController {
     @PreAuthorize("hasRole('PRINCIPAL')")
     public ResponseEntity<ApiResponse<KidDetailResponse>> assignParent(
             @PathVariable Long id,
-            @Valid @RequestBody AssignParentRequest request) {
+            @Valid @RequestBody AssignParentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        kidService.assignParent(id, request);
+        kidService.assignParent(id, request, userDetails.getMemberId());
 
-        KidDetailResponse response = kidService.getKidDetail(id);
+        KidDetailResponse response = kidService.getKidDetail(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(response, "학부모가 연결되었습니다"));
@@ -245,11 +254,12 @@ public class KidController {
     @PreAuthorize("hasRole('PRINCIPAL')")
     public ResponseEntity<ApiResponse<KidDetailResponse>> removeParent(
             @PathVariable Long id,
-            @PathVariable Long parentId) {
+            @PathVariable Long parentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        kidService.removeParent(id, parentId);
+        kidService.removeParent(id, parentId, userDetails.getMemberId());
 
-        KidDetailResponse response = kidService.getKidDetail(id);
+        KidDetailResponse response = kidService.getKidDetail(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(response, "학부모 연결이 해제되었습니다"));
@@ -260,8 +270,10 @@ public class KidController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PRINCIPAL')")
-    public ResponseEntity<ApiResponse<Void>> deleteKid(@PathVariable Long id) {
-        kidService.deleteKid(id);
+    public ResponseEntity<ApiResponse<Void>> deleteKid(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        kidService.deleteKid(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "원생이 삭제되었습니다"));

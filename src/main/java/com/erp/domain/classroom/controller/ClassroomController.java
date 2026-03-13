@@ -9,7 +9,9 @@ import com.erp.global.exception.ErrorCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import com.erp.global.security.user.CustomUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,15 +32,17 @@ public class ClassroomController {
     @PostMapping
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<ClassroomResponse>> create(
-            @Valid @RequestBody ClassroomRequest request) {
+            @Valid @RequestBody ClassroomRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Long id = classroomService.createClassroom(
                 request.getKindergartenId(),
                 request.getName(),
-                request.getAgeGroup()
+                request.getAgeGroup(),
+                userDetails.getMemberId()
         );
 
-        Classroom classroom = classroomService.getClassroom(id);
+        Classroom classroom = classroomService.getClassroom(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(ClassroomResponse.from(classroom), "반이 생성되었습니다"));
@@ -48,8 +52,10 @@ public class ClassroomController {
      * 반 조회
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ClassroomResponse>> getClassroom(@PathVariable Long id) {
-        Classroom classroom = classroomService.getClassroom(id);
+    public ResponseEntity<ApiResponse<ClassroomResponse>> getClassroom(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Classroom classroom = classroomService.getClassroom(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(ClassroomResponse.from(classroom)));
@@ -60,7 +66,8 @@ public class ClassroomController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ClassroomResponse>>> getClassrooms(
-            @RequestParam(required = false) Long kindergartenId) {
+            @RequestParam(required = false) Long kindergartenId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         if (kindergartenId == null) {
             return ResponseEntity
@@ -68,7 +75,7 @@ public class ClassroomController {
                     .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE, "kindergartenId는 필수입니다"));
         }
 
-        List<Classroom> classrooms = classroomService.getClassroomsByKindergarten(kindergartenId);
+        List<Classroom> classrooms = classroomService.getClassroomsByKindergarten(kindergartenId, userDetails.getMemberId());
 
         List<ClassroomResponse> responses = classrooms.stream()
                 .map(ClassroomResponse::from)
@@ -85,11 +92,12 @@ public class ClassroomController {
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<ClassroomResponse>> updateClassroom(
             @PathVariable Long id,
-            @Valid @RequestBody ClassroomRequest request) {
+            @Valid @RequestBody ClassroomRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        classroomService.updateClassroom(id, request.getName(), request.getAgeGroup());
+        classroomService.updateClassroom(id, request.getName(), request.getAgeGroup(), userDetails.getMemberId());
 
-        Classroom classroom = classroomService.getClassroom(id);
+        Classroom classroom = classroomService.getClassroom(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(ClassroomResponse.from(classroom), "반이 수정되었습니다"));
@@ -100,8 +108,10 @@ public class ClassroomController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
-    public ResponseEntity<ApiResponse<Void>> deleteClassroom(@PathVariable Long id) {
-        classroomService.deleteClassroom(id);
+    public ResponseEntity<ApiResponse<Void>> deleteClassroom(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classroomService.deleteClassroom(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "반이 삭제되었습니다"));
@@ -114,11 +124,12 @@ public class ClassroomController {
     @PreAuthorize("hasRole('PRINCIPAL')")
     public ResponseEntity<ApiResponse<ClassroomResponse>> assignTeacher(
             @PathVariable Long id,
-            @RequestParam Long teacherId) {
+            @RequestParam Long teacherId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        classroomService.assignTeacher(id, teacherId);
+        classroomService.assignTeacher(id, teacherId, userDetails.getMemberId());
 
-        Classroom classroom = classroomService.getClassroom(id);
+        Classroom classroom = classroomService.getClassroom(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(ClassroomResponse.from(classroom), "담임 교사가 배정되었습니다"));
@@ -129,10 +140,12 @@ public class ClassroomController {
      */
     @DeleteMapping("/{id}/teacher")
     @PreAuthorize("hasRole('PRINCIPAL')")
-    public ResponseEntity<ApiResponse<ClassroomResponse>> removeTeacher(@PathVariable Long id) {
-        classroomService.removeTeacher(id);
+    public ResponseEntity<ApiResponse<ClassroomResponse>> removeTeacher(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        classroomService.removeTeacher(id, userDetails.getMemberId());
 
-        Classroom classroom = classroomService.getClassroom(id);
+        Classroom classroom = classroomService.getClassroom(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(ClassroomResponse.from(classroom), "담임 교사가 해제되었습니다"));

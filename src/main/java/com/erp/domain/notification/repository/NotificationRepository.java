@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
@@ -24,6 +25,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      * 수신자별 알림 목록 조회 (페이징)
      */
     List<Notification> findByReceiverIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long receiverId, Pageable pageable);
+
+    Optional<Notification> findByIdAndDeletedAtIsNull(Long id);
 
     /**
      * 수신자별 알림 목록 조회 (limit 적용)
