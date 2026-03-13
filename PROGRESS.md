@@ -1,12 +1,17 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 15차 (인터뷰 패키징 + 운영 관측성 + 감사 로그 조회 API)
+- 후속 고도화 16차 (면접 예상 질문/답변 스크립트 문서화)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 22:08 | DONE | `docs/interview/interview_qa_script.md`를 추가해 프로젝트 소개, 권한/보안, JWT 세션, OAuth2 lifecycle, 테스트/CI, 성능, 운영 관측성, 회고 질문까지 실전 면접 예상 질문/답변 스크립트로 정리 | README 인터뷰 섹션 연결 및 최종 검증 |
+| 2026-03-13 22:08 | DONE | `README.md` 인터뷰 바로 보기 섹션에 Q&A 문서 링크를 추가하고, 기존 1장 요약/3분 데모 문서와 역할을 분리해 인터뷰 entry point를 확장 | add/commit/push 및 원격 CI 시작 확인 |
+| 2026-03-13 22:08 | DONE | 검증 완료: `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
+| 2026-03-13 22:05 | IN_PROGRESS | 새 후속 배치 시작. 1장 요약본과 3분 데모 문서는 이미 있지만, 실제 면접에서 바로 읽고 답할 수 있는 예상 질문/답변 스크립트 문서는 아직 없어 실전 사용성이 비어 있는 상태 확인 | `PLAN.md`를 면접 Q&A 스크립트 문서화 기준으로 갱신 |
+| 2026-03-13 22:06 | IN_PROGRESS | `PLAN.md`를 후속 고도화 16차 기준으로 갱신. 이번 배치는 `docs/interview/` Q&A 스크립트 추가, README 인터뷰 섹션 연결, 진행 로그/검증까지 포함 | 기존 인터뷰 문서 흐름 확인 후 Q&A 문서 작성 |
 | 2026-03-13 22:00 | DONE | `eadc70e` (`feat: add observability baseline and auth audit queries`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
 | 2026-03-13 22:00 | DONE | GitHub Actions run `23051763705` 성공 확인. `Fast Checks` 1m31s, `Integration Suite` 2m42s, artifact 업로드 정상 확인 | 후속 과제 정리 |
 | 2026-03-13 21:54 | DONE | `docs/interview/interview_one_pager.md`, `docs/interview/demo_3min_scenario.md`를 추가하고 README 문서 섹션을 인터뷰 바로 보기 + 상세 결정 로그 구조로 재정리 | 운영 관측성/감사 로그 조회 구현 최종 검증 |
