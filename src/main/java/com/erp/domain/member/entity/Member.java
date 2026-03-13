@@ -132,6 +132,31 @@ public class Member extends BaseEntity {
         this.password = encodedPassword;
     }
 
+    public boolean hasLocalPassword() {
+        return this.password != null && !this.password.isBlank();
+    }
+
+    public boolean hasLinkedSocialAccount() {
+        return this.providerId != null && !this.providerId.isBlank() && this.authProvider != null && this.authProvider != MemberAuthProvider.LOCAL;
+    }
+
+    public boolean isLinkedTo(MemberAuthProvider provider) {
+        return provider != null
+                && this.authProvider == provider
+                && this.providerId != null
+                && !this.providerId.isBlank();
+    }
+
+    public boolean isLinkedTo(MemberAuthProvider provider, String providerId) {
+        return isLinkedTo(provider)
+                && this.providerId.equals(providerId);
+    }
+
+    public void linkSocialAccount(MemberAuthProvider provider, String providerId) {
+        this.authProvider = provider;
+        this.providerId = providerId;
+    }
+
     /**
      * 유치원 배정
      */

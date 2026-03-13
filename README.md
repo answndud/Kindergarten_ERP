@@ -62,6 +62,7 @@
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
+- ✅ 설정 화면 기반 명시적 소셜 계정 연결
 - ✅ 역할 기반 접근 제어
 
 ### 유치원/반/원생 관리
@@ -100,6 +101,7 @@
 - ✅ 로그인 실패 전용 rate limit 정책
 - ✅ OAuth2 principal 런타임 안전성 보강
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
+- ✅ 세션 기반 OAuth2 link intent와 단일 provider 연결 정책
 
 ### 알림 시스템
 - ✅ 알림 생성/조회
@@ -480,6 +482,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 로그인 Rate Limit 정책 정교화 | `docs/phase/phase25_login_rate_limit_policy_refinement.md` |
 | OAuth2 Principal 런타임 안전성 보강 | `docs/phase/phase26_oauth2_principal_runtime_safety.md` |
 | OAuth2 계정 충돌 정책/UX 정합화 | `docs/phase/phase27_oauth2_account_conflict_policy.md` |
+| 명시적 소셜 계정 연결 플로우 | `docs/phase/phase28_explicit_social_account_linking.md` |
 
 ---
 
