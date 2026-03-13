@@ -3,10 +3,10 @@ package com.erp.global.config;
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.service.MemberService;
-import com.erp.global.security.user.CustomUserDetails;
+import com.erp.global.security.AuthenticatedMemberResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -21,21 +21,23 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class GlobalControllerAdvice {
 
     private final MemberService memberService;
+    private final AuthenticatedMemberResolver authenticatedMemberResolver;
 
     /**
      * 현재 로그인한 회원 정보를 모든 뷰에 전달
      */
     @ModelAttribute("currentMember")
-    public MemberResponse currentMember(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
+    public MemberResponse currentMember(Authentication authentication) {
+        Member resolvedMember = authenticatedMemberResolver.resolve(authentication).orElse(null);
+        if (resolvedMember == null) {
             log.debug("currentMember: userDetails is null");
             return null;
         }
 
         try {
-            log.debug("currentMember: loading member with id={}", userDetails.getMemberId());
+            log.debug("currentMember: loading member with id={}", resolvedMember.getId());
             // LazyInitializationException 방지를 위해 유치원 포함하여 조회
-            Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
+            Member member = memberService.getMemberByIdWithKindergarten(resolvedMember.getId());
             MemberResponse response = MemberResponse.from(member);
             log.debug("currentMember: loaded successfully - {}", response.name());
             return response;

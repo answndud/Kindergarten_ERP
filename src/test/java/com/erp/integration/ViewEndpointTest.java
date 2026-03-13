@@ -1,14 +1,28 @@
 package com.erp.integration;
 
 import com.erp.common.TestcontainersSupport;
+import com.erp.domain.kindergarten.entity.Kindergarten;
+import com.erp.domain.kindergarten.repository.KindergartenRepository;
+import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberAuthProvider;
+import com.erp.domain.member.entity.MemberRole;
+import com.erp.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +37,12 @@ class ViewEndpointTest extends TestcontainersSupport {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private KindergartenRepository kindergartenRepository;
 
     @Test
     void testHomePage() throws Exception {
@@ -71,5 +91,41 @@ class ViewEndpointTest extends TestcontainersSupport {
     void testSettingsPageWithoutAuth() throws Exception {
         mockMvc.perform(get("/settings"))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void testProfilePageWithOAuth2Principal() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("소셜 유치원", "서울시", "010-1111-2222", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member socialMember = Member.createSocial(
+                "social-parent@test.com",
+                "소셜학부모",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-sub-123"
+        );
+        socialMember.assignKindergarten(kindergarten);
+        memberRepository.save(socialMember);
+
+        DefaultOAuth2User principal = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_PARENT")),
+                Map.of(
+                        "sub", "google-sub-123",
+                        "email", "social-parent@test.com",
+                        "name", "소셜학부모"
+                ),
+                "sub"
+        );
+
+        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+                principal,
+                principal.getAuthorities(),
+                "google"
+        );
+
+        mockMvc.perform(get("/profile").with(authentication(authentication)))
+                .andExpect(status().isOk());
     }
 }

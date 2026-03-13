@@ -3,8 +3,6 @@ package com.erp.global.security;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
-import com.erp.domain.member.repository.MemberRepository;
-import com.erp.global.security.user.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +19,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RoleRedirectInterceptor implements HandlerInterceptor {
 
-    private final MemberRepository memberRepository;
+    private final AuthenticatedMemberResolver authenticatedMemberResolver;
 
     @Override
     public boolean preHandle(
@@ -66,9 +64,7 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Member member = memberRepository.findById(userDetails.getMemberId())
-                .orElse(null);
+        Member member = authenticatedMemberResolver.resolve(auth).orElse(null);
 
         if (member == null) {
             response.sendRedirect("/login");

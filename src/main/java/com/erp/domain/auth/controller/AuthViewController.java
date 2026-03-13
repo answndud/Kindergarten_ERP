@@ -1,9 +1,9 @@
 package com.erp.domain.auth.controller;
 
-import com.erp.global.security.user.CustomUserDetails;
+import com.erp.global.security.AuthenticatedMemberResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 @RequiredArgsConstructor
 public class AuthViewController {
+
+    private final AuthenticatedMemberResolver authenticatedMemberResolver;
 
     /**
      * 로그인 페이지
@@ -44,8 +46,8 @@ public class AuthViewController {
      * 프로필 페이지
      */
     @GetMapping("/profile")
-    public String profilePage(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
+    public String profilePage(Authentication authentication) {
+        if (authenticatedMemberResolver.resolve(authentication).isEmpty()) {
             return "redirect:/login";
         }
         return "auth/profile";
@@ -55,8 +57,8 @@ public class AuthViewController {
      * 설정 페이지
      */
     @GetMapping("/settings")
-    public String settingsPage(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
+    public String settingsPage(Authentication authentication) {
+        if (authenticatedMemberResolver.resolve(authentication).isEmpty()) {
             return "redirect:/login";
         }
         return "auth/settings";

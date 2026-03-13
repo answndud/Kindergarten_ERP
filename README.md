@@ -97,6 +97,7 @@
 - ✅ Redis 기반 auth rate limit
 - ✅ trusted proxy 기준 client IP 해석
 - ✅ 로그인 실패 전용 rate limit 정책
+- ✅ OAuth2 principal 런타임 안전성 보강
 
 ### 알림 시스템
 - ✅ 알림 생성/조회
@@ -475,6 +476,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 캘린더 반복 일정/권한 정합성 보강 | `docs/phase/phase23_calendar_recurrence_access_alignment.md` |
 | 인증 Client IP 신뢰 모델 하드닝 | `docs/phase/phase24_auth_client_ip_trust_model.md` |
 | 로그인 Rate Limit 정책 정교화 | `docs/phase/phase25_login_rate_limit_policy_refinement.md` |
+| OAuth2 Principal 런타임 안전성 보강 | `docs/phase/phase26_oauth2_principal_runtime_safety.md` |
 
 ---
 
