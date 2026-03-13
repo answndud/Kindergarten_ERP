@@ -94,8 +94,7 @@ public class AnnouncementViewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model) {
 
-        // 조회수 증가 없이 조회
-        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id, userDetails.getMemberId());
+        Announcement announcement = announcementService.getAnnouncement(id, userDetails.getMemberId());
         model.addAttribute("announcement", announcementService.toResponse(announcement));
         return "announcement/detail";
     }

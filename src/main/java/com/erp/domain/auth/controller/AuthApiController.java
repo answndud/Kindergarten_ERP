@@ -77,10 +77,8 @@ public class AuthApiController {
      */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
-                                                     HttpServletResponse response,
-                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
-        String email = userDetails.getUsername();
-        authService.logout(email, response);
+                                                     HttpServletResponse response) {
+        authService.logout(getRefreshToken(request), response);
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "로그아웃되었습니다"));

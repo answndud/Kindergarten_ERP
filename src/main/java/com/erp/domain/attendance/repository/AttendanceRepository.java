@@ -17,6 +17,12 @@ import java.util.Optional;
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
+    interface DailyPresentCountProjection {
+        LocalDate getDate();
+
+        long getPresentCount();
+    }
+
     /**
      * 원생별 날짜 출석 조회
      */
@@ -97,4 +103,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     long countPresentOrLateByKindergartenAndDateBetween(@Param("kindergartenId") Long kindergartenId,
                                                         @Param("startDate") LocalDate startDate,
                                                         @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT a.date AS date, COUNT(a) AS presentCount " +
+            "FROM Attendance a " +
+            "WHERE a.kid.classroom.kindergarten.id = :kindergartenId " +
+            "AND a.date >= :startDate AND a.date <= :endDate " +
+            "AND a.status IN ('PRESENT', 'LATE') " +
+            "GROUP BY a.date")
+    List<DailyPresentCountProjection> findPresentOrLateCountsByKindergartenAndDateBetween(
+            @Param("kindergartenId") Long kindergartenId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

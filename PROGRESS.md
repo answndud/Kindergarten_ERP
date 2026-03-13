@@ -1,12 +1,17 @@
 # PROGRESS.md
 
 ## 작업명
-- CI 자동화 (GitHub Actions + Testcontainers 테스트) + 인터뷰용 문서화
+- 후속 고도화 (CI 실행 확인 + JWT 세션 설계 + 대시보드 지표 보정 + CI 최적화 + 인터뷰용 문서화)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 18:42 | IN_PROGRESS | 사용자 요청에 따라 남은 과제를 한 배치로 전환, `PLAN.md`를 CI 확인/JWT 세션 설계/대시보드 지표/CI 최적화 기준으로 갱신 | 원격 workflow run 상태 확인 후 Auth/Dashboard 구조 점검 |
+| 2026-03-13 18:43 | DONE | `gh run`으로 첫 GitHub Actions 실패 원인 확인. `gradle-wrapper.jar`가 `.gitignore` 후행 `*.jar` 규칙에 막혀 runner에 누락되는 문제로 진단 | wrapper 추적 복구 + CI 분리 반영 |
+| 2026-03-13 18:45 | DONE | JWT claim 확장(`memberId/sessionId/tokenType/jti`), Redis 세션 키 구조 도입, refresh rotation, 현재 세션 로그아웃/전체 세션 탈퇴 revoke 반영 | 인증 회귀 테스트 및 문서화 |
+| 2026-03-13 18:47 | DONE | `announcement_view` 마이그레이션 추가, 공지 고유 열람률과 주말/입소일 반영 출석률로 대시보드 산식 보정, 집계 projection/쿼리 통합으로 쿼리 수 `13 -> 5` 확인 | Dashboard/Auth 테스트 및 README 반영 |
+| 2026-03-13 18:52 | DONE | `fastTest`/`integrationTest` 태스크 추가, GitHub Actions 2-job 분리, README 및 `docs/phase/phase17~19` 문서화 완료. 검증: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.api.DashboardApiIntegrationTest"`, `./gradlew test --tests "com.erp.performance.DashboardPerformanceStoryTest"`, `./gradlew fastTest integrationTest`, `./gradlew test` 모두 통과 | 사용자 승인 시 add/commit/push |
 | 2026-03-13 18:29 | DONE | `.github/workflows/ci.yml` 추가. PR/push/manual 트리거, Java 17, Gradle 캐시, `./gradlew test`, test report artifact 업로드 구성 | README/phase 문서와 교차 검토 |
 | 2026-03-13 18:28 | DONE | `docs/phase/phase16_github_actions_ci.md`, `README.md`에 CI/Testcontainers 전략과 인터뷰용 설명 포인트 반영 | YAML/저장소 상태 검증 후 로그 마감 |
 | 2026-03-13 18:27 | DONE | `ruby`로 `.github/workflows/ci.yml` YAML 파싱 검증, `git diff --check` 통과 | PROGRESS/PLAN 마감 |

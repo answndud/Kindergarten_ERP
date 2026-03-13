@@ -2,9 +2,11 @@ package com.erp.domain.member.controller;
 
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberApiController {
 
     private final MemberService memberService;
+    private final AuthService authService;
 
     /**
      * 내 프로필 조회
@@ -92,9 +95,11 @@ public class MemberApiController {
      */
     @DeleteMapping("/withdraw")
     public ResponseEntity<ApiResponse<Void>> withdraw(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletResponse response
     ) {
         memberService.withdraw(userDetails.getMemberId());
+        authService.revokeAllSessions(userDetails.getMemberId(), response);
         return ResponseEntity.ok(ApiResponse.success());
     }
 

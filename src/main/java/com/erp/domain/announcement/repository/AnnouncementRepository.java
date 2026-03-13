@@ -16,6 +16,12 @@ import java.util.Optional;
 @Repository
 public interface AnnouncementRepository extends JpaRepository<Announcement, Long> {
 
+    interface DashboardAnnouncementStatsProjection {
+        long getTotalAnnouncements();
+
+        long getUniqueReadCount();
+    }
+
     /**
      * 유치원별 공지사항 목록 조회 (삭제되지 않은 것만, 최신순)
      */
@@ -90,8 +96,15 @@ public interface AnnouncementRepository extends JpaRepository<Announcement, Long
     @Query("SELECT COUNT(a) FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
     long countByKindergartenIdAndDeletedAtIsNull(@Param("kindergartenId") Long kindergartenId);
 
-    @Query("SELECT COALESCE(SUM(a.viewCount), 0) FROM Announcement a WHERE a.kindergarten.id = :kindergartenId AND a.deletedAt IS NULL")
-    long sumViewCountByKindergartenId(@Param("kindergartenId") Long kindergartenId);
+    @Query(value = """
+            SELECT COUNT(DISTINCT a.id) AS totalAnnouncements,
+                   COUNT(av.id) AS uniqueReadCount
+            FROM announcement a
+            LEFT JOIN announcement_view av ON av.announcement_id = a.id
+            WHERE a.kindergarten_id = :kindergartenId
+              AND a.deleted_at IS NULL
+            """, nativeQuery = true)
+    DashboardAnnouncementStatsProjection findDashboardStats(@Param("kindergartenId") Long kindergartenId);
 
     /**
      * 유치원별 공지사항 목록 조회 (리스트)

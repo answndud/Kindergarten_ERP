@@ -76,3 +76,25 @@ tasks.withType(JavaCompile).configureEach {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('fastTest', Test) {
+    description = 'Runs fast unit/service tests.'
+    group = 'verification'
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include 'com/erp/domain/**'
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs Testcontainers-backed integration and performance tests.'
+    group = 'verification'
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include 'com/erp/api/**'
+    include 'com/erp/integration/**'
+    include 'com/erp/performance/**'
+    include 'com/erp/ErpApplicationTests.class'
+    shouldRunAfter tasks.named('fastTest')
+}
