@@ -132,6 +132,7 @@ public class TestData {
         entityManager.createNativeQuery("DELETE FROM parent_kid").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM kid").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM classroom").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM member_social_account").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM member").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM kindergarten").executeUpdate();
         entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();

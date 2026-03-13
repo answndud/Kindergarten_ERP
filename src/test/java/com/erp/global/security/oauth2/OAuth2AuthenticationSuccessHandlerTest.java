@@ -80,7 +80,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(memberRepository.findByAuthProviderAndProviderId(MemberAuthProvider.GOOGLE, "google-sub-123"))
+        when(memberRepository.findBySocialProviderAndProviderId(MemberAuthProvider.GOOGLE, "google-sub-123"))
                 .thenReturn(Optional.empty());
         when(memberRepository.existsByEmail("existing@test.com"))
                 .thenReturn(true);

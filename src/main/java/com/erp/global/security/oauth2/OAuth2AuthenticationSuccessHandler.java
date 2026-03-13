@@ -65,7 +65,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             }
 
             Member member = memberRepository
-                    .findByAuthProviderAndProviderId(userInfo.getProvider(), userInfo.getProviderId())
+                    .findBySocialProviderAndProviderId(userInfo.getProvider(), userInfo.getProviderId())
                     .orElseGet(() -> registerSocialMember(userInfo));
 
             authService.loginBySocial(member, response);
@@ -159,7 +159,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     private String mapLinkErrorReason(ErrorCode errorCode) {
         return switch (errorCode) {
             case SOCIAL_ACCOUNT_ALREADY_LINKED -> "provider-in-use";
-            case SOCIAL_PROVIDER_SLOT_OCCUPIED -> "slot-occupied";
+            case SOCIAL_PROVIDER_SLOT_OCCUPIED -> "provider-slot-occupied";
             default -> "failed";
         };
     }

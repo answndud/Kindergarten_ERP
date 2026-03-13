@@ -7,6 +7,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 회원 엔티티
  */
@@ -39,6 +42,10 @@ public class Member extends BaseEntity {
 
     @Column(name = "provider_id", length = 100)
     private String providerId;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<MemberSocialAccount> socialAccounts = new ArrayList<>();
 
     /**
      * 이름
@@ -109,9 +116,10 @@ public class Member extends BaseEntity {
         member.password = null;
         member.name = name;
         member.role = role;
-        member.authProvider = provider;
-        member.providerId = providerId;
+        member.authProvider = MemberAuthProvider.LOCAL;
+        member.providerId = null;
         member.status = MemberStatus.ACTIVE;
+        member.linkSocialAccount(provider, providerId);
         return member;
     }
 
@@ -137,29 +145,62 @@ public class Member extends BaseEntity {
     }
 
     public boolean hasLinkedSocialAccount() {
-        return this.providerId != null && !this.providerId.isBlank() && this.authProvider != null && this.authProvider != MemberAuthProvider.LOCAL;
+        return !this.socialAccounts.isEmpty();
     }
 
     public boolean isLinkedTo(MemberAuthProvider provider) {
         return provider != null
-                && this.authProvider == provider
-                && this.providerId != null
-                && !this.providerId.isBlank();
+                && this.socialAccounts.stream().anyMatch(account -> account.isSameProvider(provider));
     }
 
     public boolean isLinkedTo(MemberAuthProvider provider, String providerId) {
-        return isLinkedTo(provider)
-                && this.providerId.equals(providerId);
+        return provider != null
+                && providerId != null
+                && this.socialAccounts.stream().anyMatch(account -> account.matches(provider, providerId));
     }
 
     public void linkSocialAccount(MemberAuthProvider provider, String providerId) {
-        this.authProvider = provider;
-        this.providerId = providerId;
+        if (isLinkedTo(provider, providerId)) {
+            syncLegacyPrimarySocialAccount();
+            return;
+        }
+
+        this.socialAccounts.add(MemberSocialAccount.create(this, provider, providerId));
+        syncLegacyPrimarySocialAccount();
     }
 
-    public void unlinkSocialAccount() {
-        this.authProvider = MemberAuthProvider.LOCAL;
-        this.providerId = null;
+    public void unlinkSocialAccount(MemberAuthProvider provider) {
+        this.socialAccounts.removeIf(account -> account.isSameProvider(provider));
+        syncLegacyPrimarySocialAccount();
+    }
+
+    public boolean canUnlinkSocialAccount(MemberAuthProvider provider) {
+        if (!isLinkedTo(provider)) {
+            return false;
+        }
+
+        if (hasLocalPassword()) {
+            return true;
+        }
+
+        return this.socialAccounts.stream().anyMatch(account -> !account.isSameProvider(provider));
+    }
+
+    public String getLinkedSocialProviderSummary() {
+        if (this.socialAccounts.isEmpty()) {
+            return null;
+        }
+
+        return this.socialAccounts.stream()
+                .map(MemberSocialAccount::getProvider)
+                .map(provider -> switch (provider) {
+                    case GOOGLE -> "Google";
+                    case KAKAO -> "Kakao";
+                    default -> provider.name();
+                })
+                .distinct()
+                .reduce((left, right) -> left + ", " + right)
+                .orElse(null);
     }
 
     /**
@@ -210,5 +251,17 @@ public class Member extends BaseEntity {
      */
     public boolean matchesPassword(String rawPassword, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         return passwordEncoder.matches(rawPassword, this.password);
+    }
+
+    private void syncLegacyPrimarySocialAccount() {
+        MemberSocialAccount primarySocialAccount = this.socialAccounts.isEmpty() ? null : this.socialAccounts.get(0);
+        if (primarySocialAccount == null) {
+            this.authProvider = MemberAuthProvider.LOCAL;
+            this.providerId = null;
+            return;
+        }
+
+        this.authProvider = primarySocialAccount.getProvider();
+        this.providerId = primarySocialAccount.getProviderId();
     }
 }

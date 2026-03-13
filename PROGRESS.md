@@ -7,6 +7,12 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 21:03 | DONE | `member_social_account` 마이그레이션과 `MemberSocialAccount` 엔티티를 추가하고, `Member`/`MemberRepository`/`AuthenticatedMemberResolver`/`OAuth2AuthenticationSuccessHandler`/`SocialAccountLinkService`를 새 social account 구조 기준으로 전환. legacy `auth_provider/provider_id`는 primary provider sync 용도로만 유지 | settings UI와 테스트/문서 마감 |
+| 2026-03-13 21:03 | DONE | `settings.html`과 `AuthViewController`를 provider별 카드 UI로 재구성. Google/Kakao 동시 연결 표시, provider별 unlink 허용/차단 사유, unlink 성공 메시지를 다중 provider 정책에 맞춰 정리 | 통합 테스트 및 phase 문서 검증 |
+| 2026-03-13 21:03 | DONE | `MemberApiIntegrationTest`, `ViewEndpointTest`, `OAuth2AuthenticationSuccessHandlerTest`, `BaseIntegrationTest`, `TestData`를 보강해 다중 provider unlink, settings 렌더링, OAuth2 social lookup, `member_social_account` cleanup/reset 회귀를 반영. `README.md`, `docs/phase/phase31_member_social_account_normalization.md` 문서화 완료 | 최종 검증 로그 기록 후 add/commit/push |
+| 2026-03-13 21:04 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"`, `git diff --check` 통과 | add/commit/push 및 원격 CI 확인 |
+| 2026-03-13 20:54 | IN_PROGRESS | 새 후속 배치 시작. 기존 소셜 계정 플로우를 재점검한 결과 `member.auth_provider/provider_id` 단일 슬롯 구조 때문에 Google/Kakao 동시 연결이 불가능하고 settings 화면도 단일 provider 가정에 묶여 있는 구조적 한계 확인 | `PLAN.md`를 다중 소셜 연결 정규화 기준으로 갱신하고, 새 `member_social_account` 테이블을 SSOT로 삼는 방향으로 코드/테스트 전환 |
+| 2026-03-13 20:55 | IN_PROGRESS | `PLAN.md`를 후속 고도화 12차(소셜 계정 다중 연결 구조 정규화) 기준으로 갱신. 이번 배치는 마이그레이션/backfill, `Member` social account 컬렉션, OAuth2/login/link/unlink/settings 다중 provider 정렬, 테스트/문서화까지 한 번에 닫는 범위로 확정 | settings 템플릿과 남은 테스트/문서/검증 작업 마무리 |
 | 2026-03-13 20:46 | DONE | `SocialAccountLinkService.unlinkSocialAccount`와 `DELETE /api/v1/members/social-link/{provider}`를 추가해 소셜 연결 해제 경로를 구현. 로컬 비밀번호가 없는 계정은 `A010`으로 차단하고, 성공 시 provider 슬롯을 `LOCAL/null` 상태로 되돌리도록 정리 | settings unlink UI 및 테스트 보강 |
 | 2026-03-13 20:46 | DONE | `settings.html`에 연결 해제 버튼/차단 사유를 추가하고, `MemberApiIntegrationTest`/`ViewEndpointTest`에 unlink 성공/차단/UI 회귀 테스트를 반영 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:46 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest"` 통과. `README.md`, `docs/phase/phase30_social_account_unlink_policy.md` 반영 | add/commit/push 진행 |
@@ -96,5 +102,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 소셜 계정 연결 해제 정책 추가 검증 완료
+- 활성 작업: 소셜 계정 다중 연결 구조 정규화 검증 완료
 - 블로커: 없음
