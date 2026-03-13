@@ -1,28 +1,29 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 5차 (인증 Client IP 신뢰 모델 하드닝)
+- 후속 고도화 6차 (로그인 Rate Limit 정책 정교화)
 
 ## 1) 목표 / 범위
-- 인증 rate limit에서 사용하는 Client IP 해석 로직을 신뢰 가능한 프록시 기준으로 정리한다.
-- 임의 클라이언트가 `X-Forwarded-For`, `X-Real-IP`를 조작해 로그인/refresh rate limit을 우회하지 못하게 한다.
-- 인터뷰에서 설명 가능한 운영형 보안 결정으로 문서화하고 회귀 테스트를 추가한다.
+- 로그인 rate limit이 정상 사용자 경험을 불필요하게 해치지 않도록 정책을 정교화한다.
+- 로그인 성공은 카운트하지 않고 실패만 누적하도록 바꾼다.
+- 성공 로그인 시 이메일 기준 실패 카운터를 초기화해 brute-force 방어와 정상 로그인 UX를 분리한다.
 
 ## 2) 세부 작업 단계
-1. 현재 IP 해석 경로 점검
-   - `AuthApiController`, rate limit 테스트, 설정 파일을 검토한다.
-   - 어떤 조건에서 전달 헤더를 신뢰할지 정책을 결정한다.
+1. 현재 로그인 rate limit 흐름 점검
+   - `AuthService`, `AuthRateLimitService`, `AuthApiIntegrationTest`를 확인한다.
+   - 성공/실패가 어떤 타이밍에 카운트되는지 정리한다.
 
-2. Client IP resolver 구현
-   - trusted proxy 여부를 판단하는 resolver/properties를 추가한다.
-   - trusted proxy인 경우에만 `X-Forwarded-For`, `X-Real-IP`를 사용하도록 변경한다.
+2. 정책 정교화 구현
+   - 로그인 진입 시에는 현재 실패 횟수만 확인한다.
+   - 인증 실패 시에만 로그인 IP/이메일 카운터를 증가시킨다.
+   - 인증 성공 시 이메일 기준 실패 카운터를 초기화한다.
 
 3. 회귀 테스트 추가
-   - 임의 remote address에서 조작된 forwarded header가 무시되는지 검증한다.
-   - loopback 또는 trusted proxy에서는 전달 헤더가 반영되는지 검증한다.
+   - 반복 성공 로그인은 rate limit에 걸리지 않는지 검증한다.
+   - 일부 실패 후 성공 로그인 시 이메일 실패 카운터가 초기화되는지 검증한다.
 
 4. 문서화 및 검증
-   - `README.md`, `docs/phase/`에 보안 의도와 운영 트레이드오프를 정리한다.
+   - `README.md`, `docs/phase/`에 정책 변경 이유와 운영 관점 트레이드오프를 정리한다.
    - `./gradlew compileJava compileTestJava`
    - `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`
    - `git diff --check`
@@ -34,9 +35,9 @@
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- 프록시 신뢰 기준을 너무 엄격하게 잡으면 실제 reverse proxy 환경에서 원본 IP를 못 읽을 수 있음
-  - 대응: loopback은 기본 신뢰하고, 추가 trusted proxy는 설정으로 열어둔다
-- forwarded header 파싱을 잘못 구현하면 정상 요청이 `unknown`으로 묶일 수 있음
-  - 대응: 유효하지 않은 헤더는 무시하고 `remoteAddr`로 안전하게 fallback 한다
-- 테스트가 구현 세부에 과도하게 묶이면 유지보수가 어려움
-  - 대응: rate limit 결과(429/미발생) 기준으로 검증하고 내부 key 문자열에는 의존하지 않는다
+- 실패 카운터를 너무 많이 초기화하면 공격 흔적이 과도하게 지워질 수 있음
+  - 대응: 성공 시에는 이메일 기준 실패 카운터만 지우고, IP 실패 카운터는 유지한다
+- validate/record 타이밍이 엇갈리면 임계치 계산이 흔들릴 수 있음
+  - 대응: 서비스 흐름을 `사전 확인 -> 인증 -> 실패 기록 또는 성공 초기화` 순으로 고정한다
+- 기존 테스트가 "모든 로그인 시도 누적" 전제에 묶여 있을 수 있음
+  - 대응: 실패만 누적되는 시나리오와 성공 로그인 비차단 시나리오를 함께 추가해 정책 자체를 고정한다

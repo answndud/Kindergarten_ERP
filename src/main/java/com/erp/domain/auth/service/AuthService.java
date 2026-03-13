@@ -62,21 +62,23 @@ public class AuthService {
      * 로그인
      */
     public void login(String email, String password, String clientIp, HttpServletResponse response) {
-        try {
-            authRateLimitService.validateLoginAllowed(clientIp, email);
+        authRateLimitService.validateLoginAllowed(clientIp, email);
 
+        try {
             // 1. 인증 시도
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
 
             authLoginBootstrapService.afterAuthenticated(email);
+            authRateLimitService.clearLoginFailures(email);
 
             // 2. 회원 정보 조회
             Member member = memberService.getMemberByEmail(email);
             issueTokens(member, response);
 
         } catch (AuthenticationException e) {
+            authRateLimitService.recordLoginFailure(clientIp, email);
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
     }
