@@ -1,50 +1,35 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 (CI 실행 확인 + JWT 세션 설계 + 대시보드 지표 보정 + CI 최적화 + 인터뷰용 문서화)
+- 후속 고도화 마감 점검 (원격 CI 확인 + GitHub Actions Node24 호환)
 
 ## 1) 목표 / 범위
-- 직전 배치에서 추가한 GitHub Actions가 실제로 정상 동작하는지 확인하고, 필요 시 수정한다.
-- JWT refresh token 설계를 세션 단위 저장과 rotation이 가능한 구조로 개선한다.
-- 대시보드 지표 산식을 신뢰 가능한 방식으로 보정하고, 필요 시 조회용 데이터 모델을 보강한다.
-- CI를 빠른 검증과 통합 테스트로 분리해 실행 전략을 개선한다.
-- README와 `docs/phase/`를 인터뷰에서 설명하기 좋은 형태로 보강한다.
-- 이번 세션 결과물은 코드 변경 + 테스트/CI 검증 + 문서 보강이다.
+- 방금 push한 split CI workflow가 GitHub Actions에서 실제로 통과하는지 확인한다.
+- 통과 후 runner annotation으로 확인된 Node.js 20 deprecation 경고를 제거해 Node 24 기본 전환 전에 workflow 호환성을 확보한다.
+- 필요 시 workflow와 문서를 보강하고, YAML/로컬 검증까지 마친다.
 
 ## 2) 세부 작업 단계
-1. CI 실행 확인
-   - 방금 push된 workflow run 상태 확인
-   - 실패 시 원인 파악 후 workflow 수정
+1. 원격 CI 실행 확인
+   - `ff5b683` 기준 GitHub Actions run 상태 확인
+   - job별 결과 및 artifact 업로드 여부 확인
 
-2. JWT 세션 설계 개선
-   - refresh token 저장 방식을 `email` 단일 키에서 세션 단위 키로 전환
-   - refresh 시 rotation 적용
-   - 로그아웃/탈퇴 시 무효화 전략 정리
+2. Node24 호환 반영
+   - GitHub runner annotation 기준으로 Node 20 deprecation 대응
+   - workflow env 또는 action 버전 조정으로 Node 24 경로 확보
 
-3. 대시보드 지표 개선
-   - 출석률/공지 열람률 산식 검토
-   - 신뢰 가능한 집계 방식으로 코드와 테스트 보정
-
-4. CI 최적화
-   - GitHub Actions를 빠른 검증/통합 테스트 job으로 분리
-   - artifact 및 실패 분석 동선 유지
-
-5. 문서화
-   - `docs/phase/`에 JWT 세션 설계, 대시보드 지표 보정, CI 최적화 배경과 트레이드오프 정리
-   - README와 프로젝트 설명 문구를 채용 관점으로 보강
+3. 검증 및 기록
+   - YAML 파싱 검증
+   - `PROGRESS.md`에 원격 run 결과와 후속 조치 기록
 
 ## 3) 검증 계획
 - GitHub Actions run 상태 확인
 - 로컬 검증
-  - `./gradlew compileJava compileTestJava`
-  - `./gradlew test`
-- 문서 교차 검증
-  - README/phase 문서가 실제 구현 및 실행 결과와 일치하는지 확인
+  - `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/ci.yml')"`
+  - `git diff --check`
+- 후속 push 시 새 workflow run 재확인
 
 ## 4) 리스크 및 대응
-- JWT 구조 변경으로 인증 테스트와 쿠키 처리 흐름이 깨질 위험
-  - 대응: Auth API 통합 테스트와 실제 Redis 저장값 검증을 함께 갱신
-- 대시보드 지표 신뢰도 개선이 데이터 모델 변경을 요구할 위험
-  - 대응: 필요한 최소 범위의 마이그레이션과 회귀 테스트를 추가
-- CI job 분리 후 총 실행 시간이 오히려 늘 위험
-  - 대응: fast/integration 책임을 명확히 나누고 캐시/아티팩트 전략을 유지
+- Node 24 강제 전환 대응이 현재 action 조합과 충돌할 위험
+  - 대응: 먼저 runner가 안내한 공식 env 플래그를 적용하고, 이후 action major 업그레이드는 별도 배치로 분리
+- workflow 변경 후 경고는 줄어도 기능이 깨질 위험
+  - 대응: YAML 파싱과 원격 run 재확인까지 한 세트로 검증
