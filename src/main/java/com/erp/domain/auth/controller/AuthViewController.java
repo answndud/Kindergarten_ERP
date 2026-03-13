@@ -82,8 +82,11 @@ public class AuthViewController {
         model.addAttribute("passwordChangeAvailable", member.hasLocalPassword());
         model.addAttribute("socialLinkLimitReached", member.hasLinkedSocialAccount());
         model.addAttribute("linkedSocialProviderLabel", resolveLinkedProviderLabel(member));
+        model.addAttribute("linkedSocialProviderValue", resolveLinkedProviderValue(member));
         model.addAttribute("googleLinked", member.isLinkedTo(MemberAuthProvider.GOOGLE));
         model.addAttribute("kakaoLinked", member.isLinkedTo(MemberAuthProvider.KAKAO));
+        model.addAttribute("canUnlinkSocialAccount", member.hasLinkedSocialAccount() && member.hasLocalPassword());
+        model.addAttribute("socialUnlinkBlockedReason", resolveSocialUnlinkBlockedReason(member));
         resolveSocialLinkFeedback(socialLinkStatus, provider, reason).ifPresent(feedback -> {
             model.addAttribute("socialLinkAlertTone", feedback.tone());
             model.addAttribute("socialLinkAlertTitle", feedback.title());
@@ -123,11 +126,7 @@ public class AuthViewController {
         String providerLabel = resolveProviderLabel(provider);
 
         return switch (status) {
-            case "success" -> Optional.of(new SocialLinkFeedback(
-                    "success",
-                    providerLabel + " 계정을 연결했습니다",
-                    "다음 로그인부터 이메일/비밀번호 또는 " + providerLabel + " 로그인 중 원하는 방식을 사용할 수 있습니다."
-            ));
+            case "success" -> Optional.of(resolveSocialLinkSuccess(reason, providerLabel));
             case "info" -> Optional.of(new SocialLinkFeedback(
                     "info",
                     "이미 연결된 계정입니다",
@@ -136,6 +135,22 @@ public class AuthViewController {
             case "error" -> Optional.of(resolveSocialLinkError(reason, providerLabel));
             default -> Optional.empty();
         };
+    }
+
+    private SocialLinkFeedback resolveSocialLinkSuccess(String reason, String providerLabel) {
+        if ("unlinked".equals(reason)) {
+            return new SocialLinkFeedback(
+                    "success",
+                    providerLabel + " 연결을 해제했습니다",
+                    "이제 해당 소셜 로그인으로는 로그인할 수 없고, 로컬 비밀번호 로그인만 사용할 수 있습니다."
+            );
+        }
+
+        return new SocialLinkFeedback(
+                "success",
+                providerLabel + " 계정을 연결했습니다",
+                "다음 로그인부터 이메일/비밀번호 또는 " + providerLabel + " 로그인 중 원하는 방식을 사용할 수 있습니다."
+        );
     }
 
     private SocialLinkFeedback resolveSocialLinkError(String reason, String providerLabel) {
@@ -160,6 +175,16 @@ public class AuthViewController {
                     "지원하지 않는 소셜 로그인입니다",
                     "현재는 Google과 Kakao만 연결할 수 있습니다."
             );
+            case "unlink-requires-local-password" -> new SocialLinkFeedback(
+                    "error",
+                    "소셜 연결을 해제할 수 없습니다",
+                    "계정 잠금 방지를 위해 로컬 비밀번호를 먼저 설정해야 합니다."
+            );
+            case "not-linked" -> new SocialLinkFeedback(
+                    "error",
+                    "연결된 소셜 계정을 찾을 수 없습니다",
+                    "이미 해제되었거나 다른 제공자가 연결된 상태입니다."
+            );
             default -> new SocialLinkFeedback(
                     "error",
                     "소셜 계정 연결에 실패했습니다",
@@ -174,6 +199,26 @@ public class AuthViewController {
         }
         if (member.isLinkedTo(MemberAuthProvider.KAKAO)) {
             return "Kakao";
+        }
+        return null;
+    }
+
+    private String resolveLinkedProviderValue(Member member) {
+        if (member.isLinkedTo(MemberAuthProvider.GOOGLE)) {
+            return "google";
+        }
+        if (member.isLinkedTo(MemberAuthProvider.KAKAO)) {
+            return "kakao";
+        }
+        return null;
+    }
+
+    private String resolveSocialUnlinkBlockedReason(Member member) {
+        if (!member.hasLinkedSocialAccount()) {
+            return null;
+        }
+        if (!member.hasLocalPassword()) {
+            return "계정 잠금 방지를 위해 로컬 비밀번호를 먼저 설정해야 연결을 해제할 수 있습니다.";
         }
         return null;
     }

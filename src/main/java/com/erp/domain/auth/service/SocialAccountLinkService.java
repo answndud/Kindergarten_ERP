@@ -37,4 +37,24 @@ public class SocialAccountLinkService {
 
         member.linkSocialAccount(provider, providerId);
     }
+
+    @Transactional
+    public void unlinkSocialAccount(Long memberId, MemberAuthProvider provider) {
+        if (provider == null || provider == MemberAuthProvider.LOCAL) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!member.isLinkedTo(provider)) {
+            throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_NOT_LINKED);
+        }
+
+        if (!member.hasLocalPassword()) {
+            throw new BusinessException(ErrorCode.SOCIAL_UNLINK_REQUIRES_LOCAL_PASSWORD);
+        }
+
+        member.unlinkSocialAccount();
+    }
 }

@@ -153,7 +153,32 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(content().string(containsString("연결됨: Google")))
                 .andExpect(content().string(containsString("소셜 로그인 전용")))
                 .andExpect(content().string(containsString("로컬 비밀번호 설정")))
+                .andExpect(content().string(containsString("로컬 비밀번호를 먼저 설정해야 연결을 해제할 수 있습니다.")))
                 .andExpect(content().string(not(containsString("현재 비밀번호"))));
+    }
+
+    @Test
+    void testSettingsPageWithLocalPasswordAndLinkedSocialAccountShowsUnlinkButton() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("연결해제 유치원", "서울시", "010-7777-8888", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member linkedMember = Member.createSocial(
+                "unlink-view@test.com",
+                "연결해제화면회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.KAKAO,
+                "kakao-view-123"
+        );
+        linkedMember.changePassword("encoded-local-password");
+        linkedMember.assignKindergarten(kindergarten);
+        memberRepository.save(linkedMember);
+
+        mockMvc.perform(get("/settings").with(user(new CustomUserDetails(linkedMember))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("연결됨: Kakao")))
+                .andExpect(content().string(containsString("연결 해제")))
+                .andExpect(content().string(containsString("로컬 비밀번호 로그인 경로가 있으므로 연결 해제를 허용합니다.")));
     }
 
     @Test

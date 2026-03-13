@@ -64,6 +64,7 @@
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
 - ✅ 소셜 전용 계정의 로컬 비밀번호 설정
+- ✅ 로컬 비밀번호 기반 소셜 연결 해제
 - ✅ 역할 기반 접근 제어
 
 ### 유치원/반/원생 관리
@@ -104,6 +105,7 @@
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
 - ✅ 세션 기반 OAuth2 link intent와 단일 provider 연결 정책
 - ✅ 소셜 계정의 로컬 로그인 전환(password bootstrap)
+- ✅ 계정 잠금 방지를 반영한 소셜 연결 해제 정책
 
 ### 알림 시스템
 - ✅ 알림 생성/조회
@@ -486,6 +488,7 @@ docker compose -f docker/docker-compose.yml down -v
 | OAuth2 계정 충돌 정책/UX 정합화 | `docs/phase/phase27_oauth2_account_conflict_policy.md` |
 | 명시적 소셜 계정 연결 플로우 | `docs/phase/phase28_explicit_social_account_linking.md` |
 | 소셜 전용 계정 로컬 비밀번호 설정 | `docs/phase/phase29_social_password_bootstrap.md` |
+| 소셜 계정 연결 해제 정책 | `docs/phase/phase30_social_account_unlink_policy.md` |
 
 ---
 
