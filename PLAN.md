@@ -1,49 +1,37 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 15차 (인터뷰 패키징 + 운영 관측성 + 감사 로그 조회 API)
+- 후속 고도화 16차 (면접 예상 질문/답변 스크립트 문서화)
 
 ## 1) 목표 / 범위
-- 인터뷰에서 바로 사용할 수 있는 1장 요약 문서와 3분 데모 시나리오를 정리한다.
-- Spring Boot Actuator, health/readiness, correlation id, request structured logging으로 운영 관측성 baseline을 추가한다.
-- 원장 전용 인증 감사 로그 조회 API를 추가해 “저장만 하는 로그”가 아니라 “운영에서 조회 가능한 로그”로 닫는다.
-- README와 phase 문서를 최신 운영/면접 관점 기준으로 다시 연결한다.
+- 실제 백엔드 면접에서 바로 말할 수 있는 예상 질문/답변 스크립트를 `docs/interview/`에 추가한다.
+- 기존 1장 요약, 3분 데모 문서와 자연스럽게 이어지도록 README 인터뷰 섹션을 확장한다.
+- 질문 의도, 짧은 답변, 꼬리 질문 대응 포인트까지 포함해 실전 사용성을 높인다.
 
 ## 2) 세부 작업 단계
-1. 인터뷰 문서 패키징
-   - `docs/interview/`에 1장 요약 문서와 3분 데모 시나리오를 추가한다.
-   - `README.md` 문서 섹션에서 인터뷰용 문서를 바로 찾을 수 있게 연결한다.
+1. 인터뷰 문서 구조 확인
+   - `docs/interview/interview_one_pager.md`, `docs/interview/demo_3min_scenario.md` 흐름을 다시 확인한다.
+   - 새 Q&A 문서가 중복이 아니라 실전 답변집 역할을 하도록 범위를 분리한다.
 
-2. 운영 관측성 baseline 추가
-   - `spring-boot-starter-actuator`와 health/info 노출을 추가한다.
-   - liveness/readiness probe를 활성화한다.
-   - correlation id filter와 request structured logging을 추가한다.
-   - 보안 설정에서 actuator 공개 범위를 health/info 수준으로 제한한다.
+2. 면접 Q&A 스크립트 작성
+   - 프로젝트 소개, 권한/보안, 인증 세션, OAuth2 lifecycle, 테스트/CI, 성능, 운영 관측성, 회고 질문을 묶는다.
+   - 각 질문마다 짧은 답변과 꼬리 질문 대응 포인트를 넣는다.
 
-3. 인증 감사 로그 조회 API 구현
-   - 원장 전용 `/api/v1/auth/audit-logs` 조회 API를 추가한다.
-   - principal의 유치원 소속 member 기반 로그만 조회하도록 제한한다.
-   - eventType/result/provider/email/date 필터를 지원한다.
+3. README 및 진행 로그 반영
+   - `README.md` 인터뷰 섹션에 Q&A 문서를 추가한다.
+   - `PROGRESS.md`에 작업 기록과 검증 결과를 남긴다.
 
-4. 테스트/문서화 및 검증
-   - 운영 관측성/감사 로그 조회 통합 테스트를 추가한다.
-   - `README.md`, `docs/phase/phase34~35`에 설계와 인터뷰 포인트를 기록한다.
-   - `./gradlew compileJava compileTestJava`
-   - `./gradlew test --tests "com.erp.integration.ObservabilityIntegrationTest" --tests "com.erp.api.AuthAuditApiIntegrationTest"`
+4. 검증 및 배포
    - `git diff --check`
+   - add/commit/push
+   - GitHub Actions run 시작 여부 확인
 
 ## 3) 검증 계획
-- 로컬 검증
-  - `./gradlew compileJava compileTestJava`
-  - `./gradlew test --tests "com.erp.integration.ObservabilityIntegrationTest" --tests "com.erp.api.AuthAuditApiIntegrationTest"`
+- 문서 검증
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- actuator 공개 범위를 넓히면 운영 정보가 과다 노출될 수 있음
-  - 대응: `/actuator/health/**`, `/actuator/info`만 공개하고 그 외는 기존 인증 규칙을 유지한다
-- 요청 로그가 과도한 개인정보를 남길 수 있음
-  - 대응: method/uri/status/duration/clientIp/correlationId 수준으로만 남기고 body/토큰은 기록하지 않는다
-- 감사 로그 조회 API가 멀티테넌시 경계를 흐릴 수 있음
-  - 대응: 원장만 조회 가능, requester의 kindergarten 소속 `memberId`가 있는 로그만 반환하고 익명 실패 로그는 제외한다
-- phase 문서가 많아져 인터뷰 시 오히려 길어질 수 있음
-  - 대응: 별도 1장 요약본과 3분 데모 시나리오를 추가해 면접용 entry point를 만든다
+- 기존 인터뷰 문서와 질문/답변 문서가 중복되면 오히려 읽기 어려워질 수 있음
+  - 대응: 1장 요약은 핵심 메시지, 데모 문서는 시연 순서, 새 문서는 예상 질문 대응으로 역할을 분리한다
+- 답변이 너무 길어지면 실전 면접에서 쓰기 어렵다
+  - 대응: 각 항목을 짧은 답변과 꼬리 질문 대응 포인트로 나눈다

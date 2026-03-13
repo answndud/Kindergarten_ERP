@@ -484,6 +484,7 @@ docker compose -f docker/docker-compose.yml down -v
 |------|------|
 | 인터뷰 1장 요약 | `docs/interview/interview_one_pager.md` |
 | 3분 데모 시나리오 | `docs/interview/demo_3min_scenario.md` |
+| 면접 예상 질문/답변 스크립트 | `docs/interview/interview_qa_script.md` |
 
 ### 상세 결정 로그
 
