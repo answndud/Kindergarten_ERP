@@ -32,6 +32,8 @@
 - 멀티테넌시 권한 경계 하드닝
 - Redis 기반 JWT refresh session 분리와 rotation
 - MySQL/Redis Testcontainers 기반 통합 테스트
+- Actuator health/readiness, correlation id, request structured logging
+- DB 기반 인증 감사 로그와 원장 전용 조회 API
 - 정확도와 쿼리 수를 함께 관리한 대시보드 지표 개선
 
 ### 프로젝트 철학
@@ -61,6 +63,7 @@
 - ✅ 세션 단위 Refresh Token 저장 및 Rotation
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ DB 기반 로그인/refresh/소셜 연결 감사 로그
+- ✅ 원장 전용 인증 감사 로그 조회 API
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
@@ -105,6 +108,8 @@
 - ✅ trusted proxy 기준 client IP 해석
 - ✅ 로그인 실패 전용 rate limit 정책
 - ✅ DB 기반 auth/social audit trail
+- ✅ Actuator health/info 및 liveness/readiness probe
+- ✅ correlation id 응답 헤더 및 request structured logging
 - ✅ OAuth2 principal 런타임 안전성 보강
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
 - ✅ 세션 기반 OAuth2 link intent와 단일 provider 연결 정책
@@ -139,6 +144,7 @@
 | Spring Data JPA | - | ORM |
 | QueryDSL | 5.0.0 | 동적 쿼리 |
 | Spring Security | - | 인증/인가 |
+| Spring Boot Actuator | - | health/info, 운영 관측성 |
 | JWT (jjwt) | 0.12.6 | 토큰 인증 |
 | OAuth2 Client | - | Google/Kakao 로그인 |
 
@@ -472,6 +478,15 @@ docker compose -f docker/docker-compose.yml down -v
 
 ## 📚 문서
 
+### 인터뷰 바로 보기
+
+| 문서 | 설명 |
+|------|------|
+| 인터뷰 1장 요약 | `docs/interview/interview_one_pager.md` |
+| 3분 데모 시나리오 | `docs/interview/demo_3min_scenario.md` |
+
+### 상세 결정 로그
+
 | 문서 | 설명 |
 |------|------|
 | 프로젝트 문서 | `docs/` 폴더 참고 |
@@ -496,6 +511,8 @@ docker compose -f docker/docker-compose.yml down -v
 | 소셜 계정 다중 연결 구조 정규화 | `docs/phase/phase31_member_social_account_normalization.md` |
 | 소셜 provider 식별자 불변 정책 | `docs/phase/phase32_social_provider_identity_immutability.md` |
 | 인증/소셜 감사 로그 도입 | `docs/phase/phase33_auth_social_audit_log.md` |
+| 운영 관측성 baseline | `docs/phase/phase34_operability_observability_baseline.md` |
+| 인증 감사 로그 조회 API | `docs/phase/phase35_auth_audit_query_api.md` |
 
 ---
 
