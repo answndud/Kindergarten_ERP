@@ -1,7 +1,7 @@
 # AGENTS.md
 
 이 문서는 이 저장소에서 작업하는 코딩 에이전트용 SSOT입니다.
-긴 배경은 `docs/`에 유지하고, 에이전트 작업 규칙은 이 파일을 우선합니다.
+긴 배경은 `docs/README.md`부터 시작해 필요한 하위 문서에 유지하고, 에이전트 작업 규칙은 이 파일을 우선합니다.
 
 ## 1) Project Snapshot
 
@@ -147,9 +147,9 @@ docker compose -f docker/docker-compose.yml down
 
 ## 9) Docs Rules (Mandatory)
 
-- 주요 기능 추가/변경 시 `docs/phase/`에 결정 로그 작성.
-- 트러블슈팅/회고는 `docs/retrospective/`에 기록.
-- 성능 최적화는 `docs/performance-optimization/`에 전/후 비교를 기록.
+- 주요 기능 추가/변경 시 `docs/decisions/`에 결정 로그 작성.
+- 트러블슈팅/회고는 `docs/archive/retrospectives/`에 기록.
+- 성능 최적화는 `docs/portfolio/performance/`에 전/후 비교를 기록.
 
 ## 10) Git Workflow (Mandatory)
 

@@ -15,10 +15,10 @@
 
 ### 준비 문서
 
-- 기본 스크립트: `docs/performance-optimization/20-performance-story-script.md`
-- Redis 스크립트: `docs/performance-optimization/07-redis-adoption-story-script.md`
-- MySQL 검증: `docs/performance-optimization/02-mysql-validation-report.md`
-- 코드/테스트 매핑: `docs/performance-optimization/22-code-test-evidence-map.md`
+- 기본 스크립트: `docs/portfolio/performance/20-performance-story-script.md`
+- Redis 스크립트: `docs/portfolio/performance/07-redis-adoption-story-script.md`
+- MySQL 검증: `docs/portfolio/performance/02-mysql-validation-report.md`
+- 코드/테스트 매핑: `docs/portfolio/performance/22-code-test-evidence-map.md`
 
 ## 2) 기본 질문 세트 (설명형)
 

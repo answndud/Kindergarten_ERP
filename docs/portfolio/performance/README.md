@@ -64,4 +64,4 @@
 
 - 개선 대상 문서 (예: `13-list-loading.md`)
 - 로드맵 현황 (`00-portfolio-storytelling-roadmap.md`)
-- 필요 시 트러블슈팅 (`docs/retrospective/`)
+- 필요 시 트러블슈팅 (`docs/archive/retrospectives/`)

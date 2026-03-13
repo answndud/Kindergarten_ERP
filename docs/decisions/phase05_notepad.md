@@ -310,8 +310,8 @@ Phase 6: 공지사항 관리 구현
   - 유치원 기준 목록에 “전체 알림장(classroom NULL)”도 포함되도록 조회 조건 보강
 
 ### 관련 문서
-- 디버깅 가이드: `docs/retrospective/2025-01-14-notepad-debugging-guide.md`
-- 상세 시도 기록: `docs/retrospective/2025-01-14-notepad-list-display-issue.md`
+- 디버깅 가이드: `docs/archive/retrospectives/2025-01-14-notepad-debugging-guide.md`
+- 상세 시도 기록: `docs/archive/retrospectives/2025-01-14-notepad-list-display-issue.md`
 
 ---
 
