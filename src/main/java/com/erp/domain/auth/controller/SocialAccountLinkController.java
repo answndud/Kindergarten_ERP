@@ -36,10 +36,6 @@ public class SocialAccountLinkController {
             return "redirect:/settings?socialLinkStatus=info&reason=already-linked&provider=" + provider.toLowerCase();
         }
 
-        if (member.hasLinkedSocialAccount()) {
-            return "redirect:/settings?socialLinkStatus=error&reason=slot-occupied";
-        }
-
         oauth2LinkSessionService.store(request, member.getId(), targetProvider);
         return "redirect:/oauth2/authorization/" + provider.toLowerCase();
     }

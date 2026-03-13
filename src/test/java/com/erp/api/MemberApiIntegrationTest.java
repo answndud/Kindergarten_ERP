@@ -145,10 +145,39 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        Member updatedMember = memberRepository.findById(linkedMember.getId()).orElseThrow();
+        Member updatedMember = memberRepository.findByIdWithSocialAccounts(linkedMember.getId()).orElseThrow();
         assertThat(updatedMember.getAuthProvider()).isEqualTo(MemberAuthProvider.LOCAL);
         assertThat(updatedMember.getProviderId()).isNull();
         assertThat(updatedMember.hasLocalPassword()).isTrue();
+        assertThat(updatedMember.hasLinkedSocialAccount()).isFalse();
+    }
+
+    @Test
+    @DisplayName("다른 소셜 로그인 수단이 남아 있으면 로컬 비밀번호가 없어도 특정 provider를 해제할 수 있다")
+    void unlinkSocialAccount_Success_WhenAnotherSocialProviderRemains() throws Exception {
+        Member multiLinkedMember = Member.createSocial(
+                "unlink-multi@test.com",
+                "다중연결회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-multi-123"
+        );
+        multiLinkedMember.linkSocialAccount(MemberAuthProvider.KAKAO, "kakao-multi-456");
+        multiLinkedMember.assignKindergarten(kindergarten);
+        memberRepository.saveAndFlush(multiLinkedMember);
+
+        mockMvc.perform(delete("/api/v1/members/social-link/google")
+                        .with(authenticated(multiLinkedMember))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Member updatedMember = memberRepository.findByIdWithSocialAccounts(multiLinkedMember.getId()).orElseThrow();
+        assertThat(updatedMember.isLinkedTo(MemberAuthProvider.GOOGLE)).isFalse();
+        assertThat(updatedMember.isLinkedTo(MemberAuthProvider.KAKAO)).isTrue();
+        assertThat(updatedMember.getAuthProvider()).isEqualTo(MemberAuthProvider.KAKAO);
+        assertThat(updatedMember.getProviderId()).isEqualTo("kakao-multi-456");
     }
 
     @Test

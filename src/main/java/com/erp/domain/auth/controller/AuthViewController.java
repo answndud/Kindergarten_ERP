@@ -80,13 +80,13 @@ public class AuthViewController {
         }
 
         model.addAttribute("passwordChangeAvailable", member.hasLocalPassword());
-        model.addAttribute("socialLinkLimitReached", member.hasLinkedSocialAccount());
-        model.addAttribute("linkedSocialProviderLabel", resolveLinkedProviderLabel(member));
-        model.addAttribute("linkedSocialProviderValue", resolveLinkedProviderValue(member));
+        model.addAttribute("linkedSocialProviderSummary", member.getLinkedSocialProviderSummary());
         model.addAttribute("googleLinked", member.isLinkedTo(MemberAuthProvider.GOOGLE));
         model.addAttribute("kakaoLinked", member.isLinkedTo(MemberAuthProvider.KAKAO));
-        model.addAttribute("canUnlinkSocialAccount", member.hasLinkedSocialAccount() && member.hasLocalPassword());
-        model.addAttribute("socialUnlinkBlockedReason", resolveSocialUnlinkBlockedReason(member));
+        model.addAttribute("googleUnlinkAllowed", member.canUnlinkSocialAccount(MemberAuthProvider.GOOGLE));
+        model.addAttribute("kakaoUnlinkAllowed", member.canUnlinkSocialAccount(MemberAuthProvider.KAKAO));
+        model.addAttribute("googleUnlinkBlockedReason", resolveSocialUnlinkBlockedReason(member, MemberAuthProvider.GOOGLE));
+        model.addAttribute("kakaoUnlinkBlockedReason", resolveSocialUnlinkBlockedReason(member, MemberAuthProvider.KAKAO));
         resolveSocialLinkFeedback(socialLinkStatus, provider, reason).ifPresent(feedback -> {
             model.addAttribute("socialLinkAlertTone", feedback.tone());
             model.addAttribute("socialLinkAlertTitle", feedback.title());
@@ -142,7 +142,7 @@ public class AuthViewController {
             return new SocialLinkFeedback(
                     "success",
                     providerLabel + " 연결을 해제했습니다",
-                    "이제 해당 소셜 로그인으로는 로그인할 수 없고, 로컬 비밀번호 로그인만 사용할 수 있습니다."
+                    "이제 해당 소셜 로그인은 사용할 수 없습니다. 남아 있는 로그인 수단으로 계속 이용해 주세요."
             );
         }
 
@@ -155,15 +155,15 @@ public class AuthViewController {
 
     private SocialLinkFeedback resolveSocialLinkError(String reason, String providerLabel) {
         return switch (reason) {
-            case "slot-occupied" -> new SocialLinkFeedback(
-                    "error",
-                    "이미 다른 소셜 로그인이 연결되어 있습니다",
-                    "현재 구조에서는 소셜 로그인 1개만 연결할 수 있습니다. 교체 기능은 아직 제공하지 않습니다."
-            );
             case "provider-in-use" -> new SocialLinkFeedback(
                     "error",
                     providerLabel + " 계정을 연결할 수 없습니다",
                     "해당 소셜 계정은 이미 다른 계정에 연결되어 있습니다."
+            );
+            case "provider-slot-occupied" -> new SocialLinkFeedback(
+                    "error",
+                    providerLabel + " 계정을 연결할 수 없습니다",
+                    "현재 계정에는 이미 다른 " + providerLabel + " 계정이 연결되어 있습니다. 먼저 기존 연결을 해제해 주세요."
             );
             case "provider-mismatch" -> new SocialLinkFeedback(
                     "error",
@@ -178,7 +178,7 @@ public class AuthViewController {
             case "unlink-requires-local-password" -> new SocialLinkFeedback(
                     "error",
                     "소셜 연결을 해제할 수 없습니다",
-                    "계정 잠금 방지를 위해 로컬 비밀번호를 먼저 설정해야 합니다."
+                    "계정 잠금 방지를 위해 다른 로그인 수단을 먼저 확보해야 합니다."
             );
             case "not-linked" -> new SocialLinkFeedback(
                     "error",
@@ -193,34 +193,11 @@ public class AuthViewController {
         };
     }
 
-    private String resolveLinkedProviderLabel(Member member) {
-        if (member.isLinkedTo(MemberAuthProvider.GOOGLE)) {
-            return "Google";
-        }
-        if (member.isLinkedTo(MemberAuthProvider.KAKAO)) {
-            return "Kakao";
-        }
-        return null;
-    }
-
-    private String resolveLinkedProviderValue(Member member) {
-        if (member.isLinkedTo(MemberAuthProvider.GOOGLE)) {
-            return "google";
-        }
-        if (member.isLinkedTo(MemberAuthProvider.KAKAO)) {
-            return "kakao";
-        }
-        return null;
-    }
-
-    private String resolveSocialUnlinkBlockedReason(Member member) {
-        if (!member.hasLinkedSocialAccount()) {
+    private String resolveSocialUnlinkBlockedReason(Member member, MemberAuthProvider provider) {
+        if (!member.isLinkedTo(provider) || member.canUnlinkSocialAccount(provider)) {
             return null;
         }
-        if (!member.hasLocalPassword()) {
-            return "계정 잠금 방지를 위해 로컬 비밀번호를 먼저 설정해야 연결을 해제할 수 있습니다.";
-        }
-        return null;
+        return "다른 로그인 수단을 먼저 확보해야 연결을 해제할 수 있습니다.";
     }
 
     private String resolveProviderLabel(String provider) {

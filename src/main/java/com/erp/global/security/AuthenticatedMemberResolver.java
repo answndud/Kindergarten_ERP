@@ -58,12 +58,12 @@ public class AuthenticatedMemberResolver {
 
         String providerId = userInfo.getProviderId();
         if (providerId != null && !providerId.isBlank()) {
-            Optional<Member> providerMatch = memberRepository.findByAuthProviderAndProviderId(
+            Optional<Member> providerMatch = memberRepository.findBySocialProviderAndProviderId(
                     userInfo.getProvider(),
                     providerId
             );
             if (providerMatch.isPresent()) {
-                return loadMemberWithKindergarten(providerMatch.get().getId());
+                return providerMatch;
             }
         }
 
@@ -77,6 +77,6 @@ public class AuthenticatedMemberResolver {
     }
 
     private Optional<Member> loadMemberWithKindergarten(Long memberId) {
-        return memberRepository.findByIdWithKindergarten(memberId);
+        return memberRepository.findByIdWithKindergartenAndSocialAccounts(memberId);
     }
 }

@@ -25,9 +25,9 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(404, "A005", "리프레시 토큰을 찾을 수 없습니다"),
     AUTH_RATE_LIMITED(429, "A006", "인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요"),
     SOCIAL_ACCOUNT_ALREADY_LINKED(409, "A007", "이미 다른 계정에 연결된 소셜 계정입니다"),
-    SOCIAL_PROVIDER_SLOT_OCCUPIED(409, "A008", "이미 다른 소셜 로그인 방식이 연결되어 있습니다"),
+    SOCIAL_PROVIDER_SLOT_OCCUPIED(409, "A008", "이미 동일 제공자의 다른 소셜 계정이 연결되어 있습니다"),
     SOCIAL_ACCOUNT_NOT_LINKED(404, "A009", "연결된 소셜 계정을 찾을 수 없습니다"),
-    SOCIAL_UNLINK_REQUIRES_LOCAL_PASSWORD(400, "A010", "로컬 비밀번호를 먼저 설정해야 소셜 연결을 해제할 수 있습니다"),
+    SOCIAL_UNLINK_REQUIRES_LOCAL_PASSWORD(400, "A010", "다른 로그인 수단을 먼저 확보해야 소셜 연결을 해제할 수 있습니다"),
 
     // ========== Member ==========
     EMAIL_ALREADY_EXISTS(409, "M001", "이미 사용 중인 이메일입니다"),

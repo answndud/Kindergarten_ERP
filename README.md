@@ -63,8 +63,9 @@
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
+- ✅ 다중 소셜 provider 연결 (Google + Kakao)
 - ✅ 소셜 전용 계정의 로컬 비밀번호 설정
-- ✅ 로컬 비밀번호 기반 소셜 연결 해제
+- ✅ 마지막 로그인 수단을 보호하는 소셜 연결 해제
 - ✅ 역할 기반 접근 제어
 
 ### 유치원/반/원생 관리
@@ -489,6 +490,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 명시적 소셜 계정 연결 플로우 | `docs/phase/phase28_explicit_social_account_linking.md` |
 | 소셜 전용 계정 로컬 비밀번호 설정 | `docs/phase/phase29_social_password_bootstrap.md` |
 | 소셜 계정 연결 해제 정책 | `docs/phase/phase30_social_account_unlink_policy.md` |
+| 소셜 계정 다중 연결 구조 정규화 | `docs/phase/phase31_member_social_account_normalization.md` |
 
 ---
 

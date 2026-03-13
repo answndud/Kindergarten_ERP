@@ -22,16 +22,16 @@ public class SocialAccountLinkService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        Member member = memberRepository.findById(memberId)
+        Member member = memberRepository.findByIdWithSocialAccounts(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        memberRepository.findByAuthProviderAndProviderId(provider, providerId)
+        memberRepository.findBySocialProviderAndProviderId(provider, providerId)
                 .filter(existing -> !existing.getId().equals(memberId))
                 .ifPresent(existing -> {
                     throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
                 });
 
-        if (member.hasLinkedSocialAccount() && !member.isLinkedTo(provider, providerId)) {
+        if (member.isLinkedTo(provider) && !member.isLinkedTo(provider, providerId)) {
             throw new BusinessException(ErrorCode.SOCIAL_PROVIDER_SLOT_OCCUPIED);
         }
 
@@ -44,17 +44,17 @@ public class SocialAccountLinkService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        Member member = memberRepository.findById(memberId)
+        Member member = memberRepository.findByIdWithSocialAccounts(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (!member.isLinkedTo(provider)) {
             throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_NOT_LINKED);
         }
 
-        if (!member.hasLocalPassword()) {
+        if (!member.canUnlinkSocialAccount(provider)) {
             throw new BusinessException(ErrorCode.SOCIAL_UNLINK_REQUIRES_LOCAL_PASSWORD);
         }
 
-        member.unlinkSocialAccount();
+        member.unlinkSocialAccount(provider);
     }
 }

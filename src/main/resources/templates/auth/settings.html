@@ -101,7 +101,7 @@
                     </div>
                     <div class="flex justify-between py-2 border-t border-gray-100 pt-4">
                         <span class="text-gray-600">연결된 소셜 로그인</span>
-                        <span class="font-medium text-gray-900" th:text="${linkedSocialProviderLabel ?: '없음'}">없음</span>
+                        <span class="font-medium text-gray-900" th:text="${linkedSocialProviderSummary ?: '없음'}">없음</span>
                     </div>
                     <div class="flex justify-between py-2">
                         <span class="text-gray-600">비밀번호 로그인</span>
@@ -114,54 +114,89 @@
                 <div class="flex items-center justify-between gap-4 mb-4">
                     <div>
                         <h2 class="text-lg font-semibold text-gray-900">소셜 로그인 연결</h2>
-                        <p class="text-sm text-gray-600">설정 화면에서 직접 연결한 계정만 허용합니다. 현재는 소셜 로그인 1개만 연결할 수 있습니다.</p>
+                        <p class="text-sm text-gray-600">설정 화면에서 직접 연결한 계정만 허용합니다. Google과 Kakao를 각각 독립적으로 연결하거나 해제할 수 있습니다.</p>
                     </div>
                     <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
-                          th:text="${linkedSocialProviderLabel != null ? '연결됨: ' + linkedSocialProviderLabel : '미연결'}">미연결</span>
+                          th:text="${linkedSocialProviderSummary != null ? '연결됨: ' + linkedSocialProviderSummary : '미연결'}">미연결</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <a th:if="${!googleLinked and !socialLinkLimitReached}"
-                       href="/auth/social/link/google"
-                       class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
-                        <span>Google 연결</span>
-                    </a>
-                    <div th:if="${googleLinked or socialLinkLimitReached}"
-                         class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
-                        <span th:text="${googleLinked ? 'Google 연결됨' : 'Google 연결 불가'}">Google 연결됨</span>
-                    </div>
-
-                    <a th:if="${!kakaoLinked and !socialLinkLimitReached}"
-                       href="/auth/social/link/kakao"
-                       class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
-                        <span>Kakao 연결</span>
-                    </a>
-                    <div th:if="${kakaoLinked or socialLinkLimitReached}"
-                         class="py-3 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
-                        <span th:text="${kakaoLinked ? 'Kakao 연결됨' : 'Kakao 연결 불가'}">Kakao 연결됨</span>
-                    </div>
-                </div>
-
-                <div th:if="${linkedSocialProviderValue != null}" class="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">
-                                <span th:text="${linkedSocialProviderLabel}">Google</span> 계정이 연결되어 있습니다
-                            </p>
-                            <p class="text-xs text-gray-600 mt-1" th:if="${canUnlinkSocialAccount}">
-                                로컬 비밀번호 로그인 경로가 있으므로 연결 해제를 허용합니다.
-                            </p>
-                            <p class="text-xs text-amber-700 mt-1" th:if="${!canUnlinkSocialAccount}" th:text="${socialUnlinkBlockedReason}">
-                                계정 잠금 방지를 위해 로컬 비밀번호를 먼저 설정해야 연결을 해제할 수 있습니다.
-                            </p>
+                    <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Google</p>
+                                <p class="text-xs mt-1" th:classappend="${googleLinked ? ' text-emerald-700' : ' text-gray-500'}"
+                                   th:text="${googleLinked ? '연결됨' : '미연결'}">미연결</p>
+                            </div>
+                            <a th:if="${!googleLinked}"
+                               href="/auth/social/link/google"
+                               class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                                Google 연결
+                            </a>
+                            <span th:if="${googleLinked}"
+                                  class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                                Google 연결됨
+                            </span>
                         </div>
-                        <button th:if="${canUnlinkSocialAccount}"
-                                type="button"
-                                id="unlinkSocialButton"
-                                th:attr="data-provider=${linkedSocialProviderValue},data-provider-label=${linkedSocialProviderLabel}"
-                                class="px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-white hover:bg-red-50 transition-colors text-sm font-medium">
-                            연결 해제
-                        </button>
+                        <div th:if="${googleLinked}" class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Google 계정이 연결되어 있습니다</p>
+                                    <p class="text-xs text-gray-600 mt-1" th:if="${googleUnlinkAllowed}">
+                                        다른 로그인 수단이 남아 있어 연결 해제를 허용합니다.
+                                    </p>
+                                    <p class="text-xs text-amber-700 mt-1" th:if="${!googleUnlinkAllowed}" th:text="${googleUnlinkBlockedReason}">
+                                        다른 로그인 수단을 먼저 확보해야 연결을 해제할 수 있습니다.
+                                    </p>
+                                </div>
+                                <button th:if="${googleUnlinkAllowed}"
+                                        type="button"
+                                        class="js-unlink-social-button px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-white hover:bg-red-50 transition-colors text-sm font-medium"
+                                        data-provider="google"
+                                        data-provider-label="Google">
+                                    연결 해제
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">Kakao</p>
+                                <p class="text-xs mt-1" th:classappend="${kakaoLinked ? ' text-emerald-700' : ' text-gray-500'}"
+                                   th:text="${kakaoLinked ? '연결됨' : '미연결'}">미연결</p>
+                            </div>
+                            <a th:if="${!kakaoLinked}"
+                               href="/auth/social/link/kakao"
+                               class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                                Kakao 연결
+                            </a>
+                            <span th:if="${kakaoLinked}"
+                                  class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                                Kakao 연결됨
+                            </span>
+                        </div>
+                        <div th:if="${kakaoLinked}" class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Kakao 계정이 연결되어 있습니다</p>
+                                    <p class="text-xs text-gray-600 mt-1" th:if="${kakaoUnlinkAllowed}">
+                                        다른 로그인 수단이 남아 있어 연결 해제를 허용합니다.
+                                    </p>
+                                    <p class="text-xs text-amber-700 mt-1" th:if="${!kakaoUnlinkAllowed}" th:text="${kakaoUnlinkBlockedReason}">
+                                        다른 로그인 수단을 먼저 확보해야 연결을 해제할 수 있습니다.
+                                    </p>
+                                </div>
+                                <button th:if="${kakaoUnlinkAllowed}"
+                                        type="button"
+                                        class="js-unlink-social-button px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-white hover:bg-red-50 transition-colors text-sm font-medium"
+                                        data-provider="kakao"
+                                        data-provider-label="Kakao">
+                                    연결 해제
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -369,44 +404,46 @@
         });
     </script>
 
-    <script th:if="${canUnlinkSocialAccount}">
-        document.getElementById('unlinkSocialButton').addEventListener('click', async function () {
-            const provider = this.dataset.provider;
-            const providerLabel = this.dataset.providerLabel;
+    <script>
+        document.querySelectorAll('.js-unlink-social-button').forEach((button) => {
+            button.addEventListener('click', async function () {
+                const provider = this.dataset.provider;
+                const providerLabel = this.dataset.providerLabel;
 
-            const confirmed = await UI.confirm({
-                title: providerLabel + ' 연결을 해제할까요?',
-                text: '해제 후에는 해당 소셜 로그인으로 더 이상 로그인할 수 없습니다.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '연결 해제',
-                cancelButtonText: '취소',
-                customClass: {
-                    popup: 'rounded-2xl',
-                    confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-medium',
-                    cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
-                },
-                buttonsStyling: false,
-            });
-
-            if (!confirmed) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/v1/members/social-link/${provider}`, {
-                    method: 'DELETE'
+                const confirmed = await UI.confirm({
+                    title: providerLabel + ' 연결을 해제할까요?',
+                    text: '해제 후에는 해당 소셜 로그인으로 더 이상 로그인할 수 없습니다.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '연결 해제',
+                    cancelButtonText: '취소',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-medium',
+                        cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                    },
+                    buttonsStyling: false,
                 });
 
-                if (response.ok) {
-                    window.location.href = `/settings?socialLinkStatus=success&reason=unlinked&provider=${provider}`;
-                } else {
-                    const error = await response.json().catch(() => ({}));
-                    await UI.error(error.message || '소셜 연결 해제에 실패했습니다.');
+                if (!confirmed) {
+                    return;
                 }
-            } catch (error) {
-                await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');
-            }
+
+                try {
+                    const response = await fetch(`/api/v1/members/social-link/${provider}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        window.location.href = `/settings?socialLinkStatus=success&reason=unlinked&provider=${provider}`;
+                    } else {
+                        const error = await response.json().catch(() => ({}));
+                        await UI.error(error.message || '소셜 연결 해제에 실패했습니다.');
+                    }
+                } catch (error) {
+                    await UI.error(error.message || '요청 처리 중 오류가 발생했습니다.');
+                }
+            });
         });
     </script>
 </body>

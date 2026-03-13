@@ -153,7 +153,7 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(content().string(containsString("연결됨: Google")))
                 .andExpect(content().string(containsString("소셜 로그인 전용")))
                 .andExpect(content().string(containsString("로컬 비밀번호 설정")))
-                .andExpect(content().string(containsString("로컬 비밀번호를 먼저 설정해야 연결을 해제할 수 있습니다.")))
+                .andExpect(content().string(containsString("다른 로그인 수단을 먼저 확보해야 연결을 해제할 수 있습니다.")))
                 .andExpect(content().string(not(containsString("현재 비밀번호"))));
     }
 
@@ -178,7 +178,32 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("연결됨: Kakao")))
                 .andExpect(content().string(containsString("연결 해제")))
-                .andExpect(content().string(containsString("로컬 비밀번호 로그인 경로가 있으므로 연결 해제를 허용합니다.")));
+                .andExpect(content().string(containsString("다른 로그인 수단이 남아 있어 연결 해제를 허용합니다.")));
+    }
+
+    @Test
+    void testSettingsPageWithMultipleLinkedSocialAccountsShowsBothProviders() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("다중 연결 유치원", "서울시", "010-9999-1111", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member multiLinkedMember = Member.createSocial(
+                "multi-linked@test.com",
+                "다중연결회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-multi-view-123"
+        );
+        multiLinkedMember.linkSocialAccount(MemberAuthProvider.KAKAO, "kakao-multi-view-456");
+        multiLinkedMember.assignKindergarten(kindergarten);
+        memberRepository.save(multiLinkedMember);
+
+        mockMvc.perform(get("/settings").with(user(new CustomUserDetails(multiLinkedMember))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("연결됨: Google, Kakao")))
+                .andExpect(content().string(containsString("Google 연결됨")))
+                .andExpect(content().string(containsString("Kakao 연결됨")))
+                .andExpect(content().string(containsString("다른 로그인 수단이 남아 있어 연결 해제를 허용합니다.")));
     }
 
     @Test

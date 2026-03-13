@@ -29,7 +29,40 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      */
     Optional<Member> findByEmail(String email);
 
-    Optional<Member> findByAuthProviderAndProviderId(MemberAuthProvider authProvider, String providerId);
+    @Query("""
+            SELECT DISTINCT m
+            FROM Member m
+            LEFT JOIN FETCH m.kindergarten
+            LEFT JOIN FETCH m.socialAccounts
+            WHERE m.deletedAt IS NULL
+              AND m.id = :id
+            """)
+    Optional<Member> findByIdWithKindergartenAndSocialAccounts(@Param("id") Long id);
+
+    @Query("""
+            SELECT DISTINCT m
+            FROM Member m
+            LEFT JOIN FETCH m.socialAccounts
+            WHERE m.deletedAt IS NULL
+              AND m.id = :id
+            """)
+    Optional<Member> findByIdWithSocialAccounts(@Param("id") Long id);
+
+    @Query("""
+            SELECT DISTINCT m
+            FROM Member m
+            LEFT JOIN FETCH m.kindergarten
+            LEFT JOIN FETCH m.socialAccounts
+            WHERE m.deletedAt IS NULL
+              AND m.id IN (
+                    SELECT msa.member.id
+                    FROM MemberSocialAccount msa
+                    WHERE msa.provider = :provider
+                      AND msa.providerId = :providerId
+              )
+            """)
+    Optional<Member> findBySocialProviderAndProviderId(@Param("provider") MemberAuthProvider provider,
+                                                        @Param("providerId") String providerId);
 
     /**
      * 이메일 중복 확인
@@ -78,7 +111,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
      * ID로 회원 조회 (유치원 포함)
      * 뷰에서 사용할 때 LazyInitializationException 방지용
      */
-    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.kindergarten WHERE m.id = :id AND m.deletedAt IS NULL")
+    @Query("SELECT DISTINCT m FROM Member m LEFT JOIN FETCH m.kindergarten LEFT JOIN FETCH m.socialAccounts WHERE m.id = :id AND m.deletedAt IS NULL")
     Optional<Member> findByIdWithKindergarten(@Param("id") Long id);
 
     /**
