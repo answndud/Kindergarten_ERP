@@ -5,10 +5,10 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -237,9 +237,8 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .getCookie("refresh_token");
 
             assertNotNull(refreshCookie);
-
-            Mockito.when(redisTemplate.opsForValue().get("refresh:parent@test.com"))
-                    .thenReturn(refreshCookie.getValue());
+            Object savedRefreshToken = redisTemplate.opsForValue().get("refresh:parent@test.com");
+            assertEquals(refreshCookie.getValue(), savedRefreshToken);
 
             mockMvc.perform(post("/api/v1/auth/refresh")
                             .with(csrf())
@@ -270,9 +269,7 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .getCookie("refresh_token");
 
             assertNotNull(refreshCookie);
-
-            Mockito.when(redisTemplate.opsForValue().get("refresh:parent@test.com"))
-                    .thenReturn("mismatch-token");
+            redisTemplate.opsForValue().set("refresh:parent@test.com", "mismatch-token");
 
             mockMvc.perform(post("/api/v1/auth/refresh")
                             .with(csrf())

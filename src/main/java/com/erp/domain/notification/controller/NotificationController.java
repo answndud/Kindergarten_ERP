@@ -28,8 +28,9 @@ public class NotificationController {
     @PostMapping
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<Long>> createNotification(
-            @Valid @RequestBody NotificationCreateRequest request) {
-        Long notificationId = notificationService.create(request);
+            @Valid @RequestBody NotificationCreateRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long notificationId = notificationService.create(request, userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(notificationId));
     }
 

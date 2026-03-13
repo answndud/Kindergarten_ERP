@@ -1,9 +1,13 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.classroom.repository.ClassroomRepository;
+import com.erp.domain.member.entity.MemberRole;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
@@ -18,6 +22,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @DisplayName("출결 API 테스트")
 class AttendanceApiIntegrationTest extends BaseIntegrationTest {
+
+    @Autowired
+    private ClassroomRepository classroomRepository;
+
+    @AfterEach
+    void cleanUp() {
+        testData.cleanup();
+    }
 
     @Nested
     @DisplayName("출석 등록 API")
@@ -87,6 +99,40 @@ class AttendanceApiIntegrationTest extends BaseIntegrationTest {
                             .content(requestBody))
                     .andDo(print())
                     .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("출석 등록 - 실패 (다른 유치원 원생에는 등록 불가)")
+        void createAttendance_Fail_DifferentKindergartenKid() throws Exception {
+            var otherKindergarten = testData.createKindergarten();
+            var otherTeacher = createMemberInKindergarten(
+                    "attendance-other-teacher@test.com",
+                    "다른 유치원 교사",
+                    MemberRole.TEACHER,
+                    otherKindergarten
+            );
+            var otherClassroom = testData.createClassroom(otherKindergarten);
+            otherClassroom.assignTeacher(otherTeacher);
+            classroomRepository.save(otherClassroom);
+            var otherKid = testData.createKid(otherClassroom);
+
+            String requestBody = """
+                    {
+                        "kidId": %d,
+                        "date": "2025-01-13",
+                        "status": "PRESENT"
+                    }
+                    """.formatted(otherKid.getId());
+
+            mockMvc.perform(post("/api/v1/attendance")
+                            .with(authenticated(teacherMember))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("AP007"));
         }
     }
 

@@ -53,7 +53,7 @@ public class AttendanceViewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model) {
 
-        Attendance attendance = attendanceService.getAttendance(id);
+        Attendance attendance = attendanceService.getAttendance(id, userDetails.getMemberId());
         model.addAttribute("attendance", attendanceService.toResponse(attendance));
         return "attendance/detail";
     }
@@ -68,7 +68,7 @@ public class AttendanceViewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model) {
 
-        Attendance attendance = attendanceService.getAttendance(id);
+        Attendance attendance = attendanceService.getAttendance(id, userDetails.getMemberId());
         model.addAttribute("attendance", attendanceService.toResponse(attendance));
         return "attendance/edit";
     }
@@ -85,7 +85,7 @@ public class AttendanceViewController {
             Model model) {
 
         if (classroomId != null && date != null) {
-            var dailyAttendance = attendanceService.getDailyAttendanceByClassroom(classroomId, date);
+            var dailyAttendance = attendanceService.getDailyAttendanceByClassroom(classroomId, date, userDetails.getMemberId());
             model.addAttribute("dailyAttendance", dailyAttendance);
             model.addAttribute("classroomId", classroomId);
             model.addAttribute("date", date);
@@ -113,7 +113,7 @@ public class AttendanceViewController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            Long attendanceId = attendanceService.createAttendance(request);
+            Long attendanceId = attendanceService.createAttendance(request, userDetails.getMemberId());
             redirectAttributes.addFlashAttribute("message", "출석이 등록되었습니다.");
             return "redirect:/attendance/" + attendanceId;
         } catch (Exception e) {
@@ -134,7 +134,7 @@ public class AttendanceViewController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            attendanceService.updateAttendance(id, request);
+            attendanceService.updateAttendance(id, request, userDetails.getMemberId());
             redirectAttributes.addFlashAttribute("message", "출석 정보가 수정되었습니다.");
             return "redirect:/attendance/" + id;
         } catch (Exception e) {
@@ -154,7 +154,7 @@ public class AttendanceViewController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            attendanceService.deleteAttendance(id);
+            attendanceService.deleteAttendance(id, userDetails.getMemberId());
             redirectAttributes.addFlashAttribute("message", "출석 정보가 삭제되었습니다.");
             return "redirect:/attendance";
         } catch (Exception e) {
@@ -180,7 +180,7 @@ public class AttendanceViewController {
         try {
             var request = new com.erp.domain.attendance.dto.request.DropOffRequest();
             request.setDropOffTime(dropOffTime);
-            attendanceService.recordDropOff(kidId, date, request);
+            attendanceService.recordDropOff(kidId, date, request, userDetails.getMemberId());
             redirectAttributes.addFlashAttribute("message", "등원이 기록되었습니다.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "등원 기록에 실패했습니다: " + e.getMessage());
@@ -205,7 +205,7 @@ public class AttendanceViewController {
         try {
             var request = new com.erp.domain.attendance.dto.request.PickUpRequest();
             request.setPickUpTime(pickUpTime);
-            attendanceService.recordPickUp(kidId, date, request);
+            attendanceService.recordPickUp(kidId, date, request, userDetails.getMemberId());
             redirectAttributes.addFlashAttribute("message", "하원이 기록되었습니다.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "하원 기록에 실패했습니다: " + e.getMessage());
@@ -227,7 +227,7 @@ public class AttendanceViewController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            attendanceService.markAbsent(kidId, date, note);
+            attendanceService.markAbsent(kidId, date, note, userDetails.getMemberId());
             redirectAttributes.addFlashAttribute("message", "결석 처리되었습니다.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "결석 처리에 실패했습니다: " + e.getMessage());

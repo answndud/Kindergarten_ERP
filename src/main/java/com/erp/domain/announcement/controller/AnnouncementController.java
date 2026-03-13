@@ -39,7 +39,7 @@ public class AnnouncementController {
 
         Long id = announcementService.createAnnouncement(request, writerId);
 
-        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id);
+        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id, writerId);
 
         return ResponseEntity
                 .ok(ApiResponse.success(announcementService.toResponse(announcement), "공지사항이 작성되었습니다"));
@@ -49,8 +49,10 @@ public class AnnouncementController {
      * 공지사항 조회 (조회수 증가)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AnnouncementResponse>> getAnnouncement(@PathVariable Long id) {
-        Announcement announcement = announcementService.getAnnouncement(id);
+    public ResponseEntity<ApiResponse<AnnouncementResponse>> getAnnouncement(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Announcement announcement = announcementService.getAnnouncement(id, requireMemberId(userDetails));
 
         return ResponseEntity
                 .ok(ApiResponse.success(announcementService.toResponse(announcement)));
@@ -63,9 +65,11 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Page<Announcement> announcements = announcementService.getAnnouncementsByKindergarten(kindergartenId, page, size);
+        Page<Announcement> announcements = announcementService.getAnnouncementsByKindergarten(
+                kindergartenId, page, size, requireMemberId(userDetails));
 
         Page<AnnouncementResponse> responses = announcements.map(announcementService::toResponse);
 
@@ -80,9 +84,11 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getImportantAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Page<Announcement> announcements = announcementService.getImportantAnnouncements(kindergartenId, page, size);
+        Page<Announcement> announcements = announcementService.getImportantAnnouncements(
+                kindergartenId, page, size, requireMemberId(userDetails));
 
         Page<AnnouncementResponse> responses = announcements.map(announcementService::toResponse);
 
@@ -98,9 +104,11 @@ public class AnnouncementController {
             @RequestParam Long kindergartenId,
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Page<Announcement> announcements = announcementService.searchByTitle(kindergartenId, title, page, size);
+        Page<Announcement> announcements = announcementService.searchByTitle(
+                kindergartenId, title, page, size, requireMemberId(userDetails));
 
         Page<AnnouncementResponse> responses = announcements.map(announcementService::toResponse);
 
@@ -115,9 +123,11 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getMostViewedAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Page<Announcement> announcements = announcementService.getMostViewedAnnouncements(kindergartenId, page, size);
+        Page<Announcement> announcements = announcementService.getMostViewedAnnouncements(
+                kindergartenId, page, size, requireMemberId(userDetails));
 
         Page<AnnouncementResponse> responses = announcements.map(announcementService::toResponse);
 
@@ -139,7 +149,7 @@ public class AnnouncementController {
 
         announcementService.updateAnnouncement(id, request, writerId);
 
-        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id);
+        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id, writerId);
 
         return ResponseEntity
                 .ok(ApiResponse.success(announcementService.toResponse(announcement), "공지사항이 수정되었습니다"));
@@ -175,7 +185,7 @@ public class AnnouncementController {
 
         announcementService.toggleImportant(id, requesterId);
 
-        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id);
+        Announcement announcement = announcementService.getAnnouncementWithoutIncrement(id, requesterId);
 
         return ResponseEntity
                 .ok(ApiResponse.success(announcementService.toResponse(announcement), "중요 공지 설정이 변경되었습니다"));

@@ -47,14 +47,17 @@ public class NotepadController {
 
         if (kidId != null) {
             // 원생별 조회
-            responses = notepadService.getKidNotepads(kidId, pageable);
+            responses = notepadService.getKidNotepads(kidId, pageable, userDetails.getMemberId());
         } else if (classroomId != null) {
             // 반별 조회
-            responses = notepadService.getClassroomNotepads(classroomId, pageable);
+            responses = notepadService.getClassroomNotepads(classroomId, pageable, userDetails.getMemberId());
         } else {
-            // 유치원 전체 조회
-            Long kindergartenId = userDetails.getMember().getKindergarten().getId();
-            responses = notepadService.getNotepadsByKindergarten(kindergartenId, pageable);
+            if (userDetails.getRole() == com.erp.domain.member.entity.MemberRole.PARENT) {
+                responses = notepadService.getNotepadsForParent(userDetails.getMemberId(), pageable);
+            } else {
+                Long kindergartenId = userDetails.getMember().getKindergarten().getId();
+                responses = notepadService.getNotepadsByKindergarten(kindergartenId, pageable, userDetails.getMemberId());
+            }
         }
 
         return ResponseEntity
@@ -74,7 +77,7 @@ public class NotepadController {
 
         Long id = notepadService.createNotepad(request, writerId);
 
-        Notepad notepad = notepadService.getNotepad(id);
+        Notepad notepad = notepadService.getNotepad(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(notepadService.toResponse(notepad), "알림장이 작성되었습니다"));
@@ -103,10 +106,11 @@ public class NotepadController {
     public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getClassroomNotepads(
             @PathVariable Long classroomId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<NotepadResponse> responses = notepadService.getClassroomNotepads(classroomId, pageable);
+        Page<NotepadResponse> responses = notepadService.getClassroomNotepads(classroomId, pageable, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
@@ -119,10 +123,11 @@ public class NotepadController {
     public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getKidNotepads(
             @PathVariable Long kidId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<NotepadResponse> responses = notepadService.getKidNotepads(kidId, pageable);
+        Page<NotepadResponse> responses = notepadService.getKidNotepads(kidId, pageable, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
@@ -137,10 +142,11 @@ public class NotepadController {
             @RequestParam Long classroomId,
             @RequestParam Long kidId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<NotepadResponse> responses = notepadService.getNotepadsForParent(classroomId, kidId, pageable);
+        Page<NotepadResponse> responses = notepadService.getNotepadsForParent(classroomId, kidId, pageable, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(responses));
@@ -160,7 +166,7 @@ public class NotepadController {
 
         notepadService.updateNotepad(id, request, writerId);
 
-        Notepad notepad = notepadService.getNotepad(id);
+        Notepad notepad = notepadService.getNotepad(id, userDetails.getMemberId());
 
         return ResponseEntity
                 .ok(ApiResponse.success(notepadService.toResponse(notepad), "알림장이 수정되었습니다"));

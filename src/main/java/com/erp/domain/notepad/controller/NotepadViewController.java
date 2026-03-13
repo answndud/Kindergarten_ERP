@@ -82,19 +82,19 @@ public class NotepadViewController {
                         .orElseThrow(() -> new BusinessException(ErrorCode.ACCESS_DENIED));
 
                 Long kidClassroomId = selectedKid.getClassroom().getId();
-                notepads = notepadService.getNotepadsForParent(kidClassroomId, kidId, pageable);
+                notepads = notepadService.getNotepadsForParent(kidClassroomId, kidId, pageable, userDetails.getMemberId());
             } else {
                 notepads = notepadService.getNotepadsForParent(userDetails.getMemberId(), pageable);
             }
         } else {
             if (kidId != null) {
-                notepads = notepadService.getKidNotepads(kidId, pageable);
+                notepads = notepadService.getKidNotepads(kidId, pageable, userDetails.getMemberId());
             } else if (classroomId != null) {
-                notepads = notepadService.getClassroomNotepads(classroomId, pageable);
+                notepads = notepadService.getClassroomNotepads(classroomId, pageable, userDetails.getMemberId());
             } else {
                 Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
                 Long kindergartenId = member.getKindergarten().getId();
-                notepads = notepadService.getNotepadsByKindergarten(kindergartenId, pageable);
+                notepads = notepadService.getNotepadsByKindergarten(kindergartenId, pageable, userDetails.getMemberId());
             }
         }
 

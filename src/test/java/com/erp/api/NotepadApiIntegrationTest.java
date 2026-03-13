@@ -1,9 +1,15 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.classroom.repository.ClassroomRepository;
+import com.erp.domain.member.entity.MemberRole;
+import com.erp.domain.notepad.entity.Notepad;
+import com.erp.domain.notepad.repository.NotepadRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
@@ -18,6 +24,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @DisplayName("알림장 API 테스트")
 class NotepadApiIntegrationTest extends BaseIntegrationTest {
+
+    @Autowired
+    private ClassroomRepository classroomRepository;
+
+    @Autowired
+    private NotepadRepository notepadRepository;
+
+    @AfterEach
+    void cleanUp() {
+        testData.cleanup();
+    }
 
     @Nested
     @DisplayName("알림장 생성 API")
@@ -143,6 +160,31 @@ class NotepadApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
         }
+
+        @Test
+        @DisplayName("알림장 단건 조회 - 실패 (다른 유치원 학부모는 열람 불가)")
+        void getNotepad_Fail_DifferentKindergartenParent() throws Exception {
+            var otherKindergarten = testData.createKindergarten();
+            var otherTeacher = createMemberInKindergarten(
+                    "notepad-other-teacher@test.com",
+                    "다른 유치원 교사",
+                    MemberRole.TEACHER,
+                    otherKindergarten
+            );
+            var otherClassroom = testData.createClassroom(otherKindergarten);
+            otherClassroom.assignTeacher(otherTeacher);
+            classroomRepository.save(otherClassroom);
+            Notepad otherNotepad = notepadRepository.save(
+                    Notepad.createClassroomNotepad(otherClassroom, otherTeacher, "외부 알림장", "다른 유치원 전용")
+            );
+
+            mockMvc.perform(get("/api/v1/notepads/{id}", otherNotepad.getId())
+                            .with(authenticated(parentMember)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("N002"));
+        }
     }
 
     @Nested
@@ -189,6 +231,32 @@ class NotepadApiIntegrationTest extends BaseIntegrationTest {
                             .with(csrf()))
                     .andDo(print())
                     .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("알림장 삭제 - 실패 (다른 유치원 교사는 삭제 불가)")
+        void deleteNotepad_Fail_DifferentKindergartenTeacher() throws Exception {
+            var otherKindergarten = testData.createKindergarten();
+            var otherTeacher = createMemberInKindergarten(
+                    "notepad-delete-other-teacher@test.com",
+                    "다른 유치원 교사",
+                    MemberRole.TEACHER,
+                    otherKindergarten
+            );
+            var otherClassroom = testData.createClassroom(otherKindergarten);
+            otherClassroom.assignTeacher(otherTeacher);
+            classroomRepository.save(otherClassroom);
+            Notepad otherNotepad = notepadRepository.save(
+                    Notepad.createClassroomNotepad(otherClassroom, otherTeacher, "삭제 방지", "타 유치원 알림장")
+            );
+
+            mockMvc.perform(delete("/api/v1/notepads/{id}", otherNotepad.getId())
+                            .with(authenticated(teacherMember))
+                            .with(csrf()))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("N002"));
         }
     }
 

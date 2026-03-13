@@ -130,6 +130,7 @@
 |------|------|
 | Docker | 컨테이너화 |
 | Docker Compose | 로컬 개발 환경 |
+| GitHub Actions | CI 자동 검증 |
 | Gradle | 빌드 도구 |
 
 ---
@@ -213,6 +214,17 @@ docker ps
 ./gradlew build -x test
 java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
 ```
+
+### 3-1. 테스트 실행
+
+```bash
+# 전체 테스트 실행
+./gradlew test
+```
+
+- 통합 테스트는 MySQL/Redis Testcontainers 기반으로 실행됩니다.
+- 로컬 테스트 실행에는 Docker Desktop 또는 Docker Engine이 필요합니다.
+- CI에서도 동일하게 `./gradlew test`를 실행하도록 구성했습니다.
 
 ### 4. 접속
 
@@ -408,12 +420,24 @@ docker compose -f docker/docker-compose.yml down -v
 
 ---
 
+## ✅ 테스트 & CI
+
+- 로컬과 CI 모두 `./gradlew test` 기준으로 검증합니다.
+- 통합 테스트는 H2 mock 환경이 아니라 MySQL/Redis Testcontainers를 사용합니다.
+- GitHub Actions workflow는 `.github/workflows/ci.yml`에 정의되어 있습니다.
+- 실패 시 `build/reports/tests/test`, `build/test-results/test`를 artifact로 업로드하도록 구성했습니다.
+
+---
+
 ## 📚 문서
 
 | 문서 | 설명 |
 |------|------|
 | 프로젝트 문서 | `docs/` 폴더 참고 |
 | 성능 최적화 문서 | `docs/performance-optimization/` 폴더 참고 (번호 순서) |
+| 권한 경계 하드닝 | `docs/phase/phase14_multitenant_access_hardening.md` |
+| Testcontainers 테스트 전환 | `docs/phase/phase15_testcontainers_integration_test_stack.md` |
+| GitHub Actions CI 자동화 | `docs/phase/phase16_github_actions_ci.md` |
 
 ---
 

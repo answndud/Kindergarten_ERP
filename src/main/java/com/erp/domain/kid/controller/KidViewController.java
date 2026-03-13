@@ -27,8 +27,11 @@ public class KidViewController {
 
     @GetMapping("/kids/{id}")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
-    public String kidDetailPage(@PathVariable Long id, Model model) {
-        KidDetailResponse detail = kidService.getKidDetail(id);
+    public String kidDetailPage(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
+        KidDetailResponse detail = kidService.getKidDetail(id, userDetails.getMemberId());
         model.addAttribute("kid", detail);
         return "kid/kid-detail";
     }
@@ -41,8 +44,11 @@ public class KidViewController {
 
     @GetMapping("/kids/{id}/edit")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
-    public String kidEditPage(@PathVariable Long id, Model model) {
-        KidDetailResponse detail = kidService.getKidDetail(id);
+    public String kidEditPage(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model) {
+        KidDetailResponse detail = kidService.getKidDetail(id, userDetails.getMemberId());
         model.addAttribute("kid", detail);
         return "kid/kid-form";
     }

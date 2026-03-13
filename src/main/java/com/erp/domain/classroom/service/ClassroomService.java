@@ -9,6 +9,7 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class ClassroomService {
     private final KindergartenService kindergartenService;
     private final MemberService memberService;
     private final KidRepository kidRepository;
+    private final AccessPolicyService accessPolicyService;
 
     /**
      * 반 생성
@@ -45,12 +47,26 @@ public class ClassroomService {
         return saved.getId();
     }
 
+    @Transactional
+    public Long createClassroom(Long kindergartenId, String name, String ageGroup, Long requesterId) {
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateStaffSameKindergarten(requester, kindergartenId);
+        return createClassroom(kindergartenId, name, ageGroup);
+    }
+
     /**
      * 반 조회
      */
     public Classroom getClassroom(Long id) {
         return classroomRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLASSROOM_NOT_FOUND));
+    }
+
+    public Classroom getClassroom(Long id, Long requesterId) {
+        Classroom classroom = getClassroom(id);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateClassroomReadAccess(requester, classroom);
+        return classroom;
     }
 
     /**
@@ -63,12 +79,26 @@ public class ClassroomService {
         return classroomRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId);
     }
 
+    public List<Classroom> getClassroomsByKindergarten(Long kindergartenId, Long requesterId) {
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateSameKindergarten(requester, kindergartenId);
+        return getClassroomsByKindergarten(kindergartenId);
+    }
+
     /**
      * 반 수정
      */
     @Transactional
     public void updateClassroom(Long id, String name, String ageGroup) {
         Classroom classroom = getClassroom(id);
+        classroom.update(name, ageGroup);
+    }
+
+    @Transactional
+    public void updateClassroom(Long id, String name, String ageGroup, Long requesterId) {
+        Classroom classroom = getClassroom(id);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateClassroomManageAccess(requester, classroom);
         classroom.update(name, ageGroup);
     }
 
@@ -80,6 +110,20 @@ public class ClassroomService {
         Classroom classroom = getClassroom(id);
 
         // 원생이 있는지 확인
+        long kidsCount = kidRepository.countByClassroomIdAndDeletedAtIsNull(id);
+        if (!classroom.canDelete(kidsCount)) {
+            throw new BusinessException(ErrorCode.CLASSROOM_HAS_KIDS);
+        }
+
+        classroom.softDelete();
+    }
+
+    @Transactional
+    public void deleteClassroom(Long id, Long requesterId) {
+        Classroom classroom = getClassroom(id);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateClassroomManageAccess(requester, classroom);
+
         long kidsCount = kidRepository.countByClassroomIdAndDeletedAtIsNull(id);
         if (!classroom.canDelete(kidsCount)) {
             throw new BusinessException(ErrorCode.CLASSROOM_HAS_KIDS);
@@ -110,12 +154,41 @@ public class ClassroomService {
         classroom.assignTeacher(teacher);
     }
 
+    @Transactional
+    public void assignTeacher(Long classroomId, Long teacherId, Long requesterId) {
+        Classroom classroom = getClassroom(classroomId);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateClassroomManageAccess(requester, classroom);
+
+        Member teacher = memberService.getMemberById(teacherId);
+        if (teacher.getRole() != com.erp.domain.member.entity.MemberRole.TEACHER &&
+                teacher.getRole() != com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        accessPolicyService.validateSameKindergarten(teacher, classroom.getKindergarten().getId());
+
+        if (!classroom.canAssignTeacher()) {
+            throw new BusinessException(ErrorCode.CLASSROOM_ALREADY_HAS_TEACHER);
+        }
+
+        classroom.assignTeacher(teacher);
+    }
+
     /**
      * 담임 교사 해제
      */
     @Transactional
     public void removeTeacher(Long classroomId) {
         Classroom classroom = getClassroom(classroomId);
+        classroom.removeTeacher();
+    }
+
+    @Transactional
+    public void removeTeacher(Long classroomId, Long requesterId) {
+        Classroom classroom = getClassroom(classroomId);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateClassroomManageAccess(requester, classroom);
         classroom.removeTeacher();
     }
 }

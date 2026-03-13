@@ -11,6 +11,7 @@ import com.erp.domain.notification.entity.NotificationType;
 import com.erp.domain.notification.repository.NotificationRepository;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -29,6 +30,7 @@ public class NotificationService {
     private final MemberRepository memberRepository;
     private final NotificationDispatchService notificationDispatchService;
     private final NotificationDeliveryProperties deliveryProperties;
+    private final AccessPolicyService accessPolicyService;
 
     /**
      * 알림 생성
@@ -37,6 +39,46 @@ public class NotificationService {
     public Long create(NotificationCreateRequest request) {
         Member receiver = memberRepository.findById(request.receiverId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Notification notification;
+        if (request.relatedEntityType() != null && request.relatedEntityId() != null) {
+            notification = Notification.createWithRelatedEntity(
+                    receiver,
+                    request.type(),
+                    request.title(),
+                    request.content(),
+                    request.relatedEntityType(),
+                    request.relatedEntityId()
+            );
+        } else if (request.linkUrl() != null) {
+            notification = Notification.createWithLink(
+                    receiver,
+                    request.type(),
+                    request.title(),
+                    request.content(),
+                    request.linkUrl()
+            );
+        } else {
+            notification = Notification.create(
+                    receiver,
+                    request.type(),
+                    request.title(),
+                    request.content()
+            );
+        }
+
+        Notification saved = notificationRepository.save(notification);
+        notificationDispatchService.dispatch(saved);
+        return saved.getId();
+    }
+
+    @Transactional
+    public Long create(NotificationCreateRequest request, Long senderId) {
+        Member sender = accessPolicyService.getRequester(senderId);
+        Member receiver = memberRepository.findById(request.receiverId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        accessPolicyService.validateNotificationReceiverAccess(sender, receiver);
 
         Notification notification;
         if (request.relatedEntityType() != null && request.relatedEntityId() != null) {
@@ -174,7 +216,7 @@ public class NotificationService {
      */
     @Transactional(readOnly = true)
     public NotificationResponse getNotification(Long notificationId, Long receiverId) {
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository.findByIdAndDeletedAtIsNull(notificationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getReceiver().getId().equals(receiverId)) {
@@ -189,7 +231,7 @@ public class NotificationService {
      */
     @Transactional
     public void markAsRead(Long notificationId, Long receiverId) {
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository.findByIdAndDeletedAtIsNull(notificationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getReceiver().getId().equals(receiverId)) {
@@ -212,7 +254,7 @@ public class NotificationService {
      */
     @Transactional
     public void delete(Long notificationId, Long receiverId) {
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository.findByIdAndDeletedAtIsNull(notificationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getReceiver().getId().equals(receiverId)) {

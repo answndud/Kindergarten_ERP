@@ -1,12 +1,28 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 개선 배치 (문서 정합화 + API 안정성 + 테스트 보강)
+- CI 자동화 (GitHub Actions + Testcontainers 테스트) + 인터뷰용 문서화
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 18:29 | DONE | `.github/workflows/ci.yml` 추가. PR/push/manual 트리거, Java 17, Gradle 캐시, `./gradlew test`, test report artifact 업로드 구성 | README/phase 문서와 교차 검토 |
+| 2026-03-13 18:28 | DONE | `docs/phase/phase16_github_actions_ci.md`, `README.md`에 CI/Testcontainers 전략과 인터뷰용 설명 포인트 반영 | YAML/저장소 상태 검증 후 로그 마감 |
+| 2026-03-13 18:27 | DONE | `ruby`로 `.github/workflows/ci.yml` YAML 파싱 검증, `git diff --check` 통과 | PROGRESS/PLAN 마감 |
+| 2026-03-13 18:25 | IN_PROGRESS | 사용자 요청으로 후속 개선을 CI 자동화 작업으로 전환, `PLAN.md`를 GitHub Actions + Testcontainers 기준으로 갱신 | 워크플로우 부재 상태 확인 후 CI 파일/문서 반영 |
+| 2026-03-13 18:19 | DONE | `docs/phase/phase15_testcontainers_integration_test_stack.md` 작성 완료. H2/Mock Redis 한계, Testcontainers 전환 이유, 구현 포인트, 면접 답변 포인트를 정리 | 최종 결과 공유 |
+| 2026-03-13 18:18 | DONE | 검증 완료: `./gradlew test` 전체 통과. MySQL/Redis Testcontainers 기반 전체 테스트 스위트 정상 동작 확인 | 문서화 및 작업 로그 마무리 |
+| 2026-03-13 18:05 | DONE | 검증 완료: `./gradlew test --tests "com.erp.ErpApplicationTests" --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.KidApiIntegrationTest" --tests "com.erp.api.AttendanceApiIntegrationTest" --tests "com.erp.api.NotepadApiIntegrationTest" --tests "com.erp.api.AnnouncementApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest"` 통과 | 전체 테스트 스위트 재검증 |
+| 2026-03-13 18:03 | DONE | Testcontainers 지원 클래스, `application-test.yml`, Redis 설정, MySQL cleanup/reset 로직, 실제 Redis 기반 인증 테스트 반영 후 `./gradlew compileJava compileTestJava` 성공 | 대표 통합 테스트 실행 |
+| 2026-03-13 18:06 | IN_PROGRESS | 사용자 요청에 따라 후속 개선을 Testcontainers 전환 작업으로 전환, `PLAN.md`를 테스트 스택 현실화 기준으로 갱신 | 테스트 설정/의존성/베이스 클래스 점검 후 코드 반영 |
+| 2026-03-13 17:58 | DONE | `docs/phase/phase14_multitenant_access_hardening.md` 작성 완료. 문제 재현, 설계 결정, 테스트 증빙, 인터뷰 답변 포인트를 문서화 | 최종 결과 정리 및 사용자 공유 |
+| 2026-03-13 17:56 | DONE | 검증 완료: `./gradlew test --tests "com.erp.api.KidApiIntegrationTest" --tests "com.erp.api.AttendanceApiIntegrationTest" --tests "com.erp.api.NotepadApiIntegrationTest" --tests "com.erp.api.AnnouncementApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest"` 통과 | 문서화 및 작업 기록 마무리 |
+| 2026-03-13 17:50 | DONE | 권한 하드닝 패치 후 `./gradlew compileJava compileTestJava` 성공. 컨트롤러 시그니처 누락 및 재조회 경로 일관성 정리 | 교차-유치원/soft delete 회귀 테스트 추가 |
+| 2026-03-13 17:45 | DONE | `AccessPolicyService` 추가 및 `Kid`, `Classroom`, `Attendance`, `Notepad`, `Announcement`, `Notification` 서비스/컨트롤러에 요청자 기반 권한 검증 반영 | 컴파일 검증 및 테스트 추가 |
+| 2026-03-13 17:34 | IN_PROGRESS | 사용자 요청에 따라 리뷰에서 구현 단계로 전환, `PLAN.md`를 권한 경계 하드닝 작업 기준으로 갱신 | 접근 정책 설계 후 코드/테스트/문서 순으로 반영 |
+| 2026-03-13 17:30 | IN_PROGRESS | 사용자 요청으로 전면 코드 리뷰 시작, `PLAN.md`를 리뷰 작업 기준으로 갱신 | 설정/보안/도메인/테스트/문서 순으로 근거 수집 |
+| 2026-03-13 17:34 | DONE | 보안 경계, 알림장/알림 권한, 테스트 현실성, 대시보드 지표 산식 중심으로 저장소 전면 리뷰 완료 | 사용자에게 severity 기반 리뷰 결과 전달 |
 | 2026-02-21 10:05 | IN_PROGRESS | 사용자 요청으로 후속 개선 배치 시작, PLAN.md를 P0/P1/P2 통합 범위로 갱신 | 코드/문서/테스트 변경 순차 적용 |
 | 2026-02-21 12:40 | DONE | `SecurityConfig` CORS 허용 메서드에 `PATCH` 추가, 목록 API(`/api/v1/kids`, `/api/v1/classrooms`) 필수 필터 누락 시 400 응답으로 명시화 | 입학 승인 ParentKid 관계값 개선 |
 | 2026-02-21 12:50 | DONE | `ApproveKidApplicationRequest`에 `relationship` 확장 및 기본값(FATHER) 처리, 승인 시 요청 관계값으로 ParentKid 생성 반영 | API/백로그 문서 정합화 |

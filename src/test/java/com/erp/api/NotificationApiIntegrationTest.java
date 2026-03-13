@@ -1,12 +1,15 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.member.entity.MemberRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -77,5 +80,77 @@ class NotificationApiIntegrationTest extends BaseIntegrationTest {
                         .content(requestBody))
                 .andDo(print())
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("알림 생성 - 실패 (다른 유치원 사용자에게 발송 불가)")
+    void createNotification_Fail_DifferentKindergartenReceiver() throws Exception {
+        var otherKindergarten = testData.createKindergarten();
+        var otherParent = createMemberInKindergarten(
+                "notification-other-parent@test.com",
+                "다른 유치원 학부모",
+                MemberRole.PARENT,
+                otherKindergarten
+        );
+
+        String requestBody = """
+                {
+                    "receiverId": %d,
+                    "type": "SYSTEM",
+                    "title": "교차 유치원 발송 시도",
+                    "content": "차단되어야 합니다."
+                }
+                """.formatted(otherParent.getId());
+
+        mockMvc.perform(post("/api/v1/notifications")
+                        .with(authenticated(principalMember))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AP007"));
+    }
+
+    @Test
+    @DisplayName("삭제된 알림 상세 조회 - 실패 (soft delete 이후 재조회 불가)")
+    void getNotification_Fail_AfterSoftDelete() throws Exception {
+        String requestBody = """
+                {
+                    "receiverId": %d,
+                    "type": "SYSTEM",
+                    "title": "삭제 후 재조회 차단",
+                    "content": "soft delete 검증",
+                    "linkUrl": "/notifications"
+                }
+                """.formatted(parentMember.getId());
+
+        MvcResult createResult = mockMvc.perform(post("/api/v1/notifications")
+                        .with(authenticated(principalMember))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+
+        long notificationId = objectMapper.readTree(createResult.getResponse().getContentAsString())
+                .path("data")
+                .asLong();
+
+        mockMvc.perform(delete("/api/v1/notifications/{id}", notificationId)
+                        .with(authenticated(parentMember))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        mockMvc.perform(get("/api/v1/notifications/{id}", notificationId)
+                        .with(authenticated(parentMember)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NT001"));
     }
 }

@@ -19,6 +19,7 @@ import com.erp.domain.notification.entity.NotificationType;
 import com.erp.domain.notification.service.NotificationService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -47,6 +48,7 @@ public class NotepadService {
     private final ParentKidRepository parentKidRepository;
     private final MemberService memberService;
     private final NotificationService notificationService;
+    private final AccessPolicyService accessPolicyService;
 
     /**
      * 반별 알림장 생성
@@ -60,6 +62,7 @@ public class NotepadService {
 
         // 교사/원장 역할 확인
         validateWriterRole(writer);
+        accessPolicyService.validateClassroomManageAccess(writer, classroom);
 
         Notepad notepad = Notepad.createClassroomNotepad(classroom, writer, title, content);
         Notepad saved = notepadRepository.save(notepad);
@@ -74,7 +77,7 @@ public class NotepadService {
     @Transactional
     public Long createGlobalNotepad(Long writerId, String title, String content) {
         // 작성자 조회
-        Member writer = memberService.getMemberById(writerId);
+        Member writer = accessPolicyService.getRequester(writerId);
 
         // 원장 역할 확인
         if (writer.getRole() != MemberRole.PRINCIPAL) {
@@ -95,7 +98,7 @@ public class NotepadService {
         log.debug("알림장 생성 요청 - classroomId: {}, kidId: {}, title: {}",
                   request.getClassroomId(), request.getKidId(), request.getTitle());
 
-        Member writer = memberService.getMemberById(writerId);
+        Member writer = accessPolicyService.getRequester(writerId);
         validateWriterRole(writer);
 
         Notepad notepad;
@@ -104,11 +107,13 @@ public class NotepadService {
             // 원생별 알림장
             log.debug("원생별 알림장 생성 - kidId: {}", request.getKidId());
             var kid = kidService.getKid(request.getKidId());
+            accessPolicyService.validateKidManageAccess(writer, kid);
             notepad = Notepad.createKidNotepad(kid, writer, request.getTitle(), request.getContent());
         } else if (request.getClassroomId() != null) {
             // 반별 알림장
             log.debug("반별 알림장 생성 - classroomId: {}", request.getClassroomId());
             var classroom = classroomService.getClassroom(request.getClassroomId());
+            accessPolicyService.validateClassroomManageAccess(writer, classroom);
             notepad = Notepad.createClassroomNotepad(classroom, writer, request.getTitle(), request.getContent());
         } else {
             // 전체 알림장
@@ -192,11 +197,22 @@ public class NotepadService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTEPAD_NOT_FOUND));
     }
 
+    public Notepad getNotepad(Long id, Long requesterId) {
+        Notepad notepad = getNotepad(id);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateNotepadReadAccess(requester, notepad);
+        return notepad;
+    }
+
     /**
      * 알림장 상세 조회 (읽음 확인 포함)
      */
     public NotepadDetailResponse getNotepadDetail(Long id, Long readerId) {
         Notepad notepad = getNotepad(id);
+        if (readerId != null) {
+            Member requester = accessPolicyService.getRequester(readerId);
+            accessPolicyService.validateNotepadReadAccess(requester, notepad);
+        }
         List<NotepadReadConfirm> readConfirms = notepadRepository.findReadConfirmsByNotepadId(id);
 
         // 읽음 확인
@@ -216,6 +232,12 @@ public class NotepadService {
         return mapWithReadCounts(notepadRepository.findByKindergartenId(kindergartenId, pageable));
     }
 
+    public Page<NotepadResponse> getNotepadsByKindergarten(Long kindergartenId, Pageable pageable, Long requesterId) {
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateSameKindergarten(requester, kindergartenId);
+        return mapWithReadCounts(notepadRepository.findByKindergartenId(kindergartenId, pageable));
+    }
+
     /**
      * 반별 알림장 목록 조회 (페이지)
      */
@@ -223,6 +245,13 @@ public class NotepadService {
         // 반 존재 확인
         classroomService.getClassroom(classroomId);
 
+        return mapWithReadCounts(notepadRepository.findClassroomNotepads(classroomId, pageable));
+    }
+
+    public Page<NotepadResponse> getClassroomNotepads(Long classroomId, Pageable pageable, Long requesterId) {
+        var classroom = classroomService.getClassroom(classroomId);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateClassroomReadAccess(requester, classroom);
         return mapWithReadCounts(notepadRepository.findClassroomNotepads(classroomId, pageable));
     }
 
@@ -236,12 +265,35 @@ public class NotepadService {
         return mapWithReadCounts(notepadRepository.findKidNotepads(kidId, pageable));
     }
 
+    public Page<NotepadResponse> getKidNotepads(Long kidId, Pageable pageable, Long requesterId) {
+        var kid = kidService.getKid(kidId);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateKidReadAccess(requester, kid);
+        return mapWithReadCounts(notepadRepository.findKidNotepads(kidId, pageable));
+    }
+
     /**
      * 학부모용 알림장 목록 (반 전체 + 내 원생)
      */
     public Page<NotepadResponse> getNotepadsForParent(Long classroomId, Long kidId, Pageable pageable) {
         classroomService.getClassroom(classroomId);
         kidService.getKid(kidId);
+
+        return mapWithReadCounts(notepadRepository.findNotepadsForParent(classroomId, kidId, pageable));
+    }
+
+    public Page<NotepadResponse> getNotepadsForParent(Long classroomId, Long kidId, Pageable pageable, Long parentId) {
+        Member parent = accessPolicyService.getRequester(parentId);
+        if (parent.getRole() != MemberRole.PARENT) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        var kid = kidService.getKid(kidId);
+        accessPolicyService.validateKidReadAccess(parent, kid);
+
+        if (kid.getClassroom() == null || !kid.getClassroom().getId().equals(classroomId)) {
+            throw new BusinessException(ErrorCode.NOTEPAD_ACCESS_DENIED);
+        }
 
         return mapWithReadCounts(notepadRepository.findNotepadsForParent(classroomId, kidId, pageable));
     }
@@ -277,9 +329,8 @@ public class NotepadService {
     public void updateNotepad(Long id, NotepadRequest request, Long requesterId) {
         Notepad notepad = getNotepad(id);
 
-        // 수정 권한 확인 (원장 또는 교사만 가능)
-        Member requester = memberService.getMemberById(requesterId);
-        validateWriterRole(requester);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateNotepadManageAccess(requester, notepad);
 
         notepad.update(request.getTitle(), request.getContent());
 
@@ -295,9 +346,8 @@ public class NotepadService {
     public void deleteNotepad(Long id, Long requesterId) {
         Notepad notepad = getNotepad(id);
 
-        // 삭제 권한 확인 (원장 또는 교사만 가능)
-        Member requester = memberService.getMemberById(requesterId);
-        validateWriterRole(requester);
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateNotepadManageAccess(requester, notepad);
 
         notepadRepository.delete(notepad);
     }
@@ -308,12 +358,14 @@ public class NotepadService {
     @Transactional
     public void markAsRead(Long notepadId, Long readerId) {
         Notepad notepad = getNotepad(notepadId);
-        Member reader = memberService.getMemberById(readerId);
+        Member reader = accessPolicyService.getRequester(readerId);
 
         // 학부모 역할 확인
         if (reader.getRole() != com.erp.domain.member.entity.MemberRole.PARENT) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
+
+        accessPolicyService.validateNotepadReadAccess(reader, notepad);
 
         // 이미 읽음 확인이 있는지 확인
         var existingConfirm = notepadRepository.findByNotepadIdAndReaderId(notepadId, readerId);

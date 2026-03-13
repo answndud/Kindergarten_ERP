@@ -50,9 +50,6 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
         @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
         @DisplayName("원생 생성 - 성공 (원장)")
         void createKid_Success_Principal() throws Exception {
-            Kindergarten kg = testData.createKindergarten();
-            Classroom cr = testData.createClassroom(kg);
-
             String requestBody = String.format("""
                     {
                         "classroomId": %d,
@@ -61,7 +58,7 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
                         "gender": "MALE",
                         "admissionDate": "%s"
                     }
-                    """, cr.getId(), LocalDate.now());
+                    """, classroom.getId(), LocalDate.now());
 
             mockMvc.perform(post("/api/v1/kids")
                             .with(csrf())
@@ -176,6 +173,29 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
         }
+
+        @Test
+        @DisplayName("원생 단건 조회 - 실패 (다른 유치원 교사는 접근 불가)")
+        void getKid_Fail_DifferentKindergartenTeacher() throws Exception {
+            Kindergarten otherKindergarten = testData.createKindergarten();
+            Member otherTeacher = createMemberInKindergarten(
+                    "other-teacher@test.com",
+                    "다른 유치원 교사",
+                    MemberRole.TEACHER,
+                    otherKindergarten
+            );
+            Classroom otherClassroom = testData.createClassroom(otherKindergarten);
+            otherClassroom.assignTeacher(otherTeacher);
+            classroomRepository.save(otherClassroom);
+            Kid otherKid = testData.createKid(otherClassroom);
+
+            mockMvc.perform(get("/api/v1/kids/{id}", otherKid.getId())
+                            .with(authenticated(teacherMember)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("AP007"));
+        }
     }
 
     @Nested
@@ -280,7 +300,12 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
         @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
         @DisplayName("학부모 연결 - 성공")
         void assignParent_Success() throws Exception {
-            Member extraParent = testData.createTestMember("parent2@test.com", "추가 학부모", MemberRole.PARENT, "test1234");
+            Member extraParent = createMemberInKindergarten(
+                    "parent2@test.com",
+                    "추가 학부모",
+                    MemberRole.PARENT,
+                    kindergarten
+            );
 
             String requestBody = String.format("""
                     {
