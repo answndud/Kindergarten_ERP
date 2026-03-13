@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthAuditLogService {
 
     private final AuthAuditLogRepository authAuditLogRepository;
+    private final AuthAuditMetricsService authAuditMetricsService;
 
     public void recordLoginSuccess(Long memberId, String email, MemberAuthProvider provider, String clientIp) {
         saveAuditLog(memberId, email, provider, AuthAuditEventType.LOGIN, AuthAuditResult.SUCCESS, null, clientIp);
@@ -58,6 +59,8 @@ public class AuthAuditLogService {
                               AuthAuditResult result,
                               String reason,
                               String clientIp) {
+        authAuditMetricsService.record(eventType, result, provider);
+
         try {
             authAuditLogRepository.save(AuthAuditLog.create(
                     memberId,

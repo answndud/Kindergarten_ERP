@@ -5,6 +5,10 @@ import com.erp.domain.announcement.repository.AnnouncementRepository;
 import com.erp.domain.attendance.entity.Attendance;
 import com.erp.domain.attendance.entity.AttendanceStatus;
 import com.erp.domain.attendance.repository.AttendanceRepository;
+import com.erp.domain.authaudit.entity.AuthAuditEventType;
+import com.erp.domain.authaudit.entity.AuthAuditLog;
+import com.erp.domain.authaudit.entity.AuthAuditResult;
+import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
 import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.classroom.repository.ClassroomRepository;
 import com.erp.domain.kindergarten.entity.Kindergarten;
@@ -16,6 +20,7 @@ import com.erp.domain.kid.entity.Relationship;
 import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.kid.repository.ParentKidRepository;
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.repository.MemberRepository;
@@ -67,6 +72,7 @@ public class DataLoader implements CommandLineRunner {
     private final AttendanceRepository attendanceRepository;
     private final NotepadRepository notepadRepository;
     private final AnnouncementRepository announcementRepository;
+    private final AuthAuditLogRepository authAuditLogRepository;
     private final Random random = new Random();
 
     // 테스트용 고정 비밀번호
@@ -178,6 +184,13 @@ public class DataLoader implements CommandLineRunner {
         createAnnouncement(kgB, principalB, "새 학기 입학 안내", "2025학년도 새 학기 입학 원서 접수가 시작되었습니다.", false);
         createAnnouncement(kgB, principalB, "급식비 납부 안내", "이번 달 급식비를 5월 10일까지 납부부탁드립니다.", false);
 
+        // 10. 인증 감사 로그 시드 생성 (데모/로컬 운영 콘솔 확인용)
+        createAuthAuditLog(principalA, AuthAuditEventType.LOGIN, AuthAuditResult.SUCCESS, MemberAuthProvider.LOCAL, null, "198.51.100.10");
+        createAuthAuditLog(principalA, AuthAuditEventType.REFRESH, AuthAuditResult.SUCCESS, null, null, "198.51.100.10");
+        createAuthAuditLog(teacherA1, AuthAuditEventType.SOCIAL_LINK, AuthAuditResult.SUCCESS, MemberAuthProvider.GOOGLE, null, "198.51.100.31");
+        createAuthAuditLog(parentA1, AuthAuditEventType.SOCIAL_UNLINK, AuthAuditResult.FAILURE, MemberAuthProvider.KAKAO, "A010", "198.51.100.41");
+        createAuthAuditLog(parentA2, AuthAuditEventType.LOGIN, AuthAuditResult.SUCCESS, MemberAuthProvider.LOCAL, null, "203.0.113.55");
+
         log.info("=================================================");
         log.info("DUMMY DATA LOADED SUCCESSFULLY!");
         log.info("=================================================");
@@ -252,6 +265,23 @@ public class DataLoader implements CommandLineRunner {
         }
 
         attendanceRepository.save(attendance);
+    }
+
+    private void createAuthAuditLog(Member member,
+                                    AuthAuditEventType eventType,
+                                    AuthAuditResult result,
+                                    MemberAuthProvider provider,
+                                    String reason,
+                                    String clientIp) {
+        authAuditLogRepository.save(AuthAuditLog.create(
+                member.getId(),
+                member.getEmail(),
+                provider,
+                eventType,
+                result,
+                reason,
+                clientIp
+        ));
     }
 
     private AttendanceStatus determineAttendanceStatus(LocalDate date) {

@@ -1,0 +1,12 @@
+# ===========================================
+# 데모 환경 설정
+# ===========================================
+
+springdoc:
+  swagger-ui:
+    try-it-out-enabled: true
+    persist-authorization: true
+
+info:
+  app:
+    mode: demo

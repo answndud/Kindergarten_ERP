@@ -110,6 +110,12 @@ class ViewEndpointTest extends TestcontainersSupport {
     }
 
     @Test
+    void testAuditLogsPageWithoutAuth() throws Exception {
+        mockMvc.perform(get("/audit-logs"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
     void testSocialLinkStartRedirectsToOauthAuthorization() throws Exception {
         Kindergarten kindergarten = kindergartenRepository.save(
                 Kindergarten.create("연결 유치원", "서울시", "010-2222-3333", LocalTime.of(9, 0), LocalTime.of(18, 0))
@@ -155,6 +161,28 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(content().string(containsString("로컬 비밀번호 설정")))
                 .andExpect(content().string(containsString("다른 로그인 수단을 먼저 확보해야 연결을 해제할 수 있습니다.")))
                 .andExpect(content().string(not(containsString("현재 비밀번호"))));
+    }
+
+    @Test
+    void testSettingsPageForPrincipalShowsAuditLogLink() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("원장 설정 유치원", "서울시", "010-5555-6666", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member principal = Member.create(
+                "principal-settings@test.com",
+                "encoded-password",
+                "설정원장",
+                "01022223333",
+                MemberRole.PRINCIPAL
+        );
+        principal.assignKindergarten(kindergarten);
+        memberRepository.save(principal);
+
+        mockMvc.perform(get("/settings").with(user(new CustomUserDetails(principal))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("운영 도구")))
+                .andExpect(content().string(containsString("인증 감사 로그 열기")));
     }
 
     @Test
@@ -229,6 +257,49 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(content().string(containsString("Google 연결됨")))
                 .andExpect(content().string(containsString("Kakao 연결됨")))
                 .andExpect(content().string(containsString("다른 로그인 수단이 남아 있어 연결 해제를 허용합니다.")));
+    }
+
+    @Test
+    void testAuditLogsPageForPrincipal() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("감사 로그 유치원", "서울시", "010-8989-7878", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member principal = Member.create(
+                "audit-principal@test.com",
+                "encoded-password",
+                "감사원장",
+                "01011112222",
+                MemberRole.PRINCIPAL
+        );
+        principal.assignKindergarten(kindergarten);
+        memberRepository.save(principal);
+
+        mockMvc.perform(get("/audit-logs").with(user(new CustomUserDetails(principal))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("인증 감사 로그")))
+                .andExpect(content().string(containsString("API 계약 보기")))
+                .andExpect(content().string(containsString("로그인, refresh, 소셜 연결/해제 이벤트")));
+    }
+
+    @Test
+    void testAuditLogsPageForTeacherForbidden() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("감사 로그 권한 유치원", "서울시", "010-6767-5656", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member teacher = Member.create(
+                "audit-teacher@test.com",
+                "encoded-password",
+                "감사교사",
+                "01033334444",
+                MemberRole.TEACHER
+        );
+        teacher.assignKindergarten(kindergarten);
+        memberRepository.save(teacher);
+
+        mockMvc.perform(get("/audit-logs").with(user(new CustomUserDetails(teacher))))
+                .andExpect(status().isForbidden());
     }
 
     @Test

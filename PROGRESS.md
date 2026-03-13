@@ -1,12 +1,19 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 17차 (`docs/` 정보 구조 개편)
+- 후속 고도화 18차 (API 계약 가시화 + 감사 로그 화면 + 메트릭 + 데모 진입점)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-14 01:00 | DONE | Swagger/OpenAPI(`springdoc`)와 `/swagger-ui.html`, `/v3/api-docs` 공개 경로를 추가하고 `OpenApiConfig`로 cookie 기반 security scheme과 `api-v1` 그룹을 정의 | 감사 로그 운영 화면과 네비게이션 진입점 반영 |
+| 2026-03-14 01:00 | DONE | 원장 전용 `/audit-logs` 뷰와 `authaudit/audit-logs.html` 템플릿을 추가하고, 설정 화면/헤더에서 원장만 감사 로그 화면으로 진입하도록 정리 | Prometheus와 auth event metric 반영 |
+| 2026-03-14 01:00 | DONE | `AuthAuditMetricsService`, `PrometheusRegistryConfig`, `PrometheusScrapeController`를 추가해 `erp_auth_events_total` 메트릭과 `/actuator/prometheus` scrape 경로를 제공 | demo 프로파일/seed 및 문서 정리 |
+| 2026-03-14 01:00 | DONE | `spring.profiles.group.demo=local`, `application-demo.yml`, local/demo seed auth audit log 샘플, README/인터뷰 문서/결정 로그(`phase36`)를 반영해 시연 시작점을 고정 | 전체 테스트 및 포맷 검증 |
+| 2026-03-14 01:00 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.integration.ObservabilityIntegrationTest" --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.api.AuthAuditApiIntegrationTest"`, `./gradlew test`, `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
+| 2026-03-14 11:02 | IN_PROGRESS | 새 후속 배치 시작. 최신 GitHub Actions run `23056965692` 성공을 확인했고, 현재 저장소에는 API 계약 가시성, 감사 로그 운영 UI, Prometheus 메트릭, demo 진입점이 비어 있는 상태 확인 | `PLAN.md`를 새 배치 기준으로 갱신하고 구현 범위 고정 |
+| 2026-03-14 11:04 | IN_PROGRESS | `PLAN.md`를 후속 고도화 18차 기준으로 갱신. 이번 배치는 Swagger/OpenAPI, 원장용 감사 로그 화면, Prometheus + auth event metrics, demo 프로파일/문서, 테스트/배포까지 포함 | 관련 설정/뷰/테스트 지점을 확인한 뒤 코드 반영 |
 | 2026-03-14 00:05 | DONE | `fdeaa4e` (`docs: reorganize documentation structure`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
 | 2026-03-14 00:05 | DONE | GitHub Actions run `23056800740` 성공 확인. `Fast Checks` 1m25s, `Integration Suite` 2m56s, artifact 업로드 정상 확인 | 배치 마감 |
 | 2026-03-13 22:25 | DONE | `docs/`를 active/portfolio/archive 기준으로 재분류. `guides`, `portfolio`, `decisions`, `archive` 체계를 만들고 기존 `interview`, `performance-optimization`, `phase`, `requirements`, `retrospective`, 루트 레거시 문서를 새 위치로 이동 | docs 진입점/규칙 문서 갱신 |

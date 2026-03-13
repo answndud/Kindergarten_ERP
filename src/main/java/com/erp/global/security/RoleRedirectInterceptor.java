@@ -34,6 +34,11 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        // 운영/문서 경로는 통과
+        if (isInfrastructurePath(uri)) {
+            return true;
+        }
+
         // API 엔드포인트는 통과 (Controller에서 권한 체크)
         if (isApiPath(uri)) {
             return true;
@@ -105,6 +110,14 @@ public class RoleRedirectInterceptor implements HandlerInterceptor {
 
     private boolean isApiPath(String uri) {
         return uri.startsWith("/api/");
+    }
+
+    private boolean isInfrastructurePath(String uri) {
+        return uri.startsWith("/swagger-ui") ||
+                uri.startsWith("/v3/api-docs") ||
+                uri.startsWith("/actuator/health") ||
+                uri.startsWith("/actuator/info") ||
+                uri.startsWith("/actuator/prometheus");
     }
 
     private String shouldForceRedirect(Member member, String uri) {
