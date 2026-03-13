@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 22:12 | DONE | `8d94982` (`docs: add interview qna script`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
+| 2026-03-13 22:12 | DONE | GitHub Actions run `23052007717` 성공 확인. 전체 워크플로우 2m42s로 종료 | 배치 마감 |
 | 2026-03-13 22:08 | DONE | `docs/interview/interview_qa_script.md`를 추가해 프로젝트 소개, 권한/보안, JWT 세션, OAuth2 lifecycle, 테스트/CI, 성능, 운영 관측성, 회고 질문까지 실전 면접 예상 질문/답변 스크립트로 정리 | README 인터뷰 섹션 연결 및 최종 검증 |
 | 2026-03-13 22:08 | DONE | `README.md` 인터뷰 바로 보기 섹션에 Q&A 문서 링크를 추가하고, 기존 1장 요약/3분 데모 문서와 역할을 분리해 인터뷰 entry point를 확장 | add/commit/push 및 원격 CI 시작 확인 |
 | 2026-03-13 22:08 | DONE | 검증 완료: `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
