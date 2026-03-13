@@ -25,14 +25,14 @@ public class SocialAccountLinkService {
         Member member = memberRepository.findByIdWithSocialAccounts(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        memberRepository.findBySocialProviderAndProviderId(provider, providerId)
+        memberRepository.findByAnySocialProviderAndProviderId(provider, providerId)
                 .filter(existing -> !existing.getId().equals(memberId))
                 .ifPresent(existing -> {
                     throw new BusinessException(ErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
                 });
 
-        if (member.isLinkedTo(provider) && !member.isLinkedTo(provider, providerId)) {
-            throw new BusinessException(ErrorCode.SOCIAL_PROVIDER_SLOT_OCCUPIED);
+        if (member.hasProviderBindingWithDifferentIdentity(provider, providerId)) {
+            throw new BusinessException(ErrorCode.SOCIAL_PROVIDER_REPLACEMENT_NOT_ALLOWED);
         }
 
         member.linkSocialAccount(provider, providerId);

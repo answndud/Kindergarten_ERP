@@ -28,6 +28,7 @@ public enum ErrorCode {
     SOCIAL_PROVIDER_SLOT_OCCUPIED(409, "A008", "이미 동일 제공자의 다른 소셜 계정이 연결되어 있습니다"),
     SOCIAL_ACCOUNT_NOT_LINKED(404, "A009", "연결된 소셜 계정을 찾을 수 없습니다"),
     SOCIAL_UNLINK_REQUIRES_LOCAL_PASSWORD(400, "A010", "다른 로그인 수단을 먼저 확보해야 소셜 연결을 해제할 수 있습니다"),
+    SOCIAL_PROVIDER_REPLACEMENT_NOT_ALLOWED(409, "A011", "같은 제공자의 소셜 계정은 다른 계정으로 교체할 수 없습니다"),
 
     // ========== Member ==========
     EMAIL_ALREADY_EXISTS(409, "M001", "이미 사용 중인 이메일입니다"),

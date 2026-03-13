@@ -150,6 +150,7 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
         assertThat(updatedMember.getProviderId()).isNull();
         assertThat(updatedMember.hasLocalPassword()).isTrue();
         assertThat(updatedMember.hasLinkedSocialAccount()).isFalse();
+        assertThat(updatedMember.hasSocialAccountHistory(MemberAuthProvider.GOOGLE)).isTrue();
     }
 
     @Test

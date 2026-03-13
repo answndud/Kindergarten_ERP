@@ -131,13 +131,16 @@
                             <a th:if="${!googleLinked}"
                                href="/auth/social/link/google"
                                class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                                Google 연결
+                                <span th:text="${googleReconnectOnly ? 'Google 재연결' : 'Google 연결'}">Google 연결</span>
                             </a>
                             <span th:if="${googleLinked}"
                                   class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                                 Google 연결됨
                             </span>
                         </div>
+                        <p th:if="${googleReconnectOnly}" class="mt-3 text-xs text-amber-700">
+                            같은 제공자의 소셜 계정은 교체할 수 없습니다. 처음 연결했던 동일한 Google 계정만 다시 연결할 수 있습니다.
+                        </p>
                         <div th:if="${googleLinked}" class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
@@ -170,13 +173,16 @@
                             <a th:if="${!kakaoLinked}"
                                href="/auth/social/link/kakao"
                                class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                                Kakao 연결
+                                <span th:text="${kakaoReconnectOnly ? 'Kakao 재연결' : 'Kakao 연결'}">Kakao 연결</span>
                             </a>
                             <span th:if="${kakaoLinked}"
                                   class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                                 Kakao 연결됨
                             </span>
                         </div>
+                        <p th:if="${kakaoReconnectOnly}" class="mt-3 text-xs text-amber-700">
+                            같은 제공자의 소셜 계정은 교체할 수 없습니다. 처음 연결했던 동일한 Kakao 계정만 다시 연결할 수 있습니다.
+                        </p>
                         <div th:if="${kakaoLinked}" class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>

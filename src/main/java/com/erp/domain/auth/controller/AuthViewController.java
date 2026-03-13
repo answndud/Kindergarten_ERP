@@ -83,6 +83,10 @@ public class AuthViewController {
         model.addAttribute("linkedSocialProviderSummary", member.getLinkedSocialProviderSummary());
         model.addAttribute("googleLinked", member.isLinkedTo(MemberAuthProvider.GOOGLE));
         model.addAttribute("kakaoLinked", member.isLinkedTo(MemberAuthProvider.KAKAO));
+        model.addAttribute("googleReconnectOnly", member.hasSocialAccountHistory(MemberAuthProvider.GOOGLE)
+                && !member.isLinkedTo(MemberAuthProvider.GOOGLE));
+        model.addAttribute("kakaoReconnectOnly", member.hasSocialAccountHistory(MemberAuthProvider.KAKAO)
+                && !member.isLinkedTo(MemberAuthProvider.KAKAO));
         model.addAttribute("googleUnlinkAllowed", member.canUnlinkSocialAccount(MemberAuthProvider.GOOGLE));
         model.addAttribute("kakaoUnlinkAllowed", member.canUnlinkSocialAccount(MemberAuthProvider.KAKAO));
         model.addAttribute("googleUnlinkBlockedReason", resolveSocialUnlinkBlockedReason(member, MemberAuthProvider.GOOGLE));
@@ -164,6 +168,11 @@ public class AuthViewController {
                     "error",
                     providerLabel + " 계정을 연결할 수 없습니다",
                     "현재 계정에는 이미 다른 " + providerLabel + " 계정이 연결되어 있습니다. 먼저 기존 연결을 해제해 주세요."
+            );
+            case "provider-replacement-not-allowed" -> new SocialLinkFeedback(
+                    "error",
+                    providerLabel + " 계정을 교체할 수 없습니다",
+                    "처음 연결했던 동일한 " + providerLabel + " 계정만 다시 연결할 수 있습니다."
             );
             case "provider-mismatch" -> new SocialLinkFeedback(
                     "error",

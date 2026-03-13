@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * 회원 엔티티
@@ -145,22 +147,37 @@ public class Member extends BaseEntity {
     }
 
     public boolean hasLinkedSocialAccount() {
-        return !this.socialAccounts.isEmpty();
+        return activeSocialAccounts().findAny().isPresent();
     }
 
     public boolean isLinkedTo(MemberAuthProvider provider) {
-        return provider != null
-                && this.socialAccounts.stream().anyMatch(account -> account.isSameProvider(provider));
+        return provider != null && findActiveSocialAccount(provider).isPresent();
     }
 
     public boolean isLinkedTo(MemberAuthProvider provider, String providerId) {
         return provider != null
                 && providerId != null
-                && this.socialAccounts.stream().anyMatch(account -> account.matches(provider, providerId));
+                && findActiveSocialAccount(provider)
+                .filter(account -> account.hasProviderId(providerId))
+                .isPresent();
+    }
+
+    public boolean hasSocialAccountHistory(MemberAuthProvider provider) {
+        return provider != null && findSocialAccount(provider).isPresent();
+    }
+
+    public boolean hasProviderBindingWithDifferentIdentity(MemberAuthProvider provider, String providerId) {
+        return provider != null
+                && providerId != null
+                && findSocialAccount(provider)
+                .filter(account -> !account.hasProviderId(providerId))
+                .isPresent();
     }
 
     public void linkSocialAccount(MemberAuthProvider provider, String providerId) {
-        if (isLinkedTo(provider, providerId)) {
+        Optional<MemberSocialAccount> existingSocialAccount = findSocialAccount(provider);
+        if (existingSocialAccount.isPresent()) {
+            existingSocialAccount.get().relink();
             syncLegacyPrimarySocialAccount();
             return;
         }
@@ -170,7 +187,7 @@ public class Member extends BaseEntity {
     }
 
     public void unlinkSocialAccount(MemberAuthProvider provider) {
-        this.socialAccounts.removeIf(account -> account.isSameProvider(provider));
+        findActiveSocialAccount(provider).ifPresent(MemberSocialAccount::unlink);
         syncLegacyPrimarySocialAccount();
     }
 
@@ -183,15 +200,11 @@ public class Member extends BaseEntity {
             return true;
         }
 
-        return this.socialAccounts.stream().anyMatch(account -> !account.isSameProvider(provider));
+        return activeSocialAccounts().anyMatch(account -> !account.isSameProvider(provider));
     }
 
     public String getLinkedSocialProviderSummary() {
-        if (this.socialAccounts.isEmpty()) {
-            return null;
-        }
-
-        return this.socialAccounts.stream()
+        List<String> activeProviderLabels = activeSocialAccounts()
                 .map(MemberSocialAccount::getProvider)
                 .map(provider -> switch (provider) {
                     case GOOGLE -> "Google";
@@ -199,8 +212,13 @@ public class Member extends BaseEntity {
                     default -> provider.name();
                 })
                 .distinct()
-                .reduce((left, right) -> left + ", " + right)
-                .orElse(null);
+                .toList();
+
+        if (activeProviderLabels.isEmpty()) {
+            return null;
+        }
+
+        return String.join(", ", activeProviderLabels);
     }
 
     /**
@@ -253,8 +271,24 @@ public class Member extends BaseEntity {
         return passwordEncoder.matches(rawPassword, this.password);
     }
 
+    private Optional<MemberSocialAccount> findSocialAccount(MemberAuthProvider provider) {
+        return this.socialAccounts.stream()
+                .filter(account -> account.isSameProvider(provider))
+                .findFirst();
+    }
+
+    private Optional<MemberSocialAccount> findActiveSocialAccount(MemberAuthProvider provider) {
+        return activeSocialAccounts()
+                .filter(account -> account.isSameProvider(provider))
+                .findFirst();
+    }
+
+    private Stream<MemberSocialAccount> activeSocialAccounts() {
+        return this.socialAccounts.stream().filter(MemberSocialAccount::isActive);
+    }
+
     private void syncLegacyPrimarySocialAccount() {
-        MemberSocialAccount primarySocialAccount = this.socialAccounts.isEmpty() ? null : this.socialAccounts.get(0);
+        MemberSocialAccount primarySocialAccount = activeSocialAccounts().findFirst().orElse(null);
         if (primarySocialAccount == null) {
             this.authProvider = MemberAuthProvider.LOCAL;
             this.providerId = null;
