@@ -25,7 +25,7 @@ public class CalendarEventController {
     private final CalendarEventService calendarEventService;
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<List<CalendarEventResponse>>> getEvents(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -45,7 +45,7 @@ public class CalendarEventController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<CalendarEventResponse>> getEvent(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -55,7 +55,7 @@ public class CalendarEventController {
     }
 
     @GetMapping("/today")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<List<CalendarEventResponse>>> getTodayEvents(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -71,7 +71,7 @@ public class CalendarEventController {
     }
 
     @GetMapping("/upcoming")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<List<CalendarEventResponse>>> getUpcomingEvents(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "7") int days
@@ -90,7 +90,7 @@ public class CalendarEventController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<CalendarEventResponse>> createEvent(
             @Valid @RequestBody CalendarEventRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -101,7 +101,7 @@ public class CalendarEventController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<CalendarEventResponse>> updateEvent(
             @PathVariable Long id,
             @Valid @RequestBody CalendarEventRequest request,
@@ -113,7 +113,7 @@ public class CalendarEventController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<Void>> deleteEvent(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails

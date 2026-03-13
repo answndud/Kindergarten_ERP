@@ -98,7 +98,8 @@
 - ✅ 드롭다운 UI
 
 ### 일정/캘린더
-- ✅ 유치원/반 단위 일정 CRUD
+- ✅ 유치원/반/개인 일정 CRUD
+- ✅ 반복 일정 occurrence 조회
 - ✅ 오늘/다가오는 일정 조회
 
 ### 대시보드
@@ -465,6 +466,7 @@ docker compose -f docker/docker-compose.yml down -v
 | GitHub Actions Node24 호환 | `docs/phase/phase20_github_actions_node24_compatibility.md` |
 | 인증 Rate Limit 하드닝 | `docs/phase/phase21_auth_rate_limit.md` |
 | GitHub Actions Node24 네이티브 전환 | `docs/phase/phase22_github_actions_node24_native_actions.md` |
+| 캘린더 반복 일정/권한 정합성 보강 | `docs/phase/phase23_calendar_recurrence_access_alignment.md` |
 
 ---
 

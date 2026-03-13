@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -45,6 +46,7 @@ public class CalendarEventService {
     public Long createEvent(CalendarEventRequest request, Long memberId) {
         Member member = memberService.getMemberByIdWithKindergarten(memberId);
         validateDateRange(request.getStartDateTime(), request.getEndDateTime());
+        validateRepeatRule(request);
 
         ScopeContext scopeContext = resolveScopeContext(member, request);
 
@@ -101,15 +103,13 @@ public class CalendarEventService {
                 events.addAll(loadEventsByScope(member, CalendarScopeType.CLASSROOM, classroomId, startDateTime, endDateTime));
                 events.addAll(loadEventsByScope(member, CalendarScopeType.PERSONAL, classroomId, startDateTime, endDateTime));
             } else if (member.getRole() == MemberRole.PARENT) {
+                events.addAll(loadEventsByScope(member, CalendarScopeType.KINDERGARTEN, classroomId, startDateTime, endDateTime));
                 events.addAll(loadEventsByScope(member, CalendarScopeType.CLASSROOM, classroomId, startDateTime, endDateTime));
                 events.addAll(loadEventsByScope(member, CalendarScopeType.PERSONAL, classroomId, startDateTime, endDateTime));
             }
         }
 
-        return events.stream()
-                .sorted(Comparator.comparing(CalendarEvent::getStartDateTime))
-                .map(CalendarEventResponse::from)
-                .toList();
+        return expandEvents(events, startDateTime, endDateTime);
     }
 
     @Transactional
@@ -117,6 +117,7 @@ public class CalendarEventService {
         CalendarEvent event = getEventEntity(eventId);
         Member member = memberService.getMemberByIdWithKindergarten(memberId);
         validateDateRange(request.getStartDateTime(), request.getEndDateTime());
+        validateRepeatRule(request);
         validateManagePermission(member, event);
 
         ScopeContext scopeContext = resolveScopeContext(member, request);
@@ -158,6 +159,26 @@ public class CalendarEventService {
 
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    private void validateRepeatRule(CalendarEventRequest request) {
+        RepeatType repeatType = request.getRepeatType() == null ? RepeatType.NONE : request.getRepeatType();
+        LocalDate repeatEndDate = request.getRepeatEndDate();
+
+        if (repeatType == RepeatType.NONE) {
+            if (repeatEndDate != null) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            return;
+        }
+
+        if (repeatEndDate == null || request.getStartDateTime() == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (repeatEndDate.isBefore(request.getStartDateTime().toLocalDate())) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
@@ -211,7 +232,7 @@ public class CalendarEventService {
         }
 
         if (scopeType == CalendarScopeType.KINDERGARTEN) {
-            if (member.getRole() != MemberRole.PRINCIPAL && member.getRole() != MemberRole.TEACHER) {
+            if (member.getKindergarten() == null) {
                 throw new BusinessException(ErrorCode.CALENDAR_ACCESS_DENIED);
             }
             if (!isSameKindergarten(member, event.getKindergarten())) {
@@ -296,17 +317,16 @@ public class CalendarEventService {
             LocalDateTime endDateTime
     ) {
         if (scopeType == CalendarScopeType.KINDERGARTEN) {
-            if (member.getRole() != MemberRole.PRINCIPAL && member.getRole() != MemberRole.TEACHER) {
-                return List.of();
-            }
             if (member.getKindergarten() == null) {
                 return List.of();
             }
             return calendarEventRepository.findKindergartenEvents(
                     member.getKindergarten().getId(),
                     CalendarScopeType.KINDERGARTEN,
+                    RepeatType.NONE,
                     startDateTime,
-                    endDateTime
+                    endDateTime,
+                    startDateTime.toLocalDate()
             );
         }
 
@@ -324,8 +344,10 @@ public class CalendarEventService {
             return calendarEventRepository.findClassroomEvents(
                     classroomIds,
                     CalendarScopeType.CLASSROOM,
+                    RepeatType.NONE,
                     startDateTime,
-                    endDateTime
+                    endDateTime,
+                    startDateTime.toLocalDate()
             );
         }
 
@@ -333,8 +355,10 @@ public class CalendarEventService {
             return calendarEventRepository.findPersonalEvents(
                     member.getId(),
                     CalendarScopeType.PERSONAL,
+                    RepeatType.NONE,
                     startDateTime,
-                    endDateTime
+                    endDateTime,
+                    startDateTime.toLocalDate()
             );
         }
 
@@ -358,6 +382,67 @@ public class CalendarEventService {
         }
 
         return List.of();
+    }
+
+    private List<CalendarEventResponse> expandEvents(
+            List<CalendarEvent> events,
+            LocalDateTime rangeStart,
+            LocalDateTime rangeEnd
+    ) {
+        return events.stream()
+                .flatMap(event -> expandEvent(event, rangeStart, rangeEnd).stream())
+                .sorted(Comparator.comparing(CalendarEventResponse::startDateTime)
+                        .thenComparing(CalendarEventResponse::id))
+                .toList();
+    }
+
+    private List<CalendarEventResponse> expandEvent(
+            CalendarEvent event,
+            LocalDateTime rangeStart,
+            LocalDateTime rangeEnd
+    ) {
+        RepeatType repeatType = event.getRepeatType() == null ? RepeatType.NONE : event.getRepeatType();
+        if (repeatType == RepeatType.NONE || event.getRepeatEndDate() == null) {
+            if (!overlaps(event.getStartDateTime(), event.getEndDateTime(), rangeStart, rangeEnd)) {
+                return List.of();
+            }
+            return List.of(CalendarEventResponse.from(event));
+        }
+
+        Duration duration = Duration.between(event.getStartDateTime(), event.getEndDateTime());
+        LocalDateTime occurrenceStart = event.getStartDateTime();
+        List<CalendarEventResponse> responses = new ArrayList<>();
+
+        while (!occurrenceStart.toLocalDate().isAfter(event.getRepeatEndDate())) {
+            LocalDateTime occurrenceEnd = occurrenceStart.plus(duration);
+            if (overlaps(occurrenceStart, occurrenceEnd, rangeStart, rangeEnd)) {
+                responses.add(CalendarEventResponse.from(event, occurrenceStart, occurrenceEnd));
+            }
+            if (occurrenceStart.isAfter(rangeEnd)) {
+                break;
+            }
+            occurrenceStart = advanceOccurrence(occurrenceStart, repeatType);
+        }
+
+        return responses;
+    }
+
+    private boolean overlaps(
+            LocalDateTime occurrenceStart,
+            LocalDateTime occurrenceEnd,
+            LocalDateTime rangeStart,
+            LocalDateTime rangeEnd
+    ) {
+        return !occurrenceStart.isAfter(rangeEnd) && !occurrenceEnd.isBefore(rangeStart);
+    }
+
+    private LocalDateTime advanceOccurrence(LocalDateTime occurrenceStart, RepeatType repeatType) {
+        return switch (repeatType) {
+            case DAILY -> occurrenceStart.plusDays(1);
+            case WEEKLY -> occurrenceStart.plusWeeks(1);
+            case MONTHLY -> occurrenceStart.plusMonths(1);
+            case NONE -> occurrenceStart;
+        };
     }
 
     private record ScopeContext(CalendarScopeType scopeType, Kindergarten kindergarten, Classroom classroom) {

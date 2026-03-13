@@ -30,6 +30,14 @@ public record CalendarEventResponse(
         LocalDateTime updatedAt
 ) {
     public static CalendarEventResponse from(CalendarEvent event) {
+        return from(event, event.getStartDateTime(), event.getEndDateTime());
+    }
+
+    public static CalendarEventResponse from(
+            CalendarEvent event,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime
+    ) {
         Long kindergartenId = null;
         String kindergartenName = null;
         if (event.getKindergarten() != null) {
@@ -55,8 +63,8 @@ public record CalendarEventResponse(
                 event.getId(),
                 event.getTitle(),
                 event.getDescription(),
-                event.getStartDateTime(),
-                event.getEndDateTime(),
+                startDateTime,
+                endDateTime,
                 event.getEventType(),
                 event.getScopeType(),
                 Boolean.TRUE.equals(event.getIsAllDay()),
