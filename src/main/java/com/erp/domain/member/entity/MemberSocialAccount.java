@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "member_social_account",
@@ -33,11 +35,15 @@ public class MemberSocialAccount extends BaseEntity {
     @Column(name = "provider_id", nullable = false, length = 100)
     private String providerId;
 
+    @Column(name = "unlinked_at")
+    private LocalDateTime unlinkedAt;
+
     public static MemberSocialAccount create(Member member, MemberAuthProvider provider, String providerId) {
         MemberSocialAccount socialAccount = new MemberSocialAccount();
         socialAccount.member = member;
         socialAccount.provider = provider;
         socialAccount.providerId = providerId;
+        socialAccount.unlinkedAt = null;
         return socialAccount;
     }
 
@@ -47,5 +53,21 @@ public class MemberSocialAccount extends BaseEntity {
 
     public boolean matches(MemberAuthProvider provider, String providerId) {
         return this.provider == provider && this.providerId.equals(providerId);
+    }
+
+    public boolean hasProviderId(String providerId) {
+        return this.providerId.equals(providerId);
+    }
+
+    public boolean isActive() {
+        return this.unlinkedAt == null;
+    }
+
+    public void unlink() {
+        this.unlinkedAt = LocalDateTime.now();
+    }
+
+    public void relink() {
+        this.unlinkedAt = null;
     }
 }

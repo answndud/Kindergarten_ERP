@@ -4,6 +4,8 @@ import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.auth.service.SocialAccountLinkService;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.repository.MemberRepository;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -130,6 +133,49 @@ class OAuth2AuthenticationSuccessHandlerTest {
         assertThat(request.getSession(false)).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(socialAccountLinkService).linkSocialAccount(1L, MemberAuthProvider.GOOGLE, "google-sub-123");
+        verify(authService, never()).loginBySocial(any(), any());
+    }
+
+    @Test
+    @DisplayName("OAuth2 연결: 같은 provider의 다른 계정으로 교체하려 하면 구체적인 settings 오류로 돌려보낸다")
+    void onAuthenticationSuccess_RedirectsToReplacementBlocked_WhenProviderIdentityChanges() throws Exception {
+        DefaultOAuth2User principal = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_PARENT")),
+                Map.of(
+                        "sub", "google-replacement-456",
+                        "email", "linked@test.com",
+                        "name", "연결회원"
+                ),
+                "sub"
+        );
+        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+                principal,
+                principal.getAuthorities(),
+                "google"
+        );
+
+        MockHttpSession session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(oauth2LinkSessionService.load(request))
+                .thenReturn(Optional.of(new OAuth2LinkSessionService.SocialLinkIntent(1L, MemberAuthProvider.GOOGLE)));
+        doThrow(new BusinessException(ErrorCode.SOCIAL_PROVIDER_REPLACEMENT_NOT_ALLOWED))
+                .when(socialAccountLinkService)
+                .linkSocialAccount(1L, MemberAuthProvider.GOOGLE, "google-replacement-456");
+
+        successHandler.onAuthenticationSuccess(request, response, authentication);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo(
+                "/settings?socialLinkStatus=error&reason=provider-replacement-not-allowed"
+        );
+        assertThat(request.getSession(false)).isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(authService, never()).loginBySocial(any(), any());
     }
 }

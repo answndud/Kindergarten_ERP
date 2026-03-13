@@ -7,6 +7,12 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 21:17 | DONE | `V9__preserve_social_account_history.sql`과 `MemberSocialAccount.unlinkedAt`를 추가하고, unlink를 삭제가 아닌 비활성화로 전환. `Member`는 active/historical social account를 구분해 linked 상태, summary, legacy provider sync를 active 기준으로 재계산하도록 정리 | same-provider replacement 정책 및 UI 메시지 마감 |
+| 2026-03-13 21:17 | DONE | `SocialAccountLinkService`/`MemberRepository`를 보강해 active social lookup과 any-history lookup을 분리하고, 같은 provider에 과거 이력이 있는데 다른 `providerId`를 연결하려 하면 `A011`로 차단하도록 반영. settings 화면은 재연결 상태와 교체 금지 안내를 노출 | 서비스/OAuth2/view 테스트 보강 |
+| 2026-03-13 21:17 | DONE | `SocialAccountLinkServiceTest`를 추가하고 `MemberApiIntegrationTest`, `ViewEndpointTest`, `OAuth2AuthenticationSuccessHandlerTest`를 보강해 same-provider relink 허용, replacement 차단, settings 재연결 문구, callback error reason 매핑을 검증. `README.md`, `docs/phase/phase32_social_provider_identity_immutability.md` 문서화 완료 | 최종 검증 로그 기록 후 add/commit/push |
+| 2026-03-13 21:17 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest" --tests "com.erp.domain.auth.service.SocialAccountLinkServiceTest"`, `git diff --check` 통과 | add/commit/push 및 원격 CI 확인 |
+| 2026-03-13 21:16 | IN_PROGRESS | 새 후속 배치 시작. 소셜 계정 정규화 이후 흐름을 재점검한 결과, 현재 구조는 unlink 후 다른 같은 provider 계정으로 재연결할 수 있어 "로그인 식별자 불변" 정책이 실제로는 비어 있는 상태임을 확인 | `PLAN.md`를 소셜 provider 식별자 불변 정책 기준으로 갱신하고, unlink를 삭제가 아닌 이력 보존 구조로 전환 |
+| 2026-03-13 21:17 | IN_PROGRESS | `PLAN.md`를 후속 고도화 13차(소셜 provider 식별자 불변 정책 도입) 기준으로 갱신. 이번 배치는 same-provider replacement 차단, active/historical link 분리, settings/OAuth2 메시지 정리, 테스트/문서화까지 포함 | social account lifecycle 모델과 link/relink 정책 구현 |
 | 2026-03-13 21:03 | DONE | `member_social_account` 마이그레이션과 `MemberSocialAccount` 엔티티를 추가하고, `Member`/`MemberRepository`/`AuthenticatedMemberResolver`/`OAuth2AuthenticationSuccessHandler`/`SocialAccountLinkService`를 새 social account 구조 기준으로 전환. legacy `auth_provider/provider_id`는 primary provider sync 용도로만 유지 | settings UI와 테스트/문서 마감 |
 | 2026-03-13 21:03 | DONE | `settings.html`과 `AuthViewController`를 provider별 카드 UI로 재구성. Google/Kakao 동시 연결 표시, provider별 unlink 허용/차단 사유, unlink 성공 메시지를 다중 provider 정책에 맞춰 정리 | 통합 테스트 및 phase 문서 검증 |
 | 2026-03-13 21:03 | DONE | `MemberApiIntegrationTest`, `ViewEndpointTest`, `OAuth2AuthenticationSuccessHandlerTest`, `BaseIntegrationTest`, `TestData`를 보강해 다중 provider unlink, settings 렌더링, OAuth2 social lookup, `member_social_account` cleanup/reset 회귀를 반영. `README.md`, `docs/phase/phase31_member_social_account_normalization.md` 문서화 완료 | 최종 검증 로그 기록 후 add/commit/push |
@@ -102,5 +108,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 소셜 계정 다중 연결 구조 정규화 검증 완료
+- 활성 작업: 소셜 provider 식별자 불변 정책 도입 검증 완료
 - 블로커: 없음

@@ -59,10 +59,25 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
                     FROM MemberSocialAccount msa
                     WHERE msa.provider = :provider
                       AND msa.providerId = :providerId
+                      AND msa.unlinkedAt IS NULL
               )
             """)
     Optional<Member> findBySocialProviderAndProviderId(@Param("provider") MemberAuthProvider provider,
                                                         @Param("providerId") String providerId);
+
+    @Query("""
+            SELECT DISTINCT m
+            FROM Member m
+            LEFT JOIN FETCH m.socialAccounts
+            WHERE m.id IN (
+                    SELECT msa.member.id
+                    FROM MemberSocialAccount msa
+                    WHERE msa.provider = :provider
+                      AND msa.providerId = :providerId
+              )
+            """)
+    Optional<Member> findByAnySocialProviderAndProviderId(@Param("provider") MemberAuthProvider provider,
+                                                          @Param("providerId") String providerId);
 
     /**
      * 이메일 중복 확인

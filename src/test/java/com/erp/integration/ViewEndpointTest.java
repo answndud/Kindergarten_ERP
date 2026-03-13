@@ -182,6 +182,31 @@ class ViewEndpointTest extends TestcontainersSupport {
     }
 
     @Test
+    void testSettingsPageShowsReconnectGuidanceForHistoricallyLinkedProvider() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("재연결 정책 유치원", "서울시", "010-1212-3434", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member relinkMember = Member.createSocial(
+                "relink-policy@test.com",
+                "재연결정책회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-relink-123"
+        );
+        relinkMember.changePassword("encoded-local-password");
+        relinkMember.assignKindergarten(kindergarten);
+        relinkMember.unlinkSocialAccount(MemberAuthProvider.GOOGLE);
+        memberRepository.save(relinkMember);
+
+        mockMvc.perform(get("/settings").with(user(new CustomUserDetails(relinkMember))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Google 재연결")))
+                .andExpect(content().string(containsString("처음 연결했던 동일한 Google 계정만 다시 연결할 수 있습니다.")))
+                .andExpect(content().string(not(containsString("Google 연결됨"))));
+    }
+
+    @Test
     void testSettingsPageWithMultipleLinkedSocialAccountsShowsBothProviders() throws Exception {
         Kindergarten kindergarten = kindergartenRepository.save(
                 Kindergarten.create("다중 연결 유치원", "서울시", "010-9999-1111", LocalTime.of(9, 0), LocalTime.of(18, 0))

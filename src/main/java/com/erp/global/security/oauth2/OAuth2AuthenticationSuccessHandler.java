@@ -160,6 +160,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         return switch (errorCode) {
             case SOCIAL_ACCOUNT_ALREADY_LINKED -> "provider-in-use";
             case SOCIAL_PROVIDER_SLOT_OCCUPIED -> "provider-slot-occupied";
+            case SOCIAL_PROVIDER_REPLACEMENT_NOT_ALLOWED -> "provider-replacement-not-allowed";
             default -> "failed";
         };
     }
