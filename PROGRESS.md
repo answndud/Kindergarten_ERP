@@ -7,6 +7,7 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 19:41 | DONE | `ede8ceb` push 후 GitHub Actions run `23046823391` 최종 통과 확인. `Fast Checks` 57초, `Integration Suite` 3분 3초, artifact 업로드 정상 확인. 이전에 남던 Node20 deprecation annotation 섹션이 사라져 Node24 네이티브 action 전환 효과 확인 | 후속 개선 후보 선정 또는 배치 마감 |
 | 2026-03-13 19:36 | DONE | `.github/workflows/ci.yml`의 action major를 `checkout@v5`, `setup-java@v5`, `setup-gradle@v5`, `upload-artifact@v6`로 상향하고 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`를 제거 | README/phase 문서와 검증 결과 반영 |
 | 2026-03-13 19:37 | DONE | `README.md`, `docs/phase/phase22_github_actions_node24_native_actions.md` 반영. 검증 완료: `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/ci.yml')"` 및 `git diff --check` 통과 | 사용자 승인 시 add/commit/push |
 | 2026-03-13 19:31 | DONE | `4915d4c` 기준 GitHub Actions run `23046637472` 통과 확인. `Fast Checks` 54초, `Integration Suite` 2분 17초, artifact 업로드 정상 확인. 다만 `checkout/setup-java/setup-gradle/upload-artifact`가 여전히 Node20 deprecation annotation을 남기는 점 확인 | action major 업그레이드 범위 확인 및 workflow 갱신 |
