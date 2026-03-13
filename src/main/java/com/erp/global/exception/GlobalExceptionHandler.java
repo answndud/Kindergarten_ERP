@@ -31,7 +31,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<?>> handleBusinessException(BusinessException e) {
-        log.error("BusinessException: {}", e.getMessage());
+        if (e.getErrorCode().getStatus() >= 500) {
+            log.error("BusinessException: {}", e.getMessage(), e);
+        } else {
+            log.warn("BusinessException: {}", e.getMessage());
+        }
         return ResponseEntity
                 .status(e.getErrorCode().getStatus())
                 .body(ApiResponse.error(e.getErrorCode()));

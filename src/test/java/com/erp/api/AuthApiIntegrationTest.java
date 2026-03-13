@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.Set;
 
@@ -224,6 +224,37 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andDo(print())
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @DisplayName("로그인 - 반복 실패 시 이메일 기준 rate limit 초과")
+        void login_Fail_RateLimited_ByEmail() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "wrongpassword"
+                    }
+                    """;
+
+            for (int attempt = 0; attempt < 5; attempt++) {
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("203.0.113.10"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .with(remoteAddr("203.0.113.10"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andDo(print())
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("A006"));
+        }
     }
 
     @Nested
@@ -279,6 +310,36 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @DisplayName("토큰 갱신 - 반복 호출 시 IP 기준 rate limit 초과")
+        void refreshToken_Fail_RateLimited_ByIp() throws Exception {
+            LoginCookies loginCookies = loginAsParent("198.51.100.77");
+
+            for (int attempt = 0; attempt < 10; attempt++) {
+                MvcResult refreshResult = mockMvc.perform(post("/api/v1/auth/refresh")
+                                .with(csrf())
+                                .with(remoteAddr("198.51.100.77"))
+                                .cookie(loginCookies.refreshCookie()))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.success").value(true))
+                        .andReturn();
+
+                loginCookies = new LoginCookies(
+                        refreshResult.getResponse().getCookie("access_token"),
+                        refreshResult.getResponse().getCookie("refresh_token")
+                );
+            }
+
+            mockMvc.perform(post("/api/v1/auth/refresh")
+                            .with(csrf())
+                            .with(remoteAddr("198.51.100.77"))
+                            .cookie(loginCookies.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("A006"));
+        }
+
+        @Test
         @DisplayName("로그아웃 - 현재 세션만 정리하고 다른 기기 세션은 유지한다")
         void logout_Success_RevokesOnlyCurrentSession() throws Exception {
             LoginCookies firstLogin = loginAsParent();
@@ -309,6 +370,10 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
     }
 
     private LoginCookies loginAsParent() throws Exception {
+        return loginAsParent("127.0.0.1");
+    }
+
+    private LoginCookies loginAsParent(String ipAddress) throws Exception {
         String loginBody = """
                 {
                     "email": "parent@test.com",
@@ -318,6 +383,7 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
 
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                         .with(csrf())
+                        .with(remoteAddr(ipAddress))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody))
                 .andDo(print())
@@ -352,5 +418,12 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
     }
 
     private record LoginCookies(Cookie accessCookie, Cookie refreshCookie) {
+    }
+
+    private RequestPostProcessor remoteAddr(String ipAddress) {
+        return request -> {
+            request.setRemoteAddr(ipAddress);
+            return request;
+        };
     }
 }
