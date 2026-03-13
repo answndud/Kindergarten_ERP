@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:46 | DONE | `SocialAccountLinkService.unlinkSocialAccount`와 `DELETE /api/v1/members/social-link/{provider}`를 추가해 소셜 연결 해제 경로를 구현. 로컬 비밀번호가 없는 계정은 `A010`으로 차단하고, 성공 시 provider 슬롯을 `LOCAL/null` 상태로 되돌리도록 정리 | settings unlink UI 및 테스트 보강 |
+| 2026-03-13 20:46 | DONE | `settings.html`에 연결 해제 버튼/차단 사유를 추가하고, `MemberApiIntegrationTest`/`ViewEndpointTest`에 unlink 성공/차단/UI 회귀 테스트를 반영 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:46 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest"` 통과. `README.md`, `docs/phase/phase30_social_account_unlink_policy.md` 반영 | add/commit/push 진행 |
+| 2026-03-13 20:44 | IN_PROGRESS | 새 후속 배치 시작. 소셜 계정의 로컬 비밀번호 설정 이후 흐름을 점검한 결과, 연결 해제 기능이 없어 provider lifecycle이 반쪽 상태이며 로컬 비밀번호 없는 계정 잠금 방지 정책도 명시되지 않은 공백 확인 | `PLAN.md` 갱신 후 unlink 정책/API/UI 설계 |
+| 2026-03-13 20:44 | IN_PROGRESS | `PLAN.md`를 후속 고도화 11차(소셜 계정 연결 해제 정책 추가) 기준으로 갱신. 이번 배치는 unlink endpoint, 잠금 방지 정책, settings 상태/UI 보강에 집중 | SocialAccountLinkService/Member API/settings/view test 수정 |
 | 2026-03-13 20:42 | DONE | `MemberService.setInitialPassword`와 `POST /api/v1/members/password/bootstrap`를 추가해 소셜 전용 계정의 초기 로컬 비밀번호 설정 경로를 구현. 이미 로컬 비밀번호가 있는 계정은 `M005`로 차단 | settings 화면/회원 테스트 보강 |
 | 2026-03-13 20:42 | DONE | `settings.html`을 로컬 비밀번호 보유 여부에 따라 "비밀번호 변경"과 "로컬 비밀번호 설정"으로 분기. `MemberApiIntegrationTest`와 `ViewEndpointTest`에 password bootstrap 성공/차단/UI 회귀 테스트 추가 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:42 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest"` 통과. `README.md`, `docs/phase/phase29_social_password_bootstrap.md` 반영 | add/commit/push 진행 |
@@ -91,5 +96,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 소셜 전용 계정의 로컬 비밀번호 설정 추가 검증 완료
+- 활성 작업: 소셜 계정 연결 해제 정책 추가 검증 완료
 - 블로커: 없음

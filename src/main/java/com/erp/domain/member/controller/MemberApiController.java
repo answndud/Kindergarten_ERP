@@ -2,9 +2,13 @@ package com.erp.domain.member.controller;
 
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.auth.service.AuthService;
+import com.erp.domain.auth.service.SocialAccountLinkService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.user.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -27,6 +31,7 @@ public class MemberApiController {
 
     private final MemberService memberService;
     private final AuthService authService;
+    private final SocialAccountLinkService socialAccountLinkService;
 
     /**
      * 내 프로필 조회
@@ -102,6 +107,15 @@ public class MemberApiController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
+    @DeleteMapping("/social-link/{provider}")
+    public ResponseEntity<ApiResponse<Void>> unlinkSocialAccount(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String provider
+    ) {
+        socialAccountLinkService.unlinkSocialAccount(userDetails.getMemberId(), resolveProvider(provider));
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     /**
      * 회원 탈퇴
      */
@@ -142,5 +156,21 @@ public class MemberApiController {
         @NotBlank(message = "새 비밀번호는 필수입니다")
         @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다")
         private String newPassword;
+    }
+
+    private MemberAuthProvider resolveProvider(String provider) {
+        if (provider == null || provider.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        try {
+            MemberAuthProvider resolved = MemberAuthProvider.valueOf(provider.trim().toUpperCase());
+            if (resolved == MemberAuthProvider.LOCAL) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            return resolved;
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 }

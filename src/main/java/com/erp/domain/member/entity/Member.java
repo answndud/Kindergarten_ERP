@@ -157,6 +157,11 @@ public class Member extends BaseEntity {
         this.providerId = providerId;
     }
 
+    public void unlinkSocialAccount() {
+        this.authProvider = MemberAuthProvider.LOCAL;
+        this.providerId = null;
+    }
+
     /**
      * 유치원 배정
      */

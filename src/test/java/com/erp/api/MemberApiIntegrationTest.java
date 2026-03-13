@@ -124,6 +124,55 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.code").value("M005"));
     }
 
+    @Test
+    @DisplayName("로컬 비밀번호가 있는 계정 - 연결된 소셜 로그인을 해제할 수 있다")
+    void unlinkSocialAccount_Success_WhenLocalPasswordExists() throws Exception {
+        Member linkedMember = Member.createSocial(
+                "unlinkable@test.com",
+                "연결해제회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-unlink-123"
+        );
+        linkedMember.changePassword(passwordEncoder.encode("Local1234!"));
+        linkedMember.assignKindergarten(kindergarten);
+        memberRepository.saveAndFlush(linkedMember);
+
+        mockMvc.perform(delete("/api/v1/members/social-link/google")
+                        .with(authenticated(linkedMember))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Member updatedMember = memberRepository.findById(linkedMember.getId()).orElseThrow();
+        assertThat(updatedMember.getAuthProvider()).isEqualTo(MemberAuthProvider.LOCAL);
+        assertThat(updatedMember.getProviderId()).isNull();
+        assertThat(updatedMember.hasLocalPassword()).isTrue();
+    }
+
+    @Test
+    @DisplayName("로컬 비밀번호가 없는 계정 - 소셜 연결 해제가 차단된다")
+    void unlinkSocialAccount_Fail_WhenNoLocalPasswordExists() throws Exception {
+        Member socialOnlyMember = Member.createSocial(
+                "unlink-blocked@test.com",
+                "연결해제차단회원",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-unlink-blocked-123"
+        );
+        socialOnlyMember.assignKindergarten(kindergarten);
+        memberRepository.saveAndFlush(socialOnlyMember);
+
+        mockMvc.perform(delete("/api/v1/members/social-link/google")
+                        .with(authenticated(socialOnlyMember))
+                        .with(csrf()))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("A010"));
+    }
+
     private LoginCookies loginAsParent() throws Exception {
         String loginBody = """
                 {
