@@ -1,6 +1,9 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.authaudit.entity.AuthAuditEventType;
+import com.erp.domain.authaudit.entity.AuthAuditResult;
+import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
@@ -26,6 +29,9 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private AuthAuditLogRepository authAuditLogRepository;
 
     @Test
     @DisplayName("회원 탈퇴 - 모든 refresh 세션을 정리하고 현재 브라우저 쿠키를 만료시킨다")
@@ -151,6 +157,22 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
         assertThat(updatedMember.hasLocalPassword()).isTrue();
         assertThat(updatedMember.hasLinkedSocialAccount()).isFalse();
         assertThat(updatedMember.hasSocialAccountHistory(MemberAuthProvider.GOOGLE)).isTrue();
+
+        var auditLogs = readCommitted(authAuditLogRepository::findAllByCreatedAtAsc);
+        assertThat(auditLogs).isNotEmpty();
+        assertThat(auditLogs.get(auditLogs.size() - 1))
+                .extracting(
+                        auditLog -> auditLog.getEventType(),
+                        auditLog -> auditLog.getResult(),
+                        auditLog -> auditLog.getProvider(),
+                        auditLog -> auditLog.getEmail()
+                )
+                .containsExactly(
+                        AuthAuditEventType.SOCIAL_UNLINK,
+                        AuthAuditResult.SUCCESS,
+                        MemberAuthProvider.GOOGLE,
+                        "unlinkable@test.com"
+                );
     }
 
     @Test
@@ -201,6 +223,24 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("A010"));
+
+        var auditLogs = readCommitted(authAuditLogRepository::findAllByCreatedAtAsc);
+        assertThat(auditLogs).isNotEmpty();
+        assertThat(auditLogs.get(auditLogs.size() - 1))
+                .extracting(
+                        auditLog -> auditLog.getEventType(),
+                        auditLog -> auditLog.getResult(),
+                        auditLog -> auditLog.getProvider(),
+                        auditLog -> auditLog.getEmail(),
+                        auditLog -> auditLog.getReason()
+                )
+                .containsExactly(
+                        AuthAuditEventType.SOCIAL_UNLINK,
+                        AuthAuditResult.FAILURE,
+                        MemberAuthProvider.GOOGLE,
+                        "unlink-blocked@test.com",
+                        "A010"
+                );
     }
 
     private LoginCookies loginAsParent() throws Exception {

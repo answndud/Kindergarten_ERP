@@ -1,6 +1,10 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.authaudit.entity.AuthAuditEventType;
+import com.erp.domain.authaudit.entity.AuthAuditResult;
+import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
+import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +34,9 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private AuthAuditLogRepository authAuditLogRepository;
 
     @AfterEach
     void cleanupRedisState() {
@@ -147,6 +154,22 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
+
+            var auditLogs = readCommitted(authAuditLogRepository::findAllByCreatedAtAsc);
+            assertThat(auditLogs).isNotEmpty();
+            assertThat(auditLogs.get(auditLogs.size() - 1))
+                    .extracting(
+                            auditLog -> auditLog.getEventType(),
+                            auditLog -> auditLog.getResult(),
+                            auditLog -> auditLog.getProvider(),
+                            auditLog -> auditLog.getEmail()
+                    )
+                    .containsExactly(
+                            AuthAuditEventType.LOGIN,
+                            AuthAuditResult.SUCCESS,
+                            MemberAuthProvider.LOCAL,
+                            "parent@test.com"
+                    );
         }
 
         @Test
@@ -167,6 +190,24 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.code").value("A001"));
+
+            var auditLogs = readCommitted(authAuditLogRepository::findAllByCreatedAtAsc);
+            assertThat(auditLogs).isNotEmpty();
+            assertThat(auditLogs.get(auditLogs.size() - 1))
+                    .extracting(
+                            auditLog -> auditLog.getEventType(),
+                            auditLog -> auditLog.getResult(),
+                            auditLog -> auditLog.getProvider(),
+                            auditLog -> auditLog.getEmail(),
+                            auditLog -> auditLog.getReason()
+                    )
+                    .containsExactly(
+                            AuthAuditEventType.LOGIN,
+                            AuthAuditResult.FAILURE,
+                            MemberAuthProvider.LOCAL,
+                            "parent@test.com",
+                            "A001"
+                    );
         }
 
         @Test
@@ -464,6 +505,22 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.code").value("A005"));
+
+            var auditLogs = readCommitted(authAuditLogRepository::findAllByCreatedAtAsc);
+            assertThat(auditLogs).isNotEmpty();
+            assertThat(auditLogs.get(auditLogs.size() - 1))
+                    .extracting(
+                            auditLog -> auditLog.getEventType(),
+                            auditLog -> auditLog.getResult(),
+                            auditLog -> auditLog.getEmail(),
+                            auditLog -> auditLog.getReason()
+                    )
+                    .containsExactly(
+                            AuthAuditEventType.REFRESH,
+                            AuthAuditResult.FAILURE,
+                            "parent@test.com",
+                            "A005"
+                    );
         }
 
         @Test

@@ -1,12 +1,18 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 (CI 실행 확인 + JWT 세션 설계 + 대시보드 지표 보정 + CI 최적화 + 인터뷰용 문서화)
+- 후속 고도화 14차 (인증/소셜 감사 로그 도입)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 21:35 | DONE | `auth_audit_log` 마이그레이션, `AuthAuditLog` 엔티티/리포지토리/서비스를 추가하고 login/refresh/social link/unlink 성공·실패를 DB 감사 로그로 기록하도록 연결. 저장은 `REQUIRES_NEW` + 내부 예외 swallow/warn 처리로 분리 | 테스트 가시성 문제 정리 및 문서화 |
+| 2026-03-13 21:35 | DONE | `BaseIntegrationTest.readCommitted(...)` 헬퍼를 추가하고 `AuthApiIntegrationTest`, `MemberApiIntegrationTest`, `OAuth2AuthenticationSuccessHandlerTest`에 감사 로그 회귀 검증을 반영. 기존 테스트 트랜잭션과 별도 감사 로그 트랜잭션의 가시성 차이를 새 트랜잭션 조회로 해소 | README/phase 문서 및 최종 로컬 검증 |
+| 2026-03-13 21:35 | DONE | `README.md`, `docs/phase/phase33_auth_social_audit_log.md`에 감사 로그 도입 이유, 저장 필드, FK 미사용 이유, `REQUIRES_NEW` 선택 배경, 인터뷰 포인트를 기록 | add/commit/push 및 원격 CI 확인 |
+| 2026-03-13 21:35 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.MemberApiIntegrationTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"`, `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
+| 2026-03-13 21:24 | IN_PROGRESS | 새 후속 배치 시작. 인증/소셜 흐름을 점검한 결과 로그인 실패, refresh 실패, 소셜 연결/해제 같은 보안 이벤트가 DB에 전혀 남지 않아 면접에서 운영·감사 추적 이야기를 하기 어려운 공백 확인 | `PLAN.md`를 인증/소셜 감사 로그 도입 기준으로 갱신하고 저장 필드/트랜잭션 경계 설계 |
+| 2026-03-13 21:25 | IN_PROGRESS | `PLAN.md`를 후속 고도화 14차(인증/소셜 감사 로그 도입) 기준으로 갱신. 이번 배치는 `auth_audit_log` 모델 추가, login/refresh/social link/unlink 이벤트 저장, 테스트/문서화까지 포함 | 감사 로그 저장 경로와 회귀 테스트 구현 |
 | 2026-03-13 21:17 | DONE | `V9__preserve_social_account_history.sql`과 `MemberSocialAccount.unlinkedAt`를 추가하고, unlink를 삭제가 아닌 비활성화로 전환. `Member`는 active/historical social account를 구분해 linked 상태, summary, legacy provider sync를 active 기준으로 재계산하도록 정리 | same-provider replacement 정책 및 UI 메시지 마감 |
 | 2026-03-13 21:17 | DONE | `SocialAccountLinkService`/`MemberRepository`를 보강해 active social lookup과 any-history lookup을 분리하고, 같은 provider에 과거 이력이 있는데 다른 `providerId`를 연결하려 하면 `A011`로 차단하도록 반영. settings 화면은 재연결 상태와 교체 금지 안내를 노출 | 서비스/OAuth2/view 테스트 보강 |
 | 2026-03-13 21:17 | DONE | `SocialAccountLinkServiceTest`를 추가하고 `MemberApiIntegrationTest`, `ViewEndpointTest`, `OAuth2AuthenticationSuccessHandlerTest`를 보강해 same-provider relink 허용, replacement 차단, settings 재연결 문구, callback error reason 매핑을 검증. `README.md`, `docs/phase/phase32_social_provider_identity_immutability.md` 문서화 완료 | 최종 검증 로그 기록 후 add/commit/push |
@@ -107,6 +113,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 소셜 provider 식별자 불변 정책 도입 검증 완료
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: 인증/소셜 감사 로그 도입
 - 블로커: 없음

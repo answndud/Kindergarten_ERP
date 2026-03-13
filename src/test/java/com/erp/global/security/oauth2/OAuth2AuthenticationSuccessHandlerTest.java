@@ -2,10 +2,14 @@ package com.erp.global.security.oauth2;
 
 import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.auth.service.SocialAccountLinkService;
+import com.erp.domain.authaudit.service.AuthAuditLogService;
+import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
+import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.ClientIpResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,6 +52,12 @@ class OAuth2AuthenticationSuccessHandlerTest {
     @Mock
     private OAuth2LinkSessionService oauth2LinkSessionService;
 
+    @Mock
+    private AuthAuditLogService authAuditLogService;
+
+    @Mock
+    private ClientIpResolver clientIpResolver;
+
     @InjectMocks
     private OAuth2AuthenticationSuccessHandler successHandler;
 
@@ -83,6 +93,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
 
+        when(clientIpResolver.resolve(request)).thenReturn("203.0.113.10");
         when(memberRepository.findBySocialProviderAndProviderId(MemberAuthProvider.GOOGLE, "google-sub-123"))
                 .thenReturn(Optional.empty());
         when(memberRepository.existsByEmail("existing@test.com"))
@@ -94,6 +105,12 @@ class OAuth2AuthenticationSuccessHandlerTest {
         assertThat(response.getRedirectedUrl()).isEqualTo("/login?error=social_account_conflict");
         assertThat(request.getSession(false)).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(authAuditLogService).recordLoginFailure(
+                "existing@test.com",
+                MemberAuthProvider.GOOGLE,
+                "203.0.113.10",
+                "social_account_conflict"
+        );
         verify(authService, never()).loginBySocial(any(), any());
     }
 
@@ -124,14 +141,24 @@ class OAuth2AuthenticationSuccessHandlerTest {
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
 
+        when(clientIpResolver.resolve(request)).thenReturn("203.0.113.10");
         when(oauth2LinkSessionService.load(request))
                 .thenReturn(Optional.of(new OAuth2LinkSessionService.SocialLinkIntent(1L, MemberAuthProvider.GOOGLE)));
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(
+                Member.create("linked@test.com", "encoded", "연결회원", "01000000000", MemberRole.PARENT)
+        ));
 
         successHandler.onAuthenticationSuccess(request, response, authentication);
 
         assertThat(response.getRedirectedUrl()).isEqualTo("/settings?socialLinkStatus=success&provider=google");
         assertThat(request.getSession(false)).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(authAuditLogService).recordSocialLinkSuccess(
+                1L,
+                "linked@test.com",
+                MemberAuthProvider.GOOGLE,
+                "203.0.113.10"
+        );
         verify(socialAccountLinkService).linkSocialAccount(1L, MemberAuthProvider.GOOGLE, "google-sub-123");
         verify(authService, never()).loginBySocial(any(), any());
     }
@@ -163,8 +190,12 @@ class OAuth2AuthenticationSuccessHandlerTest {
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
 
+        when(clientIpResolver.resolve(request)).thenReturn("203.0.113.10");
         when(oauth2LinkSessionService.load(request))
                 .thenReturn(Optional.of(new OAuth2LinkSessionService.SocialLinkIntent(1L, MemberAuthProvider.GOOGLE)));
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(
+                Member.create("linked@test.com", "encoded", "연결회원", "01000000000", MemberRole.PARENT)
+        ));
         doThrow(new BusinessException(ErrorCode.SOCIAL_PROVIDER_REPLACEMENT_NOT_ALLOWED))
                 .when(socialAccountLinkService)
                 .linkSocialAccount(1L, MemberAuthProvider.GOOGLE, "google-replacement-456");
@@ -176,6 +207,13 @@ class OAuth2AuthenticationSuccessHandlerTest {
         );
         assertThat(request.getSession(false)).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(authAuditLogService).recordSocialLinkFailure(
+                1L,
+                "linked@test.com",
+                MemberAuthProvider.GOOGLE,
+                "203.0.113.10",
+                "A011"
+        );
         verify(authService, never()).loginBySocial(any(), any());
     }
 }

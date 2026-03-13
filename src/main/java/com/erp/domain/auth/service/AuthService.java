@@ -1,5 +1,7 @@
 package com.erp.domain.auth.service;
 
+import com.erp.domain.authaudit.service.AuthAuditLogService;
+import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.service.MemberService;
@@ -38,6 +40,7 @@ public class AuthService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final AuthLoginBootstrapService authLoginBootstrapService;
     private final AuthRateLimitService authRateLimitService;
+    private final AuthAuditLogService authAuditLogService;
 
     /**
      * 회원가입
@@ -62,9 +65,9 @@ public class AuthService {
      * 로그인
      */
     public void login(String email, String password, String clientIp, HttpServletResponse response) {
-        authRateLimitService.validateLoginAllowed(clientIp, email);
-
         try {
+            authRateLimitService.validateLoginAllowed(clientIp, email);
+
             // 1. 인증 시도
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -76,10 +79,30 @@ public class AuthService {
             // 2. 회원 정보 조회
             Member member = memberService.getMemberByEmail(email);
             issueTokens(member, response);
+            authAuditLogService.recordLoginSuccess(
+                    member.getId(),
+                    member.getEmail(),
+                    MemberAuthProvider.LOCAL,
+                    clientIp
+            );
 
         } catch (AuthenticationException e) {
             authRateLimitService.recordLoginFailure(clientIp, email);
+            authAuditLogService.recordLoginFailure(
+                    email,
+                    MemberAuthProvider.LOCAL,
+                    clientIp,
+                    ErrorCode.INVALID_CREDENTIALS.getCode()
+            );
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        } catch (BusinessException e) {
+            authAuditLogService.recordLoginFailure(
+                    email,
+                    MemberAuthProvider.LOCAL,
+                    clientIp,
+                    e.getErrorCode().getCode()
+            );
+            throw e;
         }
     }
 
@@ -101,40 +124,52 @@ public class AuthService {
      * Access Token 갱신
      */
     public void refreshAccessToken(String refreshToken, String clientIp, HttpServletResponse response) {
-        authRateLimitService.validateRefreshAllowed(clientIp);
+        Long memberId = null;
+        String email = null;
 
-        TokenSessionClaims claims = extractRefreshTokenClaims(refreshToken);
-        String refreshTokenKey = getRefreshTokenKey(claims.memberId(), claims.sessionId());
-        Object savedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
-        if (!(savedRefreshToken instanceof String storedToken)) {
-            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        try {
+            authRateLimitService.validateRefreshAllowed(clientIp);
+
+            TokenSessionClaims claims = extractRefreshTokenClaims(refreshToken);
+            memberId = claims.memberId();
+            email = claims.email();
+
+            String refreshTokenKey = getRefreshTokenKey(claims.memberId(), claims.sessionId());
+            Object savedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
+            if (!(savedRefreshToken instanceof String storedToken)) {
+                throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+            }
+            if (!storedToken.equals(refreshToken)) {
+                throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+            }
+
+            Member member = memberService.getMemberById(claims.memberId());
+            validateRefreshTargetMember(member, claims.email());
+
+            String newAccessToken = jwtTokenProvider.createAccessToken(
+                    member.getId(),
+                    member.getEmail(),
+                    member.getRole().getKey(),
+                    claims.sessionId()
+            );
+            String newRefreshToken = jwtTokenProvider.createRefreshToken(
+                    member.getId(),
+                    member.getEmail(),
+                    member.getRole().getKey(),
+                    claims.sessionId()
+            );
+
+            saveRefreshSession(member.getId(), claims.sessionId(), newRefreshToken);
+
+            addCookie(response, jwtTokenProvider.getAccessTokenCookieName(), newAccessToken,
+                    (int) (jwtTokenProvider.getAccessTokenValidity() / 1000));
+            addCookie(response, jwtTokenProvider.getRefreshTokenCookieName(), newRefreshToken,
+                    (int) (jwtTokenProvider.getRefreshTokenValidity() / 1000));
+            authAuditLogService.recordRefreshSuccess(member.getId(), member.getEmail(), clientIp);
+        } catch (BusinessException e) {
+            authAuditLogService.recordRefreshFailure(memberId, email, clientIp, e.getErrorCode().getCode());
+            throw e;
         }
-        if (!storedToken.equals(refreshToken)) {
-            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
-        }
-
-        Member member = memberService.getMemberById(claims.memberId());
-        validateRefreshTargetMember(member, claims.email());
-
-        String newAccessToken = jwtTokenProvider.createAccessToken(
-                member.getId(),
-                member.getEmail(),
-                member.getRole().getKey(),
-                claims.sessionId()
-        );
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(
-                member.getId(),
-                member.getEmail(),
-                member.getRole().getKey(),
-                claims.sessionId()
-        );
-
-        saveRefreshSession(member.getId(), claims.sessionId(), newRefreshToken);
-
-        addCookie(response, jwtTokenProvider.getAccessTokenCookieName(), newAccessToken,
-                (int) (jwtTokenProvider.getAccessTokenValidity() / 1000));
-        addCookie(response, jwtTokenProvider.getRefreshTokenCookieName(), newRefreshToken,
-                (int) (jwtTokenProvider.getRefreshTokenValidity() / 1000));
     }
 
     public void revokeAllSessions(Long memberId, HttpServletResponse response) {
