@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 20:28 | DONE | `AuthRateLimitService`를 사전 확인/실패 기록/성공 초기화 구조로 분리하고, `AuthService`에서 로그인 성공은 이메일 실패 카운터를 지우고 실패만 누적하도록 정책 정교화 | Auth 통합 테스트 및 문서화 |
+| 2026-03-13 20:31 | DONE | `AuthApiIntegrationTest`에 반복 성공 로그인 비차단, 성공 후 이메일 실패 카운터 초기화 시나리오를 추가 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:32 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase25_login_rate_limit_policy_refinement.md` 반영. 직전 배치 원격 CI run `23047455397`도 성공 확인 | 사용자 승인 시 add/commit/push |
+| 2026-03-13 20:21 | IN_PROGRESS | 새 후속 배치 시작. 인증 rate limit 정책 재점검 결과 로그인 성공도 실패 예산에 포함돼 같은 사용자가 짧은 시간에 여러 번 정상 로그인해도 차단될 수 있는 설계 문제 확인 | `PLAN.md` 갱신 후 Auth rate limit 정책 조정 |
+| 2026-03-13 20:22 | IN_PROGRESS | `PLAN.md`를 후속 고도화 6차(로그인 Rate Limit 정책 정교화) 기준으로 갱신. 이번 배치는 실패만 누적, 성공 시 이메일 실패 카운터 초기화, auth 테스트 보강에 집중 | AuthService/AuthRateLimitService/AuthApiIntegrationTest 수정 |
 | 2026-03-13 20:14 | DONE | `ClientIpResolver`/`ClientIpProperties` 추가 후 로그인/refresh API를 trusted proxy 기준 client IP 해석으로 전환. untrusted remote는 `remoteAddr`만 사용하고, loopback 및 설정된 proxy만 전달 헤더를 신뢰하도록 정리 | Auth 통합 테스트 및 문서화 |
 | 2026-03-13 20:17 | DONE | `AuthApiIntegrationTest`에 spoofed `X-Forwarded-For` 무시, trusted loopback proxy에서 전달 헤더 반영 시나리오를 추가 | README/phase 문서 반영 및 최종 검증 |
 | 2026-03-13 20:18 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase24_auth_client_ip_trust_model.md` 반영 | 사용자 승인 시 add/commit/push |
@@ -67,5 +72,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 인증 Client IP 신뢰 모델 하드닝 마무리, 사용자 승인 대기
+- 활성 작업: 로그인 Rate Limit 정책 정교화 마무리, 사용자 승인 대기
 - 블로커: 없음

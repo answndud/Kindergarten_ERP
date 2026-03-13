@@ -28,6 +28,11 @@ public class AuthRateLimitService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     public void validateLoginAllowed(String clientIp, String email) {
+        assertUnderLimit(LOGIN_IP_KEY_PREFIX + normalizeClientIp(clientIp), LOGIN_IP_LIMIT);
+        assertUnderLimit(LOGIN_EMAIL_KEY_PREFIX + normalizeEmail(email), LOGIN_EMAIL_LIMIT);
+    }
+
+    public void recordLoginFailure(String clientIp, String email) {
         consumeSlot(
                 LOGIN_IP_KEY_PREFIX + normalizeClientIp(clientIp),
                 LOGIN_IP_LIMIT,
@@ -38,6 +43,10 @@ public class AuthRateLimitService {
                 LOGIN_EMAIL_LIMIT,
                 LOGIN_WINDOW
         );
+    }
+
+    public void clearLoginFailures(String email) {
+        redisTemplate.delete(LOGIN_EMAIL_KEY_PREFIX + normalizeEmail(email));
     }
 
     public void validateRefreshAllowed(String clientIp) {
@@ -57,6 +66,28 @@ public class AuthRateLimitService {
         if (attempts != null && attempts > limit) {
             throw new BusinessException(ErrorCode.AUTH_RATE_LIMITED);
         }
+    }
+
+    private void assertUnderLimit(String key, long limit) {
+        Long attempts = readAttempts(key);
+        if (attempts != null && attempts >= limit) {
+            throw new BusinessException(ErrorCode.AUTH_RATE_LIMITED);
+        }
+    }
+
+    private Long readAttempts(String key) {
+        Object value = redisTemplate.opsForValue().get(key);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text) {
+            try {
+                return Long.parseLong(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private String normalizeClientIp(String clientIp) {

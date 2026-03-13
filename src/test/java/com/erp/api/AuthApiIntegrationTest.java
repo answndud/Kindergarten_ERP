@@ -226,6 +226,27 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @DisplayName("로그인 - 반복 성공은 rate limit에 누적되지 않는다")
+        void login_Success_RepeatedSuccessfulLoginsAreNotRateLimited() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "test1234"
+                    }
+                    """;
+
+            for (int attempt = 0; attempt < 6; attempt++) {
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("203.0.113.40"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.success").value(true));
+            }
+        }
+
+        @Test
         @DisplayName("로그인 - 반복 실패 시 이메일 기준 rate limit 초과")
         void login_Fail_RateLimited_ByEmail() throws Exception {
             String requestBody = """
@@ -250,6 +271,62 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                             .with(remoteAddr("203.0.113.10"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(requestBody))
+                    .andDo(print())
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("A006"));
+        }
+
+        @Test
+        @DisplayName("로그인 - 성공 후 이메일 실패 카운터가 초기화된다")
+        void login_Success_ClearsEmailFailureCounter() throws Exception {
+            String wrongPasswordBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "wrongpassword"
+                    }
+                    """;
+
+            for (int attempt = 0; attempt < 4; attempt++) {
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("203.0.113.55"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(wrongPasswordBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            String successBody = """
+                    {
+                        "email": "parent@test.com",
+                        "password": "test1234"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .with(remoteAddr("203.0.113.55"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(successBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            for (int attempt = 0; attempt < 5; attempt++) {
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("203.0.113.56"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(wrongPasswordBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .with(remoteAddr("203.0.113.56"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(wrongPasswordBody))
                     .andDo(print())
                     .andExpect(status().isTooManyRequests())
                     .andExpect(jsonPath("$.success").value(false))
