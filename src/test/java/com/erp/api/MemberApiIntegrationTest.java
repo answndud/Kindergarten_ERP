@@ -1,6 +1,9 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.member.entity.Member;
+import com.erp.domain.member.entity.MemberAuthProvider;
+import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
@@ -53,6 +56,72 @@ class MemberApiIntegrationTest extends BaseIntegrationTest {
         assertThat(withdrawResult.getResponse().getCookie("access_token").getMaxAge()).isZero();
         assertThat(withdrawResult.getResponse().getCookie("refresh_token")).isNotNull();
         assertThat(withdrawResult.getResponse().getCookie("refresh_token").getMaxAge()).isZero();
+    }
+
+    @Test
+    @DisplayName("소셜 전용 계정 - 초기 로컬 비밀번호를 설정할 수 있다")
+    void bootstrapPassword_Success_ForSocialOnlyAccount() throws Exception {
+        Member socialMember = Member.createSocial(
+                "social-bootstrap@test.com",
+                "소셜부트스트랩",
+                MemberRole.PARENT,
+                MemberAuthProvider.GOOGLE,
+                "google-bootstrap-123"
+        );
+        socialMember.assignKindergarten(kindergarten);
+        memberRepository.saveAndFlush(socialMember);
+
+        String requestBody = """
+                {
+                    "newPassword": "Boot1234!"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/members/password/bootstrap")
+                        .with(authenticated(socialMember))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Member updatedMember = memberRepository.findById(socialMember.getId()).orElseThrow();
+        assertThat(updatedMember.hasLocalPassword()).isTrue();
+        assertThat(passwordEncoder.matches("Boot1234!", updatedMember.getPassword())).isTrue();
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "social-bootstrap@test.com",
+                                    "password": "Boot1234!"
+                                }
+                                """))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("로컬 비밀번호가 이미 있는 계정 - 초기 비밀번호 설정 API를 사용할 수 없다")
+    void bootstrapPassword_Fail_WhenPasswordAlreadyExists() throws Exception {
+        String requestBody = """
+                {
+                    "newPassword": "Boot1234!"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/members/password/bootstrap")
+                        .with(authenticated(parentMember))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("M005"));
     }
 
     private LoginCookies loginAsParent() throws Exception {

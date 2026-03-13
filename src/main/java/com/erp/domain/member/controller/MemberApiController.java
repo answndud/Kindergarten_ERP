@@ -91,6 +91,18 @@ public class MemberApiController {
     }
 
     /**
+     * 소셜 전용 계정의 초기 로컬 비밀번호 설정
+     */
+    @PostMapping("/password/bootstrap")
+    public ResponseEntity<ApiResponse<Void>> bootstrapPassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody BootstrapPasswordRequest request
+    ) {
+        memberService.setInitialPassword(userDetails.getMemberId(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    /**
      * 회원 탈퇴
      */
     @DeleteMapping("/withdraw")
@@ -120,6 +132,13 @@ public class MemberApiController {
         @NotBlank(message = "현재 비밀번호는 필수입니다")
         private String currentPassword;
 
+        @NotBlank(message = "새 비밀번호는 필수입니다")
+        @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다")
+        private String newPassword;
+    }
+
+    @Data
+    public static class BootstrapPasswordRequest {
         @NotBlank(message = "새 비밀번호는 필수입니다")
         @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다")
         private String newPassword;
