@@ -8,6 +8,9 @@ spring:
 
   profiles:
     active: local  # 기본 활성 프로파일
+    group:
+      demo:
+        - local
 
   # JPA 설정
   jpa:
@@ -50,7 +53,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
@@ -90,3 +93,12 @@ app:
   security:
     client-ip:
       trusted-proxies: []
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    operations-sorter: alpha
+    tags-sorter: alpha

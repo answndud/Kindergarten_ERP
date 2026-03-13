@@ -32,9 +32,11 @@
 - 멀티테넌시 권한 경계 하드닝
 - Redis 기반 JWT refresh session 분리와 rotation
 - MySQL/Redis Testcontainers 기반 통합 테스트
-- Actuator health/readiness, correlation id, request structured logging
-- DB 기반 인증 감사 로그와 원장 전용 조회 API
+- Swagger/OpenAPI 기반 API 계약 문서
+- Actuator health/readiness, Prometheus, correlation id, request structured logging
+- DB 기반 인증 감사 로그, 원장 전용 조회 API, 감사 로그 운영 화면
 - 정확도와 쿼리 수를 함께 관리한 대시보드 지표 개선
+- `demo` 프로파일 기반 시연용 seed/bootstrap
 
 ### 프로젝트 철학
 
@@ -64,6 +66,7 @@
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ DB 기반 로그인/refresh/소셜 연결 감사 로그
 - ✅ 원장 전용 인증 감사 로그 조회 API
+- ✅ 원장 전용 인증 감사 로그 화면
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
@@ -108,7 +111,9 @@
 - ✅ trusted proxy 기준 client IP 해석
 - ✅ 로그인 실패 전용 rate limit 정책
 - ✅ DB 기반 auth/social audit trail
-- ✅ Actuator health/info 및 liveness/readiness probe
+- ✅ Swagger UI / OpenAPI JSON 계약 문서
+- ✅ Actuator health/info/prometheus 및 liveness/readiness probe
+- ✅ Prometheus scrape endpoint와 auth event counter
 - ✅ correlation id 응답 헤더 및 request structured logging
 - ✅ OAuth2 principal 런타임 안전성 보강
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
@@ -145,6 +150,7 @@
 | QueryDSL | 5.0.0 | 동적 쿼리 |
 | Spring Security | - | 인증/인가 |
 | Spring Boot Actuator | - | health/info, 운영 관측성 |
+| Springdoc OpenAPI | 2.8.16 | Swagger UI, API 계약 문서 |
 | JWT (jjwt) | 0.12.6 | 토큰 인증 |
 | OAuth2 Client | - | Google/Kakao 로그인 |
 
@@ -169,6 +175,7 @@
 | Docker | 컨테이너화 |
 | Docker Compose | 로컬 개발 환경 |
 | GitHub Actions | CI 자동 검증 |
+| Prometheus | 메트릭 스크래핑 |
 | Gradle | 빌드 도구 |
 
 ---
@@ -255,7 +262,23 @@ docker ps
 java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
 ```
 
-### 3-1. 테스트 실행
+### 3-1. 데모 프로파일 실행
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=demo'
+```
+
+- `demo` 프로파일은 `local` 설정을 포함하고, 시연용 seed data를 함께 올립니다.
+- 주요 계정 예시
+  - 원장: `principal@test.com / test1234!`
+  - 교사: `teacher1@test.com / test1234!`
+  - 학부모: `parent1@test.com / test1234!`
+- 시연 직후 바로 확인할 경로
+  - Swagger UI: `http://localhost:8080/swagger-ui.html`
+  - 인증 감사 로그 화면: `http://localhost:8080/audit-logs`
+  - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
+
+### 3-2. 테스트 실행
 
 ```bash
 # 전체 테스트 실행
@@ -292,6 +315,14 @@ docker compose -f docker/docker-compose.yml down -v
 ---
 
 ## 📡 API 문서
+
+실행 중인 애플리케이션에서는 아래 live contract를 바로 확인할 수 있습니다.
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- 쿠키 기반 인증을 쓰기 때문에 같은 origin에서 로그인 후 Swagger `Try it out`으로 보호 API를 바로 호출할 수 있습니다.
+
+아래 표는 주요 엔드포인트를 빠르게 훑기 위한 요약입니다.
 
 ### 인증 (Auth)
 | Method | Endpoint | 설명 |
@@ -472,6 +503,7 @@ docker compose -f docker/docker-compose.yml down -v
 - 로컬 전체 검증은 `./gradlew test`로 유지합니다.
 - 통합 테스트는 H2 mock 환경이 아니라 MySQL/Redis Testcontainers를 사용합니다.
 - GitHub Actions는 `fastTest`와 `integrationTest`를 별도 job으로 실행합니다.
+- Swagger/OpenAPI와 Prometheus scrape도 통합 테스트로 공개 경로를 회귀 검증합니다.
 - 초기 CI 실패 원인이었던 `gradle-wrapper.jar` 추적 누락도 복구했습니다.
 - Node 20 deprecation annotation 대응을 위해 workflow action을 Node24 네이티브 major로 올렸습니다.
 - 실패 시 `fastTest`/`integrationTest` 리포트를 각각 artifact로 업로드하도록 구성했습니다.
@@ -517,6 +549,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 인증/소셜 감사 로그 도입 | `docs/decisions/phase33_auth_social_audit_log.md` |
 | 운영 관측성 baseline | `docs/decisions/phase34_operability_observability_baseline.md` |
 | 인증 감사 로그 조회 API | `docs/decisions/phase35_auth_audit_query_api.md` |
+| API 계약/운영 콘솔/Prometheus/demo 진입점 | `docs/decisions/phase36_api_contract_observability_demo.md` |
 
 ---
 

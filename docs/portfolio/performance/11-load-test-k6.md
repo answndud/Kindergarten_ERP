@@ -29,10 +29,10 @@ k6 run scripts/performance/k6-auth-notepad-dashboard.js
 
 ```bash
 BASE_URL=http://localhost:8080 \
-PARENT_EMAIL=parent@test.com \
-PARENT_PASSWORD=test1234 \
+PARENT_EMAIL=parent1@test.com \
+PARENT_PASSWORD='test1234!' \
 PRINCIPAL_EMAIL=principal@test.com \
-PRINCIPAL_PASSWORD=test1234 \
+PRINCIPAL_PASSWORD='test1234!' \
 CLASSROOM_ID=1 \
 k6 run scripts/performance/k6-auth-notepad-dashboard.js
 ```
