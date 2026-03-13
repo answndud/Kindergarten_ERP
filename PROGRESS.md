@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 19:58 | DONE | `CalendarEventRepository`/`CalendarEventService`에 반복 일정 후보 조회와 occurrence 확장 로직을 반영하고, 학부모의 유치원 전체 일정 조회를 허용하도록 권한 정합화 | 캘린더 통합 테스트 및 문서화 |
+| 2026-03-13 20:01 | DONE | `CalendarApiIntegrationTest`를 재작성해 반복 일정 조회 성공, 학부모 유치원 일정 조회 성공, 교차 유치원 상세 차단, 잘못된 반복 입력 실패를 검증 | README/phase 문서 반영 및 최종 검증 |
+| 2026-03-13 20:03 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.CalendarApiIntegrationTest"`, `git diff --check` 통과. `README.md`, `docs/phase/phase23_calendar_recurrence_access_alignment.md` 반영 | 사용자 승인 시 add/commit/push |
+| 2026-03-13 19:50 | IN_PROGRESS | 새 후속 배치 시작. 캘린더 영역 재점검 결과, 반복 일정이 문서와 달리 실제 조회에서 전혀 확장되지 않고, 학부모가 유치원 전체 일정을 보지 못하는 정합성 문제 확인 | `PLAN.md` 갱신 후 캘린더 서비스/테스트 수정 |
+| 2026-03-13 19:52 | IN_PROGRESS | `PLAN.md`를 후속 고도화 4차(캘린더 반복 일정/권한 정합성 보강) 기준으로 갱신. 이번 배치는 캘린더 구현-문서 불일치 해소와 회귀 테스트 보강에 집중 | Calendar repository/service/controller/test 수정 |
 | 2026-03-13 19:41 | DONE | `ede8ceb` push 후 GitHub Actions run `23046823391` 최종 통과 확인. `Fast Checks` 57초, `Integration Suite` 3분 3초, artifact 업로드 정상 확인. 이전에 남던 Node20 deprecation annotation 섹션이 사라져 Node24 네이티브 action 전환 효과 확인 | 후속 개선 후보 선정 또는 배치 마감 |
 | 2026-03-13 19:36 | DONE | `.github/workflows/ci.yml`의 action major를 `checkout@v5`, `setup-java@v5`, `setup-gradle@v5`, `upload-artifact@v6`로 상향하고 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`를 제거 | README/phase 문서와 검증 결과 반영 |
 | 2026-03-13 19:37 | DONE | `README.md`, `docs/phase/phase22_github_actions_node24_native_actions.md` 반영. 검증 완료: `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/ci.yml')"` 및 `git diff --check` 통과 | 사용자 승인 시 add/commit/push |
@@ -57,5 +62,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: GitHub Actions Node24 네이티브 전환 마무리, 사용자 승인 대기
+- 활성 작업: 캘린더 반복 일정/권한 정합성 보강 마무리, 사용자 승인 대기
 - 블로커: 없음
