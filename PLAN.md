@@ -1,43 +1,42 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 7차 (OAuth2 Principal 런타임 안전성 보강)
+- 후속 고도화 8차 (OAuth2 계정 충돌 정책/UX 정합화)
 
 ## 1) 목표 / 범위
-- OAuth2/social 로그인 이후 view 계층에서 principal 타입 가정으로 인한 런타임 예외 가능성을 제거한다.
-- `CustomUserDetails` 고정 캐스팅을 줄이고, 인증 principal에서 `Member`를 공통 해석하는 경로를 만든다.
-- 소셜 로그인 성공 후에는 임시 세션 인증을 정리해 JWT cookie 기반 흐름으로 수렴시킨다.
+- OAuth2/social 로그인 시 동일 이메일의 기존 계정을 자동 연결하지 않는 보안 정책을 코드와 UX에 명시한다.
+- 소셜 가입 충돌을 일반 실패와 구분해 로그인 화면에 사람이 이해 가능한 안내를 노출한다.
+- 충돌 리다이렉트와 로그인 페이지 렌더링을 테스트로 고정하고, 인터뷰용 문서에 계정 탈취 방어 논리를 정리한다.
 
 ## 2) 세부 작업 단계
-1. principal 타입 의존 지점 점검
-   - `RoleRedirectInterceptor`, `GlobalControllerAdvice`, OAuth2 success handler를 확인한다.
-   - 어떤 요청에서 `CustomUserDetails`가 아닐 수 있는지 정리한다.
+1. OAuth2 충돌 정책 정리
+   - `OAuth2AuthenticationSuccessHandler`에서 기존 이메일 충돌을 별도 사유로 분기한다.
+   - 동일 이메일 자동 연결을 금지하는 이유를 코드 흐름에 드러낸다.
 
-2. 공통 member resolver 구현
-   - `Authentication`에서 `Member`를 찾아내는 resolver를 추가한다.
-   - `CustomUserDetails`, `UserDetails`, `OAuth2AuthenticationToken`을 모두 다룬다.
+2. 로그인 화면 UX 정합화
+   - `/login` 뷰가 OAuth2 실패 사유별 안내 문구를 렌더링하도록 정리한다.
+   - 일반 실패와 계정 충돌을 구분하고, 사용자가 다음 행동을 이해할 수 있게 만든다.
 
-3. OAuth2 후속 흐름 정리
-   - social login 성공 후 임시 세션 인증을 정리한다.
-   - 인터셉터와 공통 뷰 모델 주입이 resolver를 쓰도록 변경한다.
+3. 테스트 추가
+   - OAuth2 success handler 단위 테스트로 충돌 시 리다이렉트 쿼리와 JWT 미발급을 검증한다.
+   - 뷰 통합 테스트로 `/login?error=social_account_conflict` 렌더링을 검증한다.
 
-4. 테스트/문서화 및 검증
-   - OAuth2 principal 상태의 뷰 요청이 500 없이 처리되는 통합 테스트를 추가한다.
-   - `README.md`, `docs/phase/`에 결정 배경과 면접 포인트를 기록한다.
+4. 문서화 및 검증
+   - `README.md`, `docs/phase/`에 정책 이유와 면접 답변 포인트를 기록한다.
    - `./gradlew compileJava compileTestJava`
-   - `./gradlew test --tests "com.erp.integration.ViewEndpointTest"`
+   - `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"`
    - `git diff --check`
 
 ## 3) 검증 계획
 - 로컬 검증
   - `./gradlew compileJava compileTestJava`
-  - `./gradlew test --tests "com.erp.integration.ViewEndpointTest"`
+  - `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"`
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- OAuth2 principal 해석을 잘못하면 다른 사용자를 잘못 매핑할 수 있음
-  - 대응: provider/providerId를 우선 사용하고, email fallback은 최소 범위에서만 사용한다
-- 세션 정리 시 social login 직후 redirect 흐름이 깨질 수 있음
-  - 대응: JWT cookie 발급 후에만 세션을 정리하고, 뷰 통합 테스트로 확인한다
-- resolver가 예외를 던지면 뷰 전역 렌더링이 불안정해질 수 있음
-  - 대응: resolver는 `Optional<Member>` 반환으로 만들고, 공통 계층은 실패 시 로그인 또는 null fallback으로 처리한다
+- 충돌 안내 문구가 너무 구체적이면 인증 정책이 과도하게 노출될 수 있음
+  - 대응: 자동 연결 금지와 기존 로그인 사용만 안내하고, 내부 계정 상태는 직접 노출하지 않는다
+- success handler 분기 추가 시 기존 social 신규 가입/재로그인 흐름이 깨질 수 있음
+  - 대응: 기존 provider/providerId 매칭 경로는 유지하고, 충돌 케이스만 별도 테스트로 고정한다
+- 로그인 뷰 오류 처리 로직이 과해지면 템플릿 유지보수가 어려워질 수 있음
+  - 대응: 에러 코드별 문구 매핑을 컨트롤러에 모아 단순 문자열 모델만 템플릿에 전달한다
