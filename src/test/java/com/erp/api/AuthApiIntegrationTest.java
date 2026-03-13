@@ -255,6 +255,86 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.code").value("A006"));
         }
+
+        @Test
+        @DisplayName("로그인 - 신뢰하지 않는 remoteAddr의 forwarded 헤더는 rate limit 우회에 사용되지 않는다")
+        void login_Fail_RateLimited_IgnoresForwardedHeaderFromUntrustedRemote() throws Exception {
+            for (int attempt = 0; attempt < 15; attempt++) {
+                String requestBody = """
+                        {
+                            "email": "spoof-%d@test.com",
+                            "password": "wrongpassword"
+                        }
+                        """.formatted(attempt);
+
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("198.51.100.10"))
+                                .with(header("X-Forwarded-For", "203.0.113.%d".formatted(attempt + 1)))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            String finalRequestBody = """
+                    {
+                        "email": "spoof-final@test.com",
+                        "password": "wrongpassword"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .with(remoteAddr("198.51.100.10"))
+                            .with(header("X-Forwarded-For", "203.0.113.250"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(finalRequestBody))
+                    .andDo(print())
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("A006"));
+        }
+
+        @Test
+        @DisplayName("로그인 - loopback 프록시에서는 forwarded 헤더를 client IP로 사용한다")
+        void login_Fail_RateLimitUsesForwardedHeaderForTrustedLoopbackProxy() throws Exception {
+            for (int attempt = 0; attempt < 15; attempt++) {
+                String requestBody = """
+                        {
+                            "email": "trusted-proxy-%d@test.com",
+                            "password": "wrongpassword"
+                        }
+                        """.formatted(attempt);
+
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("127.0.0.1"))
+                                .with(header("X-Forwarded-For", "203.0.113.77"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            String rotatedClientBody = """
+                    {
+                        "email": "trusted-proxy-new-client@test.com",
+                        "password": "wrongpassword"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/auth/login")
+                            .with(csrf())
+                            .with(remoteAddr("127.0.0.1"))
+                            .with(header("X-Forwarded-For", "203.0.113.78"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(rotatedClientBody))
+                    .andDo(print())
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("A001"));
+        }
     }
 
     @Nested
@@ -423,6 +503,13 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
     private RequestPostProcessor remoteAddr(String ipAddress) {
         return request -> {
             request.setRemoteAddr(ipAddress);
+            return request;
+        };
+    }
+
+    private RequestPostProcessor header(String name, String value) {
+        return request -> {
+            request.addHeader(name, value);
             return request;
         };
     }
