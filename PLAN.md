@@ -1,43 +1,41 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 2차 (원격 CI 확인 + 인증 rate limit 하드닝)
+- 후속 고도화 3차 (GitHub Actions Node24 네이티브 전환)
 
 ## 1) 목표 / 범위
-- 방금 push한 Node24 호환 workflow가 GitHub Actions에서 실제로 정상 동작하는지 확인한다.
-- 로그인/refresh API에 Redis 기반 rate limit을 추가해 brute-force 및 token abuse 대응을 보강한다.
-- 테스트와 인터뷰용 문서까지 함께 정리한다.
+- 최신 `main` CI run 통과 상태를 확인하고 잔여 경고를 정리한다.
+- GitHub Actions workflow에서 Node 20 deprecation annotation을 발생시키는 action 버전을 Node24 네이티브 버전으로 올린다.
+- README와 `docs/phase/`에 변경 이유와 면접 설명 포인트를 함께 남긴다.
 
 ## 2) 세부 작업 단계
-1. 원격 CI 실행 확인
-   - `2b3f858` 기준 GitHub Actions run 상태 확인
-   - 실패 시 원인 파악 후 즉시 수정
+1. 원격 CI 재확인
+   - `4915d4c` 기준 GitHub Actions run 상태 및 annotation 확인
+   - 경고 재현 여부를 근거로 다음 조치 범위 확정
 
-2. 인증 rate limit 설계
-   - 로그인/refresh에 적용할 키 전략, 윈도우, 임계치 정의
-   - Redis 기반 fixed window 또는 유사한 단순 정책으로 구현
+2. Workflow action 버전 정비
+   - `checkout`, `setup-java`, `setup-gradle`, `upload-artifact`의 최신 안정 major 검토
+   - workflow를 Node24 네이티브 action 기준으로 갱신
 
-3. 코드/테스트 반영
-   - controller/service에 rate limit 적용
-   - 성공/실패/제한 초과 케이스 통합 테스트 추가
+3. 문서/기록 반영
+   - README와 `docs/phase/`에 조치 배경, 결과, 면접 답변 포인트 정리
+   - `PROGRESS.md`에 원격 run 결과와 후속 리스크 기록
 
-4. 문서화 및 검증
-   - `docs/phase/`와 README 보강
-   - `./gradlew compileJava compileTestJava`
-   - 관련 통합 테스트 실행
+4. 로컬 검증
+   - workflow YAML 파싱
+   - `git diff --check`
 
 ## 3) 검증 계획
-- GitHub Actions run 상태 확인
+- 원격 검증
+  - `gh run view 23046637472 --repo answndud/kindergarten_ERP`
 - 로컬 검증
-  - `./gradlew compileJava compileTestJava`
-  - `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"`
   - `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/ci.yml')"`
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- rate limit이 너무 공격적이면 정상 사용자도 차단될 위험
-  - 대응: 로그인/refresh 각각 보수적인 기본값으로 시작하고, IP와 이메일(또는 session) 축을 분리
-- 테스트에서 Redis 상태가 케이스 간 섞일 위험
-  - 대응: 기존 `BaseIntegrationTest`의 Redis flush를 활용하고, 제한 초과 테스트는 독립 시나리오로 작성
-- 원격 CI run이 아직 진행 중일 수 있음
-  - 대응: 먼저 상태를 확인하고, 코드 변경은 별도 커밋 단위로 분리
+- action major 업그레이드 시 입력 파라미터나 기본 동작이 달라질 수 있음
+  - 대응: 기존 사용 옵션과 release note 범위만 활용하고, workflow 구조는 최소 수정
+- 로컬에서는 remote runner annotation 재현이 불가능함
+  - 대응: 로컬에서는 YAML/format만 검증하고, push 후 GitHub Actions run으로 최종 확인
+- 일부 action이 여전히 경고를 남길 수 있음
+  - 대응: 공식 release 기준으로 올릴 수 있는 action만 먼저 올리고, 남는 항목은 후속 이슈로 분리

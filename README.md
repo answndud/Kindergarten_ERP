@@ -243,6 +243,7 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
 - 통합 테스트는 MySQL/Redis Testcontainers 기반으로 실행됩니다.
 - 로컬 테스트 실행에는 Docker Desktop 또는 Docker Engine이 필요합니다.
 - CI는 `fastTest`와 `integrationTest`를 분리해 실행합니다.
+- CI workflow action은 Node24 네이티브 major(`checkout@v5`, `setup-java@v5`, `setup-gradle@v5`, `upload-artifact@v6`)로 유지합니다.
 
 ### 4. 접속
 
@@ -444,6 +445,7 @@ docker compose -f docker/docker-compose.yml down -v
 - 통합 테스트는 H2 mock 환경이 아니라 MySQL/Redis Testcontainers를 사용합니다.
 - GitHub Actions는 `fastTest`와 `integrationTest`를 별도 job으로 실행합니다.
 - 초기 CI 실패 원인이었던 `gradle-wrapper.jar` 추적 누락도 복구했습니다.
+- Node 20 deprecation annotation 대응을 위해 workflow action을 Node24 네이티브 major로 올렸습니다.
 - 실패 시 `fastTest`/`integrationTest` 리포트를 각각 artifact로 업로드하도록 구성했습니다.
 
 ---
@@ -462,6 +464,7 @@ docker compose -f docker/docker-compose.yml down -v
 | CI 복구 및 job 분리 | `docs/phase/phase19_ci_fast_integration_split.md` |
 | GitHub Actions Node24 호환 | `docs/phase/phase20_github_actions_node24_compatibility.md` |
 | 인증 Rate Limit 하드닝 | `docs/phase/phase21_auth_rate_limit.md` |
+| GitHub Actions Node24 네이티브 전환 | `docs/phase/phase22_github_actions_node24_native_actions.md` |
 
 ---
 

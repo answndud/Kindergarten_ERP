@@ -7,6 +7,10 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 19:36 | DONE | `.github/workflows/ci.yml`의 action major를 `checkout@v5`, `setup-java@v5`, `setup-gradle@v5`, `upload-artifact@v6`로 상향하고 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`를 제거 | README/phase 문서와 검증 결과 반영 |
+| 2026-03-13 19:37 | DONE | `README.md`, `docs/phase/phase22_github_actions_node24_native_actions.md` 반영. 검증 완료: `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/ci.yml')"` 및 `git diff --check` 통과 | 사용자 승인 시 add/commit/push |
+| 2026-03-13 19:31 | DONE | `4915d4c` 기준 GitHub Actions run `23046637472` 통과 확인. `Fast Checks` 54초, `Integration Suite` 2분 17초, artifact 업로드 정상 확인. 다만 `checkout/setup-java/setup-gradle/upload-artifact`가 여전히 Node20 deprecation annotation을 남기는 점 확인 | action major 업그레이드 범위 확인 및 workflow 갱신 |
+| 2026-03-13 19:33 | IN_PROGRESS | `PLAN.md`를 후속 고도화 3차(Node24 네이티브 전환) 기준으로 갱신. 이번 배치는 GitHub Actions action 버전 업그레이드와 문서화에 집중 | workflow 수정 및 README/phase 문서 반영 |
 | 2026-03-13 19:21 | IN_PROGRESS | `2b3f858` push 후 GitHub Actions run `23046452039` 확인 시작. 병행해서 다음 개선 후보를 점검한 결과 인증 rate limit 부재 확인 | 원격 run 완료 확인 후 auth rate limit 설계/구현 |
 | 2026-03-13 19:23 | DONE | GitHub Actions run `23046452039` 통과 확인. `Fast Checks` 1m11s, `Integration Suite` 2m29s, artifact 업로드 정상 확인. 다만 Node20 deprecation annotation은 여전히 남아 추후 action 버전 업그레이드 검토 필요 | 인증 rate limit 코드/테스트 반영 |
 | 2026-03-13 19:25 | DONE | `AuthRateLimitService` 추가, 로그인(IP 15/10분 + 이메일 5/10분) 및 refresh(IP 10/5분) rate limit 반영, `A006/429` 에러 코드 및 4xx warn 로깅 정리 | Auth 통합 테스트 및 문서화 |
@@ -51,6 +55,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: 원격 CI 재확인, 인증 rate limit 하드닝
+- 현재 단계: `DONE`
+- 활성 작업: GitHub Actions Node24 네이티브 전환 마무리, 사용자 승인 대기
 - 블로커: 없음
