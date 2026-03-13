@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-14 01:04 | DONE | `2c670c2` (`feat: add api contracts audit console and prometheus metrics`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
+| 2026-03-14 01:04 | DONE | GitHub Actions run `23059249249` 성공 확인. `Fast Checks` 2m1s, `Integration Suite` 2m52s, artifact(`fast-test-reports`, `integration-test-reports`) 업로드 정상 확인 | 배치 마감 |
 | 2026-03-14 01:00 | DONE | Swagger/OpenAPI(`springdoc`)와 `/swagger-ui.html`, `/v3/api-docs` 공개 경로를 추가하고 `OpenApiConfig`로 cookie 기반 security scheme과 `api-v1` 그룹을 정의 | 감사 로그 운영 화면과 네비게이션 진입점 반영 |
 | 2026-03-14 01:00 | DONE | 원장 전용 `/audit-logs` 뷰와 `authaudit/audit-logs.html` 템플릿을 추가하고, 설정 화면/헤더에서 원장만 감사 로그 화면으로 진입하도록 정리 | Prometheus와 auth event metric 반영 |
 | 2026-03-14 01:00 | DONE | `AuthAuditMetricsService`, `PrometheusRegistryConfig`, `PrometheusScrapeController`를 추가해 `erp_auth_events_total` 메트릭과 `/actuator/prometheus` scrape 경로를 제공 | demo 프로파일/seed 및 문서 정리 |
