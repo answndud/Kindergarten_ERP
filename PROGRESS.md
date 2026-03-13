@@ -1,12 +1,18 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 14차 (인증/소셜 감사 로그 도입)
+- 후속 고도화 15차 (인터뷰 패키징 + 운영 관측성 + 감사 로그 조회 API)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-13 21:54 | DONE | `docs/interview/interview_one_pager.md`, `docs/interview/demo_3min_scenario.md`를 추가하고 README 문서 섹션을 인터뷰 바로 보기 + 상세 결정 로그 구조로 재정리 | 운영 관측성/감사 로그 조회 구현 최종 검증 |
+| 2026-03-13 21:54 | DONE | `spring-boot-starter-actuator`, health/info 노출, liveness/readiness probe, `CorrelationIdFilter`, `RequestLoggingFilter`, logback correlation id 패턴을 반영해 운영 관측성 baseline을 추가 | 감사 로그 조회 API와 테스트 최종 검증 |
+| 2026-03-13 21:54 | DONE | 원장 전용 `/api/v1/auth/audit-logs` API와 `AuthAuditLogQueryService`/repository query를 추가. 같은 유치원 소속 member 기반 로그만 조회하고 eventType/result/provider/email/date 필터를 지원하도록 정리 | phase 문서와 최종 로컬 검증 로그 기록 |
+| 2026-03-13 21:54 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "*ObservabilityIntegrationTest" --tests "*AuthAuditApiIntegrationTest"`, `./gradlew test --tests "*AuthApiIntegrationTest" --tests "*ViewEndpointTest"`, `./gradlew test`, `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
+| 2026-03-13 21:45 | IN_PROGRESS | 새 후속 배치 시작. 이전 단계까지 보안/인증 설계와 감사 로그 저장은 닫혔지만, 면접에서 바로 말할 1장 요약본, 운영 관측성 baseline, 실제 조회 가능한 감사 로그 API, 데모 시나리오 문서가 비어 있는 상태 확인 | `PLAN.md`를 인터뷰 패키징 + 운영 관측성 + 감사 로그 조회 API 기준으로 갱신 |
+| 2026-03-13 21:46 | IN_PROGRESS | `PLAN.md`를 후속 고도화 15차 기준으로 갱신. 이번 배치는 인터뷰 요약본, 3분 데모 스크립트, actuator/health/readiness/correlation id/request logging, 원장 전용 auth audit log 조회 API, 테스트/phase 문서화까지 포함 | 기존 설정/보안/API 패턴 확인 후 코드 및 문서 반영 |
 | 2026-03-13 21:39 | DONE | `219def3` (`feat: add auth and social audit logging`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
 | 2026-03-13 21:39 | DONE | GitHub Actions run `23051105269` 성공 확인. `Fast Checks` 1m46s, `Integration Suite` 2m43s, artifact 업로드 정상 확인 | 후속 과제 정리 |
 | 2026-03-13 21:35 | DONE | `auth_audit_log` 마이그레이션, `AuthAuditLog` 엔티티/리포지토리/서비스를 추가하고 login/refresh/social link/unlink 성공·실패를 DB 감사 로그로 기록하도록 연결. 저장은 `REQUIRES_NEW` + 내부 예외 swallow/warn 처리로 분리 | 테스트 가시성 문제 정리 및 문서화 |
@@ -115,6 +121,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 없음
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: 인터뷰 패키징 + 운영 관측성 + 감사 로그 조회 API
 - 블로커: 없음
