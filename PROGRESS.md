@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-14 13:01 | DONE | `bb92feb` (`feat: add auth audit retention and tenant denormalization`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
+| 2026-03-14 13:03 | DONE | GitHub Actions run `23079884994` 성공 확인. `Fast Checks` 1m30s, `Integration Suite` 2m51s, artifact(`fast-test-reports`, `integration-test-reports`) 업로드 정상 확인 | 배치 마감 |
 | 2026-03-14 12:44 | DONE | `V11__denormalize_auth_audit_log_and_add_retention_archive.sql`, `AuthAuditLog.kindergartenId`, `MemberRepository` lookup, `AuthAuditLogService` write-time tenant 귀속, `AuthAuditRetentionService`/설정 클래스를 추가해 감사 로그 tenant 비정규화와 archive/purge 스케줄러를 구현 | 테스트 fixture/회귀 테스트와 문서 반영 |
 | 2026-03-14 12:52 | DONE | `AuthAuditApiIntegrationTest`를 tenant-attributed 감사 로그 기준으로 보강하고, `AuthAuditRetentionIntegrationTest`를 추가. `TestData.cleanup`, local `DataLoader`, README/인터뷰 자료, 결정 로그 `phase38_auth_audit_retention_and_denormalization.md`까지 갱신 | 전체 검증 및 배포 준비 |
 | 2026-03-14 12:56 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthAuditApiIntegrationTest" --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.integration.ObservabilityIntegrationTest" --tests "com.erp.integration.AuthAuditRetentionIntegrationTest"`, `./gradlew test`, `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
@@ -161,6 +163,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: 후속 고도화 20차 add/commit/push 및 GitHub Actions 확인
+- 현재 단계: `DONE`
+- 활성 작업: 없음
 - 블로커: 없음
