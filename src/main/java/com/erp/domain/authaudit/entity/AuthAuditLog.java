@@ -20,6 +20,9 @@ public class AuthAuditLog extends BaseEntity {
     @Column(name = "member_id")
     private Long memberId;
 
+    @Column(name = "kindergarten_id")
+    private Long kindergartenId;
+
     @Column(name = "email", length = 100)
     private String email;
 
@@ -42,6 +45,7 @@ public class AuthAuditLog extends BaseEntity {
     private String clientIp;
 
     public static AuthAuditLog create(Long memberId,
+                                      Long kindergartenId,
                                       String email,
                                       MemberAuthProvider provider,
                                       AuthAuditEventType eventType,
@@ -50,6 +54,7 @@ public class AuthAuditLog extends BaseEntity {
                                       String clientIp) {
         AuthAuditLog authAuditLog = new AuthAuditLog();
         authAuditLog.memberId = memberId;
+        authAuditLog.kindergartenId = kindergartenId;
         authAuditLog.email = email;
         authAuditLog.provider = provider;
         authAuditLog.eventType = eventType;
@@ -57,5 +62,15 @@ public class AuthAuditLog extends BaseEntity {
         authAuditLog.reason = reason;
         authAuditLog.clientIp = clientIp;
         return authAuditLog;
+    }
+
+    public static AuthAuditLog create(Long memberId,
+                                      String email,
+                                      MemberAuthProvider provider,
+                                      AuthAuditEventType eventType,
+                                      AuthAuditResult result,
+                                      String reason,
+                                      String clientIp) {
+        return create(memberId, null, email, provider, eventType, result, reason, clientIp);
     }
 }

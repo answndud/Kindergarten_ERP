@@ -5,6 +5,7 @@ import com.erp.domain.authaudit.entity.AuthAuditLog;
 import com.erp.domain.authaudit.entity.AuthAuditResult;
 import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
 import com.erp.domain.member.entity.MemberAuthProvider;
+import com.erp.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class AuthAuditLogService {
 
     private final AuthAuditLogRepository authAuditLogRepository;
     private final AuthAuditMetricsService authAuditMetricsService;
+    private final MemberRepository memberRepository;
 
     public void recordLoginSuccess(Long memberId, String email, MemberAuthProvider provider, String clientIp) {
         saveAuditLog(memberId, email, provider, AuthAuditEventType.LOGIN, AuthAuditResult.SUCCESS, null, clientIp);
@@ -64,6 +66,7 @@ public class AuthAuditLogService {
         try {
             authAuditLogRepository.save(AuthAuditLog.create(
                     memberId,
+                    resolveKindergartenId(memberId, email),
                     normalizeEmail(email),
                     provider,
                     eventType,
@@ -75,6 +78,18 @@ public class AuthAuditLogService {
             log.warn("Failed to persist auth audit log eventType={} result={} email={} memberId={}",
                     eventType, result, email, memberId, ex);
         }
+    }
+
+    private Long resolveKindergartenId(Long memberId, String email) {
+        if (memberId != null) {
+            return memberRepository.findKindergartenIdById(memberId).orElse(null);
+        }
+
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) {
+            return null;
+        }
+        return memberRepository.findKindergartenIdByEmail(normalizedEmail).orElse(null);
     }
 
     private String normalizeEmail(String email) {

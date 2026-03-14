@@ -22,9 +22,8 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
 
     @Query(value = """
             SELECT log
-            FROM AuthAuditLog log, Member member
-            WHERE log.memberId = member.id
-              AND member.kindergarten.id = :kindergartenId
+            FROM AuthAuditLog log
+            WHERE log.kindergartenId = :kindergartenId
               AND (:eventType IS NULL OR log.eventType = :eventType)
               AND (:result IS NULL OR log.result = :result)
               AND (:provider IS NULL OR log.provider = :provider)
@@ -34,9 +33,8 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
             """,
             countQuery = """
             SELECT COUNT(log)
-            FROM AuthAuditLog log, Member member
-            WHERE log.memberId = member.id
-              AND member.kindergarten.id = :kindergartenId
+            FROM AuthAuditLog log
+            WHERE log.kindergartenId = :kindergartenId
               AND (:eventType IS NULL OR log.eventType = :eventType)
               AND (:result IS NULL OR log.result = :result)
               AND (:provider IS NULL OR log.provider = :provider)
@@ -55,9 +53,8 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
 
     @Query("""
             SELECT log
-            FROM AuthAuditLog log, Member member
-            WHERE log.memberId = member.id
-              AND member.kindergarten.id = :kindergartenId
+            FROM AuthAuditLog log
+            WHERE log.kindergartenId = :kindergartenId
               AND (:eventType IS NULL OR log.eventType = :eventType)
               AND (:result IS NULL OR log.result = :result)
               AND (:provider IS NULL OR log.provider = :provider)

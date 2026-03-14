@@ -33,7 +33,7 @@ Phase 36까지 오면서
 
 - principal만 호출 가능
 - 기존 조회 API와 같은 필터(`eventType`, `result`, `provider`, `email`, `from`, `to`)를 그대로 사용
-- 같은 유치원 소속 member 기반 로그만 export
+- 같은 유치원에 안전하게 귀속된 감사 로그만 export
 - 응답은 `text/csv` attachment
 
 구현:
@@ -134,4 +134,4 @@ Phase 36까지 오면서
 1. "감사 로그를 조회 API로만 끝내지 않고 CSV export까지 붙여 운영 대응과 공유 흐름을 만들었습니다."
 2. "보안 이벤트는 저장만으로 충분하지 않아서, 반복 로그인 실패를 principal 시스템 알림으로 연결했습니다."
 3. "Prometheus endpoint를 열어 두는 것에서 멈추지 않고, Grafana provisioning으로 실제 대시보드까지 바로 볼 수 있게 했습니다."
-4. "익명 로그인 실패는 tenant 귀속이 모호해서 조회/export/alert에서 모두 안전한 범위만 노출하도록 설계했습니다."
+4. "tenant에 안전하게 귀속할 수 있는 감사 로그만 조회/export/alert에 포함시키고, 완전히 익명인 실패 로그는 운영 범위에서 제외했습니다."

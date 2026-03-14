@@ -1,5 +1,11 @@
 # Phase 35: 원장 전용 인증 감사 로그 조회 API 추가
 
+> Update
+>
+> 이 문서는 조회 API를 처음 도입한 시점의 결정 로그입니다.
+> 현재 상태는 `phase38_auth_audit_retention_and_denormalization.md`까지 반영되어,
+> `auth_audit_log.kindergarten_id` 비정규화와 retention/archive 정책이 추가됐습니다.
+
 ## 배경
 
 Phase 33에서 login/refresh/social link/unlink를 DB 감사 로그로 저장했지만,
@@ -16,9 +22,9 @@ Phase 33에서 login/refresh/social link/unlink를 DB 감사 로그로 저장했
 1. **조회 API는 원장만 사용할 수 있다.**
    - 인증 이벤트는 민감 정보이므로 teacher/parent까지 열지 않습니다.
 
-2. **principal은 자기 유치원 소속 member 기반 로그만 조회한다.**
-   - `auth_audit_log`에는 `kindergartenId`가 없습니다.
-   - 따라서 `memberId -> member.kindergarten` 기준으로 tenant 범위를 계산합니다.
+2. **당시 principal은 자기 유치원 소속 member 기반 로그만 조회했다.**
+   - 이 시점에는 `auth_audit_log.kindergartenId`가 없었습니다.
+   - 그래서 `memberId -> member.kindergarten` 기준으로 tenant 범위를 계산했습니다.
 
 3. **익명 실패 로그는 principal 조회에서 제외한다.**
    - 예: 존재하지 않는 이메일 로그인 실패
@@ -38,7 +44,7 @@ Phase 33에서 login/refresh/social link/unlink를 DB 감사 로그로 저장했
   - 날짜는 `from` 시작일 포함, `to + 1 day` 미만으로 처리
   - 페이지 크기는 최대 100으로 제한
 
-### 2) Repository
+### 2) Repository (당시 기준)
 
 - `AuthAuditLogRepository.searchByKindergartenId(...)`
   - `AuthAuditLog.memberId = Member.id`
@@ -105,8 +111,8 @@ git diff --check
   - tenant에 안전하게 귀속할 수 없는 로그를 열면 데이터 경계가 흐려지기 때문입니다.
 
 - "왜 `kindergartenId`를 로그 테이블에 바로 저장하지 않았나요?"
-  - 우선은 최소 필드로 감사 로그를 만들고, 조회 시 member 소속을 기준으로 tenant 범위를 계산했습니다.
-  - 필요하면 후속 단계에서 denormalized `kindergartenId`를 추가해 조회 비용을 낮출 수 있습니다.
+  - 당시에는 최소 필드로 감사 로그를 먼저 도입하고, 조회 시 member 소속을 기준으로 tenant 범위를 계산했습니다.
+  - 이후 phase38에서 denormalized `kindergartenId`를 추가해 조회 비용과 known email 실패 귀속 문제를 함께 정리했습니다.
 
 - "왜 teacher는 못 보게 했나요?"
   - 인증 이벤트는 보안 데이터라서 운영 책임이 큰 principal까지만 열었습니다.

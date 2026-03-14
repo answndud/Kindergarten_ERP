@@ -34,8 +34,9 @@
 - MySQL/Redis Testcontainers 기반 통합 테스트
 - Swagger/OpenAPI 기반 API 계약 문서
 - Actuator health/readiness, Prometheus, correlation id, request structured logging
-- DB 기반 인증 감사 로그, 원장 전용 조회/export API, 감사 로그 운영 화면
+- DB 기반 인증 감사 로그, `kindergarten_id` 비정규화 tenant 필터, 원장 전용 조회/export API, 감사 로그 운영 화면
 - 반복 로그인 실패 감지와 원장 시스템 알림
+- 감사 로그 archive/purge retention scheduler
 - Grafana 대시보드까지 포함한 로컬 monitoring overlay
 - 정확도와 쿼리 수를 함께 관리한 대시보드 지표 개선
 - `demo` 프로파일 기반 시연용 seed/bootstrap
@@ -67,10 +68,12 @@
 - ✅ 세션 단위 Refresh Token 저장 및 Rotation
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ DB 기반 로그인/refresh/소셜 연결 감사 로그
+- ✅ `kindergarten_id` 기반 tenant 감사 로그 필터링
 - ✅ 원장 전용 인증 감사 로그 조회 API
 - ✅ 원장 전용 인증 감사 로그 CSV export
 - ✅ 원장 전용 인증 감사 로그 화면
 - ✅ 반복 로그인 실패 감지 및 원장 시스템 알림
+- ✅ 감사 로그 archive/purge retention scheduler
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
@@ -577,6 +580,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | 인증 감사 로그 조회 API | `docs/decisions/phase35_auth_audit_query_api.md` |
 | API 계약/운영 콘솔/Prometheus/demo 진입점 | `docs/decisions/phase36_api_contract_observability_demo.md` |
 | 감사 로그 export/인증 이상 징후 알림/Grafana 대시보드 | `docs/decisions/phase37_auth_audit_export_alerting_dashboard.md` |
+| 감사 로그 tenant 비정규화/retention/archive | `docs/decisions/phase38_auth_audit_retention_and_denormalization.md` |
 
 ---
 
