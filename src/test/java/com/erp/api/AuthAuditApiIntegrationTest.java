@@ -5,6 +5,7 @@ import com.erp.domain.authaudit.entity.AuthAuditEventType;
 import com.erp.domain.authaudit.entity.AuthAuditLog;
 import com.erp.domain.authaudit.entity.AuthAuditResult;
 import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
+import com.erp.domain.authaudit.service.AuthAuditLogService;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -32,17 +34,32 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private MemberRepository memberRepository;
 
+    @Autowired
+    private AuthAuditLogService authAuditLogService;
+
     @Test
-    @DisplayName("원장은 자기 유치원 소속 member 기반 감사 로그만 조회할 수 있다")
+    @DisplayName("원장은 자기 유치원 범위로 귀속된 감사 로그만 조회할 수 있다")
     void getAuditLogs_Success_PrincipalOnlySeesOwnKindergartenLogs() throws Exception {
         authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
                 teacherMember.getId(),
+                kindergarten.getId(),
                 teacherMember.getEmail(),
                 MemberAuthProvider.LOCAL,
                 AuthAuditEventType.LOGIN,
                 AuthAuditResult.SUCCESS,
                 null,
                 "198.51.100.10"
+        ));
+
+        authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
+                null,
+                kindergarten.getId(),
+                teacherMember.getEmail(),
+                MemberAuthProvider.LOCAL,
+                AuthAuditEventType.LOGIN,
+                AuthAuditResult.FAILURE,
+                "A001",
+                "198.51.100.11"
         ));
 
         Kindergarten otherKindergarten = kindergartenRepository.save(
@@ -54,6 +71,7 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
 
         authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
                 otherPrincipal.getId(),
+                otherKindergarten.getId(),
                 otherPrincipal.getEmail(),
                 MemberAuthProvider.LOCAL,
                 AuthAuditEventType.LOGIN,
@@ -76,10 +94,41 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
                         .with(authenticated(principalMember)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.content[0].reason").value("A001"))
                 .andExpect(jsonPath("$.data.content[0].email").value("teacher@test.com"))
                 .andExpect(jsonPath("$.data.content[0].eventType").value("LOGIN"))
-                .andExpect(jsonPath("$.data.content[0].result").value("SUCCESS"));
+                .andExpect(jsonPath("$.data.content[1].email").value("teacher@test.com"))
+                .andExpect(jsonPath("$.data.content[1].result").value("SUCCESS"));
+    }
+
+    @Test
+    @DisplayName("known email 로그인 실패는 memberId가 없어도 kindergartenId를 채워 저장한다")
+    void recordLoginFailure_Success_KnownEmailStoresKindergartenId() {
+        Long committedKindergartenId = readCommitted(() -> {
+            Kindergarten committedKindergarten = kindergartenRepository.save(
+                    Kindergarten.create("커밋 유치원", "대전시", "010-5555-5555", LocalTime.of(9, 0), LocalTime.of(18, 0))
+            );
+            Member committedTeacher = testData.createTestMember(
+                    "committed-teacher@test.com",
+                    "커밋교사",
+                    MemberRole.TEACHER,
+                    "test1234"
+            );
+            committedTeacher.assignKindergarten(committedKindergarten);
+            memberRepository.saveAndFlush(committedTeacher);
+            return committedKindergarten.getId();
+        });
+
+        authAuditLogService.recordLoginFailure("committed-teacher@test.com", MemberAuthProvider.LOCAL, "203.0.113.88", "A001");
+
+        var logs = readCommitted(authAuditLogRepository::findAllByCreatedAtAsc);
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.get(0).getMemberId()).isNull();
+        assertThat(logs.get(0).getKindergartenId()).isEqualTo(committedKindergartenId);
+        assertThat(logs.get(0).getEmail()).isEqualTo("committed-teacher@test.com");
+        assertThat(logs.get(0).getReason()).isEqualTo("A001");
     }
 
     @Test
@@ -87,6 +136,7 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
     void getAuditLogs_Success_WithFilters() throws Exception {
         authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
                 teacherMember.getId(),
+                kindergarten.getId(),
                 teacherMember.getEmail(),
                 MemberAuthProvider.GOOGLE,
                 AuthAuditEventType.SOCIAL_UNLINK,
@@ -96,6 +146,7 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
         ));
         authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
                 parentMember.getId(),
+                kindergarten.getId(),
                 parentMember.getEmail(),
                 MemberAuthProvider.LOCAL,
                 AuthAuditEventType.LOGIN,
@@ -134,6 +185,7 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
     void exportAuditLogs_Success_PrincipalCanDownloadCsv() throws Exception {
         authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
                 teacherMember.getId(),
+                kindergarten.getId(),
                 teacherMember.getEmail(),
                 MemberAuthProvider.LOCAL,
                 AuthAuditEventType.LOGIN,
@@ -143,6 +195,7 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
         ));
         authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
                 parentMember.getId(),
+                kindergarten.getId(),
                 parentMember.getEmail(),
                 MemberAuthProvider.LOCAL,
                 AuthAuditEventType.LOGIN,

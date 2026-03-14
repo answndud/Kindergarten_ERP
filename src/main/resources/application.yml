@@ -98,6 +98,12 @@ app:
       login-failure-threshold: 3
       login-failure-window: 10m
       alert-cooldown: 30m
+    auth-audit-retention:
+      enabled: true
+      archive-after: 30d
+      delete-after: 365d
+      cron: "0 30 3 * * *"
+      batch-size: 500
 
 springdoc:
   api-docs:

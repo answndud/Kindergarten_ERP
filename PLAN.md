@@ -1,32 +1,32 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 19차 (감사 로그 export + 인증 이상 징후 알림 + Grafana 대시보드)
+- 후속 고도화 20차 (감사 로그 denormalization + retention/archive 정책)
 
 ## 1) 목표 / 범위
-- 원장이 인증 감사 로그를 CSV로 export해 운영/면접 데모에서 바로 사용할 수 있게 만든다.
-- 반복 로그인 실패를 이상 징후로 감지하고 원장에게 시스템 알림을 보내 운영 대응 흐름을 닫는다.
-- Prometheus 메트릭을 실제 Grafana 대시보드로 소비할 수 있게 monitoring compose와 provisioning 파일을 추가한다.
-- README, 결정 로그, 진행 기록을 새 운영 스토리 기준으로 갱신한다.
+- `auth_audit_log`에 `kindergarten_id`를 직접 저장해 principal 조회/export에서 `member` join을 제거한다.
+- known email 실패 로그도 tenant에 안전하게 귀속할 수 있으면 조회 대상에 포함되도록 감사 로그 저장 로직을 보강한다.
+- 오래된 감사 로그를 archive table로 이동하고, 더 오래된 archive는 purge하는 retention 정책과 스케줄러를 추가한다.
+- README, 결정 로그, 진행 기록을 감사 로그 lifecycle 기준으로 갱신한다.
 
 ## 2) 세부 작업 단계
-1. 감사 로그 export API
-   - 기존 필터와 동일한 조건을 재사용하는 export query/service 추가
-   - `/api/v1/auth/audit-logs/export` CSV attachment endpoint 추가
-   - 원장 전용 권한과 파일명/헤더 규칙 고정
+1. 감사 로그 schema denormalization
+   - Flyway로 `auth_audit_log.kindergarten_id` 추가 및 backfill
+   - active/archive 테이블용 인덱스 설계
+   - 저장 서비스가 `memberId/email` 기준으로 `kindergartenId`를 해석해 함께 기록
 
-2. 인증 이상 징후 알림
-   - Redis 기반 fixed-window/cooldown 정책 추가
-   - 반복 로그인 실패가 특정 유치원 사용자 이메일에 집중될 때 원장에게 `SYSTEM` 알림 발송
-   - 스푸핑/중복 발송 방지를 위한 tenant, cooldown, unknown email 처리 명시
+2. 조회/export 쿼리 최적화
+   - principal 조회/export가 `kindergarten_id` 기반으로 바로 필터링되게 repository query 단순화
+   - known email 실패 로그가 principal 조회/export에 포함되는 회귀 테스트 추가
 
-3. Grafana/Prometheus 운영 대시보드
-   - monitoring compose overlay 추가
-   - Prometheus scrape 설정과 Grafana datasource/dashboard provisioning 추가
-   - auth event / HTTP 요청 / JVM 상태를 바로 볼 수 있는 기본 dashboard 제공
+3. retention/archive 정책
+   - archive table 생성
+   - archive-after / delete-after / cron / batch-size 설정 추가
+   - 스케줄러 서비스로 active -> archive 이동 및 archive purge 구현
+   - 수동 호출 가능한 서비스 메서드와 테스트 추가
 
 4. 테스트 / 문서 / 배포
-   - export API, alerting 회귀 테스트 보강
+   - 감사 로그 API/retention 서비스 회귀 테스트 보강
    - README, 결정 로그, 진행 기록 갱신
    - add/commit/push 및 GitHub Actions 결과 확인
 
@@ -34,16 +34,16 @@
 - 컴파일 검증
   - `./gradlew compileJava compileTestJava`
 - 핵심 회귀 검증
-  - `./gradlew test --tests "com.erp.api.AuthAuditApiIntegrationTest" --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest" --tests "com.erp.integration.ObservabilityIntegrationTest"`
+  - `./gradlew test --tests "com.erp.api.AuthAuditApiIntegrationTest" --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.integration.ObservabilityIntegrationTest" --tests "com.erp.integration.AuthAuditRetentionIntegrationTest"`
 - 전체 테스트
   - `./gradlew test`
-- 최종 문서/포맷 검증
+- 마이그레이션/문서 검증
   - `git diff --check`
 
 ## 4) 리스크 및 대응
-- 감사 로그 export가 기존 권한 경계를 우회할 수 있음
-  - 대응: 기존 principal 검증과 같은 유치원 member 기반 필터를 그대로 재사용하고, export 전용 테스트로 고정한다
-- 로그인 실패 알림이 과도하게 발송될 수 있음
-  - 대응: threshold + TTL + cooldown을 Redis로 두고, 알 수 없는 이메일이나 유치원 매핑 불가 케이스는 알림에서 제외한다
-- 모니터링 스택 문서가 실제 실행 절차와 어긋날 수 있음
-  - 대응: compose overlay, provisioning, README 명령어를 같은 기준으로 맞추고 YAML/JSON 파싱 검증을 수행한다
+- `kindergarten_id` backfill이 기존 감사 로그를 잘못 귀속할 수 있음
+  - 대응: `member_id` 기준 row만 SQL backfill하고, 이메일 기반 귀속은 저장 시점에만 적용한다
+- retention job이 과도하게 많은 row를 한 번에 옮겨 락을 오래 잡을 수 있음
+  - 대응: batch-size 기반 반복 처리로 제한하고, active/archive purge를 분리한다
+- scheduled job이 테스트나 local 부팅 시 예기치 않게 작동할 수 있음
+  - 대응: `enabled` 설정을 분리하고, 테스트는 수동 서비스 호출로 검증한다

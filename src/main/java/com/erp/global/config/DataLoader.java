@@ -275,6 +275,7 @@ public class DataLoader implements CommandLineRunner {
                                     String clientIp) {
         authAuditLogRepository.save(AuthAuditLog.create(
                 member.getId(),
+                member.getKindergarten() != null ? member.getKindergarten().getId() : null,
                 member.getEmail(),
                 provider,
                 eventType,

@@ -30,6 +30,24 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     Optional<Member> findByEmail(String email);
 
     @Query("""
+            SELECT m.kindergarten.id
+            FROM Member m
+            WHERE m.deletedAt IS NULL
+              AND m.id = :id
+              AND m.kindergarten IS NOT NULL
+            """)
+    Optional<Long> findKindergartenIdById(@Param("id") Long id);
+
+    @Query("""
+            SELECT m.kindergarten.id
+            FROM Member m
+            WHERE m.deletedAt IS NULL
+              AND LOWER(m.email) = LOWER(:email)
+              AND m.kindergarten IS NOT NULL
+            """)
+    Optional<Long> findKindergartenIdByEmail(@Param("email") String email);
+
+    @Query("""
             SELECT DISTINCT m
             FROM Member m
             LEFT JOIN FETCH m.kindergarten
