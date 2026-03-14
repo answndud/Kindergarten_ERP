@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-14 12:33 | DONE | `c8c6d9d` (`feat: add auth audit exports and monitoring dashboard`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
+| 2026-03-14 12:34 | DONE | GitHub Actions run `23079415855` 성공 확인. `Fast Checks` 1m41s, `Integration Suite` 2m46s, artifact(`fast-test-reports`, `integration-test-reports`) 업로드 정상 확인 | 배치 마감 |
 | 2026-03-14 12:31 | DONE | 감사 로그 CSV export API(`/api/v1/auth/audit-logs/export`)와 감사 로그 화면 `CSV Export` 버튼을 추가. 기존 principal tenant 필터를 재사용하고 attachment 응답으로 내려주도록 구현 | 반복 로그인 실패 alerting과 monitoring overlay 반영 |
 | 2026-03-14 12:31 | DONE | `AuthAnomalyAlertService`와 `app.security.auth-alert.*` 설정을 추가. 기존 member 이메일 기준 반복 로그인 실패를 Redis threshold/window/cooldown으로 감지하고 principal에게 `SYSTEM` 알림으로 연결 | Grafana/Prometheus compose overlay 및 문서 정리 |
 | 2026-03-14 12:31 | DONE | `docker/docker-compose.monitoring.yml`, Prometheus scrape 설정, Grafana datasource/dashboard provisioning, `Kindergarten ERP Observability` 대시보드를 추가 | 로컬 검증 및 최종 문서화 |
@@ -154,6 +156,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: 후속 고도화 19차 add/commit/push 및 원격 CI 확인
+- 현재 단계: `DONE`
+- 활성 작업: 없음
 - 블로커: 없음
