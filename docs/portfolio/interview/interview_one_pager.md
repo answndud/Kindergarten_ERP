@@ -34,7 +34,8 @@
 ### 5) 운영 관측성과 감사 추적
 
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
-- 로그인/refresh/social link/unlink는 DB 감사 로그로 남기고, 원장 전용 조회 API와 운영 화면까지 붙였습니다.
+- 로그인/refresh/social link/unlink는 DB 감사 로그로 남기고, 원장 전용 조회/export API와 운영 화면까지 붙였습니다.
+- 반복 로그인 실패는 원장 시스템 알림으로 연결했고, Prometheus metric은 Grafana 대시보드까지 바로 보이게 구성했습니다.
 - 이로써 **계약 문서 -> 이벤트 저장 -> 운영 조회 -> 메트릭 관측 -> 사후 분석** 흐름을 설명할 수 있게 됐습니다.
 
 ## 3. 성능 개선 포인트

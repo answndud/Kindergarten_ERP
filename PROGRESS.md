@@ -1,12 +1,19 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 18차 (API 계약 가시화 + 감사 로그 화면 + 메트릭 + 데모 진입점)
+- 후속 고도화 19차 (감사 로그 export + 인증 이상 징후 알림 + Grafana 대시보드)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-14 12:31 | DONE | 감사 로그 CSV export API(`/api/v1/auth/audit-logs/export`)와 감사 로그 화면 `CSV Export` 버튼을 추가. 기존 principal tenant 필터를 재사용하고 attachment 응답으로 내려주도록 구현 | 반복 로그인 실패 alerting과 monitoring overlay 반영 |
+| 2026-03-14 12:31 | DONE | `AuthAnomalyAlertService`와 `app.security.auth-alert.*` 설정을 추가. 기존 member 이메일 기준 반복 로그인 실패를 Redis threshold/window/cooldown으로 감지하고 principal에게 `SYSTEM` 알림으로 연결 | Grafana/Prometheus compose overlay 및 문서 정리 |
+| 2026-03-14 12:31 | DONE | `docker/docker-compose.monitoring.yml`, Prometheus scrape 설정, Grafana datasource/dashboard provisioning, `Kindergarten ERP Observability` 대시보드를 추가 | 로컬 검증 및 최종 문서화 |
+| 2026-03-14 12:32 | DONE | 인터뷰/운영 문서 갱신: `README.md`, `docs/README.md`, `docs/portfolio/interview/*`, 결정 로그 `phase37_auth_audit_export_alerting_dashboard.md` 반영 | 전체 테스트 및 포맷 검증 |
+| 2026-03-14 12:33 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthAuditApiIntegrationTest" --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest" --tests "com.erp.integration.ObservabilityIntegrationTest"`, `./gradlew test`, `ruby -e "require 'yaml'; YAML.load_file('docker/docker-compose.monitoring.yml'); YAML.load_file('docker/monitoring/prometheus/prometheus.yml'); YAML.load_file('docker/monitoring/grafana/provisioning/datasources/datasource.yml'); YAML.load_file('docker/monitoring/grafana/provisioning/dashboards/dashboard.yml')"`, `ruby -rjson -e "JSON.parse(File.read('docker/monitoring/grafana/dashboards/kindergarten-erp-observability.json'))"`, `git diff --check` 통과 | add/commit/push 및 GitHub Actions run 확인 |
+| 2026-03-14 11:20 | IN_PROGRESS | 새 후속 배치 시작. 최신 GitHub Actions run `23059402156` 성공과 깨끗한 작업 트리를 확인했고, 현재는 감사 로그 UI/API/Prometheus 메트릭까지 구현된 상태 | `PLAN.md`를 export/alerting/Grafana 기준으로 갱신하고 구현 범위 고정 |
+| 2026-03-14 11:22 | IN_PROGRESS | `PLAN.md`를 후속 고도화 19차 기준으로 갱신. 이번 배치는 감사 로그 CSV export, Redis 기반 인증 이상 징후 알림, Grafana/Prometheus monitoring compose, 테스트/문서/배포까지 포함 | 관련 쿼리/알림/모니터링 설정 지점을 수정 |
 | 2026-03-14 01:04 | DONE | `2c670c2` (`feat: add api contracts audit console and prometheus metrics`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
 | 2026-03-14 01:04 | DONE | GitHub Actions run `23059249249` 성공 확인. `Fast Checks` 2m1s, `Integration Suite` 2m52s, artifact(`fast-test-reports`, `integration-test-reports`) 업로드 정상 확인 | 배치 마감 |
 | 2026-03-14 01:00 | DONE | Swagger/OpenAPI(`springdoc`)와 `/swagger-ui.html`, `/v3/api-docs` 공개 경로를 추가하고 `OpenApiConfig`로 cookie 기반 security scheme과 `api-v1` 그룹을 정의 | 감사 로그 운영 화면과 네비게이션 진입점 반영 |
@@ -147,6 +154,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 없음
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: 후속 고도화 19차 add/commit/push 및 원격 CI 확인
 - 블로커: 없음

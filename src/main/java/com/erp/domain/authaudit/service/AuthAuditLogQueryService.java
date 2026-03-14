@@ -2,6 +2,7 @@ package com.erp.domain.authaudit.service;
 
 import com.erp.domain.authaudit.dto.response.AuthAuditLogResponse;
 import com.erp.domain.authaudit.entity.AuthAuditEventType;
+import com.erp.domain.authaudit.entity.AuthAuditLog;
 import com.erp.domain.authaudit.entity.AuthAuditResult;
 import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
 import com.erp.domain.member.entity.Member;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +62,30 @@ public class AuthAuditLogQueryService {
         ).map(AuthAuditLogResponse::from);
     }
 
+    public byte[] exportAuditLogsCsvForPrincipal(Long requesterId,
+                                                 AuthAuditEventType eventType,
+                                                 AuthAuditResult result,
+                                                 MemberAuthProvider provider,
+                                                 String email,
+                                                 LocalDate from,
+                                                 LocalDate to) {
+        Member requester = memberService.getMemberByIdWithKindergarten(requesterId);
+        validateRequester(requester);
+
+        List<AuthAuditLog> logs = authAuditLogRepository.searchAllByKindergartenId(
+                requester.getKindergarten().getId(),
+                eventType,
+                result,
+                provider,
+                normalizeEmailKeyword(email),
+                atStartOfDay(from),
+                toExclusive(to),
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+        );
+
+        return toCsv(logs).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     private void validateRequester(Member requester) {
         if (requester.getRole() != MemberRole.PRINCIPAL || requester.getKindergarten() == null) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
@@ -92,5 +118,41 @@ public class AuthAuditLogQueryService {
             return null;
         }
         return date.plusDays(1).atStartOfDay();
+    }
+
+    private String toCsv(List<AuthAuditLog> logs) {
+        StringBuilder csv = new StringBuilder();
+        csv.append("createdAt,eventType,result,email,provider,reason,clientIp,memberId\n");
+
+        for (AuthAuditLog log : logs) {
+            csv.append(csvEscape(log.getCreatedAt()))
+                    .append(',')
+                    .append(csvEscape(log.getEventType()))
+                    .append(',')
+                    .append(csvEscape(log.getResult()))
+                    .append(',')
+                    .append(csvEscape(log.getEmail()))
+                    .append(',')
+                    .append(csvEscape(log.getProvider()))
+                    .append(',')
+                    .append(csvEscape(log.getReason()))
+                    .append(',')
+                    .append(csvEscape(log.getClientIp()))
+                    .append(',')
+                    .append(csvEscape(log.getMemberId()))
+                    .append('\n');
+        }
+
+        return csv.toString();
+    }
+
+    private String csvEscape(Object value) {
+        if (value == null) {
+            return "";
+        }
+
+        String raw = String.valueOf(value);
+        String escaped = raw.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 }

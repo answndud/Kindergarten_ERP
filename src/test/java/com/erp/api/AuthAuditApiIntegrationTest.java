@@ -17,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,6 +123,53 @@ class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
     @DisplayName("교사는 인증 감사 로그 조회가 차단된다")
     void getAuditLogs_Fail_TeacherForbidden() throws Exception {
         mockMvc.perform(get("/api/v1/auth/audit-logs")
+                        .with(authenticated(teacherMember)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("A004"));
+    }
+
+    @Test
+    @DisplayName("원장은 같은 필터 조건으로 감사 로그 CSV를 export할 수 있다")
+    void exportAuditLogs_Success_PrincipalCanDownloadCsv() throws Exception {
+        authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
+                teacherMember.getId(),
+                teacherMember.getEmail(),
+                MemberAuthProvider.LOCAL,
+                AuthAuditEventType.LOGIN,
+                AuthAuditResult.FAILURE,
+                "A001",
+                "198.51.100.30"
+        ));
+        authAuditLogRepository.saveAndFlush(AuthAuditLog.create(
+                parentMember.getId(),
+                parentMember.getEmail(),
+                MemberAuthProvider.LOCAL,
+                AuthAuditEventType.LOGIN,
+                AuthAuditResult.SUCCESS,
+                null,
+                "198.51.100.31"
+        ));
+
+        mockMvc.perform(get("/api/v1/auth/audit-logs/export")
+                        .with(authenticated(principalMember))
+                        .param("eventType", "LOGIN")
+                        .param("result", "FAILURE")
+                        .param("email", "teacher")
+                        .param("from", LocalDate.now().minusDays(1).toString())
+                        .param("to", LocalDate.now().plusDays(1).toString()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("attachment;")))
+                .andExpect(content().contentTypeCompatibleWith("text/csv"))
+                .andExpect(content().string(containsString("createdAt,eventType,result,email,provider,reason,clientIp,memberId")))
+                .andExpect(content().string(containsString("\"teacher@test.com\"")))
+                .andExpect(content().string(containsString("\"A001\"")));
+    }
+
+    @Test
+    @DisplayName("교사는 인증 감사 로그 CSV export가 차단된다")
+    void exportAuditLogs_Fail_TeacherForbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/audit-logs/export")
                         .with(authenticated(teacherMember)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))

@@ -34,7 +34,9 @@
 - MySQL/Redis Testcontainers 기반 통합 테스트
 - Swagger/OpenAPI 기반 API 계약 문서
 - Actuator health/readiness, Prometheus, correlation id, request structured logging
-- DB 기반 인증 감사 로그, 원장 전용 조회 API, 감사 로그 운영 화면
+- DB 기반 인증 감사 로그, 원장 전용 조회/export API, 감사 로그 운영 화면
+- 반복 로그인 실패 감지와 원장 시스템 알림
+- Grafana 대시보드까지 포함한 로컬 monitoring overlay
 - 정확도와 쿼리 수를 함께 관리한 대시보드 지표 개선
 - `demo` 프로파일 기반 시연용 seed/bootstrap
 
@@ -66,7 +68,9 @@
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ DB 기반 로그인/refresh/소셜 연결 감사 로그
 - ✅ 원장 전용 인증 감사 로그 조회 API
+- ✅ 원장 전용 인증 감사 로그 CSV export
 - ✅ 원장 전용 인증 감사 로그 화면
+- ✅ 반복 로그인 실패 감지 및 원장 시스템 알림
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
 - ✅ 설정 화면 기반 명시적 소셜 계정 연결
@@ -114,6 +118,7 @@
 - ✅ Swagger UI / OpenAPI JSON 계약 문서
 - ✅ Actuator health/info/prometheus 및 liveness/readiness probe
 - ✅ Prometheus scrape endpoint와 auth event counter
+- ✅ Grafana provisioning 기반 운영 대시보드
 - ✅ correlation id 응답 헤더 및 request structured logging
 - ✅ OAuth2 principal 런타임 안전성 보강
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
@@ -176,6 +181,7 @@
 | Docker Compose | 로컬 개발 환경 |
 | GitHub Actions | CI 자동 검증 |
 | Prometheus | 메트릭 스크래핑 |
+| Grafana | 운영 대시보드 |
 | Gradle | 빌드 도구 |
 
 ---
@@ -214,7 +220,9 @@ erp/
 │   │       └── db/migration/        # Flyway 마이그레이션
 │   └── test/
 ├── docker/
-│   └── docker-compose.yml           # MySQL + Redis
+│   ├── docker-compose.yml           # MySQL + Redis
+│   ├── docker-compose.monitoring.yml # Prometheus + Grafana
+│   └── monitoring/                  # Prometheus/Grafana provisioning
 ├── docs/                             # 문서 인덱스
 │   ├── README.md                    # 문서 시작점
 │   ├── guides/                      # 개발/사용 가이드
@@ -278,7 +286,19 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
   - 인증 감사 로그 화면: `http://localhost:8080/audit-logs`
   - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
 
-### 3-2. 테스트 실행
+### 3-2. Monitoring Overlay 실행
+
+```bash
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
+```
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
+- Grafana 기본 계정: `admin / admin1234!`
+- Grafana는 provisioning으로 `Kindergarten ERP Observability` 대시보드를 자동 로드합니다.
+- 애플리케이션은 host에서 `http://localhost:8080`으로 실행 중이라고 가정합니다.
+
+### 3-3. 테스트 실행
 
 ```bash
 # 전체 테스트 실행
@@ -301,6 +321,8 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
 - 애플리케이션: http://localhost:8080
 - MySQL: localhost:3306 (erp_db / erp_user / erp1234)
 - Redis: localhost:6379
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
 
 ### 5. 종료
 
@@ -310,6 +332,9 @@ docker compose -f docker/docker-compose.yml down
 
 # 데이터 포함 완전 삭제
 docker compose -f docker/docker-compose.yml down -v
+
+# monitoring overlay까지 함께 종료
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down -v
 ```
 
 ---
@@ -332,6 +357,7 @@ docker compose -f docker/docker-compose.yml down -v
 | POST | `/api/v1/auth/logout` | 로그아웃 |
 | POST | `/api/v1/auth/refresh` | 세션 기반 토큰 rotation |
 | GET | `/api/v1/auth/me` | 현재 로그인 회원 조회 |
+| GET | `/api/v1/auth/audit-logs/export` | 원장용 감사 로그 CSV export |
 
 ### 회원 (Member)
 | Method | Endpoint | 설명 |
@@ -550,6 +576,7 @@ docker compose -f docker/docker-compose.yml down -v
 | 운영 관측성 baseline | `docs/decisions/phase34_operability_observability_baseline.md` |
 | 인증 감사 로그 조회 API | `docs/decisions/phase35_auth_audit_query_api.md` |
 | API 계약/운영 콘솔/Prometheus/demo 진입점 | `docs/decisions/phase36_api_contract_observability_demo.md` |
+| 감사 로그 export/인증 이상 징후 알림/Grafana 대시보드 | `docs/decisions/phase37_auth_audit_export_alerting_dashboard.md` |
 
 ---
 

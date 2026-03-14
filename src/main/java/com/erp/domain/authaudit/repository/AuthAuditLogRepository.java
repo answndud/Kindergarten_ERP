@@ -52,4 +52,25 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
                                               @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                               @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
                                               Pageable pageable);
+
+    @Query("""
+            SELECT log
+            FROM AuthAuditLog log, Member member
+            WHERE log.memberId = member.id
+              AND member.kindergarten.id = :kindergartenId
+              AND (:eventType IS NULL OR log.eventType = :eventType)
+              AND (:result IS NULL OR log.result = :result)
+              AND (:provider IS NULL OR log.provider = :provider)
+              AND (:emailKeyword IS NULL OR LOWER(log.email) LIKE LOWER(CONCAT('%', :emailKeyword, '%')))
+              AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
+              AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
+            """)
+    List<AuthAuditLog> searchAllByKindergartenId(@Param("kindergartenId") Long kindergartenId,
+                                                 @Param("eventType") AuthAuditEventType eventType,
+                                                 @Param("result") AuthAuditResult result,
+                                                 @Param("provider") MemberAuthProvider provider,
+                                                 @Param("emailKeyword") String emailKeyword,
+                                                 @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
+                                                 @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
+                                                 Sort sort);
 }

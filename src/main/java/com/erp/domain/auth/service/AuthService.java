@@ -1,6 +1,7 @@
 package com.erp.domain.auth.service;
 
 import com.erp.domain.authaudit.service.AuthAuditLogService;
+import com.erp.domain.authaudit.service.AuthAnomalyAlertService;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberStatus;
@@ -41,6 +42,7 @@ public class AuthService {
     private final AuthLoginBootstrapService authLoginBootstrapService;
     private final AuthRateLimitService authRateLimitService;
     private final AuthAuditLogService authAuditLogService;
+    private final AuthAnomalyAlertService authAnomalyAlertService;
 
     /**
      * 회원가입
@@ -75,6 +77,7 @@ public class AuthService {
 
             authLoginBootstrapService.afterAuthenticated(email);
             authRateLimitService.clearLoginFailures(email);
+            authAnomalyAlertService.clearLoginFailureCounter(email);
 
             // 2. 회원 정보 조회
             Member member = memberService.getMemberByEmail(email);
@@ -94,6 +97,7 @@ public class AuthService {
                     clientIp,
                     ErrorCode.INVALID_CREDENTIALS.getCode()
             );
+            authAnomalyAlertService.alertRepeatedLoginFailuresIfNeeded(email, clientIp);
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         } catch (BusinessException e) {
             authAuditLogService.recordLoginFailure(
@@ -102,6 +106,7 @@ public class AuthService {
                     clientIp,
                     e.getErrorCode().getCode()
             );
+            authAnomalyAlertService.alertRepeatedLoginFailuresIfNeeded(email, clientIp);
             throw e;
         }
     }
