@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "Kindergarten ERP"
+    orgId: 1
+    folder: "Kindergarten ERP"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards

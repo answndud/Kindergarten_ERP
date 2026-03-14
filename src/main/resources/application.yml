@@ -93,6 +93,11 @@ app:
   security:
     client-ip:
       trusted-proxies: []
+    auth-alert:
+      enabled: true
+      login-failure-threshold: 3
+      login-failure-window: 10m
+      alert-cooldown: 30m
 
 springdoc:
   api-docs:

@@ -319,6 +319,66 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @DisplayName("로그인 - 기존 계정에서 반복 실패가 발생하면 원장에게 이상 징후 알림을 한 번만 보낸다")
+        void login_Fail_RepeatedFailures_SendSinglePrincipalAlert() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "teacher@test.com",
+                        "password": "wrongpassword"
+                    }
+                    """;
+
+            for (int attempt = 0; attempt < 5; attempt++) {
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("203.0.113.88"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            mockMvc.perform(get("/api/v1/notifications")
+                            .with(authenticated(principalMember))
+                            .param("limit", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].type").value("SYSTEM"))
+                    .andExpect(jsonPath("$.data[0].title").value("인증 이상 징후 감지"))
+                    .andExpect(jsonPath("$.data[0].content").value(org.hamcrest.Matchers.containsString("teacher@test.com")))
+                    .andExpect(jsonPath("$.data[0].linkUrl").value(org.hamcrest.Matchers.containsString("email=teacher@test.com")));
+        }
+
+        @Test
+        @DisplayName("로그인 - 존재하지 않는 이메일 반복 실패는 원장 이상 징후 알림을 만들지 않는다")
+        void login_Fail_UnknownEmail_DoesNotSendPrincipalAlert() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "unknown-alert@test.com",
+                        "password": "wrongpassword"
+                    }
+                    """;
+
+            for (int attempt = 0; attempt < 3; attempt++) {
+                mockMvc.perform(post("/api/v1/auth/login")
+                                .with(csrf())
+                                .with(remoteAddr("203.0.113.99"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isUnauthorized())
+                        .andExpect(jsonPath("$.code").value("A001"));
+            }
+
+            mockMvc.perform(get("/api/v1/notifications")
+                            .with(authenticated(principalMember))
+                            .param("limit", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.length()").value(0));
+        }
+
+        @Test
         @DisplayName("로그인 - 성공 후 이메일 실패 카운터가 초기화된다")
         void login_Success_ClearsEmailFailureCounter() throws Exception {
             String wrongPasswordBody = """
