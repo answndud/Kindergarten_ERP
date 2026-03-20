@@ -287,3 +287,70 @@ sequenceDiagram
 - “전역 규약은 `global`, 업무 기능은 `domain`으로 나눴습니다.”
 - “모든 API 응답을 `ApiResponse<T>`로 통일하고, 예외는 `BusinessException + ErrorCode + GlobalExceptionHandler` 체계로 정리했습니다.”
 - “초기에는 조금 느려 보여도, 이 공통 규약 덕분에 이후 기능이 커져도 코드 일관성을 유지할 수 있었습니다.”
+
+## 10. 시작 상태
+
+- `02`~`05` 글까지 따라와서 프로젝트 부트스트랩, profile, JPA/Flyway/Redis 기반이 이미 있어야 합니다.
+- 아직 기능을 많이 붙이기 전이라도, **응답 형식 / 예외 처리 / 공통 엔티티 규약 / 패키지 경계**는 먼저 정해야 합니다.
+- 이 글의 목표는 기능 추가가 아니라, 이후 `07`~`26` 전체가 기대는 기본 규칙을 만드는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 공통 응답 / 엔티티:
+  - src/main/java/com/erp/global/common/ApiResponse.java
+  - src/main/java/com/erp/global/common/BaseEntity.java
+- 공통 예외:
+  - src/main/java/com/erp/global/exception/BusinessException.java
+  - src/main/java/com/erp/global/exception/ErrorCode.java
+  - src/main/java/com/erp/global/exception/GlobalExceptionHandler.java
+- 대표 도메인 구조 예시:
+  - src/main/java/com/erp/domain/member/controller/MemberApiController.java
+  - src/main/java/com/erp/domain/member/service/MemberService.java
+  - src/main/java/com/erp/domain/member/repository/MemberRepository.java
+- 결정 로그:
+  - docs/decisions/phase00_setup.md
+- 검증:
+  - src/test/java/com/erp/ErpApplicationTests.java
+  - src/test/java/com/erp/api/MemberApiIntegrationTest.java
+```
+
+## 12. 구현 체크리스트
+
+1. `global`과 `domain` 패키지의 역할 경계를 먼저 정합니다.
+2. `ApiResponse<T>`에 성공/실패 응답 팩토리 메서드를 만듭니다.
+3. `BusinessException + ErrorCode + GlobalExceptionHandler` 체계를 맞춥니다.
+4. `BaseEntity`에 공통 timestamp/soft delete 규칙을 둡니다.
+5. 이후 도메인은 `domain/{controller,service,repository,entity,dto}` 패턴으로 맞춥니다.
+6. 대표 API 테스트로 공통 응답과 예외 규약이 실제로 유지되는지 확인합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 이 시점의 코어 도메인 통합 스위트가 전체적으로 깨지지 않는다
+- 애플리케이션이 현재 공통 규약 상태로 정상 기동한다
+- 대표 API가 `ApiResponse<T>` 구조를 사용한다
+- 비즈니스 예외가 `GlobalExceptionHandler`를 통해 일관된 포맷으로 응답된다
+
+## 14. 글 종료 체크포인트
+
+- `global`과 `domain`의 책임 경계를 말로 설명할 수 있다
+- `ApiResponse`, `BusinessException`, `ErrorCode`, `GlobalExceptionHandler`가 한 세트로 동작한다
+- 공통 규약이 이후 도메인 패키지 구조의 기준점이 된다
+- “왜 기능보다 규약을 먼저 만들었는가”를 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 컨트롤러마다 응답 형식이 제각각이 된다
+  - 원인: `ApiResponse<T>`를 공통 계약이 아니라 선택 사항처럼 썼을 수 있습니다
+  - 확인할 것: 대표 controller가 raw entity/DTO를 직접 반환하지 않는지
+
+- 증상: 예외는 던지는데 응답 포맷이 일정하지 않다
+  - 원인: `BusinessException`과 `GlobalExceptionHandler`가 같은 규약을 보지 않을 수 있습니다
+  - 확인할 것: `ErrorCode` status/code/message, `GlobalExceptionHandler` 매핑 로직

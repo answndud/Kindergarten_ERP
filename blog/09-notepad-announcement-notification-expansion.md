@@ -265,3 +265,74 @@ sequenceDiagram
 - “알림장, 공지, 알림을 모두 메시지로 보지 않고 목적별 도메인으로 분리했습니다.”
 - “알림장과 공지 작성 이벤트는 NotificationService를 통해 사용자 알림으로 fan-out 되도록 설계했습니다.”
 - “공지사항은 대시보드 캐시 무효화와 업무 감사 로그까지 연결되는 허브 기능으로 키웠습니다.”
+
+## 10. 시작 상태
+
+- `08` 글까지 따라와서 회원/원생/반/출석 구조가 이미 있어야 합니다.
+- 이 글의 목표는 **소통 기능을 하나의 게시판으로 뭉개지 않고, 목적에 따라 알림장/공지/알림으로 분리하는 것**입니다.
+- 이후 outbox, 감사 로그, 대시보드와 연결되기 때문에 초기에 도메인 경계를 잘 나눠 두는 것이 중요합니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 알림장:
+  - src/main/java/com/erp/domain/notepad/entity/Notepad.java
+  - src/main/java/com/erp/domain/notepad/controller/NotepadController.java
+  - src/main/java/com/erp/domain/notepad/service/NotepadService.java
+- 공지:
+  - src/main/java/com/erp/domain/announcement/entity/Announcement.java
+  - src/main/java/com/erp/domain/announcement/controller/AnnouncementController.java
+  - src/main/java/com/erp/domain/announcement/service/AnnouncementService.java
+- 알림:
+  - src/main/java/com/erp/domain/notification/entity/Notification.java
+  - src/main/java/com/erp/domain/notification/controller/NotificationController.java
+  - src/main/java/com/erp/domain/notification/service/NotificationService.java
+- 검증:
+  - src/test/java/com/erp/api/NotepadApiIntegrationTest.java
+  - src/test/java/com/erp/api/AnnouncementApiIntegrationTest.java
+  - src/test/java/com/erp/api/NotificationApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase05_notepad.md
+  - docs/decisions/phase06_announcement.md
+  - docs/decisions/phase08_notification.md
+```
+
+## 12. 구현 체크리스트
+
+1. 알림장은 반/원생/전체 범위를 가진 소통 도메인으로 구현합니다.
+2. 공지는 유치원 전체 공지와 중요 공지, 열람 수 집계를 고려해 분리합니다.
+3. 알림은 읽음/안읽음/soft delete를 가진 사용자 이벤트 도메인으로 둡니다.
+4. `NotificationService`를 통해 다른 도메인 이벤트를 사용자 알림으로 fan-out 합니다.
+5. 알림장/공지/알림의 조회 범위와 권한을 각각 다르게 설계합니다.
+6. 통합 테스트로 작성, 수정, 조회, 읽음 처리, fan-out 흐름을 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `NotepadApiIntegrationTest`, `AnnouncementApiIntegrationTest`, `NotificationApiIntegrationTest`가 통과한다
+- 알림장과 공지가 각각의 권한/범위로 생성된다
+- 작성 이벤트가 사용자 알림으로 fan-out 된다
+- 알림 읽음 처리와 soft delete가 분리된 규칙으로 동작한다
+
+## 14. 글 종료 체크포인트
+
+- 알림장, 공지, 알림을 왜 분리했는지 설명할 수 있다
+- 알림 fan-out이 `NotificationService`로 모여 있다
+- 읽음 규칙, 조회 범위, 작성 권한이 도메인별로 분리돼 있다
+- 이후 outbox와 감사 로그가 이 구조에 어떻게 올라가는지 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 알림장과 공지를 같은 게시물처럼 다루게 된다
+  - 원인: 작성 대상, 조회 범위, 읽음 규칙이 다르다는 점을 놓쳤을 수 있습니다
+  - 확인할 것: `Notepad`와 `Announcement`의 생성 팩토리/조회 API 차이
+
+- 증상: 다른 도메인이 알림 엔티티를 직접 생성해 결합도가 높아진다
+  - 원인: 공통 알림 진입점을 `NotificationService`로 모으지 않았을 수 있습니다
+  - 확인할 것: `NotificationService.notify(...)`, `notifyWithLink(...)`, `notifyWithRelatedEntity(...)`

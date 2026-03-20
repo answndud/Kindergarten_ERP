@@ -259,3 +259,73 @@ sequenceDiagram
 - “학부모가 최종 `Attendance`를 직접 바꾸지 못하게 하고, 승인 전 요청 aggregate를 별도로 뒀습니다.”
 - “출결 요청 승인/거절/취소를 모두 상태 전이와 감사 로그로 남겨 운영 책임 추적이 가능하게 했습니다.”
 - “업무 감사 로그를 인증 감사 로그와 분리해 보안 사건과 비즈니스 사건의 조회 목적을 분명히 나눴습니다.”
+
+## 10. 시작 상태
+
+- `08`, `22` 글까지 따라와서 출석 aggregate와 주요 상태 전이 워크플로우가 이미 있어야 합니다.
+- 이 글의 목표는 **학부모 요청과 최종 출석 데이터를 분리하고, 그 사이의 승인 흔적을 업무 감사 로그로 남기는 것**입니다.
+- 여기서 중요한 것은 “출결 수정 기능 추가”가 아니라, 승인 전 요청 aggregate를 따로 두는 설계입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 요청 aggregate:
+  - src/main/java/com/erp/domain/attendance/entity/AttendanceChangeRequest.java
+  - src/main/java/com/erp/domain/attendance/entity/AttendanceChangeRequestStatus.java
+  - src/main/java/com/erp/domain/attendance/service/AttendanceChangeRequestService.java
+  - src/main/java/com/erp/domain/attendance/controller/AttendanceChangeRequestController.java
+  - src/main/java/com/erp/domain/attendance/controller/AttendanceChangeRequestViewController.java
+- 업무 감사:
+  - src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogService.java
+  - src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogQueryService.java
+  - src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogController.java
+  - src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogViewController.java
+  - src/main/resources/templates/domainaudit/audit-logs.html
+- 스키마:
+  - src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql
+- 검증:
+  - src/test/java/com/erp/api/AttendanceChangeRequestApiIntegrationTest.java
+  - src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase42_attendance_change_request_workflow.md
+  - docs/decisions/phase43_domain_audit_log.md
+```
+
+## 12. 구현 체크리스트
+
+1. `AttendanceChangeRequest`를 승인 전 요청 aggregate로 분리합니다.
+2. 학부모는 요청만 만들고, 교사/원장이 승인할 때만 실제 `Attendance`를 갱신하게 만듭니다.
+3. 승인, 거절, 취소 상태 전이를 `AttendanceChangeRequest` 엔티티에 둡니다.
+4. `DomainAuditLogService`로 사용자 행위와 시스템 행위를 공통 포맷으로 기록합니다.
+5. 원장 전용 조회/API/CSV export를 domain audit 쪽에도 제공합니다.
+6. 통합 테스트로 권한, 승인 흐름, 감사 로그 조회를 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `AttendanceChangeRequestApiIntegrationTest`, `DomainAuditApiIntegrationTest`가 통과한다
+- 학부모가 최종 출석을 직접 바꾸지 못하고 요청만 생성한다
+- 승인/거절/취소가 모두 업무 감사 로그로 남는다
+
+## 14. 글 종료 체크포인트
+
+- 요청 aggregate와 확정 aggregate를 왜 분리했는지 설명할 수 있다
+- 출결 변경 요청이 권한과 상태 전이 중심 기능이라는 점을 설명할 수 있다
+- 업무 감사 로그와 인증 감사 로그의 목적 차이를 설명할 수 있다
+- 원장 운영 콘솔과 CSV export까지 포함해 운영 증적을 닫았다고 말할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 학부모 요청 승인 없이 `Attendance`가 바로 바뀐다
+  - 원인: 요청 aggregate를 거치지 않고 기존 출결 서비스에 직접 쓰기 경로를 열었을 수 있습니다
+  - 확인할 것: `AttendanceChangeRequestService.create(...)`, `approve(...)`
+
+- 증상: 감사 로그는 남는데 누가 무엇을 바꿨는지 설명이 약하다
+  - 원인: action, targetType, metadata를 충분히 남기지 않았을 수 있습니다
+  - 확인할 것: `DomainAuditLogService.record(...)`, `recordSystem(...)`

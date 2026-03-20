@@ -241,3 +241,85 @@ sequenceDiagram
 - “대시보드는 여러 repository를 조합해 숫자를 만드는 조회 모델로 구현했습니다.”
 - “입학 신청은 단순 승인/거절이 아니라 waitlist, offer, expiry까지 포함한 상태 전이로 모델링했습니다.”
 - “교사 지원과 학부모 입학 신청을 분리해 서로 다른 워크플로우를 각각의 서비스로 관리했습니다.”
+
+## 10. 시작 상태
+
+- `09` 글까지 따라와서 핵심 운영 데이터가 이미 있어야 합니다.
+- 이 글의 목표는 **단순 CRUD를 넘어 조회 모델과 상태 전이 워크플로우를 설계하는 것**입니다.
+- 여기서 다루는 세 축은 서로 성격이 다릅니다.
+  - 캘린더: 권한이 있는 일정 조회
+  - 대시보드: 여러 데이터를 조합한 읽기 모델
+  - 지원 워크플로우: 승인/대기열/offer 같은 상태 머신
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 캘린더:
+  - src/main/java/com/erp/domain/calendar/entity/CalendarEvent.java
+  - src/main/java/com/erp/domain/calendar/controller/CalendarEventController.java
+  - src/main/java/com/erp/domain/calendar/service/CalendarEventService.java
+  - src/main/resources/db/migration/V4__create_calendar_events.sql
+- 대시보드:
+  - src/main/java/com/erp/domain/dashboard/service/DashboardService.java
+  - src/main/resources/db/migration/V5__add_performance_indexes_for_dashboard_and_notepad.sql
+- 학부모 입학 신청:
+  - src/main/java/com/erp/domain/kidapplication/entity/KidApplication.java
+  - src/main/java/com/erp/domain/kidapplication/controller/KidApplicationController.java
+  - src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java
+  - src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql
+- 교사 지원:
+  - src/main/java/com/erp/domain/kindergartenapplication/entity/KindergartenApplication.java
+  - src/main/java/com/erp/domain/kindergartenapplication/controller/KindergartenApplicationController.java
+  - src/main/java/com/erp/domain/kindergartenapplication/service/KindergartenApplicationService.java
+- 검증:
+  - src/test/java/com/erp/api/CalendarApiIntegrationTest.java
+  - src/test/java/com/erp/api/DashboardApiIntegrationTest.java
+  - src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java
+  - src/test/java/com/erp/api/KindergartenApplicationApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase07_application.md
+  - docs/decisions/phase10_calendar.md
+  - docs/decisions/phase18_dashboard_metric_redefinition.md
+  - docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+```
+
+## 12. 구현 체크리스트
+
+1. `CalendarEvent`에 scope와 반복 일정 기준을 넣고 조회 권한을 설계합니다.
+2. `DashboardService`에서 출석률, 공지 열람률, 인원 수 같은 읽기 모델을 만듭니다.
+3. `KidApplication`에 waitlist, offer, approval, expiry 상태 전이를 넣습니다.
+4. `KindergartenApplication`은 교사 지원에 맞는 별도 상태 전이로 분리합니다.
+5. 필요한 인덱스와 스키마 변경을 migration으로 관리합니다.
+6. 통합 테스트로 일정 조회, 대시보드 통계, 지원 상태 전이를 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `CalendarApiIntegrationTest`, `DashboardApiIntegrationTest`, `KidApplicationApiIntegrationTest`, `KindergartenApplicationApiIntegrationTest`가 통과한다
+- 일정이 scope와 권한 기준으로 조회된다
+- 대시보드 숫자가 현재 계산식 기준으로 정상 반환된다
+- 학부모 입학 신청이 waitlist/offer/accept/expiry 흐름을 가진다
+- 교사 지원은 별도 상태 머신으로 관리된다
+
+## 14. 글 종료 체크포인트
+
+- 캘린더, 대시보드, 지원 워크플로우가 서로 다른 조회/상태 모델이라는 점을 설명할 수 있다
+- 읽기 모델과 상태 전이를 CRUD와 구분해 설명할 수 있다
+- 입학 신청이 왜 단순 승인/거절로 끝나지 않는지 설명할 수 있다
+- 이후 업무 감사 로그와 운영 콘솔이 이 흐름을 어떻게 증적화하는지 연결해 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 캘린더가 잘 보이는데 scope별 권한 설명이 약하다
+  - 원인: 일정 저장 규칙만 보고 조회 범위 정책을 같이 설계하지 않았을 수 있습니다
+  - 확인할 것: `CalendarEventService`, `CalendarApiIntegrationTest`
+
+- 증상: 입학 신청이 결국 승인/거절 두 상태처럼만 구현된다
+  - 원인: 현실 운영 흐름인 waitlist/offer/expiry를 모델에 올리지 않았을 수 있습니다
+  - 확인할 것: `KidApplication.placeOnWaitlist(...)`, `offerSeat(...)`, `acceptOffer(...)`, `markOfferExpired()`

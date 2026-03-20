@@ -232,3 +232,67 @@ sequenceDiagram
 - “성능 개선을 한 번의 대수술이 아니라, 재현 -> 측정 -> 개선 -> 재측정의 반복 가능한 프로세스로 진행했습니다.”
 - “`NotepadPerformanceStoryTest`, `DashboardPerformanceStoryTest`로 before/after를 코드 수준에서 증명했습니다.”
 - “성능 결과를 성능 문서, 면접 스크립트, 치트시트까지 연결해 포트폴리오 스토리로 압축했습니다.”
+
+## 10. 시작 상태
+
+- 기능, 보안, 테스트, 운영성까지 어느 정도 올라온 뒤에 이 글을 읽는 것이 맞습니다.
+- 이 글의 목표는 **성능 개선을 단일 팁 모음이 아니라 재현 가능한 포트폴리오 서사로 정리하는 것**입니다.
+- 따라서 출발점은 “느린 곳이 있다”가 아니라 아래 절차를 코드와 문서로 같이 갖추는 것입니다.
+  - 재현 시나리오
+  - 개선 전 수치
+  - 개선 후 수치
+  - 트레이드오프 설명
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 성능 테스트:
+  - src/test/java/com/erp/performance/NotepadPerformanceStoryTest.java
+  - src/test/java/com/erp/performance/DashboardPerformanceStoryTest.java
+- 성능 문서:
+  - docs/portfolio/performance/03-notepad-readcount-nplusone.md
+  - docs/portfolio/performance/04-dashboard-stats.md
+  - docs/portfolio/performance/05-index-tuning-dashboard-notepad.md
+  - docs/portfolio/performance/20-performance-story-script.md
+  - docs/portfolio/performance/22-code-test-evidence-map.md
+  - docs/portfolio/performance/23-one-page-interview-cheatsheet.md
+```
+
+## 12. 구현 체크리스트
+
+1. 느린 시나리오를 테스트로 재현합니다.
+2. 개선 전 쿼리 수와 응답 시간을 남깁니다.
+3. N+1 제거, 집계 쿼리 개선, 캐시, 인덱스를 순서대로 적용합니다.
+4. 동일 시나리오로 개선 후 수치를 다시 측정합니다.
+5. 문서에 before/after, 원인, 선택 이유, 트레이드오프를 남깁니다.
+6. 면접용 스크립트와 치트시트까지 연결해 설명 경로를 만듭니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon performanceSmokeTest
+```
+
+성공하면 확인할 것:
+
+- `performanceSmokeTest` 안에서 `NotepadPerformanceStoryTest`, `DashboardPerformanceStoryTest`가 통과한다
+- 느린 시나리오와 개선 후 수치를 코드와 문서 양쪽에서 설명할 수 있다
+- 성능 결과가 면접 답변 자료까지 이어진다
+
+## 14. 글 종료 체크포인트
+
+- 성능 개선을 “기술 목록”이 아니라 “재현 가능한 프로세스”로 설명할 수 있다
+- before/after 수치가 코드 테스트와 문서에 동시에 남아 있다
+- 왜 N+1 제거 -> 집계 쿼리 -> 캐시/인덱스 순서였는지 설명할 수 있다
+- 면접에서 30초/1분/3분 버전으로 같은 이야기를 압축해 말할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 성능 개선은 했는데 무엇이 얼마나 좋아졌는지 말하기 어렵다
+  - 원인: baseline 없이 최적화부터 적용했을 수 있습니다
+  - 확인할 것: performance story test의 before/after 기록, 성능 문서의 숫자
+
+- 증상: 캐시를 넣었는데 설명이 오히려 불안하다
+  - 원인: N+1이나 집계 쿼리 문제를 먼저 해결하지 않고 캐시부터 붙였을 수 있습니다
+  - 확인할 것: 문서에 적힌 개선 순서와 실제 코드 변경 순서

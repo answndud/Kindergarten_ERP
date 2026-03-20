@@ -246,3 +246,76 @@ sequenceDiagram
 - “감사 로그를 저장하는 것에서 끝내지 않고, 조회/CSV export/보관 정책/성능 smoke까지 운영 도구로 키웠습니다.”
 - “auth audit는 `kindergartenId` 비정규화와 archive table로 장기 운영 비용을 낮췄습니다.”
 - “운영자 콘솔도 query budget 테스트를 붙여 사용자 API와 같은 수준으로 회귀를 관리했습니다.”
+
+## 10. 시작 상태
+
+- `19`, `23` 글까지 따라와서 auth audit와 domain audit가 이미 저장/조회 가능한 상태여야 합니다.
+- 이 글의 목표는 **감사 로그를 저장용 테이블에서 실제 운영 도구로 끌어올리는 것**입니다.
+- 핵심은 세 가지입니다.
+  - principal 범위 조회 / CSV export
+  - retention / archive / purge
+  - 운영 콘솔 성능 smoke
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- auth audit 조회 / retention:
+  - src/main/java/com/erp/domain/authaudit/service/AuthAuditLogQueryService.java
+  - src/main/java/com/erp/domain/authaudit/service/AuthAuditRetentionService.java
+  - src/main/java/com/erp/domain/authaudit/controller/AuthAuditLogController.java
+  - src/main/resources/db/migration/V11__denormalize_auth_audit_log_and_add_retention_archive.sql
+- domain audit 조회:
+  - src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogQueryService.java
+  - src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogController.java
+  - src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogViewController.java
+- 검증:
+  - src/test/java/com/erp/api/AuthAuditApiIntegrationTest.java
+  - src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java
+  - src/test/java/com/erp/integration/AuthAuditRetentionIntegrationTest.java
+  - src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java
+- 결정 로그:
+  - docs/decisions/phase35_auth_audit_query_api.md
+  - docs/decisions/phase37_auth_audit_export_alerting_dashboard.md
+  - docs/decisions/phase38_auth_audit_retention_and_denormalization.md
+  - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+```
+
+## 12. 구현 체크리스트
+
+1. auth/domain audit 조회를 principal 범위로 제한하고 CSV export를 제공합니다.
+2. `auth_audit_log`에 `kindergarten_id`를 비정규화해 조회 비용을 낮춥니다.
+3. `AuthAuditRetentionService`로 active -> archive -> purge 정책을 구현합니다.
+4. 운영 화면과 export가 큰 데이터에서도 견딜 수 있게 query budget을 정합니다.
+5. `AuditConsolePerformanceSmokeTest`로 list/export 성능을 회귀 검증합니다.
+6. retention과 export가 실제 운영 규칙으로 동작하는지 통합 테스트로 확인합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+./gradlew --no-daemon performanceSmokeTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `AuthAuditApiIntegrationTest`, `DomainAuditApiIntegrationTest`, `AuthAuditRetentionIntegrationTest`가 통과한다
+- `performanceSmokeTest`에서 `AuditConsolePerformanceSmokeTest`가 통과한다
+- 감사 로그가 조회, export, retention까지 운영 도구로 닫혀 있다
+
+## 14. 글 종료 체크포인트
+
+- 감사 로그의 write 경로와 read/retention 경로를 따로 설명할 수 있다
+- auth audit와 domain audit가 각각 다른 운영 질문에 답한다는 점을 설명할 수 있다
+- retention 정책이 문서 약속이 아니라 테스트된 코드라는 점을 설명할 수 있다
+- 운영 콘솔에도 query budget이라는 성능 기준을 둘 수 있다고 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 감사 로그 조회는 되는데 장기 운영 비용 설명이 약하다
+  - 원인: 조회 API만 만들고 archive/purge lifecycle을 설계하지 않았을 수 있습니다
+  - 확인할 것: `AuthAuditRetentionService.executeRetention()`, `V11__...`
+
+- 증상: 운영 콘솔이 기능은 되는데 성능 근거가 없다
+  - 원인: list/export를 운영 도구가 아닌 단순 관리자 화면으로 취급했을 수 있습니다
+  - 확인할 것: `AuditConsolePerformanceSmokeTest`, 쿼리 예산 기준
