@@ -21,15 +21,19 @@
 ## 3. 데모 계정
 
 - principal: `principal@test.com / test1234!`
-- teacher: `teacher@test.com / test1234!`
+- teacher: `teacher1@test.com / test1234!`
 - parent: `parent1@test.com / test1234!`
 
-## 4. 반드시 확인할 데이터
+## 4. 반드시 확인할 데이터와 시연 중 생성할 대상
 
-- 정원이 찬 반과 waitlist/offer 전환용 입학 신청 데이터
-- 출결 변경 요청을 만들 자녀 데이터
-- auth/domain audit console에서 조회 가능한 로그 데이터
-- Grafana의 `Kindergarten ERP Observability` 대시보드
+- DataLoader가 넣어 주는 기본 데이터
+  - principal / teacher / parent 계정
+  - 출석, 알림장, 공지, auth audit 로그
+- 시연 중 직접 만들거나 확인할 대상
+  - `/applications/pending`에서 보여 줄 입학 신청/승인 흐름
+  - `/attendance-requests`에서 보여 줄 출결 변경 요청
+  - auth/domain audit console의 조회 및 CSV export
+  - Grafana의 `Kindergarten ERP Observability` 대시보드
 
 ## 5. 데모 전에 빠르게 확인할 화면
 
@@ -44,3 +48,10 @@
 - Grafana가 늦게 뜨면 `/actuator/prometheus`와 audit console로 운영 관측성 스토리를 대체합니다.
 - UI 동작이 불안정하면 Swagger + audit CSV export 중심으로 API 시연으로 전환합니다.
 - 소셜 로그인은 외부 provider 상태 영향을 받으므로, 기본 데모는 local 계정 기준으로 진행합니다.
+
+## 7. 종료 / 정리
+
+- 앱은 실행 중인 터미널에서 `Ctrl+C`
+- Docker 정리:
+  - `docker compose -f docker/docker-compose.yml down`
+  - `docker compose -f docker/docker-compose.monitoring.yml down`

@@ -293,24 +293,44 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
+./blog/scripts/checkpoint-24.sh
+# 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ./gradlew --no-daemon performanceSmokeTest
 ```
 
 성공하면 확인할 것:
 
+- `checkpoint-24.sh`가 통과해 retention/export/performance 산출물이 맞는다
 - 통합 스위트 안에서 `AuthAuditApiIntegrationTest`, `DomainAuditApiIntegrationTest`, `AuthAuditRetentionIntegrationTest`가 통과한다
 - `performanceSmokeTest`에서 `AuditConsolePerformanceSmokeTest`가 통과한다
 - 감사 로그가 조회, export, retention까지 운영 도구로 닫혀 있다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- 새로 생긴 migration:
+  - `V10__create_auth_audit_log.sql`
+  - `V11__denormalize_auth_audit_log_and_add_retention_archive.sql`
+- 새로 생긴 주요 클래스:
+  - `AuthAuditLogController`
+  - `AuthAuditRetentionService`
+  - `AuthAuditLogQueryService`
+  - `DomainAuditLogController`
+  - `AuditConsolePerformanceSmokeTest`
+- 대표 검증 대상:
+  - `AuthAuditApiIntegrationTest`
+  - `DomainAuditApiIntegrationTest`
+  - `AuthAuditRetentionIntegrationTest`
+  - `AuditConsolePerformanceSmokeTest`
+
+## 15. 글 종료 체크포인트
 
 - 감사 로그의 write 경로와 read/retention 경로를 따로 설명할 수 있다
 - auth audit와 domain audit가 각각 다른 운영 질문에 답한다는 점을 설명할 수 있다
 - retention 정책이 문서 약속이 아니라 테스트된 코드라는 점을 설명할 수 있다
 - 운영 콘솔에도 query budget이라는 성능 기준을 둘 수 있다고 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 감사 로그 조회는 되는데 장기 운영 비용 설명이 약하다
   - 원인: 조회 API만 만들고 archive/purge lifecycle을 설계하지 않았을 수 있습니다

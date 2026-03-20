@@ -304,23 +304,43 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
+./blog/scripts/checkpoint-23.sh
+# 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
+- `checkpoint-23.sh`가 통과해 출결 요청 aggregate와 업무 감사 로그 산출물이 맞는다
 - 통합 스위트 안에서 `AttendanceChangeRequestApiIntegrationTest`, `DomainAuditApiIntegrationTest`가 통과한다
 - 학부모가 최종 출석을 직접 바꾸지 못하고 요청만 생성한다
 - 승인/거절/취소가 모두 업무 감사 로그로 남는다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- 새로 생긴 migration:
+  - `V13__add_admission_workflow_attendance_requests_and_domain_audit.sql`
+- 새로 생긴 주요 클래스:
+  - `AttendanceChangeRequest`
+  - `AttendanceChangeRequestService`
+  - `AttendanceChangeRequestController`
+  - `DomainAuditLogService`
+  - `DomainAuditLogController`
+- 새로 생긴 화면:
+  - `templates/attendance/requests.html`
+  - `templates/domainaudit/audit-logs.html`
+- 대표 검증 대상:
+  - `AttendanceChangeRequestApiIntegrationTest`
+  - `DomainAuditApiIntegrationTest`
+
+## 15. 글 종료 체크포인트
 
 - 요청 aggregate와 확정 aggregate를 왜 분리했는지 설명할 수 있다
 - 출결 변경 요청이 권한과 상태 전이 중심 기능이라는 점을 설명할 수 있다
 - 업무 감사 로그와 인증 감사 로그의 목적 차이를 설명할 수 있다
 - 원장 운영 콘솔과 CSV export까지 포함해 운영 증적을 닫았다고 말할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 학부모 요청 승인 없이 `Attendance`가 바로 바뀐다
   - 원인: 요청 aggregate를 거치지 않고 기존 출결 서비스에 직접 쓰기 경로를 열었을 수 있습니다

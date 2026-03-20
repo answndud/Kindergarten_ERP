@@ -328,24 +328,42 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
+./blog/scripts/checkpoint-06.sh
+# 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
+- `checkpoint-06.sh`가 통과해 공통 규약 파일과 핵심 패턴이 존재한다
 - 이 시점의 코어 도메인 통합 스위트가 전체적으로 깨지지 않는다
 - 애플리케이션이 현재 공통 규약 상태로 정상 기동한다
 - 대표 API가 `ApiResponse<T>` 구조를 사용한다
 - 비즈니스 예외가 `GlobalExceptionHandler`를 통해 일관된 포맷으로 응답된다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- 새로 생긴 주요 클래스:
+  - `ApiResponse`
+  - `BaseEntity`
+  - `BusinessException`
+  - `ErrorCode`
+  - `GlobalExceptionHandler`
+- 대표 검증 대상:
+  - `ErpApplicationTests`
+  - `MemberApiIntegrationTest`
+- 이후 모든 도메인이 따르는 패키지 규칙:
+  - `domain/{controller,service,repository,entity,dto}`
+  - `global/{common,config,exception,...}`
+
+## 15. 글 종료 체크포인트
 
 - `global`과 `domain`의 책임 경계를 말로 설명할 수 있다
 - `ApiResponse`, `BusinessException`, `ErrorCode`, `GlobalExceptionHandler`가 한 세트로 동작한다
 - 공통 규약이 이후 도메인 패키지 구조의 기준점이 된다
 - “왜 기능보다 규약을 먼저 만들었는가”를 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 컨트롤러마다 응답 형식이 제각각이 된다
   - 원인: `ApiResponse<T>`를 공통 계약이 아니라 선택 사항처럼 썼을 수 있습니다

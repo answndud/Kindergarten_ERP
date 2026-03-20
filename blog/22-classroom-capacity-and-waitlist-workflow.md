@@ -309,23 +309,41 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
+./blog/scripts/checkpoint-22.sh
+# 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
+- `checkpoint-22.sh`가 통과해 정원/대기열/offer 산출물이 맞는다
 - 통합 스위트 안에서 `KidApplicationApiIntegrationTest`, `ClassroomApiIntegrationTest`, `KidApiIntegrationTest`가 통과한다
 - 좌석 계산이 현재 재원 수와 활성 offer를 함께 반영한다
 - 입학 신청이 waitlist/offer/accept/expire 흐름을 가진다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- 새로 생긴 migration:
+  - `V13__add_admission_workflow_attendance_requests_and_domain_audit.sql`
+- 새로 생긴 주요 클래스:
+  - `ClassroomCapacityService`
+  - `KidApplicationWorkflowProperties`
+  - `WaitlistKidApplicationRequest`
+  - `OfferKidApplicationRequest`
+  - `AcceptKidApplicationOfferRequest`
+- 대표 검증 대상:
+  - `KidApplicationApiIntegrationTest`
+  - `ClassroomApiIntegrationTest`
+  - `KidApiIntegrationTest`
+
+## 15. 글 종료 체크포인트
 
 - 정원이 단순 표시값이 아니라 운영 제약이라는 점을 설명할 수 있다
 - offer와 최종 승인 사이에 별도 상태가 필요한 이유를 설명할 수 있다
 - 시간 기반 상태 변화도 스케줄러와 감사 로그로 닫을 수 있다
 - 실제 원생 생성 시점을 왜 `acceptOffer(...)`에 두는지 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 자리는 하나인데 offer를 여러 건 보내게 된다
   - 원인: 현재 재원 수만 보고 활성 offer 수를 좌석 계산에 반영하지 않았을 수 있습니다
