@@ -121,6 +121,7 @@ public class TestData {
 
         entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM notepad_read_confirm").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM notification_outbox").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM notification").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM auth_audit_log_archive").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM auth_audit_log").executeUpdate();

@@ -78,6 +78,20 @@ info:
 notification:
   delivery:
     batch-size: 500
+    worker-enabled: true
+    worker-fixed-delay-ms: 15000
+    worker-batch-size: 100
+    max-attempts: 5
+    initial-retry-delay: 30s
+    max-retry-delay: 15m
+    retry-backoff-multiplier: 2.0
+    processing-timeout: 5m
+    connect-timeout: 3s
+    read-timeout: 5s
+    external-types:
+      - AUTH_ANOMALY_DETECTED
+    incident-types:
+      - AUTH_ANOMALY_DETECTED
     email:
       enabled: false
       from: ${NOTIFICATION_EMAIL_FROM:no-reply@kindercare.local}
@@ -88,6 +102,9 @@ notification:
     app:
       enabled: false
       webhook-url: ${NOTIFICATION_APP_WEBHOOK:}
+    incident-webhook:
+      enabled: false
+      webhook-url: ${NOTIFICATION_INCIDENT_WEBHOOK:}
 
 app:
   security:

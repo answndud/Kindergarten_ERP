@@ -3,6 +3,7 @@ package com.erp.domain.notification.service.channel;
 import com.erp.domain.notification.entity.NotificationType;
 
 public record WebhookNotificationPayload(
+        Long notificationId,
         Long receiverId,
         String receiverEmail,
         String receiverName,
@@ -13,6 +14,7 @@ public record WebhookNotificationPayload(
 ) {
     public static WebhookNotificationPayload from(NotificationDeliveryPayload payload) {
         return new WebhookNotificationPayload(
+                payload.notificationId(),
                 payload.receiverId(),
                 payload.receiverEmail(),
                 payload.receiverName(),

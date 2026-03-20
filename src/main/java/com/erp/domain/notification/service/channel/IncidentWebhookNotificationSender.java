@@ -14,22 +14,22 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "notification.delivery.push", name = "enabled", havingValue = "true")
-public class PushNotificationSender implements NotificationChannelSender {
+@ConditionalOnProperty(prefix = "notification.delivery.incident-webhook", name = "enabled", havingValue = "true")
+public class IncidentWebhookNotificationSender implements NotificationChannelSender {
 
     private final NotificationDeliveryProperties deliveryProperties;
     private final RestTemplate notificationRestTemplate;
 
     @Override
     public NotificationChannel channel() {
-        return NotificationChannel.PUSH;
+        return NotificationChannel.INCIDENT_WEBHOOK;
     }
 
     @Override
     public void send(NotificationDeliveryPayload payload) {
-        String webhookUrl = deliveryProperties.getPush().getWebhookUrl();
+        String webhookUrl = deliveryProperties.getIncidentWebhook().getWebhookUrl();
         if (webhookUrl == null || webhookUrl.isBlank()) {
-            throw new IllegalStateException("notification.delivery.push.webhook-url is not configured");
+            throw new IllegalStateException("notification.delivery.incident-webhook.webhook-url is not configured");
         }
 
         WebhookNotificationPayload body = WebhookNotificationPayload.from(payload);
@@ -43,9 +43,9 @@ public class PushNotificationSender implements NotificationChannelSender {
         );
 
         if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new IllegalStateException("Push notification failed with status " + response.getStatusCode());
+            throw new IllegalStateException("Incident webhook delivery failed with status " + response.getStatusCode());
         }
 
-        log.debug("Push notification dispatched. receiverId={}, status={}", payload.receiverId(), response.getStatusCode());
+        log.debug("Incident webhook dispatched. notificationId={}, status={}", payload.notificationId(), response.getStatusCode());
     }
 }

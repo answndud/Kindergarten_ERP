@@ -27,7 +27,7 @@ public class EmailNotificationSender implements NotificationChannelSender {
     @Override
     public void send(NotificationDeliveryPayload payload) {
         if (payload.receiverEmail() == null || payload.receiverEmail().isBlank()) {
-            return;
+            throw new IllegalStateException("Notification receiver email is empty");
         }
 
         String from = deliveryProperties.getEmail().getFrom();
@@ -45,8 +45,9 @@ public class EmailNotificationSender implements NotificationChannelSender {
             helper.setSubject(subject);
             helper.setText(body, false);
             mailSender.send(message);
+            log.debug("Email notification dispatched. receiverId={}, email={}", payload.receiverId(), payload.receiverEmail());
         } catch (MessagingException e) {
-            log.warn("Email notification failed. receiverId={}, error={}", payload.receiverId(), e.getMessage());
+            throw new IllegalStateException("Email notification failed: " + e.getMessage(), e);
         }
     }
 

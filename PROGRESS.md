@@ -7,6 +7,13 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-20 13:21 | DONE | Batch B 마감. `notification_outbox` 스키마/엔티티, 채널 정책(`external-types`, `incident-types`), scheduled worker, retry/backoff/dead-letter, `AUTH_ANOMALY_DETECTED` incident webhook fan-out, sender 실패 surface, README/결정 로그/인터뷰 문서까지 반영 | add/commit/push 후 Batch C 계획으로 이동 |
+| 2026-03-20 13:20 | DONE | 검증 완료. `./gradlew --no-daemon clean compileJava compileTestJava`, `./gradlew --no-daemon cleanTest test --tests "com.erp.integration.NotificationOutboxIntegrationTest" --tests "com.erp.integration.NotificationOutboxRetryIntegrationTest" --tests "com.erp.integration.AuthAnomalyIncidentChannelIntegrationTest" --tests "com.erp.integration.AuthAnomalyIncidentChannelRetryIntegrationTest"`, `./gradlew --no-daemon cleanTest test --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest"`, `git diff --check` 통과 | 작업 로그/계획 갱신 후 커밋 준비 |
+| 2026-03-20 13:20 | DONE | 테스트 안정화 보강. `BaseIntegrationTest`의 cleanup/reset을 `writeCommitted(REQUIRES_NEW)`로 옮겨 committed helper 테스트 간 데이터 누수를 제거했고, `NotificationOutboxIntegrationTest`/`AuthAnomalyIncidentChannelIntegrationTest`는 `@DirtiesContext(AFTER_EACH_TEST_METHOD)`와 mock reset으로 property override + mock bean 간섭을 차단 | 대상 회귀 명령 재실행 후 결과 기록 |
+| 2026-03-20 13:18 | DONE | outbox 즉시 처리 플래키니스 수정. 새 outbox row의 `nextAttemptAt`을 현재 시각보다 조금 과거로 두어 생성 직후 worker claim 경계에서 `PENDING`으로 남는 현상을 제거 | compile/test 재검증 및 문서/로그 최종 반영 |
+| 2026-03-20 13:05 | IN_PROGRESS | Batch B 상세 설계 보강. auth anomaly를 일반 `SYSTEM`과 분리해 `AUTH_ANOMALY_DETECTED`로 라우팅하고, outbox는 `critical type -> receiver 외부 채널(email/push/app) + incident webhook`만 적재하는 최소 변경 설계로 확정 | 마이그레이션/엔티티/dispatch worker/refactor와 outbox 회귀 테스트 반영 |
+| 2026-03-20 12:43 | IN_PROGRESS | Batch B 착수. 현재 `NotificationService -> NotificationDispatchService`가 저장 직후 동기 채널 호출 + 실패 로그 흡수 구조임을 확인했고, 이번 배치는 in-app 저장은 그대로 유지하면서 외부 전달만 `notification_outbox`로 비동기화하는 방향으로 설계를 고정 | 마이그레이션/엔티티/프로세서/채널 정책을 구현하고 auth anomaly 외부 incident channel까지 연결 |
+| 2026-03-20 12:43 | IN_PROGRESS | 검증/문서 범위도 함께 고정. Notification 기존 phase 문서, auth anomaly alert, monitoring 문서를 기준으로 Batch B 산출물은 `outbox + retry/dead-letter + incident webhook + 회귀 테스트 + 결정 로그 + README/인터뷰 문서`까지 포함하도록 확정 | 코드 반영 후 test double 기반 통합 테스트와 문서 압축 정리 |
 | 2026-03-20 12:35 | DONE | Batch A 마감. `AuthSessionRegistryService`, `AuthApiController`, `AuthService`, `JwtFilter`, `settings.html` 기준으로 활성 세션 조회/개별 종료/다른 기기 로그아웃을 구현하고, access token도 Redis 세션 레지스트리에 묶어 세션 revoke 즉시 인증이 끊기도록 정리 | 결정 로그/README/인터뷰 문서와 함께 add/commit/push |
 | 2026-03-20 12:35 | DONE | management plane 하드닝 반영. `ManagementSurfaceProperties`, `SecurityConfig`, `application-prod.yml`, `OpenApiConfig`, `PrometheusScrapeController`, `GlobalControllerAdvice`, `authaudit/audit-logs.html` 기준으로 local/demo 공개, prod Swagger 비공개, management port 분리, 화면 링크 조건부 노출로 정리 | Batch B(`notification_outbox` + retry/dead-letter + 외부 incident channel) 착수 준비 |
 | 2026-03-20 12:35 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"`, `git diff --check` 통과. management surface MockMvc 노출 테스트는 actuator/springdoc 매핑 결합도가 높아 이번 배치에서는 제외 | 커밋/푸시 후 다음 배치 계획 갱신 |
@@ -170,6 +177,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: Batch B 준비 - notification outbox/retry + 외부 incident channel
+- 현재 단계: `DONE`
+- 활성 작업: 없음 (다음 배치: Batch C - waitlist 입학/지원 + 출결 요청/승인 + domain audit log)
 - 블로커: 없음

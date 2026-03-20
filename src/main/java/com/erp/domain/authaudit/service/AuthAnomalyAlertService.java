@@ -13,11 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriUtils;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthAnomalyAlertService {
 
     private static final String LOGIN_FAILURE_COUNT_KEY_PREFIX = "auth-alert:login-failure:count:";
@@ -113,7 +115,7 @@ public class AuthAnomalyAlertService {
 
         notificationService.notifyWithLink(
                 principalIds,
-                NotificationType.SYSTEM,
+                NotificationType.AUTH_ANOMALY_DETECTED,
                 title,
                 content,
                 buildAuditLogLink(normalizedEmail)
