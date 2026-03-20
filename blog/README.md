@@ -51,8 +51,63 @@
 - 초심자를 위해 용어를 바로 쓰지 않고 한 번은 풀어서 설명한다.
 - 각 글 끝에는 반드시 “취업 포인트”를 넣는다.
 
+## 연재 인덱스
+
+### Part A. 문제 정의
+
+1. [왜 유치원 ERP를 주제로 잡았는가](/Users/alex/project/kindergarten_ERP/erp/blog/01-why-kindergarten-erp-domain.md)
+
+### Part B. 부트스트랩과 공통 설정
+
+2. [Gradle과 Spring Boot 뼈대 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/02-gradle-spring-boot-bootstrap.md)
+3. [Docker로 MySQL / Redis 개발 환경 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/03-docker-mysql-redis-dev-environment.md)
+4. [application.yml과 profile 전략 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/04-application-yml-and-profile-strategy.md)
+5. [JPA / Flyway / QueryDSL / Redis / Cache 공통 기반 잡기](/Users/alex/project/kindergarten_ERP/erp/blog/05-jpa-flyway-querydsl-redis-cache-foundation.md)
+6. [global / domain 패키지 구조를 어떻게 잡았는가](/Users/alex/project/kindergarten_ERP/erp/blog/06-global-and-domain-package-structure.md)
+
+### Part C. 핵심 도메인 만들기
+
+7. [Member, Kindergarten, Classroom으로 첫 관계 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/07-member-kindergarten-classroom-modeling.md)
+8. [Kid, ParentKid, Attendance로 첫 업무 Aggregate 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/08-kid-parentkid-attendance-aggregate.md)
+9. [알림장, 공지, 알림으로 기능 확장하기](/Users/alex/project/kindergarten_ERP/erp/blog/09-notepad-announcement-notification-expansion.md)
+10. [일정, 대시보드, 신청 도메인으로 조회와 상태 전이를 넓히기](/Users/alex/project/kindergarten_ERP/erp/blog/10-calendar-dashboard-and-application-workflows.md)
+
+### Part D. 인증과 보안
+
+11. [SecurityConfig와 회원가입/로그인 기본 흐름 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/11-securityconfig-signup-login-basics.md)
+12. [JwtTokenProvider, JwtFilter, AuthService로 쿠키 JWT 연결하기](/Users/alex/project/kindergarten_ERP/erp/blog/12-jwt-cookie-auth-flow.md)
+13. [멀티테넌시 보안 문제를 어떻게 발견하고 고쳤는가](/Users/alex/project/kindergarten_ERP/erp/blog/13-multitenant-access-hardening.md)
+
+### Part E. 테스트와 CI
+
+14. [왜 H2가 아니라 Testcontainers였는가](/Users/alex/project/kindergarten_ERP/erp/blog/14-why-testcontainers-over-h2.md)
+15. [GitHub Actions와 태그 기반 테스트 스위트 분리](/Users/alex/project/kindergarten_ERP/erp/blog/15-github-actions-and-tagged-test-suites.md)
+
+### Part F. 인증을 운영형으로 발전시키기
+
+16. [Refresh rotation과 활성 세션 제어](/Users/alex/project/kindergarten_ERP/erp/blog/16-refresh-rotation-and-active-session-control.md)
+17. [Rate limit과 Client IP 신뢰 모델](/Users/alex/project/kindergarten_ERP/erp/blog/17-rate-limit-and-client-ip-trust-model.md)
+18. [OAuth2와 소셜 계정 lifecycle을 안전하게 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/18-oauth2-social-account-lifecycle.md)
+
+### Part G. 운영성, 감사 추적, 장애 대응
+
+19. [인증 감사 로그와 원장용 운영 콘솔 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/19-auth-audit-log-and-operations-console.md)
+20. [OpenAPI, 관리면, 관측성을 한 번에 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/20-openapi-management-plane-and-observability.md)
+21. [알림 전달을 Outbox, Retry, Dead-letter로 바꾸기](/Users/alex/project/kindergarten_ERP/erp/blog/21-notification-outbox-and-incident-channel.md)
+
+### Part H. 운영형 워크플로우
+
+22. [반 정원, 대기열, 입학 제안 워크플로우 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/22-classroom-capacity-and-waitlist-workflow.md)
+23. [출결 변경 요청과 업무 감사 로그를 함께 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/23-attendance-change-request-and-domain-audit.md)
+24. [감사 로그를 운영 도구로 키우기](/Users/alex/project/kindergarten_ERP/erp/blog/24-audit-logs-as-operations-tools.md)
+
+### Part I. 성능과 포트폴리오 마감
+
+25. [성능 개선을 코드가 아니라 스토리로 설명하는 방법](/Users/alex/project/kindergarten_ERP/erp/blog/25-performance-story-as-portfolio.md)
+26. [데모, 아키텍처, 면접 패키지까지 묶어 프로젝트를 완성하기](/Users/alex/project/kindergarten_ERP/erp/blog/26-demo-architecture-and-interview-pack.md)
+
 ## 시작 순서
 
 1. `00_series_plan.md`로 연재 전체를 본다.
 2. `_post_template.md`로 글 형식을 맞춘다.
-3. 실제 작성은 `01`번 글부터 순서대로 진행한다.
+3. 실제 읽기는 위 인덱스를 따라 `01`번부터 순서대로 진행한다.
