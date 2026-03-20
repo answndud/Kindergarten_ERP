@@ -17,6 +17,8 @@
 | 2026-03-20 16:02 | DONE | 사용자 피드백을 반영해 `BLOG_PLAN.md`를 다시 강화했다. 코드베이스 스냅샷, 소스 맵, 개발 연대기, 26개 글 구성, 집필 운영 규칙과 우선순위를 보강해 블로그 집필용 SSOT로 재정의했다 | 포맷 검증 후 커밋/푸시 |
 | 2026-03-20 16:18 | DONE | 첫 본문 주제를 `settings.gradle`, `build.gradle`, `ErpApplication`으로 고정하고 관련 코드, CI 설정, 결정 로그를 다시 읽었다 | `blog/02-gradle-spring-boot-bootstrap.md` 초안 작성 |
 | 2026-03-20 16:31 | DONE | `blog/02-gradle-spring-boot-bootstrap.md` 초안을 작성했다. 빌드 뼈대, 의존성 설계, Java 17 선택, 테스트 태스크 진화, CI 연결까지 입문자용 설명과 취업 포인트를 함께 정리했다 | 포맷 검증 후 add/commit/push |
+| 2026-03-20 16:43 | DONE | 두 번째 본문 주제를 Docker 개발 환경으로 고정하고 `docker-compose.yml`, `docker-compose.monitoring.yml`, `docker/.env`, `application-local.yml`, `application.yml`, `demo-preflight.md`를 다시 읽었다 | `blog/03-docker-mysql-redis-dev-environment.md` 초안 작성 |
+| 2026-03-20 16:57 | DONE | `blog/03-docker-mysql-redis-dev-environment.md` 초안을 작성했다. MySQL/Redis 기본 스택, monitoring overlay 분리, 앱은 호스트에서 실행하고 인프라만 컨테이너화하는 구조, `application-local.yml`과의 연결을 입문자용 설명과 취업 포인트로 정리했다 | 포맷 검증 후 add/commit/push |
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
