@@ -19,6 +19,9 @@
 | 2026-03-20 16:31 | DONE | `blog/02-gradle-spring-boot-bootstrap.md` 초안을 작성했다. 빌드 뼈대, 의존성 설계, Java 17 선택, 테스트 태스크 진화, CI 연결까지 입문자용 설명과 취업 포인트를 함께 정리했다 | 포맷 검증 후 add/commit/push |
 | 2026-03-20 16:43 | DONE | 두 번째 본문 주제를 Docker 개발 환경으로 고정하고 `docker-compose.yml`, `docker-compose.monitoring.yml`, `docker/.env`, `application-local.yml`, `application.yml`, `demo-preflight.md`를 다시 읽었다 | `blog/03-docker-mysql-redis-dev-environment.md` 초안 작성 |
 | 2026-03-20 16:57 | DONE | `blog/03-docker-mysql-redis-dev-environment.md` 초안을 작성했다. MySQL/Redis 기본 스택, monitoring overlay 분리, 앱은 호스트에서 실행하고 인프라만 컨테이너화하는 구조, `application-local.yml`과의 연결을 입문자용 설명과 취업 포인트로 정리했다 | 포맷 검증 후 add/commit/push |
+| 2026-03-20 17:05 | DONE | 세 번째 본문 주제를 프로파일 전략으로 고정하고 `application.yml`, `application-local.yml`, `application-demo.yml`, `application-prod.yml`, `logback-spring.xml`, `DataLoader`, `OpenApiConfig`, `SecurityConfig`, 관련 결정 로그를 다시 읽었다 | `blog/04-application-yml-and-profile-strategy.md` 초안 작성 |
+| 2026-03-20 17:18 | DONE | `blog/04-application-yml-and-profile-strategy.md` 초안을 작성했다. 공통 설정과 환경별 차이, `demo=local` profile group, `@Profile`/`@ConditionalOnProperty`/`SecurityConfig.buildPublicEndpoints()`까지 연결해 입문자용 설명과 취업 포인트를 함께 정리했다 | 포맷 검증 후 add/commit/push |
+| 2026-03-20 17:24 | DONE | `git diff --check`로 포맷 오류가 없는지 확인하고, 하위 제목 레벨과 진행 로그를 정리했다 | add/commit/push |
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
