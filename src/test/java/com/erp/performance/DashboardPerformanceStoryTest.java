@@ -14,6 +14,7 @@ import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -25,6 +26,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("성능 스토리 - 대시보드 통계")
+@Tag("performance")
 class DashboardPerformanceStoryTest extends BaseIntegrationTest {
 
     @Autowired

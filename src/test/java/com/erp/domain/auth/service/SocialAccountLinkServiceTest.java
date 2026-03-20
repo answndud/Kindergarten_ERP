@@ -7,6 +7,7 @@ import com.erp.domain.member.entity.MemberRole;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -14,7 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("소셜 계정 연결 서비스 테스트")
-class SocialAccountLinkServiceTest extends BaseIntegrationTest {
+@Tag("integration")
+public class SocialAccountLinkServiceTest extends BaseIntegrationTest {
 
     @Autowired
     private SocialAccountLinkService socialAccountLinkService;

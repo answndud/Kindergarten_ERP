@@ -12,6 +12,7 @@ import com.erp.domain.notification.service.channel.NotificationChannel;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.times;
         "notification.delivery.max-retry-delay=1s",
         "notification.delivery.retry-backoff-multiplier=1.0"
 })
+@Tag("integration")
 class AuthAnomalyIncidentChannelRetryIntegrationTest extends BaseIntegrationTest {
 
     @Autowired

@@ -33,8 +33,9 @@
 - Redis 기반 JWT refresh session 분리와 rotation
 - Redis 세션 레지스트리 기반 활성 세션 조회/강제 종료
 - MySQL/Redis Testcontainers 기반 통합 테스트
+- JUnit Suite 기반 `fast / integration / performance smoke` CI 분리
 - Swagger/OpenAPI 기반 API 계약 문서
-- Actuator health/readiness, Prometheus, correlation id, request structured logging
+- Actuator health/readiness, `criticalDependencies`, Prometheus, correlation id, request structured logging
 - DB 기반 인증 감사 로그, `kindergarten_id` 비정규화 tenant 필터, 원장 전용 조회/export API, 감사 로그 운영 화면
 - 반 정원(capacity), 입학 waitlist/offer/offer expiry, 학부모 출결 요청 승인처럼 상태 전이가 있는 운영형 워크플로우
 - 별도 `domain_audit_log` 기반 업무 감사 로그와 원장 전용 조회 화면
@@ -133,8 +134,10 @@
 - ✅ DB 기반 auth/social audit trail
 - ✅ Swagger UI / OpenAPI JSON 계약 문서
 - ✅ Actuator health/info/prometheus 및 liveness/readiness probe
+- ✅ `criticalDependencies` 기반 DB/Redis readiness probe
 - ✅ Prometheus scrape endpoint와 auth event counter
 - ✅ Grafana provisioning 기반 운영 대시보드
+- ✅ audit console list/export 성능 smoke 테스트
 - ✅ prod profile에서 management port 분리 및 Swagger 비공개화
 - ✅ correlation id 응답 헤더 및 request structured logging
 - ✅ OAuth2 principal 런타임 안전성 보강
@@ -345,11 +348,14 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 # Testcontainers 기반 통합 테스트
 ./gradlew integrationTest
+
+# 운영 성능 smoke 테스트
+./gradlew performanceSmokeTest
 ```
 
 - 통합 테스트는 MySQL/Redis Testcontainers 기반으로 실행됩니다.
 - 로컬 테스트 실행에는 Docker Desktop 또는 Docker Engine이 필요합니다.
-- CI는 `fastTest`와 `integrationTest`를 분리해 실행합니다.
+- CI는 `fastTest`, `integrationTest`, `performanceSmokeTest`를 분리해 실행합니다.
 - CI workflow action은 Node24 네이티브 major(`checkout@v5`, `setup-java@v5`, `setup-gradle@v5`, `upload-artifact@v6`)로 유지합니다.
 
 ### 4. 접속
@@ -585,7 +591,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 - 로컬 전체 검증은 `./gradlew test`로 유지합니다.
 - 통합 테스트는 H2 mock 환경이 아니라 MySQL/Redis Testcontainers를 사용합니다.
-- GitHub Actions는 `fastTest`와 `integrationTest`를 별도 job으로 실행합니다.
+- GitHub Actions는 `fastTest`, `integrationTest`, `performanceSmokeTest`를 별도 job으로 실행합니다.
 - Swagger/OpenAPI와 Prometheus scrape도 통합 테스트로 공개 경로를 회귀 검증합니다.
 - 초기 CI 실패 원인이었던 `gradle-wrapper.jar` 추적 누락도 복구했습니다.
 - Node 20 deprecation annotation 대응을 위해 workflow action을 Node24 네이티브 major로 올렸습니다.
@@ -600,8 +606,12 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | 문서 | 설명 |
 |------|------|
 | 문서 인덱스 | `docs/README.md` |
+| Hiring Pack | `docs/portfolio/hiring-pack/backend-hiring-pack.md` |
+| 시스템 아키텍처 | `docs/portfolio/architecture/system-architecture.md` |
+| 데모 Preflight | `docs/portfolio/demo/demo-preflight.md` |
+| 데모 Runbook | `docs/portfolio/demo/demo-runbook.md` |
+| Auth Incident Response Case Study | `docs/portfolio/case-studies/auth-incident-response.md` |
 | 인터뷰 1장 요약 | `docs/portfolio/interview/interview_one_pager.md` |
-| 3분 데모 시나리오 | `docs/portfolio/interview/demo_3min_scenario.md` |
 | 면접 예상 질문/답변 스크립트 | `docs/portfolio/interview/interview_qa_script.md` |
 
 ### 상세 결정 로그
@@ -640,6 +650,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | 반 정원/waitlist/offer 입학 워크플로우 | `docs/decisions/phase41_admission_capacity_waitlist_workflow.md` |
 | 학부모 출결 변경 요청/승인 워크플로우 | `docs/decisions/phase42_attendance_change_request_workflow.md` |
 | 업무 감사 로그(domain audit log) | `docs/decisions/phase43_domain_audit_log.md` |
+| tagged CI/readiness failure mode/hiring pack | `docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md` |
 
 ---
 

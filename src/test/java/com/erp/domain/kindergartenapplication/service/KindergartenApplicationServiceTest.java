@@ -12,6 +12,7 @@ import com.erp.domain.notification.service.NotificationService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +32,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class KindergartenApplicationServiceTest {
+@Tag("fast")
+public class KindergartenApplicationServiceTest {
 
     @Mock
     private KindergartenApplicationRepository applicationRepository;

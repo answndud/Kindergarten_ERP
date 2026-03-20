@@ -11,6 +11,7 @@ import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("캘린더 API 테스트")
+@Tag("integration")
 class CalendarApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired

@@ -12,6 +12,7 @@ import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Tag("integration")
 class AuthAuditApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired

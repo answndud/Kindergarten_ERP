@@ -12,6 +12,7 @@ import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.ClientIpResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,7 +39,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class OAuth2AuthenticationSuccessHandlerTest {
+@Tag("fast")
+public class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock
     private MemberRepository memberRepository;

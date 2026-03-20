@@ -4,6 +4,7 @@ import com.erp.common.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 각 역할(원장, 교사, 학부모)별로 페이지 접근 권한을 테스트
  */
 @DisplayName("페이지 접근 권한 테스트")
+@Tag("integration")
 class PageAccessIntegrationTest extends BaseIntegrationTest {
 
     @Nested

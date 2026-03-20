@@ -8,6 +8,7 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.global.security.user.CustomUserDetails;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -24,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("입학 신청 API 테스트")
+@Tag("integration")
 class KidApplicationApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired

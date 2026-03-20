@@ -21,6 +21,7 @@ import com.erp.domain.notepad.repository.NotepadRepository;
 import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.announcement.repository.AnnouncementRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @ActiveProfiles("test")
 @Import(TestConfig.class)
 @Transactional
+@Tag("integration")
 public abstract class BaseIntegrationTest extends TestcontainersSupport {
 
     @Autowired

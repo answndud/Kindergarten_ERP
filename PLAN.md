@@ -7,7 +7,7 @@
 - 완료: Batch A (`management plane 하드닝 + 활성 세션 관리`)
 - 완료: Batch B (`notification_outbox` + retry/dead-letter + 외부 incident channel`)
 - 완료: Batch C (`waitlist 입학/지원 + 출결 요청/승인 + domain audit log`)
-- 다음 배치: Batch D (`CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축`)
+- 완료: Batch D (`CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축`)
 
 ## 1) 목표 / 범위
 - 포트폴리오 관점에서 가장 값이 큰 다음 개선 5개를 실제 코드/테스트/문서까지 포함해 순차 구현한다.
@@ -46,17 +46,18 @@
    - 원장용 조회 API/화면 또는 기존 감사 로그 콘솔과의 분리 정책 설계
 
 6. 테스트/CI 신뢰성 보강
-   - `fastTest`/`integrationTest`를 path include에서 JUnit Tag 또는 test suite 기반으로 전환
+   - `fastTest`/`integrationTest`를 path include에서 JUnit suite 기반으로 전환
+   - `performanceSmokeTest`를 별도 task/job으로 분리해 운영 성능 smoke를 CI에 포함
    - auth/security leaf unit test 보강
-   - Redis/MySQL 장애 시 readiness/degraded behavior 검증
-   - auth/export 경로 성능 smoke 및 scheduled job cluster-safe 전략 검토
+   - Redis/MySQL 장애 시 readiness DOWN, liveness 유지 시나리오 검증
+   - auth/domain audit list/export 경로 성능 smoke 및 scheduled job cluster-safe 전략 검토
 
 7. 취업용 문서 패키지 재구성
    - 활성 아키텍처 문서 (`C4 + auth flow + audit/alert flow + ERD`)
    - 재현형 데모 문서 (`demo_preflight`, `demo_runbook`)
    - `auth incident response` 케이스 스터디
-   - 채용용 랜딩 페이지(`hiring-pack`)와 핵심 스크린샷/시각 자료
-   - README / docs index / interview script를 최신 상태로 재정렬
+   - 채용용 요약 문서(`hiring-pack`)와 핵심 링크 구조 정리
+   - README / docs index / interview script를 최신 경로 기준으로 재정렬
 
 8. 배치 전략
    - 범위가 큰 만큼 4개 사용자 가치 배치로 쪼개서 진행

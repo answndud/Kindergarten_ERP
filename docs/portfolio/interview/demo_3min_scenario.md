@@ -1,5 +1,7 @@
 # 3분 데모 시나리오
 
+실행 준비와 실제 시연 순서는 각각 `docs/portfolio/demo/demo-preflight.md`, `docs/portfolio/demo/demo-runbook.md`를 SSOT로 사용합니다.
+
 ## 목적
 
 짧은 시간 안에
@@ -80,6 +82,7 @@
 
 말할 포인트:
 - "운영에서는 살아 있는지보다, 트래픽 받을 준비가 됐는지까지 분리해서 봅니다."
+- "이 readiness는 단순 endpoint 노출이 아니라 DB/Redis `criticalDependencies`를 직접 반영합니다."
 - "로그만 남긴 게 아니라 Prometheus로 보안 이벤트를 숫자로도 관측합니다."
 - "Prometheus metric을 Grafana 대시보드로 연결해서 운영자가 바로 볼 수 있게 했습니다."
 - "모든 요청에 correlation id를 붙여 로그 추적이 가능하게 했습니다."
@@ -91,7 +94,7 @@
 
 말할 포인트:
 - "H2가 아니라 MySQL/Redis Testcontainers로 운영 환경과 최대한 비슷하게 검증합니다."
-- "fast/integration job을 분리해서 개발 속도와 신뢰성을 같이 가져갔습니다."
+- "CI는 fast/integration/performance smoke를 suite 기반으로 분리해서 개발 속도와 운영 회귀 검증을 같이 가져갑니다."
 
 ## 마무리 한 문장
 

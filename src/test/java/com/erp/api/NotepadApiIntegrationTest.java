@@ -8,6 +8,7 @@ import com.erp.domain.notepad.repository.NotepadRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 알림장 API 통합 테스트
  */
 @DisplayName("알림장 API 테스트")
+@Tag("integration")
 class NotepadApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
