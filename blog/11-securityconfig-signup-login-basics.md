@@ -1,0 +1,223 @@
+# [Spring Boot 포트폴리오] 11. `SecurityConfig`와 회원가입/로그인 기본 흐름을 어떻게 붙였는가
+
+## 1. 이번 글에서 풀 문제
+
+도메인이 어느 정도 만들어졌다면 이제 “누가 이 기능을 쓸 수 있는가”를 정해야 합니다.
+
+Kindergarten ERP에서 인증의 첫 단계는 아래 문제를 푸는 것이었습니다.
+
+- 비로그인 사용자는 어디까지 접근 가능한가?
+- 회원가입과 로그인은 어떤 API로 시작되는가?
+- 원장, 교사, 학부모는 기본적으로 어떻게 구분되는가?
+- JWT를 쓰더라도 CSRF는 어떻게 다뤄야 하는가?
+
+이번 글은 고급 JWT rotation이나 세션 레지스트리 전 단계입니다.  
+즉, **Spring Security를 프로젝트에 처음 연결하는 기본 흐름**을 다룹니다.
+
+## 2. 먼저 알아둘 개념
+
+### 2-1. Security Filter Chain
+
+Spring Security는 요청이 컨트롤러에 도착하기 전에 여러 필터를 거쳐 인증/인가를 처리합니다.
+
+이 필터들의 묶음을 `SecurityFilterChain`이라고 생각하면 됩니다.
+
+### 2-2. 공개 경로와 인증 필요 경로
+
+모든 URL이 같은 규칙을 가지면 안 됩니다.
+
+- `/login`, `/signup`
+- `/api/v1/auth/login`
+- `/api/v1/auth/signup`
+
+같은 경로는 공개여야 하고,
+
+- 출결
+- 알림장
+- 공지
+- 프로필/설정
+
+같은 경로는 인증이 필요합니다.
+
+### 2-3. 쿠키 기반 JWT와 CSRF
+
+이 프로젝트는 JWT를 헤더가 아니라 **HTTP-only 쿠키**에 담습니다.
+
+이 경우 브라우저가 자동으로 쿠키를 보내므로,  
+CSRF를 다시 켜는 편이 안전합니다.
+
+## 3. 이번 글에서 다룰 파일
+
+```text
+- src/main/java/com/erp/global/config/SecurityConfig.java
+- src/main/java/com/erp/global/config/CsrfCookieFilter.java
+- src/main/java/com/erp/domain/auth/controller/AuthApiController.java
+- src/main/java/com/erp/domain/auth/service/AuthService.java
+- src/main/java/com/erp/domain/member/service/MemberService.java
+- src/test/java/com/erp/api/AuthApiIntegrationTest.java
+- src/test/java/com/erp/integration/PageAccessIntegrationTest.java
+- docs/decisions/phase13_security_hardening.md
+```
+
+## 4. 설계 구상
+
+이 단계의 목표는 “인증 가능한 기본 서비스”를 만드는 것이었습니다.
+
+핵심 설계 기준은 아래였습니다.
+
+1. 인증되지 않은 사용자가 들어올 공개 경로를 명확히 둔다
+2. 로그인/회원가입 API는 `AuthApiController`로 모은다
+3. 비밀번호 검사는 `AuthService`가 맡는다
+4. JWT 쿠키를 쓰더라도 CSRF는 켠다
+
+## 5. 코드 설명
+
+### 5-1. `SecurityConfig`: 보안 규칙의 시작점
+
+[SecurityConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/SecurityConfig.java)의 핵심 메서드는 아래입니다.
+
+- `securityFilterChain(...)`
+- `corsConfigurationSource()`
+- `jwtFilter()`
+- `buildPublicEndpoints()`
+
+이 메서드들로 아래를 결정합니다.
+
+- 어떤 경로가 공개인가
+- 어떤 경로가 인증이 필요한가
+- JWT 필터를 어느 위치에 둘 것인가
+- logout, oauth2 login, csrf 정책을 어떻게 둘 것인가
+
+### 5-2. `securityFilterChain(...)`: 기본 보안 정책을 조합한다
+
+이 메서드에서 중요한 설정은 아래입니다.
+
+- `csrf(...)`
+  - `CookieCsrfTokenRepository.withHttpOnlyFalse()`
+- `formLogin().disable()`
+- `httpBasic().disable()`
+- `sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)`
+- `authorizeHttpRequests(...)`
+- `logout(...)`
+- `oauth2Login(...)`
+- `addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)`
+
+즉, 이 프로젝트는
+
+- 기본 폼 로그인 대신 자체 로그인 API를 쓰고
+- JWT 필터를 직접 추가하고
+- OAuth2 handshake 때문에 세션은 최소한으로만 허용합니다.
+
+### 5-3. `buildPublicEndpoints()`: 공개 경로를 한 곳에서 관리한다
+
+이 메서드는 아래 공개 경로를 모읍니다.
+
+- `/`
+- `/login`
+- `/signup`
+- `/api/v1/auth/signup`
+- `/api/v1/auth/login`
+- `/api/v1/auth/refresh`
+- `/actuator/health`
+
+그리고 설정값에 따라 Swagger/OpenAPI, Prometheus 경로도 열 수 있습니다.
+
+이렇게 리스트를 한 곳에서 만들면
+
+- 보안 정책이 흩어지지 않고
+- profile별 노출 차이를 연결하기 쉽습니다.
+
+### 5-4. `CsrfCookieFilter`: 쿠키 기반 인증에서 CSRF 토큰을 초기에 발급한다
+
+[CsrfCookieFilter.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/CsrfCookieFilter.java)는 매우 짧지만 중요합니다.
+
+핵심 메서드는 아래입니다.
+
+- `doFilterInternal(...)`
+
+이 필터는 초기 요청에도 CSRF 토큰이 쿠키로 발급되게 도와줍니다.
+
+즉, 로그인/회원가입 같은 첫 요청에서도 클라이언트가 CSRF 토큰을 받을 수 있게 합니다.
+
+### 5-5. `AuthApiController`: 인증 API 진입점
+
+[AuthApiController.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/controller/AuthApiController.java)의 핵심 메서드는 아래입니다.
+
+- `signUp(...)`
+- `login(...)`
+- `logout(...)`
+- `refresh(...)`
+- `getCurrentMember(...)`
+
+이 시점에서 중요한 것은 “API 경계를 한 컨트롤러에 모은다”는 점입니다.
+
+### 5-6. `AuthService`: 컨트롤러보다 아래에서 인증 흐름을 조율한다
+
+[AuthService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthService.java)의 초반 핵심 메서드는 아래입니다.
+
+- `signUp(...)`
+- `login(...)`
+- `logout(...)`
+
+즉, 컨트롤러는 HTTP 요청/응답만 처리하고,  
+실제 인증 오케스트레이션은 서비스가 맡습니다.
+
+## 6. 실제 흐름
+
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant Security as SecurityConfig
+    participant Controller as AuthApiController
+    participant Service as AuthService
+
+    User->>Security: /api/v1/auth/signup
+    Security->>Controller: 공개 경로 통과
+    Controller->>Service: signUp(...)
+
+    User->>Security: /api/v1/auth/login
+    Security->>Controller: 공개 경로 통과 + CSRF 확인
+    Controller->>Service: login(...)
+```
+
+즉, 로그인/회원가입은 공개 경로지만  
+그 외 업무 화면과 API는 보안 체인을 통과해야 합니다.
+
+## 7. 테스트로 검증하기
+
+관련 테스트는 아래가 핵심입니다.
+
+- `AuthApiIntegrationTest`
+  - 회원가입 성공/실패
+  - 로그인 성공/실패
+  - 공통 에러 응답 형식
+- `PageAccessIntegrationTest`
+  - 비로그인 접근
+  - 원장/교사/학부모별 페이지 접근
+
+즉, 보안 설정을 코드만 믿지 않고 실제 HTTP 요청으로 검증합니다.
+
+## 8. 회고
+
+이 단계에서 중요한 교훈은 아래입니다.
+
+1. 보안 설정은 나중에 붙이는 옵션이 아니다
+2. JWT를 쓴다고 CSRF를 무조건 꺼서는 안 된다
+3. 로그인 API를 만들 때는 컨트롤러와 서비스 책임을 일찍 나눠야 한다
+
+이 기본 구조가 있었기 때문에 나중에
+
+- JWT rotation
+- 활성 세션 관리
+- rate limit
+- OAuth2 lifecycle
+
+같은 고도화가 자연스럽게 이어졌습니다.
+
+## 9. 취업 포인트
+
+면접에서는 이렇게 설명하면 좋습니다.
+
+- “Spring Security 기본 흐름은 `SecurityConfig`에서 공개 경로와 인증 경로를 먼저 나누는 것부터 시작했습니다.”
+- “JWT를 쿠키에 담기 때문에 CSRF를 켜는 쪽이 안전하다고 판단했습니다.”
+- “컨트롤러는 HTTP 경계, 서비스는 인증 흐름 orchestration을 맡도록 책임을 나눴습니다.”

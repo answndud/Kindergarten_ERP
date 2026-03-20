@@ -1,0 +1,259 @@
+# [Spring Boot 포트폴리오] 21. 알림 전달을 Outbox, Retry, Dead-letter로 바꾸기
+
+## 1. 이번 글에서 풀 문제
+
+알림 기능은 구현 초기에 보통 이렇게 만듭니다.
+
+1. `notification` 테이블에 저장
+2. 바로 외부 웹훅이나 메일 호출
+3. 실패하면 로그만 남김
+
+처음에는 동작하지만, 운영에서는 금방 문제가 드러납니다.
+
+- 외부 채널이 잠깐 죽으면 알림이 사라진다
+- 재시도 정책이 없다
+- 전달 실패를 운영자가 추적할 수 없다
+- 보안 이벤트를 incident 채널로 보내기도 어렵다
+
+Kindergarten ERP는 이 문제를 `notification_outbox` 패턴으로 풀었습니다.
+
+## 2. 먼저 알아둘 개념
+
+### 2-1. “알림 생성”과 “외부 전달”은 다른 책임이다
+
+앱 내부 알림이 생성됐다는 사실과  
+Slack, webhook, push, email이 성공했다는 사실은 다릅니다.
+
+이 둘을 한 트랜잭션으로 묶으면  
+느린 외부 시스템이 핵심 비즈니스 흐름을 망칠 수 있습니다.
+
+### 2-2. Outbox 패턴
+
+Outbox 패턴은 핵심 데이터 저장 뒤,  
+“나중에 전달해야 할 작업”을 별도 테이블에 적재하는 방식입니다.
+
+즉 이 프로젝트에서는
+
+- `notification`
+  - 사용자에게 알림이 생겼다
+- `notification_outbox`
+  - 외부 채널로 전달할 작업이 생겼다
+
+로 책임을 분리합니다.
+
+### 2-3. Dead-letter
+
+여러 번 재시도해도 계속 실패하면  
+“더 이상 자동 재시도하지 않는 최종 실패 상태”가 필요합니다.
+
+그래야 운영자가 놓치지 않습니다.
+
+## 3. 이번 글에서 다룰 파일
+
+```text
+- src/main/java/com/erp/domain/notification/entity/NotificationOutbox.java
+- src/main/java/com/erp/domain/notification/repository/NotificationOutboxRepository.java
+- src/main/java/com/erp/domain/notification/service/NotificationDispatchService.java
+- src/main/java/com/erp/domain/notification/service/NotificationDeliveryPolicyService.java
+- src/main/java/com/erp/domain/notification/service/channel/NotificationChannel.java
+- src/test/java/com/erp/integration/NotificationOutboxIntegrationTest.java
+- src/test/java/com/erp/integration/NotificationOutboxRetryIntegrationTest.java
+- docs/decisions/phase40_notification_outbox_and_incident_channel.md
+```
+
+## 4. 설계 구상
+
+```mermaid
+flowchart TD
+    A["NotificationService"] --> B["Notification 저장"]
+    B --> C["NotificationDispatchService.dispatch(...)"]
+    C --> D["notification_outbox 적재"]
+    D --> E["processReadyDeliveriesBatch()"]
+    E --> F["채널 sender 호출"]
+    F --> G["DELIVERED"]
+    F --> H["PENDING + retry 예약"]
+    F --> I["DEAD_LETTER"]
+```
+
+핵심 기준은 아래였습니다.
+
+1. 앱 내부 알림 저장은 빠르게 끝낸다
+2. 외부 전달은 outbox row로 분리한다
+3. 채널 선택은 정책 서비스에서 결정한다
+4. 실패는 warn 로그가 아니라 상태 전이로 남긴다
+
+## 5. 코드 설명
+
+### 5-1. `NotificationOutbox`: 전달 작업을 표현하는 엔티티
+
+[NotificationOutbox.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/entity/NotificationOutbox.java)는  
+아래 상태를 가집니다.
+
+- `channel`
+- `status`
+- `attemptCount`
+- `maxAttempts`
+- `nextAttemptAt`
+- `processingStartedAt`
+- `deliveredAt`
+- `deadLetteredAt`
+- `lastError`
+
+핵심 메서드는 아래입니다.
+
+- `create(...)`
+- `markProcessing(...)`
+- `markDelivered(...)`
+- `scheduleRetry(...)`
+- `markDeadLetter(...)`
+- `canRetry()`
+- `toPayload()`
+
+즉 이 엔티티는 단순 보조 테이블이 아니라  
+**전달 작업의 상태 머신**입니다.
+
+### 5-2. `NotificationDispatchService`: worker 역할까지 담당한다
+
+[NotificationDispatchService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/service/NotificationDispatchService.java)의 핵심 메서드는 아래입니다.
+
+- `dispatch(Notification notification)`
+- `dispatch(List<Notification> notifications)`
+- `processReadyDeliveriesOnSchedule()`
+- `processReadyDeliveriesBatch()`
+- `claimReadyDeliveries(...)`
+- `processClaimedDelivery(...)`
+- `enqueueNotifications(...)`
+
+초보자가 꼭 봐야 할 포인트는 아래입니다.
+
+#### `dispatch(...)`는 외부 전송이 아니라 큐 적재
+
+이름만 보면 바로 보내는 것처럼 보이지만,  
+실제로는 `enqueueNotifications(...)`를 통해 outbox row를 만듭니다.
+
+즉 이 단계의 책임은 “보내기”가 아니라 “보낼 작업 등록”입니다.
+
+#### `processReadyDeliveriesBatch()`
+
+이 메서드는 worker 진입점입니다.
+
+1. `claimReadyDeliveries(...)`로 ready batch 선택
+2. outbox ID 단위로 새 트랜잭션에서 처리
+3. `processClaimedDelivery(...)`에서 sender 호출
+
+여기서 `executeInNewTransaction(...)`을 쓰는 이유는  
+각 outbox row 처리를 서로 격리하기 위해서입니다.
+
+### 5-3. `claimReadyDeliveries(...)`: stale processing까지 회수한다
+
+이 메서드는 두 단계로 조회합니다.
+
+1. `PENDING`이고 `nextAttemptAt <= now`
+2. 없으면 오래된 `PROCESSING` row
+
+즉 worker가 죽거나 중간에 멈춘 row도  
+다시 회수할 수 있게 설계했습니다.
+
+### 5-4. `processClaimedDelivery(...)`: 성공, 재시도, dead-letter
+
+성공하면:
+
+- `markDelivered(now)`
+
+실패하면:
+
+- 아직 여유가 있으면 `scheduleRetry(...)`
+- 더 이상 안 되면 `markDeadLetter(...)`
+
+이 구조가 중요한 이유는  
+실패를 “로그에만 남기는 부수효과”가 아니라
+**도메인 상태 변화**로 승격시켰기 때문입니다.
+
+### 5-5. `NotificationDeliveryPolicyService`: 어떤 채널로 보낼지 결정
+
+[NotificationDeliveryPolicyService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/service/NotificationDeliveryPolicyService.java)의 핵심 메서드는 아래입니다.
+
+- `resolveReceiverChannels(...)`
+- `resolveIncidentChannels(...)`
+- `resolveChannels(...)`
+
+즉 channel 분기 로직을 `NotificationService`나 controller에 두지 않고,  
+정책 서비스로 분리했습니다.
+
+예를 들어 `AUTH_ANOMALY_DETECTED` 같은 타입은
+
+- principal in-app 알림
+- incident webhook
+
+으로 fan-out할 수 있습니다.
+
+### 5-6. `NotificationOutboxRepository`: worker가 실제로 의존하는 조회 규칙
+
+[NotificationOutboxRepository.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/repository/NotificationOutboxRepository.java)의 핵심 메서드는 아래입니다.
+
+- `findByStatusAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(...)`
+- `findByStatusAndProcessingStartedAtLessThanEqualOrderByProcessingStartedAtAscIdAsc(...)`
+- `findByNotificationIdOrderByIdAsc(...)`
+
+즉 repository도 CRUD가 아니라  
+**worker가 어떤 순서로 잡아 가야 하는지**를 표현합니다.
+
+## 6. 실제 흐름
+
+```mermaid
+sequenceDiagram
+    participant App as NotificationService
+    participant Dispatch as NotificationDispatchService
+    participant Outbox as NotificationOutbox
+    participant Sender as Channel Sender
+
+    App->>Dispatch: dispatch(notification)
+    Dispatch->>Outbox: PENDING row 생성
+    Dispatch->>Dispatch: processReadyDeliveriesBatch()
+    Dispatch->>Outbox: markProcessing()
+    Dispatch->>Sender: send(payload)
+    alt 성공
+        Sender-->>Dispatch: ok
+        Dispatch->>Outbox: markDelivered()
+    else 실패 but retry 가능
+        Sender-->>Dispatch: error
+        Dispatch->>Outbox: scheduleRetry()
+    else 최대 횟수 초과
+        Sender-->>Dispatch: error
+        Dispatch->>Outbox: markDeadLetter()
+    end
+```
+
+## 7. 테스트로 검증하기
+
+대표 테스트는 아래입니다.
+
+- [NotificationOutboxIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/integration/NotificationOutboxIntegrationTest.java)
+  - outbox 적재 후 성공 시 `DELIVERED`
+- [NotificationOutboxRetryIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/integration/NotificationOutboxRetryIntegrationTest.java)
+  - 실패 반복 시 `DEAD_LETTER`
+
+이 테스트가 좋은 이유는 외부 채널을 모킹하면서도  
+outbox 상태 전이를 끝까지 검증한다는 점입니다.
+
+즉 “웹훅 호출했다”가 아니라  
+**실패했을 때 시스템이 어떻게 행동하는지**를 본다는 것입니다.
+
+## 8. 회고
+
+Outbox를 처음 보면 구조가 복잡해 보일 수 있습니다.  
+하지만 실제로는 시스템 책임을 더 명확하게 나눈 것입니다.
+
+- 앱 내부 알림 저장
+- 외부 전달 정책 결정
+- 비동기 worker 처리
+- 실패/재시도/최종 포기
+
+이 분리가 되면 나중에 incident webhook, email, push를 추가할 때도  
+핵심 비즈니스 코드가 덜 흔들립니다.
+
+## 9. 취업 포인트
+
+- “알림 저장과 외부 전달을 분리해, 느린 외부 채널이 핵심 트랜잭션을 망치지 않게 했습니다.”
+- “실패는 warn 로그가 아니라 `PENDING -> DELIVERED / DEAD_LETTER` 상태 전이로 남겼습니다.”
+- “채널 선택은 `NotificationDeliveryPolicyService`로 분리해 incident webhook 같은 운영 채널 확장을 쉽게 만들었습니다.”
