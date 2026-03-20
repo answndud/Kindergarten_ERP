@@ -670,3 +670,63 @@ sequenceDiagram
 
 이 질문에 답할 수 있으면, 단순히 Spring Boot 기능을 붙인 수준이 아니라  
 **운영형 백엔드의 기초 토대를 설계한 경험**으로 말할 수 있습니다.
+
+## 10. 시작 상태
+
+- `02`, `03`, `04`까지 따라와서 프로젝트 뼈대, Docker 인프라, profile 전략이 준비돼 있어야 합니다.
+- 이 글의 목표는 **DB/Redis를 실제로 쓰기 시작할 수 있는 공통 백엔드 기반**을 세우는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 의존성 / 설정:
+  - build.gradle
+  - src/main/resources/application.yml
+  - src/main/resources/application-local.yml
+  - src/test/resources/application-test.yml
+- 공통 config:
+  - src/main/java/com/erp/global/config/JpaConfig.java
+  - src/main/java/com/erp/global/config/QuerydslConfig.java
+  - src/main/java/com/erp/global/config/RedisConfig.java
+  - src/main/java/com/erp/global/config/CacheConfig.java
+- 공통 엔티티 / 스키마:
+  - src/main/java/com/erp/global/common/BaseEntity.java
+  - src/main/resources/db/migration/V1__init_schema.sql
+```
+
+## 12. 구현 체크리스트
+
+1. `build.gradle`에 JPA, Flyway, QueryDSL, Redis, Cache 관련 의존성을 추가합니다.
+2. `BaseEntity`로 생성/수정/삭제 공통 필드를 정리합니다.
+3. `V1__init_schema.sql`부터 마이그레이션 체계를 시작합니다.
+4. JPA / QueryDSL / Redis / Cache 공통 설정 클래스를 만듭니다.
+5. 테스트 환경도 별도 프로파일과 Testcontainers로 연결할 준비를 합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew test --tests "com.erp.ErpApplicationTests"
+```
+
+성공하면 확인할 것:
+
+- 애플리케이션과 테스트 코드가 함께 컴파일된다
+- Flyway migration이 적용될 준비가 돼 있다
+- JPA / Redis / Cache 설정 빈이 충돌 없이 올라온다
+
+## 14. 글 종료 체크포인트
+
+- `BaseEntity`와 migration 체계가 생겼다
+- JPA, Flyway, QueryDSL, Redis, Cache의 역할을 각각 설명할 수 있다
+- 테스트 환경도 나중에 Testcontainers로 현실화할 수 있는 기반이 생겼다
+
+## 15. 자주 막히는 지점
+
+- 증상: JPA 엔티티는 있는데 테이블이 기대대로 안 생김
+  - 원인: Flyway와 JPA ddl-auto 책임을 동시에 헷갈린 경우가 많습니다
+  - 확인할 것: 스키마 생성은 migration, 매핑 검증은 JPA라는 역할 분리를 다시 확인
+
+- 증상: QueryDSL Q 클래스가 안 생김
+  - 원인: annotation processor 설정이 빠졌거나 IDE/Gradle sync가 꼬였을 수 있습니다
+  - 확인할 것: `build.gradle`의 QueryDSL processor 설정과 Gradle 재동기화 상태 확인

@@ -31,6 +31,10 @@
 | 2026-03-20 19:39 | DONE | `blog/19-auth-audit-log-and-operations-console.md`, `blog/20-openapi-management-plane-and-observability.md`, `blog/21-notification-outbox-and-incident-channel.md`, `blog/22-classroom-capacity-and-waitlist-workflow.md`, `blog/23-attendance-change-request-and-domain-audit.md`, `blog/24-audit-logs-as-operations-tools.md`, `blog/25-performance-story-as-portfolio.md`, `blog/26-demo-architecture-and-interview-pack.md` 초안을 작성했다 | 블로그 인덱스와 진행 기록 정리 |
 | 2026-03-20 19:47 | DONE | `blog/README.md`와 `blog/00_series_plan.md`를 전체 글 링크가 보이는 인덱스로 갱신했다. 블로그 범위를 벗어난 임시 `PLAN.md`, `PROGRESS.md` 수정은 원복하기로 확정했다 | 개발용 SSOT 원복 후 포맷 검증 |
 | 2026-03-20 19:56 | DONE | 개발용 `PROGRESS.md`까지 원복했고, 블로그 시리즈 작업 범위만 남도록 워크트리를 정리했다. `git diff --check` 기준 포맷 오류 없이 26편 전체 초안 + 인덱스가 완성된 상태다 | add/commit/push |
+| 2026-03-20 20:11 | DONE | 사용자 피드백을 반영해 블로그 재현성 보강 작업에 착수했다. `BLOG_PLAN.md`, `blog/_post_template.md`, 기존 본문 `02`~`05`를 다시 읽고 “설명형 -> 재현형” 전환 기준을 정의했다 | 공통 재현성 가이드와 템플릿 작성 |
+| 2026-03-20 20:24 | DONE | `BLOG_PLAN.md`에 재현성 강화 목표/배치 계획을 추가하고, `blog/00_rebuild_guide.md`, `blog/_rebuild_template.md`를 새로 작성했다. `blog/README.md`도 재현형 사용 순서를 반영했다 | 우선순위 구간 `02`~`05`에 체크포인트 섹션 보강 |
+| 2026-03-20 20:36 | DONE | `blog/02-gradle-spring-boot-bootstrap.md`, `blog/03-docker-mysql-redis-dev-environment.md`, `blog/04-application-yml-and-profile-strategy.md`, `blog/05-jpa-flyway-querydsl-redis-cache-foundation.md`에 시작 상태, 변경 파일, 구현 체크리스트, 실행/검증 명령, 글 종료 체크포인트, 자주 막히는 지점을 추가해 첫 재현형 보강 배치를 적용했다 | 포맷 검증 후 add/commit/push |
+| 2026-03-20 20:43 | DONE | `git diff --check`로 문서 포맷을 다시 검증했고, 공통 규칙 문서 + 초반 4개 글 재현형 보강 배치가 커밋 가능한 상태임을 확인했다 | add/commit/push |
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
