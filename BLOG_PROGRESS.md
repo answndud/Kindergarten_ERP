@@ -22,6 +22,9 @@
 | 2026-03-20 17:05 | DONE | 세 번째 본문 주제를 프로파일 전략으로 고정하고 `application.yml`, `application-local.yml`, `application-demo.yml`, `application-prod.yml`, `logback-spring.xml`, `DataLoader`, `OpenApiConfig`, `SecurityConfig`, 관련 결정 로그를 다시 읽었다 | `blog/04-application-yml-and-profile-strategy.md` 초안 작성 |
 | 2026-03-20 17:18 | DONE | `blog/04-application-yml-and-profile-strategy.md` 초안을 작성했다. 공통 설정과 환경별 차이, `demo=local` profile group, `@Profile`/`@ConditionalOnProperty`/`SecurityConfig.buildPublicEndpoints()`까지 연결해 입문자용 설명과 취업 포인트를 함께 정리했다 | 포맷 검증 후 add/commit/push |
 | 2026-03-20 17:24 | DONE | `git diff --check`로 포맷 오류가 없는지 확인하고, 하위 제목 레벨과 진행 로그를 정리했다 | add/commit/push |
+| 2026-03-20 17:31 | DONE | 네 번째 본문 주제를 JPA/Flyway/QueryDSL/Redis/Cache 공통 설정으로 고정하고 `build.gradle`, `application*.yml`, `V1/V5/V8/V13` 마이그레이션, `JpaConfig`, `BaseEntity`, `QuerydslConfig`, `RedisConfig`, `CacheConfig`, `TestcontainersSupport`, 관련 결정 로그를 다시 읽었다 | `blog/05-jpa-flyway-querydsl-redis-cache-foundation.md` 초안 작성 |
+| 2026-03-20 17:46 | DONE | `blog/05-jpa-flyway-querydsl-redis-cache-foundation.md` 초안을 작성했다. JPA와 Flyway의 역할 분리, QueryDSL/Redis/Cache의 초기 공통 설정 의도, Testcontainers 기반 검증까지 입문자용 설명과 취업 포인트로 정리했다 | 포맷 검증 후 add/commit/push |
+| 2026-03-20 17:51 | DONE | `git diff --check`로 문서 포맷을 검증하고 섹션 구조를 재확인했다 | add/commit/push |
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
