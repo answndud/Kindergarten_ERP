@@ -5,7 +5,8 @@
 
 ## 현재 배치 상태
 - 완료: Batch A (`management plane 하드닝 + 활성 세션 관리`)
-- 다음: Batch B (`notification_outbox` + retry/dead-letter + 외부 incident channel)
+- 완료: Batch B (`notification_outbox` + retry/dead-letter + 외부 incident channel`)
+- 다음 배치: Batch C (`waitlist 입학/지원 + 출결 요청/승인 + domain audit log`)
 
 ## 1) 목표 / 범위
 - 포트폴리오 관점에서 가장 값이 큰 다음 개선 5개를 실제 코드/테스트/문서까지 포함해 순차 구현한다.
@@ -27,8 +28,9 @@
 
 3. 알림 신뢰성 고도화
    - `notification_outbox` 기반 비동기 dispatch 설계
-   - retry / dead-letter / delivery status / incident channel(Slack/Webhook/Email) 도입
-   - 인증 이상 징후 알림을 외부 채널로도 연결
+   - critical 알림 타입만 outbox에 적재하는 fan-out 정책 도입
+   - retry / dead-letter / delivery status / stale processing timeout 도입
+   - 인증 이상 징후 알림 타입 분리(`AUTH_ANOMALY_DETECTED`) 및 Slack-compatible webhook 연결
    - 운영 runbook과 실패 시나리오 테스트 보강
 
 4. 도메인 워크플로우 확장

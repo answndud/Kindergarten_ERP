@@ -347,7 +347,7 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.length()").value(1))
-                    .andExpect(jsonPath("$.data[0].type").value("SYSTEM"))
+                    .andExpect(jsonPath("$.data[0].type").value("AUTH_ANOMALY_DETECTED"))
                     .andExpect(jsonPath("$.data[0].title").value("인증 이상 징후 감지"))
                     .andExpect(jsonPath("$.data[0].content").value(org.hamcrest.Matchers.containsString("teacher@test.com")))
                     .andExpect(jsonPath("$.data[0].linkUrl").value(org.hamcrest.Matchers.containsString("email=teacher@test.com")));

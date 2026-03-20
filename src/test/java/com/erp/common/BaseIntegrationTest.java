@@ -113,9 +113,12 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
 
     @BeforeEach
     void setUp() {
-        testData.cleanup();
-        resetIdentity();
         clearRedis();
+        writeCommitted(() -> {
+            testData.cleanup();
+            resetIdentity();
+            return null;
+        });
 
         // 테스트 데이터 초기화
         principalMember = testData.createPrincipalMember();
@@ -226,6 +229,12 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
         return transactionTemplate.execute(status -> supplier.get());
     }
 
+    protected <T> T writeCommitted(Supplier<T> supplier) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return transactionTemplate.execute(status -> supplier.get());
+    }
+
     private void replaceAuthenticationPrincipal() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
@@ -254,6 +263,7 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
     }
 
     private void resetIdentity() {
+        resetTableIdentity("notification_outbox");
         resetTableIdentity("auth_audit_log");
         resetTableIdentity("member_social_account");
         resetTableIdentity("announcement_view");

@@ -37,8 +37,8 @@
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
 - local/demo에서는 Swagger와 Prometheus를 바로 열고, prod에서는 Swagger를 비활성화하고 management port를 분리해 운영 노출면을 줄였습니다.
 - 로그인/refresh/social link/unlink는 DB 감사 로그로 남기고, `kindergarten_id` 비정규화와 archive/purge retention 정책까지 붙였습니다.
-- 반복 로그인 실패는 원장 시스템 알림으로 연결했고, Prometheus metric은 Grafana 대시보드까지 바로 보이게 구성했습니다.
-- 이로써 **계약 문서 -> 이벤트 저장 -> 운영 조회 -> 메트릭 관측 -> 사후 분석** 흐름을 설명할 수 있게 됐습니다.
+- 반복 로그인 실패는 원장 시스템 알림으로 연결했고, 이후 `notification_outbox`로 외부 전달을 분리해 retry/dead-letter와 incident webhook까지 붙였습니다.
+- Prometheus metric은 Grafana 대시보드까지 바로 보이게 구성했고, 이로써 **계약 문서 -> 이벤트 저장 -> 운영 조회 -> 외부 incident 전파 -> 메트릭 관측 -> 사후 분석** 흐름을 설명할 수 있게 됐습니다.
 
 ## 3. 성능 개선 포인트
 
@@ -72,6 +72,9 @@
 
 - principal API에서는 tenant에 안전하게 귀속된 감사 로그만 조회합니다.
   - 이유: known email 실패는 `kindergarten_id`로 귀속하지만, 완전히 익명인 로그인 실패는 여전히 tenant를 특정할 수 없기 때문입니다.
+
+- notification outbox worker는 현재 단일 인스턴스 기준으로 설계했습니다.
+  - 이유: 이번 단계에서는 전달 신뢰성(retry/dead-letter) 확보를 먼저 닫고, 멀티 인스턴스 lock 전략은 다음 단계 확장 포인트로 남겼기 때문입니다.
 
 - 소셜 계정은 “교체”를 허용하지 않았습니다.
   - 이유: 소셜 `providerId`를 비밀번호가 아니라 로그인 식별자로 봤기 때문입니다.

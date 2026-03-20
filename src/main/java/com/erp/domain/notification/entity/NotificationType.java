@@ -15,6 +15,7 @@ public enum NotificationType {
     NOTEPAD_CREATED("알림장 작성"),
     NOTEPAD_READ_CONFIRM("알림장 읽음 확인"),
     ANNOUNCEMENT_CREATED("공지사항 작성"),
+    AUTH_ANOMALY_DETECTED("인증 이상 징후 감지"),
     SYSTEM("시스템 알림");
 
     private final String description;

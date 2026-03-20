@@ -346,6 +346,10 @@ INDEX idx_receiver_created (receiver_id, created_at DESC)
 
 ## 12. 외부 채널 옵션 (메일/푸시/앱)
 
+> Note
+> 이 섹션은 외부 채널 옵션의 초기 설계 기록입니다.
+> 외부 전달 신뢰성 모델(`notification_outbox`, retry/dead-letter, incident webhook)은 `phase40_notification_outbox_and_incident_channel.md`가 최신 SSOT입니다.
+
 ### 결정
 외부 채널은 **옵션**으로 제공하고 기본값은 비활성화한다.
 

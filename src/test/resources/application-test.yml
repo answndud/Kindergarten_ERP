@@ -68,3 +68,7 @@ logging:
     org.springframework.security: INFO
     org.springframework.test.web.servlet: INFO
     org.hibernate.SQL: INFO
+
+notification:
+  delivery:
+    worker-enabled: false

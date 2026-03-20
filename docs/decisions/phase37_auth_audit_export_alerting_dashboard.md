@@ -1,5 +1,9 @@
 # Phase 37. 감사 로그 export + 인증 이상 징후 알림 + Grafana 대시보드
 
+> Note
+> 이 단계의 이상 징후 알림은 "principal in-app alert"까지 닫은 1차 버전입니다.
+> 외부 incident webhook 전달, retry/dead-letter, `notification_outbox` 분리는 `phase40_notification_outbox_and_incident_channel.md`가 최신 SSOT입니다.
+
 ## 배경
 
 Phase 36까지 오면서
@@ -66,7 +70,7 @@ Phase 36까지 오면서
 - window: 10분
 - cooldown: 30분
 - 수신자: 해당 유치원 principal
-- 알림 타입: `NotificationType.SYSTEM`
+- 알림 타입: 초기 단계에서는 principal in-app alert 중심
 
 구현:
 
@@ -132,6 +136,6 @@ Phase 36까지 오면서
 ## 면접에서 강조할 포인트
 
 1. "감사 로그를 조회 API로만 끝내지 않고 CSV export까지 붙여 운영 대응과 공유 흐름을 만들었습니다."
-2. "보안 이벤트는 저장만으로 충분하지 않아서, 반복 로그인 실패를 principal 시스템 알림으로 연결했습니다."
+2. "보안 이벤트는 저장만으로 충분하지 않아서, 반복 로그인 실패를 principal in-app alert로 연결했습니다. 외부 incident webhook은 phase40에서 이어집니다."
 3. "Prometheus endpoint를 열어 두는 것에서 멈추지 않고, Grafana provisioning으로 실제 대시보드까지 바로 볼 수 있게 했습니다."
 4. "tenant에 안전하게 귀속할 수 있는 감사 로그만 조회/export/alert에 포함시키고, 완전히 익명인 실패 로그는 운영 범위에서 제외했습니다."

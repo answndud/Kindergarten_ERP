@@ -36,7 +36,7 @@
 - Swagger/OpenAPI 기반 API 계약 문서
 - Actuator health/readiness, Prometheus, correlation id, request structured logging
 - DB 기반 인증 감사 로그, `kindergarten_id` 비정규화 tenant 필터, 원장 전용 조회/export API, 감사 로그 운영 화면
-- 반복 로그인 실패 감지와 원장 시스템 알림
+- 반복 로그인 실패 감지, principal in-app alert, `notification_outbox` 기반 incident webhook 전달
 - 감사 로그 archive/purge retention scheduler
 - Grafana 대시보드까지 포함한 로컬 monitoring overlay
 - 정확도와 쿼리 수를 함께 관리한 대시보드 지표 개선
@@ -75,6 +75,9 @@
 - ✅ 원장 전용 인증 감사 로그 CSV export
 - ✅ 원장 전용 인증 감사 로그 화면
 - ✅ 반복 로그인 실패 감지 및 원장 시스템 알림
+- ✅ `notification_outbox` 기반 외부 채널 비동기 전달
+- ✅ retry/backoff/dead-letter 기반 알림 전달 상태 관리
+- ✅ 인증 이상 징후 incident webhook fan-out
 - ✅ 감사 로그 archive/purge retention scheduler
 - ✅ 소셜 로그인 (Google, Kakao OAuth2)
 - ✅ 소셜 계정 자동 연결 금지 및 충돌 안내
@@ -598,6 +601,8 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | API 계약/운영 콘솔/Prometheus/demo 진입점 | `docs/decisions/phase36_api_contract_observability_demo.md` |
 | 감사 로그 export/인증 이상 징후 알림/Grafana 대시보드 | `docs/decisions/phase37_auth_audit_export_alerting_dashboard.md` |
 | 감사 로그 tenant 비정규화/retention/archive | `docs/decisions/phase38_auth_audit_retention_and_denormalization.md` |
+| management plane 하드닝/활성 세션 제어 | `docs/decisions/phase39_management_plane_and_active_session_control.md` |
+| notification outbox/retry/incident webhook | `docs/decisions/phase40_notification_outbox_and_incident_channel.md` |
 
 ---
 

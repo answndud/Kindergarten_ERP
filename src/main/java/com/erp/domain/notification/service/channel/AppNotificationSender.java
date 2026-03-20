@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 public class AppNotificationSender implements NotificationChannelSender {
 
     private final NotificationDeliveryProperties deliveryProperties;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate notificationRestTemplate;
 
     @Override
     public NotificationChannel channel() {
@@ -29,22 +29,23 @@ public class AppNotificationSender implements NotificationChannelSender {
     public void send(NotificationDeliveryPayload payload) {
         String webhookUrl = deliveryProperties.getApp().getWebhookUrl();
         if (webhookUrl == null || webhookUrl.isBlank()) {
-            return;
+            throw new IllegalStateException("notification.delivery.app.webhook-url is not configured");
         }
 
         WebhookNotificationPayload body = WebhookNotificationPayload.from(payload);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(
-                    webhookUrl,
-                    new HttpEntity<>(body, headers),
-                    String.class
-            );
-            log.debug("App notification dispatched. receiverId={}, status={}", payload.receiverId(), response.getStatusCode());
-        } catch (Exception e) {
-            log.warn("App notification failed. receiverId={}, error={}", payload.receiverId(), e.getMessage());
+        ResponseEntity<String> response = notificationRestTemplate.postForEntity(
+                webhookUrl,
+                new HttpEntity<>(body, headers),
+                String.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("App notification failed with status " + response.getStatusCode());
         }
+
+        log.debug("App notification dispatched. receiverId={}, status={}", payload.receiverId(), response.getStatusCode());
     }
 }

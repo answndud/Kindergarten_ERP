@@ -64,11 +64,12 @@
 2. eventType/result/provider/email/date 필터 예시 시연
 3. `CSV Export` 버튼으로 같은 필터 조건의 다운로드 시연
 4. 같은 유치원 소속 로그만 보이고 익명 실패 로그는 principal 조회에서 제외되는 점 설명
-5. 반복 로그인 실패 시 원장 시스템 알림으로 연결된 점 설명
+5. 반복 로그인 실패 시 principal 시스템 알림으로 연결되는 점 설명
+6. 외부 incident webhook과 retry/dead-letter는 라이브 시연보다 설계 포인트로 짧게 설명
 
 말할 포인트:
 - "보안 이벤트를 저장만 하는 게 아니라 운영자가 실제로 조회할 수 있게 닫았습니다."
-- "조회에서 끝내지 않고 CSV export와 이상 징후 알림까지 붙여 운영 대응 흐름을 만들었습니다."
+- "조회에서 끝내지 않고 CSV export, principal in-app alert, external incident delivery까지 운영 대응 흐름을 만들었습니다."
 - "단, tenant 경계를 위해 principal은 자기 유치원 소속 member 기반 로그만 조회할 수 있습니다."
 
 ## 2:40 ~ 3:00 테스트와 CI
