@@ -221,3 +221,63 @@ sequenceDiagram
 - “Spring Security 기본 흐름은 `SecurityConfig`에서 공개 경로와 인증 경로를 먼저 나누는 것부터 시작했습니다.”
 - “JWT를 쿠키에 담기 때문에 CSRF를 켜는 쪽이 안전하다고 판단했습니다.”
 - “컨트롤러는 HTTP 경계, 서비스는 인증 흐름 orchestration을 맡도록 책임을 나눴습니다.”
+
+## 10. 시작 상태
+
+- `02`~`10`까지 따라와서 Spring Boot 뼈대, 실행 환경, 공통 설정, 기본 도메인 구조가 준비돼 있어야 합니다.
+- 최소한 `Member` 도메인과 공통 예외 응답 구조가 있어야 회원가입/로그인 API를 올릴 수 있습니다.
+- 이 글의 목표는 **인증 기능의 첫 진입점**을 만드는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 핵심 설정 / 필터:
+  - src/main/java/com/erp/global/config/SecurityConfig.java
+  - src/main/java/com/erp/global/config/CsrfCookieFilter.java
+- 인증 API / 서비스:
+  - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
+  - src/main/java/com/erp/domain/auth/service/AuthService.java
+  - src/main/java/com/erp/domain/auth/dto/request/LoginRequest.java
+- 검증 파일:
+  - src/test/java/com/erp/api/AuthApiIntegrationTest.java
+  - src/test/java/com/erp/integration/PageAccessIntegrationTest.java
+```
+
+## 12. 구현 체크리스트
+
+1. `SecurityConfig`에서 공개 경로와 인증 필요 경로를 나눕니다.
+2. `CsrfCookieFilter`를 추가해 초기 요청에서도 CSRF 쿠키가 발급되게 합니다.
+3. `AuthApiController`에 회원가입 / 로그인 / 로그아웃 / refresh API 진입점을 둡니다.
+4. `AuthService`에서 회원 생성과 로그인 검증 흐름을 분리합니다.
+5. 통합 테스트로 공개 경로, 인증 실패, 페이지 접근 제어를 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"
+./gradlew test --tests "com.erp.integration.PageAccessIntegrationTest"
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+성공하면 확인할 것:
+
+- `/api/v1/auth/signup`, `/api/v1/auth/login`이 공개 경로로 동작한다
+- 비로그인 상태에서 보호된 페이지 접근 시 로그인 경로로 유도된다
+- 회원가입/로그인 실패 시 공통 에러 포맷이 유지된다
+
+## 14. 글 종료 체크포인트
+
+- 공개 경로와 인증 필요 경로가 `SecurityConfig`에 정리돼 있다
+- 인증 API가 `AuthApiController`와 `AuthService`로 분리돼 있다
+- 쿠키 기반 인증을 위한 CSRF 초기화 흐름이 존재한다
+- 보안 설정을 통합 테스트로 검증할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 로그인 API가 403으로 막힘
+  - 원인: CSRF 토큰 흐름을 고려하지 않았거나 공개 경로 설정이 빠졌을 수 있습니다
+  - 확인할 것: `SecurityConfig.buildPublicEndpoints()`와 `CsrfCookieFilter` 등록 여부
+
+- 증상: 비로그인 접근이 기대와 다르게 동작함
+  - 원인: SecurityConfig와 뷰 인터셉터/페이지 접근 규칙이 어긋났을 수 있습니다
+  - 확인할 것: `PageAccessIntegrationTest` 결과와 보호 페이지 URL 매핑

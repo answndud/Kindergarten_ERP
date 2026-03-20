@@ -35,6 +35,9 @@
 | 2026-03-20 20:24 | DONE | `BLOG_PLAN.md`에 재현성 강화 목표/배치 계획을 추가하고, `blog/00_rebuild_guide.md`, `blog/_rebuild_template.md`를 새로 작성했다. `blog/README.md`도 재현형 사용 순서를 반영했다 | 우선순위 구간 `02`~`05`에 체크포인트 섹션 보강 |
 | 2026-03-20 20:36 | DONE | `blog/02-gradle-spring-boot-bootstrap.md`, `blog/03-docker-mysql-redis-dev-environment.md`, `blog/04-application-yml-and-profile-strategy.md`, `blog/05-jpa-flyway-querydsl-redis-cache-foundation.md`에 시작 상태, 변경 파일, 구현 체크리스트, 실행/검증 명령, 글 종료 체크포인트, 자주 막히는 지점을 추가해 첫 재현형 보강 배치를 적용했다 | 포맷 검증 후 add/commit/push |
 | 2026-03-20 20:43 | DONE | `git diff --check`로 문서 포맷을 다시 검증했고, 공통 규칙 문서 + 초반 4개 글 재현형 보강 배치가 커밋 가능한 상태임을 확인했다 | add/commit/push |
+| 2026-03-20 21:02 | DONE | 재현성 보강 2차 배치 범위를 `11`~`15`로 고정하고, 현재 본문 말미와 관련 auth/test/CI 파일명을 다시 점검했다. Security/JWT/AccessPolicy/Testcontainers/tagged CI를 따라 하기 위해 독자가 실제로 무엇을 준비해야 하는지 기준을 정리했다 | `11`~`15`에 재현형 섹션 추가 |
+| 2026-03-20 21:17 | DONE | `blog/11-securityconfig-signup-login-basics.md`, `blog/12-jwt-cookie-auth-flow.md`, `blog/13-multitenant-access-hardening.md`, `blog/14-why-testcontainers-over-h2.md`, `blog/15-github-actions-and-tagged-test-suites.md`에 시작 상태, 변경 파일, 구현 체크리스트, 실행/검증 명령, 글 종료 체크포인트, 자주 막히는 지점을 추가했다 | 포맷 검증 후 add/commit/push |
+| 2026-03-20 21:23 | DONE | `git diff --check` 기준 2차 배치 문서 포맷이 정상이었고, 인증/테스트 구간 `11`~`15`의 재현형 보강이 커밋 가능한 상태임을 확인했다 | add/commit/push |
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`

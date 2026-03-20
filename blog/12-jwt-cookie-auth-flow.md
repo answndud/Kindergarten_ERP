@@ -187,3 +187,61 @@ sequenceDiagram
 - “JWT 발급은 `JwtTokenProvider`, 인증 복원은 `JwtFilter`, 로그인 orchestration은 `AuthService`로 책임을 나눴습니다.”
 - “토큰에 `sessionId`, `tokenType`, `jti`를 넣어 이후 세션 관리와 rotation으로 확장 가능한 구조를 먼저 만들었습니다.”
 - “쿠키 기반 JWT를 택했기 때문에 CSRF와 쿠키 보안 설정까지 함께 설계했습니다.”
+
+## 10. 시작 상태
+
+- `11` 글까지 따라와서 회원가입/로그인 기본 API와 `SecurityConfig`가 있어야 합니다.
+- 이 글의 목표는 **로그인 성공 후 JWT를 발급하고, 다음 요청에서 쿠키로 인증을 복원하는 흐름**을 완성하는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 토큰 / 필터:
+  - src/main/java/com/erp/global/security/jwt/JwtTokenProvider.java
+  - src/main/java/com/erp/global/security/jwt/JwtFilter.java
+- 인증 조율:
+  - src/main/java/com/erp/domain/auth/service/AuthService.java
+  - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
+  - src/main/java/com/erp/global/config/SecurityConfig.java
+- 검증 파일:
+  - src/test/java/com/erp/api/AuthApiIntegrationTest.java
+  - docs/decisions/phase17_jwt_refresh_session_rotation.md
+```
+
+## 12. 구현 체크리스트
+
+1. `JwtTokenProvider`에 access/refresh 토큰 생성과 파싱 책임을 모읍니다.
+2. 토큰 claims에 `memberId`, `role`, `sessionId`, `tokenType`, `jti`를 넣습니다.
+3. `AuthService.login()`에서 로그인 성공 후 쿠키 발급 흐름을 만듭니다.
+4. `JwtFilter`가 요청마다 access token 쿠키를 읽고 `SecurityContext`를 복원하게 합니다.
+5. `AuthApiIntegrationTest`로 로그인/인증/refresh 회귀를 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+성공하면 확인할 것:
+
+- 로그인 성공 시 HTTP-only access/refresh 쿠키가 발급된다
+- 다음 요청에서 `JwtFilter`가 쿠키를 읽어 인증을 복원한다
+- refresh 경로 회귀 테스트가 통과한다
+
+## 14. 글 종료 체크포인트
+
+- 토큰 생성 책임이 `JwtTokenProvider`로 분리돼 있다
+- 요청 인증 복원 책임이 `JwtFilter`로 분리돼 있다
+- 로그인 orchestration은 `AuthService`가 맡는다
+- 브라우저 요청이 쿠키 기반으로 인증되는 최소 JWT 구조가 완성돼 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 로그인은 되는데 다음 요청이 계속 익명 사용자로 처리됨
+  - 원인: `JwtFilter` 등록 순서나 access token 쿠키 이름이 맞지 않을 수 있습니다
+  - 확인할 것: `SecurityConfig`의 필터 등록과 `JwtTokenProvider` 쿠키 이름 설정
+
+- 증상: refresh 토큰까지 access 토큰처럼 처리됨
+  - 원인: claim에 `tokenType`을 구분하지 않았거나 검증이 빠졌을 수 있습니다
+  - 확인할 것: `JwtTokenProvider.getTokenType()` 또는 refresh 전용 검증 로직

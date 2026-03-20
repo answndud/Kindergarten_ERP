@@ -170,3 +170,64 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 - “테스트를 `fast`, `integration`, `performance` 태그로 나눠 목적 기반 실행 전략을 만들었습니다.”
 - “GitHub Actions도 3개 job으로 분리해 빠른 피드백과 현실적인 통합 검증을 같이 가져갔습니다.”
 - “테스트가 많은 것보다, 어떻게 분류하고 언제 돌리는지가 더 중요하다고 생각했습니다.”
+
+## 10. 시작 상태
+
+- `14` 글까지 따라와서 Testcontainers 기반 통합 테스트가 동작해야 합니다.
+- 최소한 `fast`, `integration`, `performance`로 나눌 대표 테스트 클래스가 있어야 합니다.
+- 이 글의 목표는 **로컬 테스트 전략과 GitHub Actions 실행 전략을 같은 기준으로 맞추는 것**입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 테스트 task / 태그:
+  - build.gradle
+  - src/test/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandlerTest.java
+  - src/test/java/com/erp/api/AuthApiIntegrationTest.java
+  - src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java
+- CI:
+  - .github/workflows/ci.yml
+- 결정 로그:
+  - docs/decisions/phase16_github_actions_ci.md
+  - docs/decisions/phase19_ci_fast_integration_split.md
+  - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+```
+
+## 12. 구현 체크리스트
+
+1. `build.gradle`에 `fastTest`, `integrationTest`, `performanceSmokeTest` task를 등록합니다.
+2. 각 task가 `includeTags` 기준으로 테스트를 집계하게 만듭니다.
+3. 대표 테스트 클래스에 `@Tag("fast")`, `@Tag("integration")`, `@Tag("performance")`를 붙입니다.
+4. `.github/workflows/ci.yml`에서 job을 분리해 각 task를 실행합니다.
+5. 로컬과 CI가 같은 task 이름을 쓰도록 맞춥니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew fastTest
+./gradlew integrationTest
+./gradlew performanceSmokeTest
+```
+
+성공하면 확인할 것:
+
+- 태그 기준으로 각 테스트 묶음이 따로 실행된다
+- 빠른 실패는 `fastTest`에서 먼저 잡힌다
+- 통합/성능 스모크는 Docker 가능한 환경에서 분리 실행된다
+
+## 14. 글 종료 체크포인트
+
+- 테스트가 목적 기반 태그로 분류돼 있다
+- `build.gradle`과 `ci.yml`이 같은 실행 전략을 공유한다
+- fast / integration / performance smoke를 따로 돌릴 수 있다
+- CI 실패 원인을 job 단위로 더 빨리 찾을 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 특정 테스트가 아무 task에서도 안 돈다
+  - 원인: 클래스가 존재해도 `@Tag`가 없으면 분리 task에서 빠질 수 있습니다
+  - 확인할 것: 해당 테스트 클래스의 `@Tag`와 `build.gradle includeTags` 설정
+
+- 증상: 로컬에서는 되는데 CI integration/performance가 실패함
+  - 원인: Docker availability나 runner 환경 차이 때문일 수 있습니다
+  - 확인할 것: `.github/workflows/ci.yml`의 Docker 확인 단계와 Testcontainers 의존 task 실행 순서
