@@ -195,3 +195,69 @@ sequenceDiagram
 - “JWT claims에 `sessionId`를 넣고 Redis 세션 레지스트리와 연결했습니다.”
 - “refresh token rotation을 적용하고, 필터 단계에서 활성 세션 여부를 다시 확인해 access token revoke까지 보장했습니다.”
 - “세션 설계를 사용자 기능(`/sessions`)까지 닫아서 운영 가능한 인증 구조를 만들었습니다.”
+
+## 10. 시작 상태
+
+- `12` 글까지 따라와서 cookie 기반 JWT 로그인/로그아웃/refresh가 동작해야 합니다.
+- Redis가 실행 중이어야 합니다. 이 글의 핵심은 **refresh token을 단순 문자열이 아니라 세션 단위 자산으로 관리하는 것**입니다.
+- 목표는 세 가지입니다.
+  - refresh rotation
+  - 활성 세션 목록 조회
+  - 특정 세션 또는 다른 기기 세션 종료
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 토큰 / 필터:
+  - src/main/java/com/erp/global/security/jwt/JwtTokenProvider.java
+  - src/main/java/com/erp/global/security/jwt/JwtFilter.java
+- 세션 레지스트리 / 인증 서비스:
+  - src/main/java/com/erp/domain/auth/service/AuthService.java
+  - src/main/java/com/erp/domain/auth/service/AuthSessionRegistryService.java
+  - src/main/java/com/erp/domain/auth/dto/response/AuthSessionResponse.java
+- API:
+  - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
+- 검증:
+  - src/test/java/com/erp/api/AuthApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase17_jwt_refresh_session_rotation.md
+  - docs/decisions/phase39_management_plane_and_active_session_control.md
+```
+
+## 12. 구현 체크리스트
+
+1. `JwtTokenProvider`에 `memberId`, `sessionId`, `tokenType` claim을 넣습니다.
+2. `AuthSessionRegistryService`를 만들어 Redis에 refresh token과 세션 메타데이터를 저장합니다.
+3. `AuthService.refreshAccessToken(...)`에서 rotation 시 이전 refresh token을 무효화하고 새 토큰을 재발급합니다.
+4. `JwtFilter`에서 access token 처리 시 활성 세션 여부를 다시 확인하고, 필요하면 세션 last activity를 갱신합니다.
+5. `AuthApiController`에 세션 목록 조회, 특정 세션 종료, 다른 세션 일괄 종료 API를 추가합니다.
+6. `AuthApiIntegrationTest`로 세션 lifecycle이 실제로 닫히는지 확인합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew --no-daemon integrationTest --tests "com.erp.api.AuthApiIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- refresh 후 이전 refresh token이 더 이상 유효하지 않다
+- `/api/v1/auth/sessions`에서 현재 세션과 다른 기기 세션이 구분돼 보인다
+- 특정 세션 종료 후 해당 세션 access token도 필터 단계에서 차단된다
+
+## 14. 글 종료 체크포인트
+
+- access/refresh token이 둘 다 `sessionId`를 기준으로 묶인다
+- Redis에서 세션 메타데이터와 refresh token을 함께 관리한다
+- 사용자가 자신의 세션을 목록으로 보고 정리할 수 있다
+- refresh rotation과 세션 revoke를 같은 설계로 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: refresh rotation 뒤에도 이전 refresh token이 계속 먹는다
+  - 원인: Redis에 저장된 refresh token을 교체하지 않았거나, `sessionId` 기준 비교가 빠졌을 수 있습니다
+  - 확인할 것: `AuthService.refreshAccessToken(...)`, `AuthSessionRegistryService.rotateSession(...)`
+
+- 증상: 세션 삭제 후에도 access token이 계속 통과한다
+  - 원인: `JwtFilter`가 토큰 서명만 검증하고 활성 세션 조회를 하지 않을 수 있습니다
+  - 확인할 것: `JwtFilter.doFilter(...)`, `AuthSessionRegistryService.isSessionActive(...)`

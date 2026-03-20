@@ -257,3 +257,75 @@ Outbox를 처음 보면 구조가 복잡해 보일 수 있습니다.
 - “알림 저장과 외부 전달을 분리해, 느린 외부 채널이 핵심 트랜잭션을 망치지 않게 했습니다.”
 - “실패는 warn 로그가 아니라 `PENDING -> DELIVERED / DEAD_LETTER` 상태 전이로 남겼습니다.”
 - “채널 선택은 `NotificationDeliveryPolicyService`로 분리해 incident webhook 같은 운영 채널 확장을 쉽게 만들었습니다.”
+
+## 10. 시작 상태
+
+- 앱 내부 알림 기능은 이미 존재하고, 인증 이상 징후 같은 운영 이벤트도 발생시킬 수 있어야 합니다.
+- 이 글의 목표는 **알림을 보냈다**가 아니라, **실패해도 복구 가능한 전달 구조를 만든다**는 것입니다.
+- 따라서 전제는 다음과 같습니다.
+  - 알림 엔티티와 알림 생성 흐름이 이미 있다
+  - 외부 채널 호출은 실패할 수 있다고 가정한다
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 스키마 / 엔티티:
+  - src/main/resources/db/migration/V12__add_notification_outbox.sql
+  - src/main/java/com/erp/domain/notification/entity/NotificationOutbox.java
+  - src/main/java/com/erp/domain/notification/entity/NotificationDeliveryStatus.java
+- 정책 / worker:
+  - src/main/java/com/erp/domain/notification/service/NotificationDispatchService.java
+  - src/main/java/com/erp/domain/notification/service/NotificationDeliveryPolicyService.java
+  - src/main/java/com/erp/domain/notification/repository/NotificationOutboxRepository.java
+  - src/main/java/com/erp/domain/notification/config/NotificationDeliveryProperties.java
+- 채널 구현:
+  - src/main/java/com/erp/domain/notification/service/channel/NotificationChannelSender.java
+  - src/main/java/com/erp/domain/notification/service/channel/AppNotificationSender.java
+  - src/main/java/com/erp/domain/notification/service/channel/EmailNotificationSender.java
+  - src/main/java/com/erp/domain/notification/service/channel/IncidentWebhookNotificationSender.java
+- 검증:
+  - src/test/java/com/erp/integration/NotificationOutboxIntegrationTest.java
+  - src/test/java/com/erp/integration/NotificationOutboxRetryIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase40_notification_outbox_and_incident_channel.md
+```
+
+## 12. 구현 체크리스트
+
+1. `notification_outbox` 테이블과 상태 enum을 추가합니다.
+2. `NotificationDispatchService`에서 알림 저장과 외부 채널 전달을 분리합니다.
+3. outbox worker가 `PENDING` 건을 claim하고 처리하도록 만듭니다.
+4. 실패 시 재시도 간격과 최대 시도 횟수를 기준으로 `scheduleRetry()` 또는 `markDeadLetter()`를 수행합니다.
+5. `NotificationDeliveryPolicyService`에서 수신자 채널과 incident 채널 선택 규칙을 분리합니다.
+6. 통합 테스트로 성공 시 `DELIVERED`, 반복 실패 시 `DEAD_LETTER`까지 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew --no-daemon integrationTest \
+  --tests "com.erp.integration.NotificationOutboxIntegrationTest" \
+  --tests "com.erp.integration.NotificationOutboxRetryIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- 알림 저장 직후 outbox row가 생성된다
+- 성공한 채널은 `DELIVERED`로 끝난다
+- 반복 실패는 재시도 후 `DEAD_LETTER`로 남는다
+
+## 14. 글 종료 체크포인트
+
+- 핵심 트랜잭션과 외부 채널 호출이 분리돼 있다
+- outbox 상태 전이로 전달 결과를 설명할 수 있다
+- 채널 선택 규칙이 비즈니스 서비스 내부 분기문으로 흩어져 있지 않다
+- incident webhook 같은 운영 채널을 같은 구조로 확장할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 외부 채널 실패가 알림 생성 API 자체를 깨뜨린다
+  - 원인: outbox 적재와 외부 전송을 같은 즉시 호출로 처리했을 수 있습니다
+  - 확인할 것: `NotificationDispatchService.dispatch(...)`, `enqueueNotifications(...)`
+
+- 증상: 실패가 발생해도 상태가 계속 `PROCESSING`에 머문다
+  - 원인: worker timeout, retry scheduling, dead-letter 분기 중 하나가 빠졌을 수 있습니다
+  - 확인할 것: `processReadyDeliveriesBatch()`, `processClaimedDelivery(...)`, `resolveRetryDelay(...)`
