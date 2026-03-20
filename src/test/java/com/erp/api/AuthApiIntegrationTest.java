@@ -1,6 +1,7 @@
 package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
+import com.erp.domain.auth.service.AuthSessionRegistryService;
 import com.erp.domain.authaudit.entity.AuthAuditEventType;
 import com.erp.domain.authaudit.entity.AuthAuditResult;
 import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
@@ -17,10 +18,12 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -643,11 +646,171 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("활성 세션 관리 API")
+    class SessionManagementApiTest {
+
+        @Test
+        @DisplayName("활성 세션 목록 - 현재 세션과 다른 기기 세션을 함께 반환한다")
+        void getActiveSessions_Success_ReturnsCurrentAndOtherSessions() throws Exception {
+            LoginCookies firstLogin = loginAsParent("198.51.100.10", "JUnit Session Browser/1.0 (Mac OS X)");
+            LoginCookies secondLogin = loginAsParent("198.51.100.11", "JUnit Session Browser/2.0 (Windows NT 10.0)");
+
+            String firstSessionId = jwtTokenProvider.getSessionId(firstLogin.refreshCookie().getValue());
+            String secondSessionId = jwtTokenProvider.getSessionId(secondLogin.refreshCookie().getValue());
+
+            mockMvc.perform(get("/api/v1/auth/sessions")
+                            .cookie(secondLogin.accessCookie(), secondLogin.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.length()").value(2))
+                    .andExpect(jsonPath("$.data[0].current").value(true))
+                    .andExpect(jsonPath("$.data[0].sessionId").value(secondSessionId))
+                    .andExpect(jsonPath("$.data[0].signInMethod").value("LOCAL"))
+                    .andExpect(jsonPath("$.data[0].signInMethodLabel").value("Local"))
+                    .andExpect(jsonPath("$.data[0].deviceLabel").value(org.hamcrest.Matchers.containsString("Browser")))
+                    .andExpect(jsonPath("$.data[1].sessionId").value(firstSessionId));
+
+            assertThat(redisTemplate.opsForValue().get(getSessionMetadataKey(secondLogin.refreshCookie()))).isNotNull();
+        }
+
+        @Test
+        @DisplayName("세션 종료 - 다른 기기 세션을 끊으면 해당 access token도 즉시 무효화된다")
+        void revokeSession_Success_ImmediatelyInvalidatesRevokedAccessToken() throws Exception {
+            LoginCookies firstLogin = loginAsParent("198.51.100.20", "JUnit Device A");
+            LoginCookies secondLogin = loginAsParent("198.51.100.21", "JUnit Device B");
+
+            String firstSessionId = jwtTokenProvider.getSessionId(firstLogin.refreshCookie().getValue());
+
+            mockMvc.perform(delete("/api/v1/auth/sessions/{sessionId}", firstSessionId)
+                            .with(csrf())
+                            .cookie(secondLogin.accessCookie(), secondLogin.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            mockMvc.perform(get("/api/v1/auth/me")
+                            .cookie(firstLogin.accessCookie(), firstLogin.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isUnauthorized());
+
+            mockMvc.perform(get("/api/v1/auth/me")
+                            .cookie(secondLogin.accessCookie(), secondLogin.refreshCookie()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+        }
+
+        @Test
+        @DisplayName("세션 종료 - 현재 세션을 종료하면 쿠키를 만료시키고 즉시 인증이 해제된다")
+        void revokeCurrentSession_Success_ExpiresCookiesAndInvalidatesCurrentAccessToken() throws Exception {
+            LoginCookies login = loginAsParent("198.51.100.22", "JUnit Current Session");
+            String currentSessionId = jwtTokenProvider.getSessionId(login.refreshCookie().getValue());
+
+            MvcResult result = mockMvc.perform(delete("/api/v1/auth/sessions/{sessionId}", currentSessionId)
+                            .with(csrf())
+                            .cookie(login.accessCookie(), login.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andReturn();
+
+            assertThat(result.getResponse().getCookie("access_token")).isNotNull();
+            assertThat(result.getResponse().getCookie("refresh_token")).isNotNull();
+            assertThat(result.getResponse().getCookie("access_token").getMaxAge()).isZero();
+            assertThat(result.getResponse().getCookie("refresh_token").getMaxAge()).isZero();
+            assertThat(redisTemplate.opsForValue().get(getRefreshSessionKey(login.refreshCookie()))).isNull();
+            assertThat(redisTemplate.opsForValue().get(getSessionMetadataKey(login.refreshCookie()))).isNull();
+
+            mockMvc.perform(get("/api/v1/auth/me")
+                            .cookie(login.accessCookie(), login.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("다른 기기 로그아웃 - 현재 세션만 남기고 나머지 세션을 모두 종료한다")
+        void revokeOtherSessions_Success_KeepsOnlyCurrentSession() throws Exception {
+            LoginCookies firstLogin = loginAsParent("198.51.100.31", "JUnit Device A");
+            LoginCookies secondLogin = loginAsParent("198.51.100.32", "JUnit Device B");
+
+            String currentSessionId = jwtTokenProvider.getSessionId(secondLogin.refreshCookie().getValue());
+
+            mockMvc.perform(delete("/api/v1/auth/sessions/others")
+                            .with(csrf())
+                            .cookie(secondLogin.accessCookie(), secondLogin.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            mockMvc.perform(get("/api/v1/auth/me")
+                            .cookie(firstLogin.accessCookie(), firstLogin.refreshCookie()))
+                    .andExpect(status().isUnauthorized());
+
+            mockMvc.perform(get("/api/v1/auth/sessions")
+                            .cookie(secondLogin.accessCookie(), secondLogin.refreshCookie()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].current").value(true))
+                    .andExpect(jsonPath("$.data[0].sessionId").value(currentSessionId));
+        }
+
+        @Test
+        @DisplayName("활성 세션 - 인증된 요청이 들어오면 마지막 활동 시각이 갱신된다")
+        void authenticatedRequest_TouchesSessionLastSeen() throws Exception {
+            LoginCookies login = loginAsParent("198.51.100.41", "JUnit Touch Browser/1.0");
+
+            String refreshKey = getRefreshSessionKey(login.refreshCookie());
+            String metadataKey = getSessionMetadataKey(login.refreshCookie());
+            Long ttlMs = redisTemplate.getExpire(refreshKey, TimeUnit.MILLISECONDS);
+            assertThat(ttlMs).isNotNull();
+            assertThat(ttlMs).isPositive();
+
+            AuthSessionRegistryService.SessionMetadata metadata =
+                    (AuthSessionRegistryService.SessionMetadata) redisTemplate.opsForValue().get(metadataKey);
+            assertThat(metadata).isNotNull();
+
+            long oldLastSeen = metadata.getCreatedAtEpochMs() - 120_000L;
+            redisTemplate.opsForValue().set(
+                    metadataKey,
+                    new AuthSessionRegistryService.SessionMetadata(
+                            metadata.getSessionId(),
+                            metadata.getSignInMethod(),
+                            metadata.getClientIp(),
+                            metadata.getUserAgent(),
+                            metadata.getCreatedAtEpochMs(),
+                            oldLastSeen,
+                            metadata.getLastRefreshedAtEpochMs(),
+                            metadata.getExpiresAtEpochMs()
+                    ),
+                    ttlMs,
+                    TimeUnit.MILLISECONDS
+            );
+
+            mockMvc.perform(get("/api/v1/auth/me")
+                            .with(remoteAddr("198.51.100.41"))
+                            .with(header("User-Agent", "JUnit Touch Browser/1.1"))
+                            .cookie(login.accessCookie(), login.refreshCookie()))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            AuthSessionRegistryService.SessionMetadata touched =
+                    (AuthSessionRegistryService.SessionMetadata) redisTemplate.opsForValue().get(metadataKey);
+            assertThat(touched).isNotNull();
+            assertThat(touched.getLastSeenAtEpochMs()).isGreaterThan(oldLastSeen);
+        }
+    }
+
     private LoginCookies loginAsParent() throws Exception {
         return loginAsParent("127.0.0.1");
     }
 
     private LoginCookies loginAsParent(String ipAddress) throws Exception {
+        return loginAsParent(ipAddress, "JUnit Test Browser/1.0");
+    }
+
+    private LoginCookies loginAsParent(String ipAddress, String userAgent) throws Exception {
         String loginBody = """
                 {
                     "email": "parent@test.com",
@@ -658,6 +821,7 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                         .with(csrf())
                         .with(remoteAddr(ipAddress))
+                        .with(header("User-Agent", userAgent))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody))
                 .andDo(print())
@@ -679,6 +843,13 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
 
     private String getRefreshSessionSetKey(Cookie refreshCookie) {
         return "refresh:sessions:%d".formatted(jwtTokenProvider.getMemberId(refreshCookie.getValue()));
+    }
+
+    private String getSessionMetadataKey(Cookie refreshCookie) {
+        return "refresh:session:meta:%d:%s".formatted(
+                jwtTokenProvider.getMemberId(refreshCookie.getValue()),
+                jwtTokenProvider.getSessionId(refreshCookie.getValue())
+        );
     }
 
     private Set<String> asStringSet(Set<Object> values) {

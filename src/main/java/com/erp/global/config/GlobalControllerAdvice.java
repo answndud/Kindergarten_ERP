@@ -3,6 +3,7 @@ package com.erp.global.config;
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.service.MemberService;
+import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.AuthenticatedMemberResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class GlobalControllerAdvice {
 
     private final MemberService memberService;
     private final AuthenticatedMemberResolver authenticatedMemberResolver;
+    private final ManagementSurfaceProperties managementSurfaceProperties;
 
     /**
      * 현재 로그인한 회원 정보를 모든 뷰에 전달
@@ -45,5 +47,15 @@ public class GlobalControllerAdvice {
             log.error("currentMember: failed to load member", e);
             return null;
         }
+    }
+
+    @ModelAttribute("publicApiDocsEnabled")
+    public boolean publicApiDocsEnabled() {
+        return managementSurfaceProperties.isPublicApiDocs();
+    }
+
+    @ModelAttribute("publicPrometheusEnabled")
+    public boolean publicPrometheusEnabled() {
+        return managementSurfaceProperties.isExposePrometheusOnAppPort();
     }
 }

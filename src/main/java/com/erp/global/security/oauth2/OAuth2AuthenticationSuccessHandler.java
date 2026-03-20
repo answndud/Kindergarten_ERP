@@ -82,7 +82,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 member = registerSocialMember(userInfo);
             }
 
-            authService.loginBySocial(member, response);
+            authService.loginBySocial(member, userInfo.getProvider(), clientIp, request.getHeader("User-Agent"), response);
             authAuditLogService.recordLoginSuccess(
                     member.getId(),
                     member.getEmail(),

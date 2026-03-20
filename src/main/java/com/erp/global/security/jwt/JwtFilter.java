@@ -1,5 +1,7 @@
 package com.erp.global.security.jwt;
 
+import com.erp.domain.auth.service.AuthSessionRegistryService;
+import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.user.CustomUserDetails;
 import com.erp.global.security.user.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
@@ -28,11 +30,17 @@ public class JwtFilter extends GenericFilterBean {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final AuthSessionRegistryService authSessionRegistryService;
+    private final ClientIpResolver clientIpResolver;
 
     public JwtFilter(JwtTokenProvider jwtTokenProvider,
-                     CustomUserDetailsService userDetailsService) {
+                     CustomUserDetailsService userDetailsService,
+                     AuthSessionRegistryService authSessionRegistryService,
+                     ClientIpResolver clientIpResolver) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
+        this.authSessionRegistryService = authSessionRegistryService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Override
@@ -46,8 +54,30 @@ public class JwtFilter extends GenericFilterBean {
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
             try {
+                Long memberId = jwtTokenProvider.getMemberId(token);
+                String sessionId = jwtTokenProvider.getSessionId(token);
+                if (memberId == null || sessionId == null || sessionId.isBlank()) {
+                    SecurityContextHolder.clearContext();
+                    chain.doFilter(request, response);
+                    return;
+                }
+                if (!authSessionRegistryService.isSessionActive(memberId, sessionId)) {
+                    SecurityContextHolder.clearContext();
+                    log.debug("JWT 인증 실패 - 비활성 세션: memberId={}, sessionId={}", memberId, sessionId);
+                    chain.doFilter(request, response);
+                    return;
+                }
+
                 Authentication authentication = getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (shouldTrackSessionActivity(httpRequest)) {
+                    authSessionRegistryService.touchSession(
+                            memberId,
+                            sessionId,
+                            clientIpResolver.resolve(httpRequest),
+                            httpRequest.getHeader("User-Agent")
+                    );
+                }
                 log.debug("JWT 인증 성공: {}", jwtTokenProvider.getEmail(token));
             } catch (UsernameNotFoundException e) {
                 SecurityContextHolder.clearContext();
@@ -90,5 +120,21 @@ public class JwtFilter extends GenericFilterBean {
                 null,
                 userDetails.getAuthorities()
         );
+    }
+
+    private boolean shouldTrackSessionActivity(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (uri == null || uri.isBlank()) {
+            return true;
+        }
+
+        return !uri.startsWith("/css/")
+                && !uri.startsWith("/js/")
+                && !uri.startsWith("/img/")
+                && !uri.startsWith("/images/")
+                && !uri.startsWith("/favicon.ico")
+                && !uri.startsWith("/swagger-ui")
+                && !uri.startsWith("/v3/api-docs")
+                && !uri.startsWith("/actuator");
     }
 }

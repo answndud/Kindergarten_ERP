@@ -1,12 +1,19 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 20차 (감사 로그 denormalization + retention/archive 정책)
+- 후속 고도화 21차 (운영형 워크플로우 + 세션/알림 신뢰성 + 취업용 문서 패키지)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-20 12:35 | DONE | Batch A 마감. `AuthSessionRegistryService`, `AuthApiController`, `AuthService`, `JwtFilter`, `settings.html` 기준으로 활성 세션 조회/개별 종료/다른 기기 로그아웃을 구현하고, access token도 Redis 세션 레지스트리에 묶어 세션 revoke 즉시 인증이 끊기도록 정리 | 결정 로그/README/인터뷰 문서와 함께 add/commit/push |
+| 2026-03-20 12:35 | DONE | management plane 하드닝 반영. `ManagementSurfaceProperties`, `SecurityConfig`, `application-prod.yml`, `OpenApiConfig`, `PrometheusScrapeController`, `GlobalControllerAdvice`, `authaudit/audit-logs.html` 기준으로 local/demo 공개, prod Swagger 비공개, management port 분리, 화면 링크 조건부 노출로 정리 | Batch B(`notification_outbox` + retry/dead-letter + 외부 incident channel) 착수 준비 |
+| 2026-03-20 12:35 | DONE | 검증 완료: `./gradlew compileJava compileTestJava`, `./gradlew test --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"`, `git diff --check` 통과. management surface MockMvc 노출 테스트는 actuator/springdoc 매핑 결합도가 높아 이번 배치에서는 제외 | 커밋/푸시 후 다음 배치 계획 갱신 |
+| 2026-03-20 00:00 | IN_PROGRESS | 사용자 요청으로 다음 대규모 고도화 범위를 재설계. 목표는 단순 기능 추가가 아니라 신입 백엔드 채용 시그널을 높이는 운영형 기능/문서 패키지로 확정 | 기존 코드/문서/결정 로그를 기준으로 우선순위 후보 정리 |
+| 2026-03-20 00:00 | IN_PROGRESS | 서브에이전트 병렬 검토를 통해 다음 핵심 축을 수집: 운영 plane 하드닝, 활성 세션 관리, 알림 outbox/retry, waitlist/출결 승인 워크플로우, domain audit log, CI 태그 기반 분할, 아키텍처/데모/케이스 스터디/채용용 문서 압축 | `PLAN.md`를 후속 고도화 21차 기준으로 갱신하고 사용자에게 실행 계획 공유 |
+| 2026-03-20 00:08 | IN_PROGRESS | `Batch A` 구현 착수. 현재 코드베이스를 재점검한 결과 활성 세션 registry/API는 일부 반영돼 있지만 settings 화면/테스트/문서가 비어 있고, 운영 surface는 여전히 `SecurityConfig`/`application-prod.yml` 기준 공개 노출 정책이 남아 있는 상태 확인 | management surface 속성화, prod 분리 정책, 세션 UI/회귀 테스트를 한 배치로 마감 |
+| 2026-03-20 00:14 | IN_PROGRESS | `AuthService`/`AuthApiController`/`JwtFilter`/`AuthSessionRegistryService`/`settings.html`/`ObservabilityIntegrationTest`를 읽어 Batch A 설계 고정. 구현 방향은 `prod: docs 비활성화 + actuator 별도 port/loopback`, `local/demo: docs 공개 유지`, `세션: settings 화면 + API 회귀 테스트 + 로그인 방식 표시`로 확정 | 설정/보안/세션 DTO/뷰/테스트를 순서대로 수정 |
 | 2026-03-14 13:01 | DONE | `bb92feb` (`feat: add auth audit retention and tenant denormalization`)를 `origin/main`에 push 완료 | GitHub Actions run 결과 기록 후 배치 종료 |
 | 2026-03-14 13:03 | DONE | GitHub Actions run `23079884994` 성공 확인. `Fast Checks` 1m30s, `Integration Suite` 2m51s, artifact(`fast-test-reports`, `integration-test-reports`) 업로드 정상 확인 | 배치 마감 |
 | 2026-03-14 12:44 | DONE | `V11__denormalize_auth_audit_log_and_add_retention_archive.sql`, `AuthAuditLog.kindergartenId`, `MemberRepository` lookup, `AuthAuditLogService` write-time tenant 귀속, `AuthAuditRetentionService`/설정 클래스를 추가해 감사 로그 tenant 비정규화와 archive/purge 스케줄러를 구현 | 테스트 fixture/회귀 테스트와 문서 반영 |
@@ -163,6 +170,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 없음
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: Batch B 준비 - notification outbox/retry + 외부 incident channel
 - 블로커: 없음

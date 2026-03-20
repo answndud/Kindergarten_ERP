@@ -17,6 +17,7 @@
 
 - refresh token을 이메일 단위 단일 키에서 **세션 단위 Redis 저장**으로 바꿨습니다.
 - refresh rotation, 로그아웃/탈퇴 시 revoke, 로그인/refresh rate limit, trusted proxy 기준 client IP 해석까지 반영했습니다.
+- 마지막에는 access token도 Redis 세션 레지스트리에 묶어, 세션 종료 시 다른 기기의 access token이 남아 있어도 즉시 인증이 끊기도록 만들었습니다.
 - 면접에서는 “JWT를 썼다”보다 **세션 수명과 남용 방어를 어떻게 설계했는지**를 설명할 수 있습니다.
 
 ### 3) 소셜 로그인 lifecycle 설계
@@ -34,6 +35,7 @@
 ### 5) 운영 관측성과 감사 추적
 
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
+- local/demo에서는 Swagger와 Prometheus를 바로 열고, prod에서는 Swagger를 비활성화하고 management port를 분리해 운영 노출면을 줄였습니다.
 - 로그인/refresh/social link/unlink는 DB 감사 로그로 남기고, `kindergarten_id` 비정규화와 archive/purge retention 정책까지 붙였습니다.
 - 반복 로그인 실패는 원장 시스템 알림으로 연결했고, Prometheus metric은 Grafana 대시보드까지 바로 보이게 구성했습니다.
 - 이로써 **계약 문서 -> 이벤트 저장 -> 운영 조회 -> 메트릭 관측 -> 사후 분석** 흐름을 설명할 수 있게 됐습니다.

@@ -91,6 +91,9 @@ notification:
 
 app:
   security:
+    management-surface:
+      public-api-docs: true
+      expose-prometheus-on-app-port: true
     client-ip:
       trusted-proxies: []
     auth-alert:

@@ -31,6 +31,7 @@
 
 - 멀티테넌시 권한 경계 하드닝
 - Redis 기반 JWT refresh session 분리와 rotation
+- Redis 세션 레지스트리 기반 활성 세션 조회/강제 종료
 - MySQL/Redis Testcontainers 기반 통합 테스트
 - Swagger/OpenAPI 기반 API 계약 문서
 - Actuator health/readiness, Prometheus, correlation id, request structured logging
@@ -66,6 +67,7 @@
 - ✅ 회원가입 (이메일/비밀번호)
 - ✅ 로그인 (JWT 기반)
 - ✅ 세션 단위 Refresh Token 저장 및 Rotation
+- ✅ 활성 세션 목록 조회, 개별 세션 종료, 다른 기기 일괄 로그아웃
 - ✅ Redis 기반 로그인/토큰 갱신 Rate Limit
 - ✅ DB 기반 로그인/refresh/소셜 연결 감사 로그
 - ✅ `kindergarten_id` 기반 tenant 감사 로그 필터링
@@ -116,12 +118,14 @@
 - ✅ 세션 단위 refresh token rotation
 - ✅ Redis 기반 auth rate limit
 - ✅ trusted proxy 기준 client IP 해석
+- ✅ access token을 Redis 세션 레지스트리에 묶은 즉시 revoke
 - ✅ 로그인 실패 전용 rate limit 정책
 - ✅ DB 기반 auth/social audit trail
 - ✅ Swagger UI / OpenAPI JSON 계약 문서
 - ✅ Actuator health/info/prometheus 및 liveness/readiness probe
 - ✅ Prometheus scrape endpoint와 auth event counter
 - ✅ Grafana provisioning 기반 운영 대시보드
+- ✅ prod profile에서 management port 분리 및 Swagger 비공개화
 - ✅ correlation id 응답 헤더 및 request structured logging
 - ✅ OAuth2 principal 런타임 안전성 보강
 - ✅ OAuth2 이메일 충돌 시 임시 세션 정리 및 명시적 안내
@@ -289,6 +293,15 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
   - 인증 감사 로그 화면: `http://localhost:8080/audit-logs`
   - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
 
+### 3-1-1. 운영 profile management plane
+
+- `prod`에서는 Swagger/OpenAPI를 비활성화하고, management endpoint를 별도 포트로 분리합니다.
+- 기본값
+  - 앱 포트: `8080`
+  - management 포트: `9091`
+  - management bind address: `127.0.0.1`
+- 필요하면 `MANAGEMENT_SERVER_PORT`, `MANAGEMENT_SERVER_ADDRESS` 환경변수로 조정할 수 있습니다.
+
 ### 3-2. Monitoring Overlay 실행
 
 ```bash
@@ -349,6 +362,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 - 쿠키 기반 인증을 쓰기 때문에 같은 origin에서 로그인 후 Swagger `Try it out`으로 보호 API를 바로 호출할 수 있습니다.
+- 단, `prod` profile에서는 Swagger/OpenAPI를 비활성화해 운영 노출면을 줄입니다.
 
 아래 표는 주요 엔드포인트를 빠르게 훑기 위한 요약입니다.
 
@@ -360,6 +374,9 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | POST | `/api/v1/auth/logout` | 로그아웃 |
 | POST | `/api/v1/auth/refresh` | 세션 기반 토큰 rotation |
 | GET | `/api/v1/auth/me` | 현재 로그인 회원 조회 |
+| GET | `/api/v1/auth/sessions` | 활성 세션 목록 조회 |
+| DELETE | `/api/v1/auth/sessions/{sessionId}` | 특정 세션 종료 |
+| DELETE | `/api/v1/auth/sessions/others` | 다른 기기 세션 일괄 종료 |
 | GET | `/api/v1/auth/audit-logs/export` | 원장용 감사 로그 CSV export |
 
 ### 회원 (Member)
