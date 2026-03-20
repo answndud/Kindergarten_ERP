@@ -6,6 +6,9 @@ import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.announcement.repository.AnnouncementRepository;
 import com.erp.domain.announcement.repository.AnnouncementViewRepository;
 import com.erp.domain.dashboard.service.DashboardService;
+import com.erp.domain.domainaudit.entity.DomainAuditAction;
+import com.erp.domain.domainaudit.entity.DomainAuditTargetType;
+import com.erp.domain.domainaudit.service.DomainAuditLogService;
 import com.erp.domain.kindergarten.service.KindergartenService;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
@@ -41,6 +44,7 @@ public class AnnouncementService {
     private final NotificationService notificationService;
     private final DashboardService dashboardService;
     private final AccessPolicyService accessPolicyService;
+    private final DomainAuditLogService domainAuditLogService;
 
     /**
      * 공지사항 생성
@@ -245,6 +249,15 @@ public class AnnouncementService {
             announcement.setImportant(request.getIsImportant());
         }
         evictDashboardStatistics(announcement);
+        domainAuditLogService.record(
+                requester,
+                announcement.getKindergarten().getId(),
+                DomainAuditAction.ANNOUNCEMENT_UPDATED,
+                DomainAuditTargetType.ANNOUNCEMENT,
+                announcement.getId(),
+                requester.getName() + "이(가) 공지사항 '" + announcement.getTitle() + "'을(를) 수정했습니다.",
+                java.util.Map.of("important", announcement.isImportant())
+        );
     }
 
     /**
@@ -261,6 +274,15 @@ public class AnnouncementService {
 
         announcement.softDelete();
         evictDashboardStatistics(announcement);
+        domainAuditLogService.record(
+                requester,
+                announcement.getKindergarten().getId(),
+                DomainAuditAction.ANNOUNCEMENT_DELETED,
+                DomainAuditTargetType.ANNOUNCEMENT,
+                announcement.getId(),
+                requester.getName() + "이(가) 공지사항 '" + announcement.getTitle() + "'을(를) 삭제했습니다.",
+                java.util.Map.of("important", announcement.isImportant())
+        );
     }
 
     /**

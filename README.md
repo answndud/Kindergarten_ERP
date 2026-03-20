@@ -36,6 +36,8 @@
 - Swagger/OpenAPI 기반 API 계약 문서
 - Actuator health/readiness, Prometheus, correlation id, request structured logging
 - DB 기반 인증 감사 로그, `kindergarten_id` 비정규화 tenant 필터, 원장 전용 조회/export API, 감사 로그 운영 화면
+- 반 정원(capacity), 입학 waitlist/offer/offer expiry, 학부모 출결 요청 승인처럼 상태 전이가 있는 운영형 워크플로우
+- 별도 `domain_audit_log` 기반 업무 감사 로그와 원장 전용 조회 화면
 - 반복 로그인 실패 감지, principal in-app alert, `notification_outbox` 기반 incident webhook 전달
 - 감사 로그 archive/purge retention scheduler
 - Grafana 대시보드까지 포함한 로컬 monitoring overlay
@@ -91,6 +93,7 @@
 ### 유치원/반/원생 관리
 - ✅ 유치원 등록/수정
 - ✅ 반 생성/수정/삭제
+- ✅ 반 정원(capacity) 설정 및 축소 검증
 - ✅ 교사 배정
 - ✅ 원생 등록/관리
 - ✅ 학부모-원생 연결
@@ -101,6 +104,8 @@
 - ✅ 결석 사유 입력
 - ✅ 월별 출석 통계
 - ✅ 반별 월간 리포트
+- ✅ 학부모 출결 변경 요청 생성/취소
+- ✅ 교사/원장 출결 변경 요청 승인/거절
 
 ### 알림장
 - ✅ 알림장 작성 (교사)
@@ -116,6 +121,8 @@
 - ✅ 교사 유치원 지원
 - ✅ 학부모 입학 신청
 - ✅ 승인/거절 워크플로우
+- ✅ 반 정원 기반 waitlist 처리
+- ✅ 입학 offer 발송 / 학부모 수락 / 만료 배치
 
 ### 인증/보안
 - ✅ 세션 단위 refresh token rotation
@@ -135,6 +142,13 @@
 - ✅ 세션 기반 OAuth2 link intent와 단일 provider 연결 정책
 - ✅ 소셜 계정의 로컬 로그인 전환(password bootstrap)
 - ✅ 계정 잠금 방지를 반영한 소셜 연결 해제 정책
+
+### 업무 감사/운영 워크플로우
+- ✅ 입학 waitlist/offer/offer expiry 업무 감사 로그
+- ✅ 출결 변경 요청 제출/승인/거절/취소 업무 감사 로그
+- ✅ 공지 수정/삭제 및 승인 워크플로우 상태 전이 로그
+- ✅ 원장 전용 업무 감사 로그 조회 API
+- ✅ 원장 전용 업무 감사 로그 화면 및 CSV export
 
 ### 알림 시스템
 - ✅ 알림 생성/조회
@@ -222,6 +236,7 @@ erp/
 │   │   │       ├── calendar/        # 일정
 │   │   │       ├── dashboard/       # 대시보드
 │   │   │       ├── kidapplication/  # 원생 입학 신청
+│   │   │       ├── domainaudit/     # 업무 감사 로그
 │   │   │       └── kindergartenapplication/ # 교사 지원
 │   │   └── resources/
 │   │       ├── application.yml
@@ -293,7 +308,9 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
   - 학부모: `parent1@test.com / test1234!`
 - 시연 직후 바로 확인할 경로
   - Swagger UI: `http://localhost:8080/swagger-ui.html`
+  - 출결 요청 화면: `http://localhost:8080/attendance-requests`
   - 인증 감사 로그 화면: `http://localhost:8080/audit-logs`
+  - 업무 감사 로그 화면: `http://localhost:8080/domain-audit-logs`
   - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
 
 ### 3-1-1. 운영 profile management plane
@@ -438,6 +455,13 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | GET | `/api/v1/attendance/kid/{kidId}/monthly` | 월간 출석 목록 |
 | GET | `/api/v1/attendance/kid/{kidId}/statistics` | 월간 출석 통계 |
 | GET | `/api/v1/attendance/classroom/{classroomId}/monthly-report` | 반별 월간 리포트 |
+| POST | `/api/v1/attendance-requests` | 학부모 출결 변경 요청 생성 |
+| GET | `/api/v1/attendance-requests/my` | 내 출결 변경 요청 목록 |
+| GET | `/api/v1/attendance-requests/pending` | 승인 대기 출결 요청 목록 |
+| GET | `/api/v1/attendance-requests/{id}` | 출결 변경 요청 상세 |
+| POST | `/api/v1/attendance-requests/{id}/approve` | 출결 변경 요청 승인 |
+| POST | `/api/v1/attendance-requests/{id}/reject` | 출결 변경 요청 거절 |
+| POST | `/api/v1/attendance-requests/{id}/cancel` | 출결 변경 요청 취소 |
 | PUT | `/api/v1/attendance/{id}` | 출석 수정 |
 | POST | `/api/v1/attendance/kid/{kidId}/drop-off` | 등원 처리 |
 | POST | `/api/v1/attendance/kid/{kidId}/pick-up` | 하원 처리 |
@@ -483,10 +507,20 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | POST | `/api/v1/kid-applications` | 학부모 입학 신청 |
 | GET | `/api/v1/kid-applications/my` | 내 입학 신청 목록 |
 | GET | `/api/v1/kid-applications/pending` | 유치원 대기 입학 신청 목록 |
+| GET | `/api/v1/kid-applications/queue` | review queue 입학 신청 목록 |
 | GET | `/api/v1/kid-applications/{id}` | 입학 신청 상세 |
 | PUT | `/api/v1/kid-applications/{id}/approve` | 입학 신청 승인 |
+| PUT | `/api/v1/kid-applications/{id}/waitlist` | 입학 신청 waitlist 전환 |
+| PUT | `/api/v1/kid-applications/{id}/offer` | 입학 offer 발행 |
+| PUT | `/api/v1/kid-applications/{id}/accept-offer` | 학부모 입학 offer 수락 |
 | PUT | `/api/v1/kid-applications/{id}/reject` | 입학 신청 거절 |
 | PUT | `/api/v1/kid-applications/{id}/cancel` | 입학 신청 취소 |
+
+### 업무 감사 로그 (Domain Audit)
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| GET | `/api/v1/domain-audit-logs` | 원장용 업무 감사 로그 조회 |
+| GET | `/api/v1/domain-audit-logs/export` | 원장용 업무 감사 로그 CSV export |
 
 ### 알림 (Notification)
 | Method | Endpoint | 설명 |
@@ -603,6 +637,9 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | 감사 로그 tenant 비정규화/retention/archive | `docs/decisions/phase38_auth_audit_retention_and_denormalization.md` |
 | management plane 하드닝/활성 세션 제어 | `docs/decisions/phase39_management_plane_and_active_session_control.md` |
 | notification outbox/retry/incident webhook | `docs/decisions/phase40_notification_outbox_and_incident_channel.md` |
+| 반 정원/waitlist/offer 입학 워크플로우 | `docs/decisions/phase41_admission_capacity_waitlist_workflow.md` |
+| 학부모 출결 변경 요청/승인 워크플로우 | `docs/decisions/phase42_attendance_change_request_workflow.md` |
+| 업무 감사 로그(domain audit log) | `docs/decisions/phase43_domain_audit_log.md` |
 
 ---
 

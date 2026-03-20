@@ -92,6 +92,12 @@ class ViewEndpointTest extends TestcontainersSupport {
     }
 
     @Test
+    void testAttendanceRequestsPageWithoutAuth() throws Exception {
+        mockMvc.perform(get("/attendance-requests"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
     void testAnnouncementsPageWithoutAuth() throws Exception {
         mockMvc.perform(get("/announcements"))
                 .andExpect(status().is3xxRedirection());
@@ -112,6 +118,12 @@ class ViewEndpointTest extends TestcontainersSupport {
     @Test
     void testAuditLogsPageWithoutAuth() throws Exception {
         mockMvc.perform(get("/audit-logs"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void testDomainAuditLogsPageWithoutAuth() throws Exception {
+        mockMvc.perform(get("/domain-audit-logs"))
                 .andExpect(status().is3xxRedirection());
     }
 
@@ -183,6 +195,7 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("운영 도구")))
                 .andExpect(content().string(containsString("인증 감사 로그 열기")))
+                .andExpect(content().string(containsString("업무 감사 로그 열기")))
                 .andExpect(content().string(containsString("활성 세션")))
                 .andExpect(content().string(containsString("다른 기기 로그아웃")));
     }
@@ -302,6 +315,75 @@ class ViewEndpointTest extends TestcontainersSupport {
 
         mockMvc.perform(get("/audit-logs").with(user(new CustomUserDetails(teacher))))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testDomainAuditLogsPageForPrincipal() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("업무 감사 유치원", "서울시", "010-9898-7878", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member principal = Member.create(
+                "domain-audit-principal@test.com",
+                "encoded-password",
+                "업무감사원장",
+                "01011113333",
+                MemberRole.PRINCIPAL
+        );
+        principal.assignKindergarten(kindergarten);
+        memberRepository.save(principal);
+
+        mockMvc.perform(get("/domain-audit-logs").with(user(new CustomUserDetails(principal))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("업무 감사 로그")))
+                .andExpect(content().string(containsString("비즈니스 상태 변경 이력")))
+                .andExpect(content().string(containsString("입학, 출결 요청, 공지 수정/삭제")));
+    }
+
+    @Test
+    void testAttendanceRequestsPageForParent() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("출결 요청 유치원", "서울시", "010-2121-3434", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member parent = Member.create(
+                "attendance-parent@test.com",
+                "encoded-password",
+                "출결학부모",
+                "01088889999",
+                MemberRole.PARENT
+        );
+        parent.assignKindergarten(kindergarten);
+        memberRepository.save(parent);
+
+        mockMvc.perform(get("/attendance-requests").with(user(new CustomUserDetails(parent))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("내 출결 변경 요청")))
+                .andExpect(content().string(containsString("출결 변경 요청 보내기")))
+                .andExpect(content().string(containsString("학부모는 출석 record를 직접 수정하지 않고 변경 요청을 제출합니다.")));
+    }
+
+    @Test
+    void testAttendanceRequestsPageForTeacher() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("출결 검토 유치원", "서울시", "010-4545-6767", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member teacher = Member.create(
+                "attendance-teacher@test.com",
+                "encoded-password",
+                "출결교사",
+                "01056565656",
+                MemberRole.TEACHER
+        );
+        teacher.assignKindergarten(kindergarten);
+        memberRepository.save(teacher);
+
+        mockMvc.perform(get("/attendance-requests").with(user(new CustomUserDetails(teacher))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("출결 변경 요청 검토")))
+                .andExpect(content().string(containsString("승인 대기 요청")))
+                .andExpect(content().string(containsString("교사 검토 큐")));
     }
 
     @Test

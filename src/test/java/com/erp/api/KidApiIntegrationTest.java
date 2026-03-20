@@ -114,6 +114,31 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
                     .andDo(print())
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
+        @DisplayName("원생 생성 - 실패 (정원이 가득 찬 반)")
+        void createKid_Fail_WhenCapacityIsFull() throws Exception {
+            classroom.update("테스트반", "5세", 1);
+
+            String requestBody = String.format("""
+                    {
+                        "classroomId": %d,
+                        "name": "정원초과원생",
+                        "birthDate": "2020-01-01",
+                        "gender": "MALE",
+                        "admissionDate": "%s"
+                    }
+                    """, classroom.getId(), LocalDate.now());
+
+            mockMvc.perform(post("/api/v1/kids")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("CL005"));
+        }
     }
 
     @Nested
@@ -289,6 +314,30 @@ class KidApiIntegrationTest extends BaseIntegrationTest {
                             .content(requestBody))
                     .andDo(print())
                     .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
+        @DisplayName("반 배정 변경 - 실패 (정원이 가득 찬 반)")
+        void updateClassroom_Fail_WhenTargetClassroomIsFull() throws Exception {
+            Classroom fullClassroom = testData.createClassroom(kindergarten);
+            fullClassroom.update("만석반", "6세", 1);
+            classroomRepository.saveAndFlush(fullClassroom);
+            kidRepository.saveAndFlush(testData.createKid(fullClassroom));
+
+            String requestBody = """
+                    {
+                        "classroomId": %d
+                    }
+                    """.formatted(fullClassroom.getId());
+
+            mockMvc.perform(put("/api/v1/kids/1/classroom")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("CL005"));
         }
     }
 

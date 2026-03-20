@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출결 변경 요청 - 유치원 ERP</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#F3FBF7',
+                            100: '#E2F5EB',
+                            200: '#C7EBD9',
+                            300: '#A4DEC2',
+                            400: '#79CCA5',
+                            500: '#56B88C',
+                            600: '#3F9C73',
+                            700: '#327D5E',
+                            800: '#26624A',
+                            900: '#1D4D3A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%); }
+    </style>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
+</head>
+<body class="bg-gray-50">
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      th:attr="data-parent=${isParent},data-staff=${isStaff}">
+    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+        <div>
+            <p class="text-sm font-semibold text-primary-700" th:text="${isParent ? 'Parent Queue' : 'Staff Review Queue'}">Parent Queue</p>
+            <h1 class="text-3xl font-bold text-gray-900 mt-1"
+                th:text="${isParent ? '내 출결 변경 요청' : '출결 변경 요청 검토'}">내 출결 변경 요청</h1>
+            <p class="text-sm text-gray-600 mt-2"
+               th:text="${isParent
+                ? '학부모는 출석 record를 직접 수정하지 않고 변경 요청을 제출합니다. 교사/원장 승인 후 실제 출결에 반영됩니다.'
+                : '학부모가 제출한 변경 요청을 검토하고 승인 또는 거절할 수 있습니다.'}">
+                학부모는 출석 record를 직접 수정하지 않고 변경 요청을 제출합니다.
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/attendance"
+               class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                출결 화면으로 이동
+            </a>
+            <a th:if="${currentMember?.role?.name() == 'PRINCIPAL'}" href="/domain-audit-logs"
+               class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
+                업무 감사 로그 보기
+            </a>
+        </div>
+    </div>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <div class="space-y-6">
+            <div th:if="${isParent}" class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div class="mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">출결 변경 요청 보내기</h2>
+                    <p class="text-sm text-gray-500 mt-1">원생, 날짜, 상태를 선택하면 승인 대기 큐로 등록됩니다.</p>
+                </div>
+                <form id="createRequestForm" class="space-y-4">
+                    <div>
+                        <label for="kidId" class="block text-sm font-medium text-gray-700 mb-1">원생</label>
+                        <select id="kidId" name="kidId" class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                            <option value="">원생을 선택하세요</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="requestDate" class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
+                        <input id="requestDate" name="date" type="date"
+                               class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label for="requestStatus" class="block text-sm font-medium text-gray-700 mb-1">요청 상태</label>
+                        <select id="requestStatus" name="status" class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                            <option th:each="status : ${attendanceStatuses}" th:value="${status.name()}"
+                                    th:text="${status.description}">출석</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="requestNote" class="block text-sm font-medium text-gray-700 mb-1">메모</label>
+                        <textarea id="requestNote" name="note" rows="3" maxlength="255"
+                                  placeholder="예: 병원 진료로 결석 처리 부탁드립니다"
+                                  class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"></textarea>
+                    </div>
+                    <button type="submit" class="w-full rounded-2xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700">
+                        요청 제출
+                    </button>
+                </form>
+            </div>
+
+            <div th:if="${isStaff}" class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div class="mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900" th:text="${reviewQueueLabel}">원장 검토 큐</h2>
+                    <p class="text-sm text-gray-500 mt-1">날짜와 반으로 승인 대기 요청을 필터링합니다.</p>
+                </div>
+                <form id="reviewFilterForm" class="space-y-4">
+                    <div>
+                        <label for="filterDate" class="block text-sm font-medium text-gray-700 mb-1">날짜</label>
+                        <input id="filterDate" name="date" type="date"
+                               class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label for="filterClassroomId" class="block text-sm font-medium text-gray-700 mb-1">반 ID</label>
+                        <input id="filterClassroomId" name="classroomId" type="number" min="1"
+                               placeholder="전체 반이면 비워 두세요"
+                               class="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                    </div>
+                    <button type="submit" class="w-full rounded-2xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700">
+                        승인 대기 요청 조회
+                    </button>
+                </form>
+            </div>
+
+            <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">설계 포인트</h2>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>학부모 요청은 `AttendanceChangeRequest` aggregate로 저장하고, 실제 `Attendance`는 승인 시점에만 갱신합니다.</li>
+                    <li>권한 정책은 학부모-자녀 관계와 동일 유치원 소속을 동시에 검증합니다.</li>
+                    <li>승인/거절/취소는 모두 업무 감사 로그와 알림으로 남아 운영 추적이 가능합니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div class="rounded-3xl bg-white p-5 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">현재 목록 수</p>
+                    <p id="requestCountValue" class="mt-2 text-3xl font-bold text-gray-900">-</p>
+                </div>
+                <div class="rounded-3xl bg-white p-5 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">목록 유형</p>
+                    <p id="queueTypeValue" class="mt-2 text-lg font-semibold text-gray-900"
+                       th:text="${isParent ? '내 요청 목록' : '승인 대기 요청'}">내 요청 목록</p>
+                </div>
+                <div class="rounded-3xl bg-white p-5 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">처리 원칙</p>
+                    <p class="mt-2 text-sm font-medium text-gray-900 leading-6">승인은 실제 출결 반영, 거절은 이력 보존, 취소는 학부모 본인만 가능</p>
+                </div>
+            </div>
+
+            <div id="requestSuccessBanner"
+                 class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"></div>
+            <div id="requestErrorBanner"
+                 class="hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+
+            <div class="rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between gap-3 border-b border-gray-200 px-6 py-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900" th:text="${isParent ? '요청 이력' : '승인 대기 요청'}">요청 이력</h2>
+                        <p class="text-sm text-gray-500" th:text="${isParent ? '최근 요청부터 확인할 수 있습니다.' : '학부모가 제출한 요청을 검토하세요.'}">
+                            최근 요청부터 확인할 수 있습니다.
+                        </p>
+                    </div>
+                    <div id="requestLoadingIndicator" class="hidden text-sm font-medium text-primary-700">불러오는 중...</div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">생성 시각</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">원생</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">요청 날짜</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">상태</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">메모</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">처리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="requestTableBody" class="divide-y divide-gray-100 bg-white">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">요청을 불러오는 중입니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const page = document.querySelector('main[data-parent]');
+        const isParent = page?.dataset.parent === 'true';
+        const isStaff = page?.dataset.staff === 'true';
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        const createForm = document.getElementById('createRequestForm');
+        const reviewFilterForm = document.getElementById('reviewFilterForm');
+        const requestTableBody = document.getElementById('requestTableBody');
+        const loadingIndicator = document.getElementById('requestLoadingIndicator');
+        const successBanner = document.getElementById('requestSuccessBanner');
+        const errorBanner = document.getElementById('requestErrorBanner');
+        const requestCountValue = document.getElementById('requestCountValue');
+        const kidSelect = document.getElementById('kidId');
+
+        if (isParent) {
+            loadMyKids();
+        }
+        loadRequests();
+
+        createForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            hideBanner(successBanner);
+            hideBanner(errorBanner);
+
+            const body = {
+                kidId: Number(document.getElementById('kidId').value),
+                date: document.getElementById('requestDate').value,
+                status: document.getElementById('requestStatus').value,
+                note: document.getElementById('requestNote').value || null
+            };
+
+            const response = await apiRequest('/api/v1/attendance-requests', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+
+            if (!response.success) {
+                showBanner(errorBanner, response.message || '요청 생성에 실패했습니다.');
+                return;
+            }
+
+            createForm.reset();
+            showBanner(successBanner, '출결 변경 요청이 등록되었습니다.');
+            loadRequests();
+        });
+
+        reviewFilterForm?.addEventListener('submit', (event) => {
+            event.preventDefault();
+            loadRequests();
+        });
+
+        requestTableBody.addEventListener('click', async (event) => {
+            const actionButton = event.target.closest('button[data-action]');
+            if (!actionButton) {
+                return;
+            }
+
+            hideBanner(successBanner);
+            hideBanner(errorBanner);
+
+            const requestId = actionButton.dataset.id;
+            const action = actionButton.dataset.action;
+
+            if (action === 'cancel') {
+                const response = await apiRequest(`/api/v1/attendance-requests/${requestId}/cancel`, {
+                    method: 'POST'
+                });
+                handleActionResponse(response, '요청이 취소되었습니다.');
+                return;
+            }
+
+            if (action === 'approve') {
+                const response = await apiRequest(`/api/v1/attendance-requests/${requestId}/approve`, {
+                    method: 'POST'
+                });
+                handleActionResponse(response, '출결 변경 요청을 승인했습니다.');
+                return;
+            }
+
+            if (action === 'reject') {
+                const reason = window.prompt('거절 사유를 입력하세요.');
+                if (!reason) {
+                    return;
+                }
+                const response = await apiRequest(`/api/v1/attendance-requests/${requestId}/reject`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason })
+                });
+                handleActionResponse(response, '출결 변경 요청을 거절했습니다.');
+            }
+        });
+
+        async function loadMyKids() {
+            const response = await apiRequest('/api/v1/kids/my-kids');
+            if (!response.success) {
+                showBanner(errorBanner, response.message || '원생 목록을 불러오지 못했습니다.');
+                return;
+            }
+
+            kidSelect.innerHTML = '<option value="">원생을 선택하세요</option>';
+            response.data.forEach(kid => {
+                const option = document.createElement('option');
+                option.value = kid.id;
+                option.textContent = `${kid.name} (${kid.classroomName})`;
+                kidSelect.appendChild(option);
+            });
+        }
+
+        async function loadRequests() {
+            setLoading(true);
+            hideBanner(errorBanner);
+
+            const url = isParent ? '/api/v1/attendance-requests/my' : buildPendingUrl();
+            const response = await apiRequest(url);
+            setLoading(false);
+
+            if (!response.success) {
+                requestTableBody.innerHTML = emptyRow('요청을 불러오지 못했습니다.');
+                requestCountValue.textContent = '-';
+                showBanner(errorBanner, response.message || '요청 조회에 실패했습니다.');
+                return;
+            }
+
+            const requests = response.data ?? [];
+            requestCountValue.textContent = String(requests.length);
+
+            if (requests.length === 0) {
+                requestTableBody.innerHTML = emptyRow(isParent ? '아직 요청 이력이 없습니다.' : '승인 대기 요청이 없습니다.');
+                return;
+            }
+
+            requestTableBody.innerHTML = requests.map(request => renderRow(request)).join('');
+        }
+
+        function buildPendingUrl() {
+            const params = new URLSearchParams();
+            const date = document.getElementById('filterDate')?.value;
+            const classroomId = document.getElementById('filterClassroomId')?.value;
+            if (date) {
+                params.set('date', date);
+            }
+            if (classroomId) {
+                params.set('classroomId', classroomId);
+            }
+            const query = params.toString();
+            return query ? `/api/v1/attendance-requests/pending?${query}` : '/api/v1/attendance-requests/pending';
+        }
+
+        async function apiRequest(url, options = {}) {
+            const headers = {
+                'Accept': 'application/json',
+                ...(options.body ? { 'Content-Type': 'application/json' } : {})
+            };
+            if (csrfToken && csrfHeader && options.method && options.method !== 'GET') {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            const response = await fetch(url, {
+                credentials: 'same-origin',
+                ...options,
+                headers
+            });
+            return response.json();
+        }
+
+        function handleActionResponse(response, successMessage) {
+            if (!response.success) {
+                showBanner(errorBanner, response.message || '처리에 실패했습니다.');
+                return;
+            }
+            showBanner(successBanner, successMessage);
+            loadRequests();
+        }
+
+        function renderRow(request) {
+            const reviewCell = request.reviewedBy
+                ? `<div class="text-sm text-gray-700">${request.reviewedBy.name}</div>`
+                : '<span class="text-sm text-gray-400">미처리</span>';
+
+            return `
+                <tr>
+                    <td class="px-6 py-4 text-sm text-gray-600">${formatDateTime(request.createdAt)}</td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-semibold text-gray-900">${request.kid.name}</div>
+                        <div class="text-xs text-gray-500">${request.requester.name}</div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-700">${request.date}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusTone(request.status)}">
+                            ${statusLabel(request.requestedStatus)} / ${request.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-700">${escapeHtml(request.note || '-')}</div>
+                        <div class="mt-1 text-xs text-gray-500">${reviewCell}</div>
+                        ${request.rejectionReason ? `<div class="mt-2 text-xs text-red-600">거절 사유: ${escapeHtml(request.rejectionReason)}</div>` : ''}
+                    </td>
+                    <td class="px-6 py-4">
+                        ${renderActions(request)}
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderActions(request) {
+            if (isParent) {
+                if (request.status === 'PENDING') {
+                    return `<button data-action="cancel" data-id="${request.id}" class="rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50">취소</button>`;
+                }
+                return '<span class="text-sm text-gray-400">처리 완료</span>';
+            }
+
+            return `
+                <div class="flex flex-wrap gap-2">
+                    <button data-action="approve" data-id="${request.id}" class="rounded-xl bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700">승인</button>
+                    <button data-action="reject" data-id="${request.id}" class="rounded-xl border border-amber-200 px-3 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50">거절</button>
+                </div>
+            `;
+        }
+
+        function statusLabel(status) {
+            switch (status) {
+                case 'PRESENT': return '출석';
+                case 'ABSENT': return '결석';
+                case 'LATE': return '지각';
+                case 'EARLY_LEAVE': return '조퇴';
+                case 'SICK_LEAVE': return '병결';
+                default: return status;
+            }
+        }
+
+        function statusTone(status) {
+            switch (status) {
+                case 'PENDING': return 'bg-amber-50 text-amber-700';
+                case 'APPROVED': return 'bg-emerald-50 text-emerald-700';
+                case 'REJECTED': return 'bg-rose-50 text-rose-700';
+                case 'CANCELLED': return 'bg-gray-100 text-gray-700';
+                default: return 'bg-gray-100 text-gray-700';
+            }
+        }
+
+        function formatDateTime(value) {
+            if (!value) {
+                return '-';
+            }
+            return value.replace('T', ' ').slice(0, 16);
+        }
+
+        function escapeHtml(value) {
+            return value
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function emptyRow(message) {
+            return `<tr><td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">${message}</td></tr>`;
+        }
+
+        function setLoading(loading) {
+            loadingIndicator.classList.toggle('hidden', !loading);
+        }
+
+        function showBanner(element, message) {
+            element.textContent = message;
+            element.classList.remove('hidden');
+        }
+
+        function hideBanner(element) {
+            element.classList.add('hidden');
+            element.textContent = '';
+        }
+    });
+</script>
+</body>
+</html>

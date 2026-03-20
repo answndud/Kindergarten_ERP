@@ -1,0 +1,8 @@
+package com.erp.domain.domainaudit.entity;
+
+public enum DomainAuditTargetType {
+    KID_APPLICATION,
+    KINDERGARTEN_APPLICATION,
+    ANNOUNCEMENT,
+    ATTENDANCE_CHANGE_REQUEST
+}

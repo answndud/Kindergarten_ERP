@@ -29,17 +29,18 @@ public class ClassroomService {
     private final MemberService memberService;
     private final KidRepository kidRepository;
     private final AccessPolicyService accessPolicyService;
+    private final ClassroomCapacityService classroomCapacityService;
 
     /**
      * 반 생성
      */
     @Transactional
-    public Long createClassroom(Long kindergartenId, String name, String ageGroup) {
+    public Long createClassroom(Long kindergartenId, String name, String ageGroup, Integer capacity) {
         // 유치원 조회
         Kindergarten kindergarten = kindergartenService.getKindergarten(kindergartenId);
 
         // 반 생성
-        Classroom classroom = Classroom.create(kindergarten, name, ageGroup);
+        Classroom classroom = Classroom.create(kindergarten, name, ageGroup, capacity);
 
         // 저장
         Classroom saved = classroomRepository.save(classroom);
@@ -51,7 +52,14 @@ public class ClassroomService {
     public Long createClassroom(Long kindergartenId, String name, String ageGroup, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateStaffSameKindergarten(requester, kindergartenId);
-        return createClassroom(kindergartenId, name, ageGroup);
+        return createClassroom(kindergartenId, name, ageGroup, Classroom.DEFAULT_CAPACITY);
+    }
+
+    @Transactional
+    public Long createClassroom(Long kindergartenId, String name, String ageGroup, Integer capacity, Long requesterId) {
+        Member requester = accessPolicyService.getRequester(requesterId);
+        accessPolicyService.validateStaffSameKindergarten(requester, kindergartenId);
+        return createClassroom(kindergartenId, name, ageGroup, capacity);
     }
 
     /**
@@ -89,17 +97,19 @@ public class ClassroomService {
      * 반 수정
      */
     @Transactional
-    public void updateClassroom(Long id, String name, String ageGroup) {
+    public void updateClassroom(Long id, String name, String ageGroup, Integer capacity) {
         Classroom classroom = getClassroom(id);
-        classroom.update(name, ageGroup);
+        classroomCapacityService.validateCapacityReduction(classroom, capacity == null ? classroom.getCapacity() : capacity);
+        classroom.update(name, ageGroup, capacity);
     }
 
     @Transactional
-    public void updateClassroom(Long id, String name, String ageGroup, Long requesterId) {
+    public void updateClassroom(Long id, String name, String ageGroup, Integer capacity, Long requesterId) {
         Classroom classroom = getClassroom(id);
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateClassroomManageAccess(requester, classroom);
-        classroom.update(name, ageGroup);
+        classroomCapacityService.validateCapacityReduction(classroom, capacity == null ? classroom.getCapacity() : capacity);
+        classroom.update(name, ageGroup, capacity);
     }
 
     /**

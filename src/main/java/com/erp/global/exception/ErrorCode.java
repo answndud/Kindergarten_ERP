@@ -46,6 +46,8 @@ public enum ErrorCode {
     CLASSROOM_ALREADY_HAS_TEACHER(400, "CL002", "이미 담임 교사가 배정된 반입니다"),
     CLASSROOM_HAS_KIDS(400, "CL003", "원생이 있는 반은 삭제할 수 없습니다"),
     CLASSROOM_NOT_BELONG_TO_KINDERGARTEN(400, "CL004", "해당 유치원의 반이 아닙니다"),
+    CLASSROOM_CAPACITY_EXCEEDED(409, "CL005", "반 정원을 초과할 수 없습니다"),
+    CLASSROOM_CAPACITY_REDUCTION_NOT_ALLOWED(400, "CL006", "현재 배정 인원보다 정원을 작게 줄일 수 없습니다"),
 
     // ========== Kid ==========
     KID_NOT_FOUND(404, "KD001", "원생을 찾을 수 없습니다"),
@@ -56,6 +58,10 @@ public enum ErrorCode {
     ATTENDANCE_ALREADY_EXISTS(409, "AT001", "이미 출석 정보가 존재합니다"),
     ATTENDANCE_NOT_FOUND(404, "AT002", "출석 정보를 찾을 수 없습니다"),
     INVALID_ATTENDANCE_STATUS(400, "AT003", "잘못된 출석 상태입니다"),
+    ATTENDANCE_CHANGE_REQUEST_NOT_FOUND(404, "AT004", "출결 요청을 찾을 수 없습니다"),
+    ATTENDANCE_CHANGE_REQUEST_ALREADY_PENDING(409, "AT005", "같은 날짜의 처리 대기 출결 요청이 이미 있습니다"),
+    ATTENDANCE_CHANGE_REQUEST_NOT_PENDING(400, "AT006", "처리 가능한 출결 요청 상태가 아닙니다"),
+    ATTENDANCE_CHANGE_REQUEST_ACCESS_DENIED(403, "AT007", "출결 요청 접근 권한이 없습니다"),
 
     // ========== Notepad ==========
     NOTEPAD_NOT_FOUND(404, "N001", "알림장을 찾을 수 없습니다"),
@@ -80,7 +86,10 @@ public enum ErrorCode {
     APPLICATION_ACCESS_DENIED(403, "AP005", "지원서 접근 권한이 없습니다"),
     ALREADY_ASSIGNED_TO_KINDERGARTEN(400, "AP006", "이미 유치원에 배정된 회원입니다"),
     KINDERGARTEN_ACCESS_DENIED(403, "AP007", "유치원 접근 권한이 없습니다"),
-    INVALID_MEMBER_ROLE(403, "AP008", "잘못된 회원 역할입니다");
+    INVALID_MEMBER_ROLE(403, "AP008", "잘못된 회원 역할입니다"),
+    APPLICATION_NOT_OFFERED(400, "AP009", "입학 offer 상태가 아닙니다"),
+    APPLICATION_OFFER_EXPIRED(400, "AP010", "입학 offer가 만료되었습니다"),
+    APPLICATION_INVALID_STATE(400, "AP011", "지원서 상태 전이가 올바르지 않습니다");
 
     /**
      * HTTP 상태 코드

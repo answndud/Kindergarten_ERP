@@ -8,6 +8,9 @@ import com.erp.domain.kindergartenapplication.dto.response.KindergartenApplicati
 import com.erp.domain.kindergartenapplication.entity.ApplicationStatus;
 import com.erp.domain.kindergartenapplication.entity.KindergartenApplication;
 import com.erp.domain.kindergartenapplication.repository.KindergartenApplicationRepository;
+import com.erp.domain.domainaudit.entity.DomainAuditAction;
+import com.erp.domain.domainaudit.entity.DomainAuditTargetType;
+import com.erp.domain.domainaudit.service.DomainAuditLogService;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
@@ -32,6 +35,7 @@ public class KindergartenApplicationService {
     private final MemberRepository memberRepository;
     private final KindergartenRepository kindergartenRepository;
     private final NotificationService notificationService;
+    private final DomainAuditLogService domainAuditLogService;
 
     /**
      * 교사가 유치원에 지원
@@ -123,6 +127,15 @@ public class KindergartenApplicationService {
 
         // 교사에게 알림 발송
         notifyTeacherAboutApproval(teacher, application.getKindergarten());
+        domainAuditLogService.record(
+                principal,
+                application.getKindergarten().getId(),
+                DomainAuditAction.KINDERGARTEN_APPLICATION_APPROVED,
+                DomainAuditTargetType.KINDERGARTEN_APPLICATION,
+                application.getId(),
+                principal.getName() + "이(가) " + teacher.getName() + " 교사의 지원을 승인했습니다.",
+                java.util.Map.of("teacherId", teacher.getId())
+        );
 
         // 다른 대기 중인 지원서 자동 거절
         rejectOtherPendingApplications(application.getId(), teacher.getId(), principal);
@@ -150,6 +163,15 @@ public class KindergartenApplicationService {
 
         // 교사에게 알림 발송
         notifyTeacherAboutRejection(application.getTeacher(), application.getKindergarten(), request.reason());
+        domainAuditLogService.record(
+                principal,
+                application.getKindergarten().getId(),
+                DomainAuditAction.KINDERGARTEN_APPLICATION_REJECTED,
+                DomainAuditTargetType.KINDERGARTEN_APPLICATION,
+                application.getId(),
+                principal.getName() + "이(가) " + application.getTeacher().getName() + " 교사의 지원을 거절했습니다.",
+                java.util.Map.of("reason", request.reason())
+        );
     }
 
     /**
