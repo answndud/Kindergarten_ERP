@@ -232,3 +232,75 @@ sequenceDiagram
 - “회원, 유치원, 반을 단순 테이블이 아니라 권한과 소속 구조의 시작점으로 모델링했습니다.”
 - “`MemberRole`, `MemberStatus`를 enum으로 제한해 역할/상태 규칙을 코드에 녹였습니다.”
 - “`Classroom`은 초기에 단순 반 관리였지만, 이후 정원과 배정 워크플로우 확장까지 고려할 수 있는 구조로 키웠습니다.”
+
+## 10. 시작 상태
+
+- `06` 글까지 따라와서 공통 규약과 패키지 구조가 잡혀 있어야 합니다.
+- 이 글의 목표는 **회원, 유치원, 반을 별도 CRUD가 아니라 소속/권한 구조의 뼈대**로 세우는 것입니다.
+- 이후 원생, 출석, 알림장, 지원 워크플로우는 모두 이 세 엔티티 위에 올라갑니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 회원:
+  - src/main/java/com/erp/domain/member/entity/Member.java
+  - src/main/java/com/erp/domain/member/entity/MemberRole.java
+  - src/main/java/com/erp/domain/member/entity/MemberStatus.java
+  - src/main/java/com/erp/domain/member/controller/MemberApiController.java
+- 유치원 / 반:
+  - src/main/java/com/erp/domain/kindergarten/entity/Kindergarten.java
+  - src/main/java/com/erp/domain/kindergarten/controller/KindergartenController.java
+  - src/main/java/com/erp/domain/classroom/entity/Classroom.java
+  - src/main/java/com/erp/domain/classroom/controller/ClassroomController.java
+- 스키마:
+  - src/main/resources/db/migration/V1__init_schema.sql
+- 검증:
+  - src/test/java/com/erp/api/MemberApiIntegrationTest.java
+  - src/test/java/com/erp/api/KindergartenApiIntegrationTest.java
+  - src/test/java/com/erp/api/ClassroomApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase01_kindergarten.md
+  - docs/decisions/phase02_member.md
+  - docs/decisions/phase03_classroom.md
+  - docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+```
+
+## 12. 구현 체크리스트
+
+1. `MemberRole`, `MemberStatus` enum으로 역할과 상태를 제한합니다.
+2. `Member`에 생성, 프로필 수정, 비밀번호 변경, 유치원 배정 같은 핵심 메서드를 둡니다.
+3. `Kindergarten`에 principal 연결과 기본 정보 수정 규칙을 넣습니다.
+4. `Classroom`에 생성, 교사 배정, 정원, soft delete 규칙을 넣습니다.
+5. 회원/유치원/반 API를 통해 소속 구조가 실제로 연결되게 만듭니다.
+6. 통합 테스트로 생성, 수정, 배정, 정원 관련 흐름을 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `MemberApiIntegrationTest`, `KindergartenApiIntegrationTest`, `ClassroomApiIntegrationTest`가 함께 통과한다
+- 회원이 역할/상태를 가진 상태로 생성된다
+- 유치원과 principal 연결이 실제 엔티티 관계로 저장된다
+- 반 생성, 수정, 교사 배정, 정원 규칙이 API 수준에서 동작한다
+
+## 14. 글 종료 체크포인트
+
+- 회원, 유치원, 반이 이후 모든 도메인의 소속 구조를 결정한다
+- 역할/상태/정원 같은 제약이 엔티티 메서드에 반영돼 있다
+- `Classroom`이 단순 이름 테이블이 아니라 운영 규칙을 가진 엔티티라는 점을 설명할 수 있다
+- 이후 waitlist/offer 확장이 왜 `Classroom.capacity`와 자연스럽게 이어지는지 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 교사를 반에 배정했는데 같은 유치원 소속인지 설명이 불안하다
+  - 원인: 소속 검증을 서비스나 정책 계층으로 끌어올리지 않았을 수 있습니다
+  - 확인할 것: `Member.assignKindergarten(...)`, 관련 service 권한 검증
+
+- 증상: 정원 변경이 쉽게 되지만 운영 시나리오와 안 맞는다
+  - 원인: 현재 인원 수보다 작은 정원으로 줄이는 규칙이 없을 수 있습니다
+  - 확인할 것: `Classroom.canResizeTo(...)`, 정원 변경 서비스 로직

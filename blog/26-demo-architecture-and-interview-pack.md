@@ -279,3 +279,70 @@ sequenceDiagram
 - “`demo` profile, seed data, preflight, runbook을 분리해 시연 실패 확률을 낮췄습니다.”
 - “아키텍처 SSOT, hiring pack, interview one pager, Q&A 스크립트까지 만들어 설명 경로를 설계했습니다.”
 - “코드 작성에서 끝나지 않고, 면접관이 이해하는 순서까지 설계한 것이 이 프로젝트 마감 단계의 핵심입니다.”
+
+## 10. 시작 상태
+
+- 기능과 운영 문서가 충분히 쌓인 뒤에야 이 글이 의미가 있습니다.
+- 이 글의 목표는 **프로젝트를 잘 만드는 것에서 끝나지 않고, 면접관이 이해하기 쉬운 순서로 전달하는 것**입니다.
+- 따라서 코드를 더 쓰기보다, 실행 환경과 설명 경로를 같이 정리합니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- demo 실행 환경:
+  - src/main/resources/application-demo.yml
+  - src/main/java/com/erp/global/config/DataLoader.java
+- 인터뷰 / 아키텍처 문서:
+  - docs/portfolio/architecture/system-architecture.md
+  - docs/portfolio/hiring-pack/backend-hiring-pack.md
+  - docs/portfolio/demo/demo-preflight.md
+  - docs/portfolio/demo/demo-runbook.md
+  - docs/portfolio/interview/interview_one_pager.md
+  - docs/portfolio/interview/interview_qa_script.md
+  - docs/portfolio/case-studies/auth-incident-response.md
+- 관련 코드 근거:
+  - src/main/java/com/erp/global/config/OpenApiConfig.java
+  - src/main/java/com/erp/global/monitoring/CriticalDependenciesHealthIndicator.java
+```
+
+## 12. 구현 체크리스트
+
+1. `demo` profile과 seed data를 고정해 시연 시나리오를 재현 가능하게 만듭니다.
+2. preflight 문서로 Docker, 계정, URL, 점검 순서를 정리합니다.
+3. runbook에 실제 시연 순서와 화면 전환 순서를 적습니다.
+4. architecture 문서와 hiring pack으로 읽기 시작점을 만듭니다.
+5. interview one pager와 Q&A script로 예상 질문 대응 자료를 만듭니다.
+6. 대표 사례 문서(`auth-incident-response`)로 여러 기능을 하나의 이야기로 묶습니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+./gradlew bootRun --args='--spring.profiles.active=demo'
+```
+
+수동으로 확인할 것:
+
+- `/swagger-ui.html`
+- `/actuator/health/readiness`
+- demo 계정 로그인
+- 감사 로그 콘솔 진입
+
+## 14. 글 종료 체크포인트
+
+- demo profile과 seed data로 시연 재현성을 확보했다
+- 아키텍처 문서와 hiring pack이 읽기 시작점을 제공한다
+- interview one pager와 Q&A script가 꼬리 질문 대응 자료로 이어진다
+- “무엇을 만들었는가”뿐 아니라 “어떤 순서로 보여줄 것인가”까지 설계했다고 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 데모 문서는 있는데 실제 화면과 계정이 자주 어긋난다
+  - 원인: demo profile, seed data, runbook을 따로 관리하지 않았을 수 있습니다
+  - 확인할 것: `application-demo.yml`, `DataLoader`, `demo-preflight.md`, `demo-runbook.md`
+
+- 증상: 문서는 많은데 면접관이 어디부터 읽어야 할지 모른다
+  - 원인: architecture SSOT와 hiring pack 같은 시작점 문서가 없을 수 있습니다
+  - 확인할 것: `system-architecture.md`, `backend-hiring-pack.md`, `interview_one_pager.md`

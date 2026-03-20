@@ -267,3 +267,70 @@ sequenceDiagram
 - “정원은 단순 표시값이 아니라 재원 수 + 활성 offer 수를 함께 보는 실제 제약으로 설계했습니다.”
 - “입학 신청을 단일 승인 버튼이 아니라 `WAITLISTED -> OFFERED -> APPROVED / OFFER_EXPIRED` 상태 머신으로 모델링했습니다.”
 - “스케줄러와 정원 잠금, 재검증을 통해 시간 기반 상태 변화까지 백엔드 책임으로 닫았습니다.”
+
+## 10. 시작 상태
+
+- `07`, `10` 글까지 따라와서 `Classroom.capacity`와 입학 신청 기본 흐름이 이미 있어야 합니다.
+- 이 글의 목표는 **정원을 숫자 필드에서 실제 운영 제약으로 끌어올리고, 입학 신청을 waitlist/offer 기반 상태 머신으로 바꾸는 것**입니다.
+- 핵심은 두 가지입니다.
+  - 좌석 가능 여부를 매번 재계산하고 잠그는 것
+  - 제안(offer)과 최종 승인(approved)을 분리하는 것
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 정원 계산:
+  - src/main/java/com/erp/domain/classroom/service/ClassroomCapacityService.java
+  - src/main/java/com/erp/domain/classroom/entity/Classroom.java
+- 입학 신청 상태 머신:
+  - src/main/java/com/erp/domain/kidapplication/entity/KidApplication.java
+  - src/main/java/com/erp/domain/kidapplication/controller/KidApplicationController.java
+  - src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java
+- 스키마:
+  - src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql
+- 검증:
+  - src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java
+  - src/test/java/com/erp/api/ClassroomApiIntegrationTest.java
+  - src/test/java/com/erp/api/KidApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+```
+
+## 12. 구현 체크리스트
+
+1. `ClassroomCapacityService`에서 현재 재원 수와 활성 offer 수를 함께 계산합니다.
+2. `KidApplication`에 `WAITLISTED`, `OFFERED`, `APPROVED`, `OFFER_EXPIRED` 상태 전이를 넣습니다.
+3. `KidApplicationService.offer(...)`에서 제안 만료 시각과 좌석 재검증을 같이 처리합니다.
+4. `acceptOffer(...)`에서만 실제 `Kid`를 생성해 입학을 확정합니다.
+5. `expireOffers()` 스케줄러로 시간 기반 만료를 처리합니다.
+6. 통합 테스트로 waitlist, offer, accept, expire와 정원 규칙을 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `KidApplicationApiIntegrationTest`, `ClassroomApiIntegrationTest`, `KidApiIntegrationTest`가 통과한다
+- 좌석 계산이 현재 재원 수와 활성 offer를 함께 반영한다
+- 입학 신청이 waitlist/offer/accept/expire 흐름을 가진다
+
+## 14. 글 종료 체크포인트
+
+- 정원이 단순 표시값이 아니라 운영 제약이라는 점을 설명할 수 있다
+- offer와 최종 승인 사이에 별도 상태가 필요한 이유를 설명할 수 있다
+- 시간 기반 상태 변화도 스케줄러와 감사 로그로 닫을 수 있다
+- 실제 원생 생성 시점을 왜 `acceptOffer(...)`에 두는지 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 자리는 하나인데 offer를 여러 건 보내게 된다
+  - 원인: 현재 재원 수만 보고 활성 offer 수를 좌석 계산에 반영하지 않았을 수 있습니다
+  - 확인할 것: `ClassroomCapacityService.summarize(...)`, `validateSeatAvailable(...)`
+
+- 증상: offer를 보냈는데 만료/수락 후 상태가 꼬인다
+  - 원인: 실제 입학 확정 시점과 제안 시점을 같은 이벤트로 취급했을 수 있습니다
+  - 확인할 것: `KidApplication.offerSeat(...)`, `acceptOffer(...)`, `markOfferExpired()`

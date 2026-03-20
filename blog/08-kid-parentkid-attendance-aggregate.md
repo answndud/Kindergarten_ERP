@@ -240,3 +240,69 @@ sequenceDiagram
 - “학부모-원생 관계를 단순 다대다가 아니라 의미를 가진 중간 엔티티로 모델링했습니다.”
 - “출석은 원생+날짜 unique 규칙을 JPA와 DB 양쪽에서 보장했습니다.”
 - “결석/지각/조퇴 같은 상태 전이를 엔티티 메서드에 모아 비즈니스 규칙을 응집시켰습니다.”
+
+## 10. 시작 상태
+
+- `07` 글까지 따라와서 회원, 유치원, 반 구조가 이미 있어야 합니다.
+- 이 글의 목표는 **원생과 학부모 연결, 그리고 일별 출석 상태 전이**를 하나의 흐름으로 묶는 것입니다.
+- 이후 알림장, 출결 변경 요청, 대시보드 출석률 계산도 이 모델 위에 올라갑니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 원생 / 관계:
+  - src/main/java/com/erp/domain/kid/entity/Kid.java
+  - src/main/java/com/erp/domain/kid/entity/ParentKid.java
+  - src/main/java/com/erp/domain/kid/controller/KidController.java
+- 출석:
+  - src/main/java/com/erp/domain/attendance/entity/Attendance.java
+  - src/main/java/com/erp/domain/attendance/controller/AttendanceController.java
+- 스키마:
+  - src/main/resources/db/migration/V1__init_schema.sql
+- 검증:
+  - src/test/java/com/erp/api/KidApiIntegrationTest.java
+  - src/test/java/com/erp/api/AttendanceApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase04_attendance.md
+  - docs/decisions/phase09_kid_management.md
+```
+
+## 12. 구현 체크리스트
+
+1. `Kid`에 생성, 수정, 반 이동, 학부모 연결/해제 메서드를 둡니다.
+2. `ParentKid`를 별도 엔티티로 두고 relationship 정보를 보존합니다.
+3. `Attendance`에 `kid + date` unique 규칙을 JPA와 DB 양쪽에 둡니다.
+4. 출석 상태 변경 메서드(`markAbsent`, `markLate`, `markEarlyLeave`, `markSickLeave`)를 엔티티에 둡니다.
+5. 원생/출석 API를 만들어 교사와 원장이 실제로 관리할 수 있게 합니다.
+6. 통합 테스트로 원생 생성/연결/반 이동과 출석 상태 전이를 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+성공하면 확인할 것:
+
+- 통합 스위트 안에서 `KidApiIntegrationTest`, `AttendanceApiIntegrationTest`가 통과한다
+- 원생 생성과 학부모 연결이 정상 동작한다
+- 하루 한 원생 한 출석 규칙이 지켜진다
+- 결석/지각/조퇴 같은 상태 전이가 API와 엔티티 규칙에 맞게 반영된다
+
+## 14. 글 종료 체크포인트
+
+- `ParentKid`를 왜 별도 엔티티로 뒀는지 설명할 수 있다
+- 출석 유일성 규칙이 JPA와 DB에 모두 반영돼 있다
+- 상태 전이 메서드가 서비스가 아니라 엔티티에 모여 있다
+- 이후 출결 변경 요청과 대시보드 출석률이 이 모델에 기대는 이유를 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 학부모-원생 관계를 단순 ID 목록처럼 다루게 된다
+  - 원인: 관계 자체의 의미(`relationship`)를 무시하면 중간 엔티티로 올린 이유가 사라집니다
+  - 확인할 것: `ParentKid.create(...)`, `Kid.addParent(...)`
+
+- 증상: 하루 한 번만 출석이 들어가야 하는데 중복이 허용된다
+  - 원인: JPA 매핑이나 DB unique key 둘 중 하나가 빠졌을 수 있습니다
+  - 확인할 것: `Attendance`의 `@UniqueConstraint`, `V1__init_schema.sql`
