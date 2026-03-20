@@ -182,7 +182,9 @@ class ViewEndpointTest extends TestcontainersSupport {
         mockMvc.perform(get("/settings").with(user(new CustomUserDetails(principal))))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("운영 도구")))
-                .andExpect(content().string(containsString("인증 감사 로그 열기")));
+                .andExpect(content().string(containsString("인증 감사 로그 열기")))
+                .andExpect(content().string(containsString("활성 세션")))
+                .andExpect(content().string(containsString("다른 기기 로그아웃")));
     }
 
     @Test

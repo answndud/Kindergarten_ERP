@@ -111,7 +111,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 "203.0.113.10",
                 "social_account_conflict"
         );
-        verify(authService, never()).loginBySocial(any(), any());
+        verify(authService, never()).loginBySocial(any(), any(MemberAuthProvider.class), any(), any(), any());
     }
 
     @Test
@@ -160,7 +160,7 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 "203.0.113.10"
         );
         verify(socialAccountLinkService).linkSocialAccount(1L, MemberAuthProvider.GOOGLE, "google-sub-123");
-        verify(authService, never()).loginBySocial(any(), any());
+        verify(authService, never()).loginBySocial(any(), any(MemberAuthProvider.class), any(), any(), any());
     }
 
     @Test
@@ -214,6 +214,6 @@ class OAuth2AuthenticationSuccessHandlerTest {
                 "203.0.113.10",
                 "A011"
         );
-        verify(authService, never()).loginBySocial(any(), any());
+        verify(authService, never()).loginBySocial(any(), any(MemberAuthProvider.class), any(), any(), any());
     }
 }

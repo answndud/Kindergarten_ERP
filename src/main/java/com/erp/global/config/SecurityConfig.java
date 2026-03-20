@@ -1,6 +1,9 @@
 package com.erp.global.config;
 
+import com.erp.domain.auth.service.AuthSessionRegistryService;
+import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.CustomAuthenticationEntryPoint;
+import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.jwt.JwtFilter;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import com.erp.global.security.oauth2.CustomOAuth2UserService;
@@ -25,6 +28,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,17 +41,26 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final AuthSessionRegistryService authSessionRegistryService;
+    private final ClientIpResolver clientIpResolver;
+    private final ManagementSurfaceProperties managementSurfaceProperties;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     public SecurityConfig(JwtTokenProvider jwtTokenProvider,
                           CustomUserDetailsService userDetailsService,
+                          AuthSessionRegistryService authSessionRegistryService,
+                          ClientIpResolver clientIpResolver,
+                          ManagementSurfaceProperties managementSurfaceProperties,
                           CustomAuthenticationEntryPoint authenticationEntryPoint,
                           CustomOAuth2UserService customOAuth2UserService,
                           OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
+        this.authSessionRegistryService = authSessionRegistryService;
+        this.clientIpResolver = clientIpResolver;
+        this.managementSurfaceProperties = managementSurfaceProperties;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
@@ -74,7 +87,7 @@ public class SecurityConfig {
      */
     @Bean
     public JwtFilter jwtFilter() {
-        return new JwtFilter(jwtTokenProvider, userDetailsService);
+        return new JwtFilter(jwtTokenProvider, userDetailsService, authSessionRegistryService, clientIpResolver);
     }
 
     /**
@@ -101,6 +114,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
+        String[] publicEndpoints = buildPublicEndpoints();
 
         http
                 // CORS 설정
@@ -127,34 +141,14 @@ public class SecurityConfig {
                 // URL별 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         // 공개 경로
+                        .requestMatchers(publicEndpoints).permitAll()
+
                         .requestMatchers(
-                                "/",
-                                "/login",
-                                "/signup",
-                                "/oauth2/**",
-                                "/login/oauth2/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/actuator/health",
-                                "/actuator/health/**",
-                                "/actuator/info",
-                                "/actuator/prometheus",
-                                "/actuator/prometheus/**",
-                                "/api/v1/auth/signup",
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/refresh",
-                                "/kindergarten/create",
-                                "/kindergarten/select",
-                                "/css/**",
-                                "/js/**",
-                                "/img/**",
-                                "/images/**",
-                                "/favicon.ico",
-                                "/error",
-                                "/.well-known/**"  // Chrome DevTools 등의 요청 허용
-                        ).permitAll()
+                                "/v3/api-docs/**"
+                        ).hasRole("PRINCIPAL")
 
                         // 관리자 전용
                         .requestMatchers("/main/admin").hasAnyRole(
@@ -198,5 +192,44 @@ public class SecurityConfig {
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private String[] buildPublicEndpoints() {
+        List<String> publicEndpoints = new ArrayList<>(List.of(
+                "/",
+                "/login",
+                "/signup",
+                "/oauth2/**",
+                "/login/oauth2/**",
+                "/actuator/health",
+                "/actuator/health/**",
+                "/actuator/info",
+                "/api/v1/auth/signup",
+                "/api/v1/auth/login",
+                "/api/v1/auth/refresh",
+                "/kindergarten/create",
+                "/kindergarten/select",
+                "/css/**",
+                "/js/**",
+                "/img/**",
+                "/images/**",
+                "/favicon.ico",
+                "/error",
+                "/.well-known/**"
+        ));
+
+        if (managementSurfaceProperties.isPublicApiDocs()) {
+            publicEndpoints.add("/swagger-ui.html");
+            publicEndpoints.add("/swagger-ui/**");
+            publicEndpoints.add("/v3/api-docs");
+            publicEndpoints.add("/v3/api-docs/**");
+        }
+
+        if (managementSurfaceProperties.isExposePrometheusOnAppPort()) {
+            publicEndpoints.add("/actuator/prometheus");
+            publicEndpoints.add("/actuator/prometheus/**");
+        }
+
+        return publicEndpoints.toArray(String[]::new);
     }
 }

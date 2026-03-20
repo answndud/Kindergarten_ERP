@@ -32,7 +32,7 @@
 - `docs/decisions/`
   - 기능/보안/테스트/운영 관련 결정 로그
   - 최신 개선 흐름은 `phase14` 이후 문서를 우선 보면 됩니다.
-  - 최근 배치는 `phase38_auth_audit_retention_and_denormalization.md`까지 이어집니다.
+  - 최근 배치는 `phase39_management_plane_and_active_session_control.md`까지 이어집니다.
 
 ## Archive
 

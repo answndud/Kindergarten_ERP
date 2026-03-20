@@ -2,11 +2,13 @@ package com.erp.domain.auth.controller;
 
 import com.erp.domain.auth.dto.request.LoginRequest;
 import com.erp.domain.auth.dto.request.SignUpRequest;
+import com.erp.domain.auth.dto.response.AuthSessionResponse;
 import com.erp.domain.authaudit.service.AuthAuditLogService;
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.auth.service.AuthService;
 import com.erp.domain.member.service.MemberService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.jwt.JwtTokenProvider;
@@ -19,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 인증 API 컨트롤러
@@ -76,6 +80,7 @@ public class AuthApiController {
                 request.getEmail(),
                 request.getPassword(),
                 clientIpResolver.resolve(httpServletRequest),
+                httpServletRequest.getHeader("User-Agent"),
                 response
         );
 
@@ -112,7 +117,7 @@ public class AuthApiController {
                     .body(ApiResponse.error(ErrorCode.TOKEN_INVALID));
         }
 
-        authService.refreshAccessToken(refreshToken, clientIp, response);
+        authService.refreshAccessToken(refreshToken, clientIp, request.getHeader("User-Agent"), response);
 
         return ResponseEntity
                 .ok(ApiResponse.success(null, "토큰이 갱신되었습니다"));
@@ -130,6 +135,43 @@ public class AuthApiController {
                 .ok(ApiResponse.success(MemberResponse.from(member)));
     }
 
+    @GetMapping("/sessions")
+    public ResponseEntity<ApiResponse<List<AuthSessionResponse>>> getActiveSessions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request
+    ) {
+        String currentSessionId = resolveCurrentSessionId(request, userDetails.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success(
+                authService.getActiveSessions(userDetails.getMemberId(), currentSessionId)
+        ));
+    }
+
+    @DeleteMapping("/sessions/others")
+    public ResponseEntity<ApiResponse<Void>> revokeOtherSessions(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request
+    ) {
+        String currentSessionId = resolveCurrentSessionId(request, userDetails.getMemberId());
+        authService.revokeOtherSessions(userDetails.getMemberId(), currentSessionId);
+        return ResponseEntity.ok(ApiResponse.success(null, "다른 기기 세션을 종료했습니다"));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<ApiResponse<Void>> revokeSession(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String sessionId,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        String currentSessionId = resolveCurrentSessionId(request, userDetails.getMemberId());
+        authService.revokeSession(userDetails.getMemberId(), sessionId, currentSessionId, response);
+        return ResponseEntity.ok(ApiResponse.success(null, "선택한 세션을 종료했습니다"));
+    }
+
     /**
      * 쿠키에서 Refresh Token 추출
      */
@@ -145,6 +187,48 @@ public class AuthApiController {
             }
         }
 
+        return null;
+    }
+
+    private String resolveCurrentSessionId(HttpServletRequest request, Long expectedMemberId) {
+        String accessToken = getCookieValue(request, jwtTokenProvider.getAccessTokenCookieName());
+        String sessionId = extractSessionId(accessToken, expectedMemberId);
+        if (sessionId != null) {
+            return sessionId;
+        }
+
+        String refreshToken = getCookieValue(request, jwtTokenProvider.getRefreshTokenCookieName());
+        sessionId = extractSessionId(refreshToken, expectedMemberId);
+        if (sessionId != null) {
+            return sessionId;
+        }
+
+        throw new BusinessException(ErrorCode.TOKEN_INVALID);
+    }
+
+    private String extractSessionId(String token, Long expectedMemberId) {
+        if (token == null || !jwtTokenProvider.validateToken(token)) {
+            return null;
+        }
+
+        Long memberId = jwtTokenProvider.getMemberId(token);
+        if (memberId == null || !memberId.equals(expectedMemberId)) {
+            return null;
+        }
+        return jwtTokenProvider.getSessionId(token);
+    }
+
+    private String getCookieValue(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+
+        for (Cookie cookie : cookies) {
+            if (cookieName.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
         return null;
     }
 }

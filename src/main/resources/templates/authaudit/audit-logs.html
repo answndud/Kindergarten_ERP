@@ -53,10 +53,14 @@
             <a href="/settings" class="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 설정으로 돌아가기
             </a>
-            <a href="/swagger-ui.html" target="_blank" rel="noreferrer"
+            <a th:if="${publicApiDocsEnabled}" href="/swagger-ui.html" target="_blank" rel="noreferrer"
                class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
                 API 계약 보기
             </a>
+            <span th:if="${!publicApiDocsEnabled}"
+                  class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-600">
+                운영 환경에서는 API 계약 문서를 비공개로 유지합니다
+            </span>
         </div>
     </div>
 
