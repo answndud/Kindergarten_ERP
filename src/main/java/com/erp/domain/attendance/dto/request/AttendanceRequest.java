@@ -47,4 +47,18 @@ public class AttendanceRequest {
      * 메모
      */
     private String note;
+
+    public AttendanceRequest(Long kidId,
+                             LocalDate date,
+                             AttendanceStatus status,
+                             LocalTime dropOffTime,
+                             LocalTime pickUpTime,
+                             String note) {
+        this.kidId = kidId;
+        this.date = date;
+        this.status = status;
+        this.dropOffTime = dropOffTime;
+        this.pickUpTime = pickUpTime;
+        this.note = note;
+    }
 }

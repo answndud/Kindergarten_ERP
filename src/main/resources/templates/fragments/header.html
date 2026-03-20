@@ -22,6 +22,7 @@
                 <nav class="hidden md:flex items-center gap-1" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">
                     <a href="/dashboard" class="app-nav-link js-nav-link" data-nav-pattern="/dashboard">대시보드</a>
                     <a href="/attendance" class="app-nav-link js-nav-link" data-nav-pattern="/attendance">출결</a>
+                    <a href="/attendance-requests" class="app-nav-link js-nav-link" data-nav-pattern="/attendance-requests">출결 요청</a>
                     <a href="/notepad" class="app-nav-link js-nav-link" data-nav-pattern="/notepad">알림장</a>
                     <a href="/announcements" class="app-nav-link js-nav-link" data-nav-pattern="/announcement,/announcements">공지</a>
                     <a href="/calendar" class="app-nav-link js-nav-link" data-nav-pattern="/calendar">캘린더</a>
@@ -74,9 +75,13 @@
                         <div id="headerUserPanel" class="hidden absolute right-0 mt-2 w-56 app-surface py-2 z-50">
                             <a href="/profile" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">프로필</a>
                             <a href="/settings" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">설정</a>
+                            <a href="/attendance-requests" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">출결 요청</a>
                             <a href="/audit-logs"
                                class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
                                th:if="${currentMember?.role?.name() == 'PRINCIPAL'}">인증 감사 로그</a>
+                            <a href="/domain-audit-logs"
+                               class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                               th:if="${currentMember?.role?.name() == 'PRINCIPAL'}">업무 감사 로그</a>
                             <a href="/applications/pending" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">승인/신청</a>
                             <div class="border-t border-gray-200 my-1"></div>
                             <form th:action="@{/logout}" method="post">
@@ -98,6 +103,7 @@
         <div id="headerMobilePanel" class="hidden md:hidden border-t border-gray-200 bg-white/95 backdrop-blur px-4 py-4 space-y-2">
             <a href="/dashboard" class="block app-nav-link js-nav-link" data-nav-pattern="/dashboard">대시보드</a>
             <a href="/attendance" class="block app-nav-link js-nav-link" data-nav-pattern="/attendance">출결</a>
+            <a href="/attendance-requests" class="block app-nav-link js-nav-link" data-nav-pattern="/attendance-requests">출결 요청</a>
             <a href="/notepad" class="block app-nav-link js-nav-link" data-nav-pattern="/notepad">알림장</a>
             <a href="/announcements" class="block app-nav-link js-nav-link" data-nav-pattern="/announcement,/announcements">공지</a>
             <a href="/calendar" class="block app-nav-link js-nav-link" data-nav-pattern="/calendar">캘린더</a>
@@ -107,6 +113,10 @@
                class="block app-nav-link js-nav-link"
                data-nav-pattern="/audit-logs"
                th:if="${currentMember?.role?.name() == 'PRINCIPAL'}">인증 감사 로그</a>
+            <a href="/domain-audit-logs"
+               class="block app-nav-link js-nav-link"
+               data-nav-pattern="/domain-audit-logs"
+               th:if="${currentMember?.role?.name() == 'PRINCIPAL'}">업무 감사 로그</a>
             <a href="/applications/pending" class="block app-nav-link js-nav-link" data-nav-pattern="/applications" th:if="${#authentication != null and #authentication.name != 'anonymousUser'}">승인/신청</a>
             <form th:if="${#authentication != null and #authentication.name != 'anonymousUser'}" th:action="@{/logout}" method="post" class="pt-2 border-t border-gray-200">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

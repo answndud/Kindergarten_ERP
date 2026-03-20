@@ -2,6 +2,7 @@ package com.erp.domain.kindergartenapplication.service;
 
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
+import com.erp.domain.domainaudit.service.DomainAuditLogService;
 import com.erp.domain.kindergartenapplication.entity.KindergartenApplication;
 import com.erp.domain.kindergartenapplication.repository.KindergartenApplicationRepository;
 import com.erp.domain.member.entity.Member;
@@ -43,6 +44,9 @@ class KindergartenApplicationServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private DomainAuditLogService domainAuditLogService;
 
     @InjectMocks
     private KindergartenApplicationService kindergartenApplicationService;

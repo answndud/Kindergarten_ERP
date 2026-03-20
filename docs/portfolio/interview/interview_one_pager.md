@@ -26,19 +26,31 @@
 - settings 화면 기반 명시적 social link, local password bootstrap, unlink safeguards, multi-provider linking까지 확장했습니다.
 - 마지막에는 같은 provider의 다른 계정으로 교체되지 않도록 **로그인 식별자 불변 정책**도 넣었습니다.
 
-### 4) 실환경형 테스트와 CI
+### 4) 상태 전이 워크플로우 설계
+
+- 입학 신청을 `승인/거절`만 있는 단순 흐름이 아니라 **반 정원(capacity) + waitlist + offer + offer 만료**가 있는 상태 전이로 바꿨습니다.
+- 좌석 계산은 현재 원생 수만이 아니라 active offer까지 예약으로 계산하도록 설계했습니다.
+- 출결도 학부모가 직접 `Attendance`를 바꾸지 못하게 하고, **AttendanceChangeRequest -> 교사/원장 승인 -> Attendance 반영** 구조로 분리했습니다.
+- 여기에 `domain_audit_log`를 붙여 입학과 출결의 상태 변경을 중앙에서 추적할 수 있게 했습니다.
+- 면접에서는 “CRUD를 만들었다”보다 **운영 현실을 상태 전이 모델로 어떻게 옮겼는지**를 설명할 수 있습니다.
+
+### 5) 실환경형 테스트와 운영 관측성/감사 추적
 
 - H2/Mock Redis를 버리고 **MySQL/Redis Testcontainers + Flyway** 기반으로 통합 테스트를 전환했습니다.
 - GitHub Actions에서 fast/integration job을 분리했고, Node24 네이티브 action으로 runner 경고도 제거했습니다.
 - 즉 “돌아가는 테스트”가 아니라 **운영 스택을 닮은 테스트**를 만들었습니다.
-
-### 5) 운영 관측성과 감사 추적
-
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
 - local/demo에서는 Swagger와 Prometheus를 바로 열고, prod에서는 Swagger를 비활성화하고 management port를 분리해 운영 노출면을 줄였습니다.
-- 로그인/refresh/social link/unlink는 DB 감사 로그로 남기고, `kindergarten_id` 비정규화와 archive/purge retention 정책까지 붙였습니다.
+- 로그인/refresh/social link/unlink는 인증 감사 로그로 남기고, 입학/출결/공지 상태 변경은 별도 업무 감사 로그로 분리했습니다.
 - 반복 로그인 실패는 원장 시스템 알림으로 연결했고, 이후 `notification_outbox`로 외부 전달을 분리해 retry/dead-letter와 incident webhook까지 붙였습니다.
 - Prometheus metric은 Grafana 대시보드까지 바로 보이게 구성했고, 이로써 **계약 문서 -> 이벤트 저장 -> 운영 조회 -> 외부 incident 전파 -> 메트릭 관측 -> 사후 분석** 흐름을 설명할 수 있게 됐습니다.
+
+### 6) 상태 전이가 있는 운영형 워크플로우
+
+- `Classroom.capacity`를 도입하고, 입학 신청을 `PENDING -> WAITLISTED -> OFFERED -> APPROVED / OFFER_EXPIRED` 상태 머신으로 확장했습니다.
+- 학부모 출결 변경은 `Attendance`를 직접 수정하지 않고 `AttendanceChangeRequest` aggregate로 분리해 `PENDING -> APPROVED / REJECTED / CANCELLED` 흐름으로 만들었습니다.
+- 입학 처리, 출결 요청 승인, 공지 수정/삭제는 별도 `domain_audit_log`에 기록하고, 원장이 화면/CSV로 직접 확인할 수 있게 했습니다.
+- 면접에서는 “CRUD를 만들었다”보다 **상태 전이, 승인 흐름, 좌석 제약, 감사 증적을 어떻게 설계했는가**를 설명할 수 있습니다.
 
 ## 3. 성능 개선 포인트
 

@@ -263,6 +263,8 @@ public abstract class BaseIntegrationTest extends TestcontainersSupport {
     }
 
     private void resetIdentity() {
+        resetTableIdentity("domain_audit_log");
+        resetTableIdentity("attendance_change_request");
         resetTableIdentity("notification_outbox");
         resetTableIdentity("auth_audit_log");
         resetTableIdentity("member_social_account");

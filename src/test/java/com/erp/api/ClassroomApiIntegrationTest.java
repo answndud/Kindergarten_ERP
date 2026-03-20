@@ -57,4 +57,26 @@ class ClassroomApiIntegrationTest extends BaseIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(username = "principal@test.com", roles = {"PRINCIPAL"})
+    @DisplayName("반 생성 - 성공 (정원 포함)")
+    void createClassroom_Success_WithCapacity() throws Exception {
+        String requestBody = """
+                {
+                    "kindergartenId": 1,
+                    "name": "대기열반",
+                    "ageGroup": "6세",
+                    "capacity": 12
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/classrooms")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.capacity").value(12));
+    }
 }

@@ -7,6 +7,11 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-20 14:20 | DONE | Batch C 전체 검증 완료. `./gradlew --no-daemon compileJava compileTestJava`, `./gradlew --no-daemon test --tests "com.erp.api.KidApplicationApiIntegrationTest" --tests "com.erp.api.AttendanceChangeRequestApiIntegrationTest" --tests "com.erp.api.DomainAuditApiIntegrationTest" --tests "com.erp.api.ClassroomApiIntegrationTest" --tests "com.erp.api.KidApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest"`, `./gradlew --no-daemon cleanTest test`, `git diff --check` 통과 | add/commit/push 후 Batch D 계획으로 전환 |
+| 2026-03-20 14:10 | DONE | Batch C 문서 패키지 정리. 결정 로그 `phase41~phase43`, `docs/README.md`, `README.md`, `docs/portfolio/interview/interview_one_pager.md`, `docs/portfolio/interview/demo_3min_scenario.md`, `docs/portfolio/interview/interview_qa_script.md`를 현재 구현 기준으로 갱신 | 전체 회귀와 포맷 검증 후 배치 마감 |
+| 2026-03-20 14:06 | DONE | `/attendance-requests`, `/domain-audit-logs` 화면과 원장/학부모/교사용 진입점 추가. `AttendanceChangeRequestViewController`, `attendance/requests.html`, `domainaudit/audit-logs.html`, `fragments/header.html`, `settings.html`, `ViewEndpointTest` 반영 | README/결정 로그/인터뷰 문서 반영 |
+| 2026-03-20 14:00 | DONE | Batch C 핵심 도메인/API 구현과 대상 테스트 고정. `classroom.capacity`, `KidApplication` waitlist/offer/accept/expire, `AttendanceChangeRequest`, `domain_audit_log`, 관련 API/서비스/통합 테스트를 반영했고, 업무 감사 로그는 비즈니스 트랜잭션 참여 방식으로 바꿔 lock wait timeout을 해소 | view/template와 포트폴리오 문서 패키지 마감 |
+| 2026-03-20 14:05 | IN_PROGRESS | Batch C 착수. `PLAN.md`/`PROGRESS.md`를 SSOT로 재확인했고, 현재 `KidApplication`이 `PENDING -> APPROVED/REJECTED/CANCELLED`, `Attendance`가 교사/원장 직접 입력 중심임을 확인했다. 이번 배치는 `반 정원 + waitlist/offer`, `학부모 출결 요청 -> 교사 승인`, `domain_audit_log`를 함께 묶는 방향으로 설계를 고정 | 관련 엔티티/서비스/API/테스트 삽입 지점을 정리하고 마이그레이션/상태 모델을 확정 |
 | 2026-03-20 13:21 | DONE | Batch B 마감. `notification_outbox` 스키마/엔티티, 채널 정책(`external-types`, `incident-types`), scheduled worker, retry/backoff/dead-letter, `AUTH_ANOMALY_DETECTED` incident webhook fan-out, sender 실패 surface, README/결정 로그/인터뷰 문서까지 반영 | add/commit/push 후 Batch C 계획으로 이동 |
 | 2026-03-20 13:20 | DONE | 검증 완료. `./gradlew --no-daemon clean compileJava compileTestJava`, `./gradlew --no-daemon cleanTest test --tests "com.erp.integration.NotificationOutboxIntegrationTest" --tests "com.erp.integration.NotificationOutboxRetryIntegrationTest" --tests "com.erp.integration.AuthAnomalyIncidentChannelIntegrationTest" --tests "com.erp.integration.AuthAnomalyIncidentChannelRetryIntegrationTest"`, `./gradlew --no-daemon cleanTest test --tests "com.erp.api.AuthApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest"`, `git diff --check` 통과 | 작업 로그/계획 갱신 후 커밋 준비 |
 | 2026-03-20 13:20 | DONE | 테스트 안정화 보강. `BaseIntegrationTest`의 cleanup/reset을 `writeCommitted(REQUIRES_NEW)`로 옮겨 committed helper 테스트 간 데이터 누수를 제거했고, `NotificationOutboxIntegrationTest`/`AuthAnomalyIncidentChannelIntegrationTest`는 `@DirtiesContext(AFTER_EACH_TEST_METHOD)`와 mock reset으로 property override + mock bean 간섭을 차단 | 대상 회귀 명령 재실행 후 결과 기록 |
@@ -178,5 +183,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 없음 (다음 배치: Batch C - waitlist 입학/지원 + 출결 요청/승인 + domain audit log)
+- 활성 작업: 없음 (다음 배치: Batch D - CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축)
 - 블로커: 없음

@@ -125,7 +125,9 @@ public class TestData {
         entityManager.createNativeQuery("DELETE FROM notification").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM auth_audit_log_archive").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM auth_audit_log").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM domain_audit_log").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM announcement_view").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM attendance_change_request").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM attendance").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM notepad").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM announcement").executeUpdate();

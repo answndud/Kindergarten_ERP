@@ -2,9 +2,12 @@ package com.erp.domain.kidapplication.controller;
 
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
+import com.erp.domain.kidapplication.dto.request.AcceptKidApplicationOfferRequest;
 import com.erp.domain.kidapplication.dto.request.ApproveKidApplicationRequest;
 import com.erp.domain.kidapplication.dto.request.KidApplicationRequest;
+import com.erp.domain.kidapplication.dto.request.OfferKidApplicationRequest;
 import com.erp.domain.kidapplication.dto.request.RejectRequest;
+import com.erp.domain.kidapplication.dto.request.WaitlistKidApplicationRequest;
 import com.erp.domain.kidapplication.dto.response.KidApplicationResponse;
 import com.erp.domain.kidapplication.service.KidApplicationService;
 import jakarta.validation.Valid;
@@ -58,6 +61,15 @@ public class KidApplicationController {
         return ResponseEntity.ok(ApiResponse.success(applications));
     }
 
+    @GetMapping("/queue")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<List<KidApplicationResponse>>> getReviewQueueApplications(
+            @RequestParam Long kindergartenId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<KidApplicationResponse> applications = applicationService.getReviewQueueApplications(kindergartenId, userDetails.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success(applications));
+    }
+
     /**
      * 입학 신청 상세 조회
      */
@@ -79,6 +91,36 @@ public class KidApplicationController {
             @Valid @RequestBody ApproveKidApplicationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         applicationService.approve(id, request, userDetails.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PutMapping("/{id}/waitlist")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<Void>> waitlist(
+            @PathVariable Long id,
+            @Valid @RequestBody WaitlistKidApplicationRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        applicationService.placeOnWaitlist(id, request, userDetails.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PutMapping("/{id}/offer")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    public ResponseEntity<ApiResponse<Void>> offer(
+            @PathVariable Long id,
+            @Valid @RequestBody OfferKidApplicationRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        applicationService.offer(id, request, userDetails.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PutMapping("/{id}/accept-offer")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<ApiResponse<Void>> acceptOffer(
+            @PathVariable Long id,
+            @Valid @RequestBody AcceptKidApplicationOfferRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        applicationService.acceptOffer(id, request, userDetails.getMemberId());
         return ResponseEntity.ok(ApiResponse.success());
     }
 

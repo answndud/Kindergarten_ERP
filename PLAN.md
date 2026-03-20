@@ -6,7 +6,8 @@
 ## 현재 배치 상태
 - 완료: Batch A (`management plane 하드닝 + 활성 세션 관리`)
 - 완료: Batch B (`notification_outbox` + retry/dead-letter + 외부 incident channel`)
-- 다음 배치: Batch C (`waitlist 입학/지원 + 출결 요청/승인 + domain audit log`)
+- 완료: Batch C (`waitlist 입학/지원 + 출결 요청/승인 + domain audit log`)
+- 다음 배치: Batch D (`CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축`)
 
 ## 1) 목표 / 범위
 - 포트폴리오 관점에서 가장 값이 큰 다음 개선 5개를 실제 코드/테스트/문서까지 포함해 순차 구현한다.

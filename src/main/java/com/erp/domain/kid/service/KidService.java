@@ -1,6 +1,7 @@
 package com.erp.domain.kid.service;
 
 import com.erp.domain.classroom.entity.Classroom;
+import com.erp.domain.classroom.service.ClassroomCapacityService;
 import com.erp.domain.classroom.service.ClassroomService;
 import com.erp.domain.kid.dto.request.AssignParentRequest;
 import com.erp.domain.kid.dto.request.KidRequest;
@@ -31,6 +32,7 @@ public class KidService {
 
     private final KidRepository kidRepository;
     private final ClassroomService classroomService;
+    private final ClassroomCapacityService classroomCapacityService;
     private final MemberService memberService;
     private final AccessPolicyService accessPolicyService;
 
@@ -40,7 +42,8 @@ public class KidService {
     @Transactional
     public Long createKid(KidRequest request) {
         // 반 조회
-        Classroom classroom = classroomService.getClassroom(request.getClassroomId());
+        Classroom classroom = classroomCapacityService.lockClassroom(request.getClassroomId());
+        classroomCapacityService.validateSeatAvailable(classroom);
 
         // 원생 생성
         Kid kid = Kid.create(
@@ -60,9 +63,20 @@ public class KidService {
     @Transactional
     public Long createKid(KidRequest request, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
-        Classroom classroom = classroomService.getClassroom(request.getClassroomId());
+        Classroom classroom = classroomCapacityService.lockClassroom(request.getClassroomId());
         accessPolicyService.validateClassroomManageAccess(requester, classroom);
-        return createKid(request);
+        classroomCapacityService.validateSeatAvailable(classroom);
+
+        Kid kid = Kid.create(
+                classroom,
+                request.getName(),
+                request.getBirthDate(),
+                request.getGender(),
+                request.getAdmissionDate()
+        );
+
+        Kid saved = kidRepository.save(kid);
+        return saved.getId();
     }
 
     /**
@@ -280,7 +294,10 @@ public class KidService {
     @Transactional
     public void updateClassroom(Long id, UpdateClassroomRequest request) {
         Kid kid = getKid(id);
-        Classroom classroom = classroomService.getClassroom(request.getClassroomId());
+        Classroom classroom = classroomCapacityService.lockClassroom(request.getClassroomId());
+        if (!classroom.getId().equals(kid.getClassroom().getId())) {
+            classroomCapacityService.validateSeatAvailable(classroom);
+        }
         kid.assignClassroom(classroom);
     }
 
@@ -290,8 +307,11 @@ public class KidService {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateKidManageAccess(requester, kid);
 
-        Classroom classroom = classroomService.getClassroom(request.getClassroomId());
+        Classroom classroom = classroomCapacityService.lockClassroom(request.getClassroomId());
         accessPolicyService.validateClassroomManageAccess(requester, classroom);
+        if (!classroom.getId().equals(kid.getClassroom().getId())) {
+            classroomCapacityService.validateSeatAvailable(classroom);
+        }
         kid.assignClassroom(classroom);
     }
 

@@ -36,4 +36,13 @@ public class ClassroomRequest {
      * 담임 교사 ID
      */
     private Long teacherId;
+
+    /**
+     * 반 정원
+     */
+    private Integer capacity;
+
+    public Integer capacityOrDefault() {
+        return capacity == null ? com.erp.domain.classroom.entity.Classroom.DEFAULT_CAPACITY : capacity;
+    }
 }

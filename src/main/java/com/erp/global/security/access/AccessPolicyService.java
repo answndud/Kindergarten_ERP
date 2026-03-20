@@ -2,6 +2,7 @@ package com.erp.global.security.access;
 
 import com.erp.domain.announcement.entity.Announcement;
 import com.erp.domain.attendance.entity.Attendance;
+import com.erp.domain.attendance.entity.AttendanceChangeRequest;
 import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.repository.KidRepository;
@@ -101,6 +102,52 @@ public class AccessPolicyService {
 
     public void validateAttendanceManageAccess(Member requester, Kid kid) {
         validateKidManageAccess(requester, kid);
+    }
+
+    public void validateAttendanceChangeRequestCreateAccess(Member requester, Kid kid) {
+        if (requester == null || requester.getRole() != MemberRole.PARENT || !isParentOfKid(requester.getId(), kid.getId())) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_ACCESS_DENIED);
+        }
+    }
+
+    public void validateAttendanceChangeRequestReadAccess(Member requester, AttendanceChangeRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_NOT_FOUND);
+        }
+
+        if (isStaff(requester)) {
+            validateSameKindergarten(requester, request.getKindergartenId());
+            return;
+        }
+
+        if (requester != null
+                && requester.getRole() == MemberRole.PARENT
+                && request.getRequester().getId().equals(requester.getId())) {
+            return;
+        }
+
+        throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_ACCESS_DENIED);
+    }
+
+    public void validateAttendanceChangeRequestReviewAccess(Member requester, AttendanceChangeRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_NOT_FOUND);
+        }
+        if (!isStaff(requester)) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_ACCESS_DENIED);
+        }
+        validateSameKindergarten(requester, request.getKindergartenId());
+    }
+
+    public void validateAttendanceChangeRequestCancelAccess(Member requester, AttendanceChangeRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_NOT_FOUND);
+        }
+        if (requester == null
+                || requester.getRole() != MemberRole.PARENT
+                || !request.getRequester().getId().equals(requester.getId())) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_ACCESS_DENIED);
+        }
     }
 
     public void validateAnnouncementReadAccess(Member requester, Announcement announcement) {

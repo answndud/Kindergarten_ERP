@@ -5,6 +5,8 @@ import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kid.entity.Gender;
 import com.erp.domain.member.entity.Member;
 import com.erp.global.common.BaseEntity;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,94 +27,74 @@ public class KidApplication extends BaseEntity {
     @Column(name = "id")
     private Long id;
 
-    /**
-     * 학부모 (신청자)
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id", nullable = false)
     private Member parent;
 
-    /**
-     * 대상 유치원
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kindergarten_id", nullable = false)
     private Kindergarten kindergarten;
 
-    /**
-     * 원생 이름
-     */
     @Column(name = "kid_name", nullable = false, length = 50)
     private String kidName;
 
-    /**
-     * 생년월일
-     */
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
-    /**
-     * 성별
-     */
     @Enumerated(EnumType.STRING)
     @Column(name = "gender", nullable = false, length = 10)
     private Gender gender;
 
-    /**
-     * 희망 반
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "preferred_classroom_id")
     private Classroom preferredClassroom;
 
-    /**
-     * 신청 상태
-     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_classroom_id")
+    private Classroom assignedClassroom;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ApplicationStatus status;
 
-    /**
-     * 특이사항
-     */
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    /**
-     * 처리 일시
-     */
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
-    /**
-     * 거절 사유
-     */
+    @Column(name = "waitlisted_at")
+    private LocalDateTime waitlistedAt;
+
+    @Column(name = "offered_at")
+    private LocalDateTime offeredAt;
+
+    @Column(name = "offer_expires_at")
+    private LocalDateTime offerExpiresAt;
+
+    @Column(name = "offer_accepted_at")
+    private LocalDateTime offerAcceptedAt;
+
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
-    /**
-     * 처리자
-     */
+    @Column(name = "decision_note")
+    private String decisionNote;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "processed_by")
     private Member processedBy;
 
-    /**
-     * 승인 후 생성된 Kid ID
-     */
     @Column(name = "kid_id")
     private Long kidId;
 
-    /**
-     * 삭제일 (Soft Delete)
-     */
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Builder
     private KidApplication(Member parent, Kindergarten kindergarten, String kidName,
-                          LocalDate birthDate, Gender gender, Classroom preferredClassroom,
-                          String notes) {
+                           LocalDate birthDate, Gender gender, Classroom preferredClassroom,
+                           String notes) {
         this.parent = parent;
         this.kindergarten = kindergarten;
         this.kidName = kidName;
@@ -123,52 +105,85 @@ public class KidApplication extends BaseEntity {
         this.status = ApplicationStatus.PENDING;
     }
 
-    /**
-     * 입학 신청 승인
-     */
-    public void approve(Classroom classroom, Member processor, Long kidId) {
-        if (!status.isProcessable()) {
-            throw new IllegalStateException("처리 가능한 상태가 아닙니다: " + status);
-        }
+    public void approveDirect(Classroom classroom, Member processor, Long approvedKidId) {
+        ensureState(status.isPending(), "즉시 승인은 PENDING 상태에서만 가능합니다");
         this.status = ApplicationStatus.APPROVED;
-        this.preferredClassroom = classroom;
+        this.assignedClassroom = classroom;
         this.processedAt = LocalDateTime.now();
         this.processedBy = processor;
-        this.kidId = kidId;
+        this.kidId = approvedKidId;
+        this.waitlistedAt = null;
+        this.offeredAt = null;
+        this.offerExpiresAt = null;
+        this.offerAcceptedAt = null;
+        this.rejectionReason = null;
     }
 
-    /**
-     * 입학 신청 거절
-     */
+    public void placeOnWaitlist(Classroom classroom, Member processor, String note) {
+        ensureState(status == ApplicationStatus.PENDING || status == ApplicationStatus.OFFER_EXPIRED,
+                "대기열 등록은 PENDING/OFFER_EXPIRED 상태에서만 가능합니다");
+        this.status = ApplicationStatus.WAITLISTED;
+        this.assignedClassroom = classroom;
+        this.processedAt = LocalDateTime.now();
+        this.processedBy = processor;
+        this.waitlistedAt = LocalDateTime.now();
+        this.offeredAt = null;
+        this.offerExpiresAt = null;
+        this.offerAcceptedAt = null;
+        this.rejectionReason = null;
+        this.decisionNote = normalize(note);
+        this.kidId = null;
+    }
+
+    public void offerSeat(Classroom classroom, Member processor, LocalDateTime expiresAt, String note) {
+        ensureState(status == ApplicationStatus.PENDING || status == ApplicationStatus.WAITLISTED,
+                "입학 offer는 PENDING/WAITLISTED 상태에서만 가능합니다");
+        this.status = ApplicationStatus.OFFERED;
+        this.assignedClassroom = classroom;
+        this.processedAt = LocalDateTime.now();
+        this.processedBy = processor;
+        this.offeredAt = LocalDateTime.now();
+        this.offerExpiresAt = expiresAt;
+        this.rejectionReason = null;
+        this.decisionNote = normalize(note);
+    }
+
+    public void acceptOffer(Long approvedKidId) {
+        ensureState(status == ApplicationStatus.OFFERED, "입학 offer 상태가 아닙니다");
+        ensureState(offerExpiresAt == null || offerExpiresAt.isAfter(LocalDateTime.now()),
+                "만료된 입학 offer는 수락할 수 없습니다");
+        this.status = ApplicationStatus.APPROVED;
+        this.offerAcceptedAt = LocalDateTime.now();
+        this.processedAt = LocalDateTime.now();
+        this.kidId = approvedKidId;
+    }
+
+    public void markOfferExpired() {
+        ensureState(status == ApplicationStatus.OFFERED, "만료 처리 가능한 offer 상태가 아닙니다");
+        this.status = ApplicationStatus.OFFER_EXPIRED;
+        this.processedAt = LocalDateTime.now();
+    }
+
     public void reject(String reason, Member processor) {
-        if (!status.isProcessable()) {
-            throw new IllegalStateException("처리 가능한 상태가 아닙니다: " + status);
-        }
+        ensureState(status.isReviewQueueStatus(), "처리 가능한 상태가 아닙니다: " + status);
         this.status = ApplicationStatus.REJECTED;
         this.rejectionReason = reason;
         this.processedAt = LocalDateTime.now();
         this.processedBy = processor;
+        this.offerExpiresAt = null;
     }
 
-    /**
-     * 입학 신청 취소
-     */
     public void cancel() {
-        if (!status.isProcessable()) {
-            throw new IllegalStateException("취소 가능한 상태가 아닙니다: " + status);
-        }
+        ensureState(status.isActiveForParent(), "취소 가능한 상태가 아닙니다: " + status);
         this.status = ApplicationStatus.CANCELLED;
         this.processedAt = LocalDateTime.now();
+        this.offerExpiresAt = null;
     }
 
-    /**
-     * 취소/거절된 입학 신청 재신청
-     */
     public void reapply(Kindergarten kindergarten, String kidName, LocalDate birthDate, Gender gender,
                         Classroom preferredClassroom, String notes) {
-        if (!(status.isCancelled() || status.isRejected())) {
-            throw new IllegalStateException("재신청 가능한 상태가 아닙니다: " + status);
-        }
+        ensureState(status.isCancelled() || status.isRejected() || status.isOfferExpired(),
+                "재신청 가능한 상태가 아닙니다: " + status);
 
         this.kindergarten = kindergarten;
         this.kidName = kidName;
@@ -176,45 +191,47 @@ public class KidApplication extends BaseEntity {
         this.gender = gender;
         this.preferredClassroom = preferredClassroom;
         this.notes = notes;
-
         this.status = ApplicationStatus.PENDING;
+        this.assignedClassroom = null;
         this.processedAt = null;
+        this.waitlistedAt = null;
+        this.offeredAt = null;
+        this.offerExpiresAt = null;
+        this.offerAcceptedAt = null;
         this.processedBy = null;
         this.rejectionReason = null;
+        this.decisionNote = null;
         this.kidId = null;
     }
 
-    /**
-     * Soft Delete
-     */
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
     }
 
-    /**
-     * 대기 상태 확인
-     */
     public boolean isPending() {
         return status.isPending();
     }
 
-    /**
-     * 승인 완료 확인
-     */
     public boolean isApproved() {
         return status.isApproved();
     }
 
-    /**
-     * 거절 확인
-     */
     public boolean isRejected() {
         return status.isRejected();
     }
 
-    /**
-     * 입학 신청 생성 정적 팩토리 메서드
-     */
+    public boolean isWaitlisted() {
+        return status.isWaitlisted();
+    }
+
+    public boolean isOffered() {
+        return status.isOffered();
+    }
+
+    public boolean isOfferExpired() {
+        return status.isOfferExpired();
+    }
+
     public static KidApplication create(Member parent, Kindergarten kindergarten,
                                         String kidName, LocalDate birthDate, Gender gender,
                                         Classroom preferredClassroom, String notes) {
@@ -227,5 +244,18 @@ public class KidApplication extends BaseEntity {
                 .preferredClassroom(preferredClassroom)
                 .notes(notes)
                 .build();
+    }
+
+    private void ensureState(boolean condition, String message) {
+        if (!condition) {
+            throw new BusinessException(ErrorCode.APPLICATION_INVALID_STATE, message);
+        }
+    }
+
+    private String normalize(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

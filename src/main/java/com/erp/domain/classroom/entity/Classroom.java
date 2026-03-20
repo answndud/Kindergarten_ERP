@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Classroom extends BaseEntity {
 
+    public static final int DEFAULT_CAPACITY = 20;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -42,6 +44,12 @@ public class Classroom extends BaseEntity {
     private String ageGroup;
 
     /**
+     * 정원
+     */
+    @Column(name = "capacity", nullable = false)
+    private Integer capacity = DEFAULT_CAPACITY;
+
+    /**
      * 담임 교사
      */
     @OneToOne(fetch = FetchType.LAZY)
@@ -60,10 +68,15 @@ public class Classroom extends BaseEntity {
      * 반 생성
      */
     public static Classroom create(Kindergarten kindergarten, String name, String ageGroup) {
+        return create(kindergarten, name, ageGroup, DEFAULT_CAPACITY);
+    }
+
+    public static Classroom create(Kindergarten kindergarten, String name, String ageGroup, Integer capacity) {
         Classroom classroom = new Classroom();
         classroom.kindergarten = kindergarten;
         classroom.name = name;
         classroom.ageGroup = ageGroup;
+        classroom.capacity = capacity == null ? DEFAULT_CAPACITY : capacity;
         return classroom;
     }
 
@@ -73,8 +86,13 @@ public class Classroom extends BaseEntity {
      * 반 정보 수정
      */
     public void update(String name, String ageGroup) {
+        update(name, ageGroup, this.capacity);
+    }
+
+    public void update(String name, String ageGroup, Integer capacity) {
         this.name = name;
         this.ageGroup = ageGroup;
+        this.capacity = capacity == null ? DEFAULT_CAPACITY : capacity;
     }
 
     /**
@@ -117,5 +135,13 @@ public class Classroom extends BaseEntity {
      */
     public boolean canDelete(long kidsCount) {
         return this.deletedAt == null && kidsCount == 0;
+    }
+
+    public long remainingSeats(long occupiedSeats) {
+        return Math.max(0, (long) capacity - occupiedSeats);
+    }
+
+    public boolean canResizeTo(long occupiedSeats, int requestedCapacity) {
+        return requestedCapacity >= occupiedSeats;
     }
 }

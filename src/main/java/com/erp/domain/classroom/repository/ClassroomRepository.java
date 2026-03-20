@@ -1,7 +1,9 @@
 package com.erp.domain.classroom.repository;
 
 import com.erp.domain.classroom.entity.Classroom;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -34,6 +36,13 @@ public interface ClassroomRepository extends JpaRepository<Classroom, Long> {
            "LEFT JOIN FETCH c.teacher t " +
            "WHERE c.id = :id AND c.deletedAt IS NULL")
     Optional<Classroom> findByIdAndDeletedAtIsNull(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Classroom c " +
+           "JOIN FETCH c.kindergarten k " +
+           "LEFT JOIN FETCH c.teacher t " +
+           "WHERE c.id = :id AND c.deletedAt IS NULL")
+    Optional<Classroom> findByIdAndDeletedAtIsNullForUpdate(@Param("id") Long id);
 
     /**
      * 유치원별 반 개수 조회 (삭제되지 않은 것만)

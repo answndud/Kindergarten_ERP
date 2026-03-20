@@ -39,6 +39,7 @@ public class ClassroomController {
                 request.getKindergartenId(),
                 request.getName(),
                 request.getAgeGroup(),
+                request.capacityOrDefault(),
                 userDetails.getMemberId()
         );
 
@@ -95,7 +96,13 @@ public class ClassroomController {
             @Valid @RequestBody ClassroomRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        classroomService.updateClassroom(id, request.getName(), request.getAgeGroup(), userDetails.getMemberId());
+        classroomService.updateClassroom(
+                id,
+                request.getName(),
+                request.getAgeGroup(),
+                request.capacityOrDefault(),
+                userDetails.getMemberId()
+        );
 
         Classroom classroom = classroomService.getClassroom(id, userDetails.getMemberId());
 
