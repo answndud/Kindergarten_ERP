@@ -2,6 +2,7 @@ package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -10,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("원생 API 간단 테스트")
+@Tag("integration")
 class KidApiSimpleTest extends BaseIntegrationTest {
 
     @Test

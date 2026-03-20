@@ -7,6 +7,12 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-20 14:47 | DONE | Batch D 최종 검증 완료. `./gradlew --no-daemon compileJava compileTestJava`, `./gradlew --no-daemon fastTest`, `./gradlew --no-daemon integrationTest`, `./gradlew --no-daemon performanceSmokeTest`, `./gradlew --no-daemon test`, `git diff --check` 통과 | add/commit/push 후 원격 CI 확인 |
+| 2026-03-20 14:41 | DONE | Batch D 테스트/CI 안정화 보강. 태그 기반 흐름과 충돌하던 suite 초안(`src/test/java/com/erp/suite/*`)을 제거했고, `AuditConsolePerformanceSmokeTest`는 committed fixture 기반으로 바꿔 auth/domain audit list/export smoke가 REQUIRES_NEW 조회와 충돌하지 않게 정리 | 전체 회귀(`fastTest`, `integrationTest`, `performanceSmokeTest`, `test`) 재검증 |
+| 2026-03-20 14:39 | DONE | Batch D 문서 패키지 정리. `docs/portfolio/hiring-pack/backend-hiring-pack.md`, `docs/portfolio/architecture/system-architecture.md`, `docs/portfolio/demo/*`, `docs/portfolio/case-studies/auth-incident-response.md`, `docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md`, `README.md`, `docs/README.md`, 인터뷰 문서를 active SSOT 기준으로 압축 | tagged suite/health/perf smoke 검증 및 CI 반영 |
+| 2026-03-20 14:38 | DONE | Batch D 핵심 코드 반영. `build.gradle`과 `.github/workflows/ci.yml`를 JUnit Tag 기반 `fastTest/integrationTest/performanceSmokeTest` 구조로 정리했고, `CriticalDependenciesHealthIndicator`, `ObservabilityIntegrationTest`, `AuditConsolePerformanceSmokeTest`, 테스트 클래스 태그를 반영했다 | compile/test로 실제 스위트 동작과 failure mode 시나리오 검증 |
+| 2026-03-20 14:38 | IN_PROGRESS | Batch D 착수. `build.gradle`, `.github/workflows/ci.yml`, `ObservabilityIntegrationTest`, `application.yml`, 현재 테스트 트리를 재점검했고, 이번 배치는 `JUnit Tag 기반 스위트 분리`, `readiness failure-mode 검증`, `audit list/export 성능 smoke`, `architecture/demo/case-study/hiring-pack 문서 압축`으로 범위를 고정 | PLAN/PROGRESS를 Batch D 기준으로 갱신하고 테스트/관측성 삽입 지점을 반영 |
+| 2026-03-20 14:31 | DONE | Batch C를 `feat: add admission workflow, attendance requests, and domain audit logs` (`56076ea`)로 커밋하고 `origin/main`에 push 완료. 중복 결정 로그 초안 `phase41_operational_workflows_domain_audit.md`는 제거해 문서 SSOT를 정리 | Batch D (`CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축`) 구현 착수 |
 | 2026-03-20 14:20 | DONE | Batch C 전체 검증 완료. `./gradlew --no-daemon compileJava compileTestJava`, `./gradlew --no-daemon test --tests "com.erp.api.KidApplicationApiIntegrationTest" --tests "com.erp.api.AttendanceChangeRequestApiIntegrationTest" --tests "com.erp.api.DomainAuditApiIntegrationTest" --tests "com.erp.api.ClassroomApiIntegrationTest" --tests "com.erp.api.KidApiIntegrationTest" --tests "com.erp.integration.ViewEndpointTest"`, `./gradlew --no-daemon cleanTest test`, `git diff --check` 통과 | add/commit/push 후 Batch D 계획으로 전환 |
 | 2026-03-20 14:10 | DONE | Batch C 문서 패키지 정리. 결정 로그 `phase41~phase43`, `docs/README.md`, `README.md`, `docs/portfolio/interview/interview_one_pager.md`, `docs/portfolio/interview/demo_3min_scenario.md`, `docs/portfolio/interview/interview_qa_script.md`를 현재 구현 기준으로 갱신 | 전체 회귀와 포맷 검증 후 배치 마감 |
 | 2026-03-20 14:06 | DONE | `/attendance-requests`, `/domain-audit-logs` 화면과 원장/학부모/교사용 진입점 추가. `AttendanceChangeRequestViewController`, `attendance/requests.html`, `domainaudit/audit-logs.html`, `fragments/header.html`, `settings.html`, `ViewEndpointTest` 반영 | README/결정 로그/인터뷰 문서 반영 |
@@ -183,5 +189,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 없음 (다음 배치: Batch D - CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축)
+- 활성 작업: 없음
 - 블로커: 없음

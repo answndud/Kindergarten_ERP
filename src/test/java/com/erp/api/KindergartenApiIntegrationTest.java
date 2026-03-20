@@ -2,6 +2,7 @@ package com.erp.api;
 
 import com.erp.common.BaseIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("유치원 API 테스트")
+@Tag("integration")
 class KindergartenApiIntegrationTest extends BaseIntegrationTest {
 
     @Test

@@ -6,6 +6,7 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +23,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class LocalAuthLoginBootstrapServiceTest {
+@Tag("fast")
+public class LocalAuthLoginBootstrapServiceTest {
 
     @Mock
     private MemberRepository memberRepository;

@@ -8,6 +8,7 @@ import com.erp.domain.kid.entity.Gender;
 import com.erp.domain.kid.entity.Kid;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("대시보드 API 테스트")
+@Tag("integration")
 class DashboardApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired

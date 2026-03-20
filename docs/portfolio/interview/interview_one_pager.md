@@ -5,7 +5,7 @@
 유치원 운영 관리 시스템을 만들면서,
 "기능 구현"보다 **운영 가능한 백엔드로 어떻게 다듬었는가**를 보여주는 포트폴리오 프로젝트입니다.
 
-## 2. 내가 강조할 핵심 역량 5가지
+## 2. 내가 강조할 핵심 역량 6가지
 
 ### 1) 멀티테넌시 권한 경계 하드닝
 
@@ -37,9 +37,10 @@
 ### 5) 실환경형 테스트와 운영 관측성/감사 추적
 
 - H2/Mock Redis를 버리고 **MySQL/Redis Testcontainers + Flyway** 기반으로 통합 테스트를 전환했습니다.
-- GitHub Actions에서 fast/integration job을 분리했고, Node24 네이티브 action으로 runner 경고도 제거했습니다.
+- GitHub Actions에서 `fast / integration / performance smoke` job을 JUnit suite 기반으로 분리했고, Node24 네이티브 action으로 runner 경고도 제거했습니다.
 - 즉 “돌아가는 테스트”가 아니라 **운영 스택을 닮은 테스트**를 만들었습니다.
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
+- readiness는 `criticalDependencies`로 DB/Redis를 직접 반영하고, failure-mode 테스트로 `readiness DOWN / liveness UP`도 검증했습니다.
 - local/demo에서는 Swagger와 Prometheus를 바로 열고, prod에서는 Swagger를 비활성화하고 management port를 분리해 운영 노출면을 줄였습니다.
 - 로그인/refresh/social link/unlink는 인증 감사 로그로 남기고, 입학/출결/공지 상태 변경은 별도 업무 감사 로그로 분리했습니다.
 - 반복 로그인 실패는 원장 시스템 알림으로 연결했고, 이후 `notification_outbox`로 외부 전달을 분리해 retry/dead-letter와 incident webhook까지 붙였습니다.

@@ -1,16 +1,18 @@
 package com.erp;
 
+import com.erp.common.TestcontainersSupport;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import com.erp.common.TestcontainersSupport;
 
 /**
  * 애플리케이션 컨텍스트 로드 테스트
  */
 @SpringBootTest
 @ActiveProfiles("test")
-class ErpApplicationTests extends TestcontainersSupport {
+@Tag("integration")
+public class ErpApplicationTests extends TestcontainersSupport {
 
     @Test
     void contextLoads() {

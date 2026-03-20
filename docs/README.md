@@ -7,9 +7,11 @@
 처음 보는 사람은 아래 순서로 읽으면 됩니다.
 
 1. `README.md`
-2. `docs/portfolio/interview/interview_one_pager.md`
-3. `docs/portfolio/interview/demo_3min_scenario.md`
-4. `docs/portfolio/interview/interview_qa_script.md`
+2. `docs/portfolio/hiring-pack/backend-hiring-pack.md`
+3. `docs/portfolio/architecture/system-architecture.md`
+4. `docs/portfolio/demo/demo-preflight.md`
+5. `docs/portfolio/demo/demo-runbook.md`
+6. `docs/portfolio/case-studies/auth-incident-response.md`
 
 ## Active Docs
 
@@ -22,8 +24,16 @@
 
 ### Portfolio
 
+- `docs/portfolio/hiring-pack/`
+  - 채용 담당자/면접관용 진입 문서
+- `docs/portfolio/architecture/`
+  - 현재 구조를 설명하는 아키텍처 SSOT
+- `docs/portfolio/demo/`
+  - 시연 전 체크리스트와 실제 데모 runbook
+- `docs/portfolio/case-studies/`
+  - auth incident response 같은 대표 사례
 - `docs/portfolio/interview/`
-  - 인터뷰 1장 요약, 데모 시나리오, Q&A 스크립트
+  - 인터뷰 1장 요약, 데모 스크립트, Q&A 스피킹 노트
 - `docs/portfolio/performance/`
   - 성능 개선 스토리, 측정 리포트, 면접용 성능 자료
 
@@ -32,9 +42,9 @@
 - `docs/decisions/`
   - 기능/보안/테스트/운영 관련 결정 로그
   - 최신 개선 흐름은 `phase14` 이후 문서를 우선 보면 됩니다.
-  - 최근 배치는 `phase43_domain_audit_log.md`까지 이어집니다.
+  - 최근 배치는 `phase44_tagged_ci_readiness_and_hiring_pack.md`까지 이어집니다.
   - 인증 이상 징후/모니터링/외부 incident 전달 흐름은 `phase37 -> phase40` 순서로 읽는 것을 권장합니다.
-  - 운영형 워크플로우 확장은 `phase39 -> phase40 -> phase41 -> phase42 -> phase43` 순서로 읽는 것을 권장합니다.
+  - 운영형 워크플로우 확장은 `phase39 -> phase40 -> phase41 -> phase42 -> phase43 -> phase44` 순서로 읽는 것을 권장합니다.
 
 ## Archive
 
