@@ -23,6 +23,12 @@
 
 기존 [PLAN.md](/Users/alex/project/kindergarten_ERP/erp/PLAN.md), [PROGRESS.md](/Users/alex/project/kindergarten_ERP/erp/PROGRESS.md)는 **애플리케이션 개발 작업용 SSOT**로 유지합니다.
 
+## 링크 정책
+
+- 이 `blog/` 작업 공간판은 Codex/로컬 워크스페이스에서 바로 열 수 있게 **절대경로 링크**를 사용합니다.
+- 공개 블로그로 옮길 때는 repo-relative 링크나 GitHub permalink로 변환해야 합니다.
+- 즉, 현재 문서는 `집필/검수용 원본`, 공개 플랫폼 글은 `배포용 변환본`이라고 보면 됩니다.
+
 ## 이 폴더의 역할
 
 - `00_series_plan.md`
@@ -114,9 +120,16 @@
 25. [성능 개선을 코드가 아니라 스토리로 설명하는 방법](/Users/alex/project/kindergarten_ERP/erp/blog/25-performance-story-as-portfolio.md)
 26. [데모, 아키텍처, 면접 패키지까지 묶어 프로젝트를 완성하기](/Users/alex/project/kindergarten_ERP/erp/blog/26-demo-architecture-and-interview-pack.md)
 
-## 시작 순서
+## 독자용 시작 순서
 
-1. `00_series_plan.md`로 연재 전체를 본다.
-2. `00_rebuild_guide.md`로 재현형 읽기 규칙을 본다.
-3. `_post_template.md`, `_rebuild_template.md`로 글 형식을 확인한다.
-4. 실제 읽기는 위 인덱스를 따라 `01`번부터 순서대로 진행한다.
+1. `00_rebuild_guide.md`로 이 시리즈를 어떻게 읽고 재현할지 먼저 확인합니다.
+2. `00_series_plan.md`로 전체 지도를 한 번 훑습니다.
+3. 실제 읽기는 위 인덱스를 따라 `01`번부터 `26`번까지 순서대로 진행합니다.
+4. 구현 글에서는 본문보다 먼저 글 하단의 `시작 상태`, `바뀌는 파일`, `산출물 체크리스트`, `실행 / 검증 명령`을 같이 봅니다.
+
+## 작성자용 시작 순서
+
+1. `BLOG_PLAN.md`로 현재 연재 구조와 리라이트 우선순위를 확인합니다.
+2. `BLOG_PROGRESS.md`로 최근 수정 이력과 남은 작업을 확인합니다.
+3. 새 글이나 대규모 리라이트 전에는 `_post_template.md`, `_rebuild_template.md`를 기준으로 섹션 구조를 맞춥니다.
+4. 재현성 보강이 필요한 글은 가능하면 `blog/scripts/checkpoint-XX.sh` 같은 단계별 체크포인트 스크립트도 같이 둡니다.

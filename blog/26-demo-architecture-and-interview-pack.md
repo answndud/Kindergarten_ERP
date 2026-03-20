@@ -104,6 +104,8 @@ flowchart TD
 [DataLoader.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/DataLoader.java)는  
 `local` profile에서 시드 데이터를 넣습니다.
 
+`demo` profile은 `local` 그룹을 포함하므로, 실제 시연에서도 같은 시드 데이터를 그대로 사용합니다.
+
 이 파일에서 중요한 메서드는 아래입니다.
 
 - `run(...)`
@@ -125,6 +127,12 @@ flowchart TD
 - 출석 데이터
 - 알림장 / 공지
 - 인증 감사 로그
+
+실제로 바로 써야 하는 계정은 아래처럼 고정해 두는 편이 좋습니다.
+
+- principal: `principal@test.com / test1234!`
+- teacher: `teacher1@test.com / test1234!`
+- parent: `parent1@test.com / test1234!`
 
 즉 demo 데이터는 테스트 편의가 아니라  
 프로젝트 설명력을 위한 자산입니다.
@@ -150,9 +158,9 @@ flowchart TD
 아래 순서를 제안합니다.
 
 1. Swagger/OpenAPI
-2. waitlist/offer 입학 워크플로우
-3. 출결 변경 요청 승인
-4. auth/domain audit console
+2. 별도 브라우저나 시크릿 창의 parent 계정으로 요청 하나 생성
+3. principal 계정으로 `/applications/pending`, `/attendance-requests`에서 승인 흐름 시연
+4. `/domain-audit-logs`, `/audit-logs`에서 증적 확인
 5. readiness, Prometheus, Grafana, CI
 
 즉 무엇을 먼저 보여줄지까지 설계합니다.
@@ -319,25 +327,61 @@ sequenceDiagram
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ./gradlew compileJava compileTestJava
+./blog/scripts/checkpoint-26.sh
 ./gradlew --no-daemon integrationTest
 ./gradlew bootRun --args='--spring.profiles.active=demo'
 ```
 
 수동으로 확인할 것:
 
-- `/swagger-ui.html`
+- `principal@test.com / test1234!`로 로그인 후 `/swagger-ui.html`
+- `teacher1@test.com / test1234!` 또는 `parent1@test.com / test1234!` 계정 로그인 가능 여부
+- `/applications/pending`
+- `/attendance-requests`
+- `/domain-audit-logs`
+- `/audit-logs`
 - `/actuator/health/readiness`
-- demo 계정 로그인
-- 감사 로그 콘솔 진입
 
-## 14. 글 종료 체크포인트
+시연 종료 후 정리:
+
+```bash
+# 앱 실행 터미널에서
+Ctrl+C
+
+# Docker 정리
+docker compose -f docker/docker-compose.yml down
+docker compose -f docker/docker-compose.monitoring.yml down
+```
+
+## 14. 산출물 체크리스트
+
+- 새로 생긴 설정/시드:
+  - `application-demo.yml`
+  - `DataLoader`
+- 새로 생긴 문서:
+  - `demo-preflight.md`
+  - `demo-runbook.md`
+  - `system-architecture.md`
+  - `backend-hiring-pack.md`
+  - `interview_one_pager.md`
+  - `interview_qa_script.md`
+  - `auth-incident-response.md`
+- 대표 수동 검증 대상:
+  - `/swagger-ui.html`
+  - `/applications/pending`
+  - `/attendance-requests`
+  - `/domain-audit-logs`
+  - `/audit-logs`
+  - `/actuator/health/readiness`
+
+## 15. 글 종료 체크포인트
 
 - demo profile과 seed data로 시연 재현성을 확보했다
 - 아키텍처 문서와 hiring pack이 읽기 시작점을 제공한다
 - interview one pager와 Q&A script가 꼬리 질문 대응 자료로 이어진다
 - “무엇을 만들었는가”뿐 아니라 “어떤 순서로 보여줄 것인가”까지 설계했다고 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 데모 문서는 있는데 실제 화면과 계정이 자주 어긋난다
   - 원인: demo profile, seed data, runbook을 따로 관리하지 않았을 수 있습니다

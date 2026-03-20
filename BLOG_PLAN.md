@@ -229,499 +229,62 @@
 
 ## 6) 게시 순서
 
-### Part 1. 처음 시작하는 사람도 따라갈 수 있는 기초 구축
+이 섹션은 **현재 실제 공개 글 순서**를 반영한 SSOT입니다.
+세부 글 제목과 Part 구분은 [blog/README.md](/Users/alex/project/kindergarten_ERP/erp/blog/README.md)와 동일하게 유지합니다.
 
-#### 01. 왜 유치원 ERP를 주제로 잡았는가
-- 핵심 질문
-  - 왜 이 도메인이 첫 포트폴리오로 좋은가?
-- 주요 파일 / 문서
-  - `README.md`
-  - `docs/archive/legacy/project-idea.md`
-  - `docs/archive/legacy/project-plan.md`
-  - `docs/guides/user-guide.md`
-- 핵심 포인트
-  - 역할 모델: `PRINCIPAL`, `TEACHER`, `PARENT`
-  - 이 도메인은 CRUD보다 권한과 상태 전이를 자연스럽게 만들 수 있다.
-- 입문자 설명
-  - 주제를 기능 목록이 아니라 “관계와 문제 공간”으로 정하는 법
-- 취업 포인트
-  - “왜 이 도메인을 골랐는가?”에 구조적인 답을 할 수 있어야 한다.
+### Part A. 문제 정의
+- `01. 왜 유치원 ERP를 주제로 잡았는가`
+  - 역할, 상태 전이, 테넌트 경계가 자연스럽게 나오는 도메인 선택 이유
 
-#### 02. `settings.gradle`과 `build.gradle`로 프로젝트 뼈대 세우기
-- 핵심 질문
-  - Spring Boot 프로젝트는 최소 무엇으로 시작하는가?
-- 주요 파일
-  - `settings.gradle`
-  - `build.gradle`
-  - `src/main/java/com/erp/ErpApplication.java`
-- 반드시 설명할 메서드 / 설정
-  - Gradle plugin 블록
-  - dependency 블록
-  - `tasks.register('fastTest' / 'integrationTest' / 'performanceSmokeTest')`
-- 입문자 설명
-  - starter 의존성을 무엇 기준으로 넣는지
-  - 나중에 test task 분리까지 어떻게 확장됐는지
-- 취업 포인트
-  - 처음부터 운영형 확장을 고려한 빌드 구조라는 점
+### Part B. 부트스트랩과 공통 설정
+- `02. Gradle과 Spring Boot 뼈대 만들기`
+  - `settings.gradle`, `build.gradle`, `ErpApplication`
+- `03. Docker로 MySQL / Redis 개발 환경 만들기`
+  - `docker-compose.yml`, monitoring overlay
+- `04. application.yml과 profile 전략 설계하기`
+  - `application*.yml`, `logback-spring.xml`, `DataLoader`
+- `05. JPA / Flyway / QueryDSL / Redis / Cache 공통 기반 잡기`
+  - `JpaConfig`, `QuerydslConfig`, `RedisConfig`, `CacheConfig`, migration 전략
+- `06. global / domain 패키지 구조를 어떻게 잡았는가`
+  - `ApiResponse`, `BaseEntity`, `BusinessException`, `ErrorCode`, `GlobalExceptionHandler`
 
-#### 03. Docker로 MySQL / Redis 개발 환경 만들기
-- 핵심 질문
-  - 왜 로컬 설치 대신 Docker Compose로 시작해야 하는가?
-- 주요 파일
-  - `docker/docker-compose.yml`
-  - `docker/docker-compose.monitoring.yml`
-- 반드시 설명할 포인트
-  - MySQL 문자셋 / timezone
-  - Redis appendonly
-  - monitoring overlay 분리
-- 입문자 설명
-  - 애플리케이션보다 먼저 “실행 환경 재현성”을 챙기는 이유
-- 취업 포인트
-  - 로컬 실행 절차가 문서가 아니라 코드로 남아 있다는 점
+### Part C. 핵심 도메인 만들기
+- `07. Member, Kindergarten, Classroom으로 첫 관계 만들기`
+  - 회원/유치원/반 모델링과 기본 관계
+- `08. Kid, ParentKid, Attendance로 첫 업무 Aggregate 만들기`
+  - 원생, 보호자 관계, 출결 aggregate
+- `09. 알림장, 공지, 알림으로 기능 확장하기`
+  - 읽기/쓰기 기능 확장과 알림 흐름
+- `10. 일정, 대시보드, 신청 도메인으로 조회와 상태 전이를 넓히기`
+  - `Calendar`, `Dashboard`, `KidApplication`, `KindergartenApplication`의 기본 뼈대
 
-#### 04. `application.yml`과 profile 전략 설계하기
-- 핵심 질문
-  - local / demo / prod 설정은 왜 처음부터 나눠야 하는가?
-- 주요 파일
-  - `src/main/resources/application.yml`
-  - `src/main/resources/application-local.yml`
-  - `src/main/resources/application-demo.yml`
-  - `src/main/resources/application-prod.yml`
-  - `src/main/resources/logback-spring.xml`
-  - `src/main/java/com/erp/global/config/DataLoader.java`
-- 반드시 설명할 포인트
-  - `spring.profiles.group.demo`
-  - `management`와 `springdoc` prod 차단
-  - local seed data
-- 입문자 설명
-  - 공통 설정과 환경별 설정을 분리하는 기준
-- 취업 포인트
-  - 시연 편의와 운영 보안을 한 코드베이스에서 동시에 다룬 경험
+### Part D. 인증과 보안
+- `11. SecurityConfig와 회원가입/로그인 기본 흐름 만들기`
+- `12. JwtTokenProvider, JwtFilter, AuthService로 쿠키 JWT 연결하기`
+- `13. 멀티테넌시 보안 문제를 어떻게 발견하고 고쳤는가`
 
-#### 05. 공통 백엔드 토대 만들기: 패키지 구조, 공통 응답, 예외 처리
-- 핵심 질문
-  - 코드가 커지기 전에 무엇을 공통 토대로 고정해야 하는가?
-- 주요 파일
-  - `src/main/java/com/erp/global/common/*`
-  - `src/main/java/com/erp/global/exception/*`
-  - `src/main/java/com/erp/domain/dto/*`
-- 반드시 설명할 클래스 / 메서드
-  - `BaseEntity`
-  - `ApiResponse`
-  - `ErrorCode`
-  - `GlobalExceptionHandler`
-- 입문자 설명
-  - 패키지 구조를 왜 `domain/*` + `global/*`로 나눴는지
-- 취업 포인트
-  - 초반에 공통 규약을 세운 덕분에 이후 기능이 커져도 일관성을 유지한 점
+### Part E. 테스트와 CI
+- `14. 왜 H2가 아니라 Testcontainers였는가`
+- `15. GitHub Actions와 태그 기반 테스트 스위트 분리`
 
-#### 06. Flyway와 JPA를 어떻게 같이 가져갈 것인가
-- 핵심 질문
-  - 왜 `ddl-auto=create`가 아니라 Flyway + validate 전략을 택했는가?
-- 주요 파일
-  - `src/main/resources/db/migration/V1__init_schema.sql`
-  - `src/main/resources/application.yml`
-  - `build.gradle`
-- 반드시 설명할 포인트
-  - `open-in-view: false`
-  - `default_batch_fetch_size`
-  - Flyway baseline / validate
-- 입문자 설명
-  - JPA가 엔티티를 다루고, Flyway가 스키마 변화를 관리한다는 역할 분리
-- 취업 포인트
-  - 운영형 마이그레이션 감각을 초반부터 넣었다는 점
+### Part F. 인증을 운영형으로 발전시키기
+- `16. Refresh rotation과 활성 세션 제어`
+- `17. Rate limit과 Client IP 신뢰 모델`
+- `18. OAuth2와 소셜 계정 lifecycle을 안전하게 설계하기`
 
-### Part 2. 도메인 모델과 기능을 실제로 만드는 단계
+### Part G. 운영성, 감사 추적, 장애 대응
+- `19. 인증 감사 로그와 원장용 운영 콘솔 만들기`
+- `20. OpenAPI, 관리면, 관측성을 한 번에 설계하기`
+- `21. 알림 전달을 Outbox, Retry, Dead-letter로 바꾸기`
 
-#### 07. 첫 도메인 설계: `Member`, `Kindergarten`, `Classroom`, `Kid`
-- 핵심 질문
-  - CRUD 전에 어떤 관계를 먼저 모델링해야 하는가?
-- 주요 파일
-  - `domain/member/entity/Member.java`
-  - `domain/kindergarten/entity/Kindergarten.java`
-  - `domain/classroom/entity/Classroom.java`
-  - `domain/kid/entity/Kid.java`
-  - `domain/kid/entity/ParentKid.java`
-- 반드시 설명할 메서드
-  - `Member.create(...)`
-  - `Member.createSocial(...)`
-  - `Member.assignKindergarten(...)`
-  - `Classroom.create(...)`
-  - `Kid.create(...)`
-  - `Kid.addParent(...)`
-- 입문자 설명
-  - 엔티티를 테이블이 아니라 “상태를 가진 객체”로 보는 관점
-- 취업 포인트
-  - 테넌트 경계의 기초를 도메인 모델 단계에서 먼저 만든 점
+### Part H. 운영형 워크플로우
+- `22. 반 정원, 대기열, 입학 제안 워크플로우 설계하기`
+- `23. 출결 변경 요청과 업무 감사 로그를 함께 설계하기`
+- `24. 감사 로그를 운영 도구로 키우기`
 
-#### 08. 첫 인증 흐름 만들기: 회원가입, 로그인, `SecurityConfig`
-- 핵심 질문
-  - Spring Security와 JWT를 처음 프로젝트에 어떻게 붙이는가?
-- 주요 파일
-  - `domain/auth/service/AuthService.java`
-  - `domain/auth/controller/AuthApiController.java`
-  - `global/config/SecurityConfig.java`
-  - `global/security/jwt/JwtTokenProvider.java`
-  - `domain/member/service/MemberService.java`
-- 반드시 설명할 메서드
-  - `AuthService.signUp(...)`
-  - `AuthService.login(...)`
-  - `JwtTokenProvider.createAccessToken(...)`
-  - `SecurityConfig.securityFilterChain(...)`
-- 입문자 설명
-  - 인증은 필터 체인, 서비스, 토큰 생성이 어떻게 연결되는가
-- 취업 포인트
-  - 단순 로그인 구현이 아니라 구조적으로 Security를 붙였다는 점
-
-#### 09. 뷰 레이어를 붙여 전체 흐름을 보이게 만들기
-- 핵심 질문
-  - API만 있는 프로젝트보다 SSR 화면이 있으면 무엇이 좋아지는가?
-- 주요 파일
-  - `domain/auth/controller/AuthViewController.java`
-  - `src/main/resources/templates/auth/*`
-  - `src/main/resources/templates/fragments/header.html`
-  - `src/main/resources/templates/layout/*`
-- 반드시 설명할 메서드
-  - `AuthViewController.loginPage(...)`
-  - `AuthViewController.profilePage(...)`
-  - `AuthViewController.settingsPage(...)`
-- 입문자 설명
-  - Thymeleaf, HTMX, Alpine.js가 어떤 역할로 섞였는가
-- 취업 포인트
-  - 시연 가능한 백엔드는 설명력과 검증력이 높아진다는 점
-
-#### 10. 출석 도메인 만들기: 단순 저장이 아니라 상태 관리로 보기
-- 핵심 질문
-  - 출석은 왜 단순 CRUD보다 상태 변경 메서드가 중요한가?
-- 주요 파일
-  - `domain/attendance/entity/Attendance.java`
-  - `domain/attendance/service/AttendanceService.java`
-  - `domain/attendance/controller/AttendanceController.java`
-  - `domain/attendance/dto/*`
-- 반드시 설명할 메서드
-  - `AttendanceService.upsertAttendance(...)`
-  - `AttendanceService.bulkUpdateAttendance(...)`
-  - `AttendanceService.recordDropOff(...)`
-  - `AttendanceService.recordPickUp(...)`
-  - `AttendanceService.getMonthlyReportByClassroom(...)`
-- 입문자 설명
-  - 서비스는 저장 담당이 아니라 유스케이스 조정자라는 점
-- 취업 포인트
-  - 출석 집계와 리포트로 읽기 모델까지 확장한 점
-
-#### 11. 알림장과 공지사항: 비슷해 보이지만 다른 두 도메인
-- 핵심 질문
-  - 둘 다 글쓰기 기능인데 왜 서비스가 분리되어야 하는가?
-- 주요 파일
-  - `domain/notepad/service/NotepadService.java`
-  - `domain/announcement/service/AnnouncementService.java`
-  - `domain/notepad/controller/NotepadController.java`
-  - `domain/announcement/controller/AnnouncementController.java`
-  - `V7__add_announcement_unique_views.sql`
-- 반드시 설명할 메서드
-  - `NotepadService.createNotepad(...)`
-  - `NotepadService.getNotepadDetail(...)`
-  - `NotepadService.markAsRead(...)`
-  - `AnnouncementService.createAnnouncement(...)`
-  - `AnnouncementService.toggleImportant(...)`
-  - `AnnouncementService.recordView(...)`
-- 입문자 설명
-  - 읽음 처리와 조회수는 왜 별도 모델 / 서비스 관심사인가
-- 취업 포인트
-  - “비슷한 CRUD”도 역할과 정책에 따라 분리해야 한다는 점
-
-#### 12. 신청과 승인: CRUD에서 워크플로우로 넘어가기
-- 핵심 질문
-  - 입력 저장 이후의 상태 전이는 어떻게 모델링하는가?
-- 주요 파일
-  - `domain/kidapplication/*`
-  - `domain/kindergartenapplication/*`
-  - `V2__add_application_workflow.sql`
-  - `V3__kid_application_unique_parent_kindergarten.sql`
-- 반드시 설명할 메서드
-  - `KidApplicationService.apply(...)`
-  - `KidApplicationService.approve(...)`
-  - `KidApplicationService.reject(...)`
-- 입문자 설명
-  - 신청과 승인 도메인은 일반 CRUD와 어떻게 다른가
-- 취업 포인트
-  - 상태 전이가 필요한 비즈니스 도메인을 직접 설계한 경험
-
-#### 13. 캘린더와 대시보드: 조회 모델과 집계 모델을 설계하는 법
-- 핵심 질문
-  - 쓰기 모델과 읽기 모델은 왜 같은 방식으로 설계하면 안 되는가?
-- 주요 파일
-  - `domain/calendar/*`
-  - `domain/dashboard/service/DashboardService.java`
-  - `V4__create_calendar_events.sql`
-  - `V5__add_performance_indexes_for_dashboard_and_notepad.sql`
-- 반드시 설명할 메서드
-  - `DashboardService.getDashboardStatistics(...)`
-  - `DashboardService.calculateAttendanceRate(...)`
-  - `DashboardService.calculateAnnouncementReadRate(...)`
-- 입문자 설명
-  - 반복 일정 occurrence와 대시보드 집계는 왜 별도 계산 로직이 필요한가
-- 취업 포인트
-  - 정확도와 성능을 동시에 고민한 읽기 모델 설계
-
-### Part 3. 기능을 안전하게 만들기 위한 보안 / 인증 고도화
-
-#### 14. 멀티테넌시 권한 경계 하드닝
-- 핵심 질문
-  - 역할 체크만으로 왜 충분하지 않은가?
-- 주요 파일
-  - `global/security/access/AccessPolicyService.java`
-  - `global/config/SecurityConfig.java`
-  - `KidService`, `ClassroomService`, `AttendanceService`, `NotepadService`, `AnnouncementService`
-  - `docs/decisions/phase14_multitenant_access_hardening.md`
-- 반드시 설명할 메서드
-  - `AccessPolicyService.getRequester(...)`
-  - `validateSameKindergarten(...)`
-  - `validateKidReadAccess(...)`
-  - `validateNotepadReadAccess(...)`
-  - `validateNotificationReceiverAccess(...)`
-- 입문자 설명
-  - IDOR와 데이터 경계 검증이 무엇인지
-- 취업 포인트
-  - 컨트롤러가 아니라 서비스 계층에 보안 정책을 올린 선택
-
-#### 15. 테스트를 현실화하기: MySQL / Redis Testcontainers
-- 핵심 질문
-  - 왜 H2 / mock Redis에서 멈추면 안 되는가?
-- 주요 파일
-  - `src/test/java/com/erp/common/TestcontainersSupport.java`
-  - `src/test/java/com/erp/common/BaseIntegrationTest.java`
-  - `src/test/resources/application-test.yml`
-  - `docs/decisions/phase15_testcontainers_integration_test_stack.md`
-- 반드시 설명할 메서드
-  - `BaseIntegrationTest.readCommitted(...)`
-  - `BaseIntegrationTest.writeCommitted(...)`
-  - identity reset / cleanup 전략
-- 입문자 설명
-  - “테스트가 통과한다”와 “운영과 비슷하게 검증했다”의 차이
-- 취업 포인트
-  - 실환경형 테스트 스택을 직접 만든 점
-
-#### 16. CI를 의미 단위로 나누기: `fast`, `integration`, `performance`
-- 핵심 질문
-  - 테스트가 많아지면 CI를 어떻게 설계해야 하는가?
-- 주요 파일
-  - `build.gradle`
-  - `.github/workflows/ci.yml`
-  - `docs/decisions/phase16_github_actions_ci.md`
-  - `docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md`
-- 반드시 설명할 포인트
-  - `@Tag("fast")`, `@Tag("integration")`, `@Tag("performance")`
-  - GitHub Actions job 분리
-- 입문자 설명
-  - 모든 테스트를 한 job에서 돌리는 것의 한계
-- 취업 포인트
-  - 테스트의 의미를 CI 구조에 반영한 경험
-
-#### 17. JWT를 진짜 세션 관리로 확장하기
-- 핵심 질문
-  - JWT를 써도 왜 세션 레지스트리가 필요한가?
-- 주요 파일
-  - `domain/auth/service/AuthService.java`
-  - `domain/auth/service/AuthSessionRegistryService.java`
-  - `global/security/jwt/JwtTokenProvider.java`
-  - `global/security/jwt/JwtFilter.java`
-  - `docs/decisions/phase17_jwt_refresh_session_rotation.md`
-  - `docs/decisions/phase39_management_plane_and_active_session_control.md`
-- 반드시 설명할 메서드
-  - `AuthService.refreshAccessToken(...)`
-  - `AuthService.getActiveSessions(...)`
-  - `AuthService.revokeSession(...)`
-  - `AuthSessionRegistryService.registerSession(...)`
-  - `AuthSessionRegistryService.revokeOtherSessions(...)`
-- 입문자 설명
-  - stateless access token과 stateful session control이 함께 가는 이유
-- 취업 포인트
-  - refresh rotation과 세션 강제 종료를 실제로 설명할 수 있는 구조
-
-#### 18. 인증 남용 방어: Rate Limit과 trusted proxy 기반 Client IP
-- 핵심 질문
-  - 로그인 API는 왜 일반 API보다 더 조심해야 하는가?
-- 주요 파일
-  - `domain/auth/service/AuthRateLimitService.java`
-  - `global/security/ClientIpResolver.java`
-  - `global/security/ClientIpProperties.java`
-  - `docs/decisions/phase21_auth_rate_limit.md`
-  - `docs/decisions/phase24_auth_client_ip_trust_model.md`
-  - `docs/decisions/phase25_login_rate_limit_policy_refinement.md`
-- 반드시 설명할 메서드
-  - `AuthRateLimitService`의 사전 확인 / 실패 기록 / 성공 초기화
-  - `ClientIpResolver.resolve(...)`
-- 입문자 설명
-  - 헤더 스푸핑, trusted proxy, 실패 전용 rate limit
-- 취업 포인트
-  - 보안 정책을 단순 라이브러리 사용이 아니라 직접 설계한 점
-
-#### 19. OAuth2를 붙이는 것이 아니라 lifecycle을 설계하기
-- 핵심 질문
-  - 소셜 로그인은 “로그인 성공” 이후가 더 중요한 이유가 무엇인가?
-- 주요 파일
-  - `global/security/oauth2/OAuth2AuthenticationSuccessHandler.java`
-  - `global/security/AuthenticatedMemberResolver.java`
-  - `domain/auth/service/SocialAccountLinkService.java`
-  - `domain/member/entity/Member.java`
-  - `domain/member/entity/MemberSocialAccount.java`
-  - `V6__add_oauth_columns_to_member.sql`
-  - `V8__normalize_member_social_accounts.sql`
-  - `V9__preserve_social_account_history.sql`
-- 반드시 설명할 메서드
-  - `OAuth2AuthenticationSuccessHandler.onAuthenticationSuccess(...)`
-  - `SocialAccountLinkService.linkSocialAccount(...)`
-  - `Member.linkSocialAccount(...)`
-  - `Member.unlinkSocialAccount(...)`
-  - `Member.hasProviderBindingWithDifferentIdentity(...)`
-- 입문자 설명
-  - 이메일 충돌, explicit linking, password bootstrap, unlink safeguard, provider identity immutability
-- 취업 포인트
-  - 흔한 “소셜 로그인 붙였다”가 아니라 계정 lifecycle까지 설계한 점
-
-### Part 4. 운영 가능한 백엔드로 고도화하고 포트폴리오로 패키징하기
-
-#### 20. 인증 감사 로그를 운영 도구로 키우기
-- 핵심 질문
-  - 로그인 로그를 저장만 하면 왜 부족한가?
-- 주요 파일
-  - `domain/authaudit/service/AuthAuditLogService.java`
-  - `domain/authaudit/service/AuthAuditRetentionService.java`
-  - `domain/authaudit/controller/AuthAuditLogController.java`
-  - `domain/authaudit/service/AuthAuditLogQueryService.java`
-  - `V10__create_auth_audit_log.sql`
-  - `V11__denormalize_auth_audit_log_and_add_retention_archive.sql`
-- 반드시 설명할 메서드
-  - `recordLoginSuccess(...)`
-  - `recordLoginFailure(...)`
-  - `resolveKindergartenId(...)`
-  - retention / archive scheduling
-- 입문자 설명
-  - auth audit와 business audit를 왜 나누는가
-- 취업 포인트
-  - 조회, export, retention까지 갖춘 운영 감사 체계
-
-#### 21. OpenAPI, Actuator, Prometheus, correlation id로 운영 관측성 만들기
-- 핵심 질문
-  - “기능이 된다”에서 “운영할 수 있다”로 가려면 무엇이 필요한가?
-- 주요 파일
-  - `global/monitoring/*`
-  - `global/logging/*`
-  - `global/config/OpenApiConfig.java`
-  - `src/main/resources/application.yml`
-  - `src/main/resources/application-prod.yml`
-  - `src/main/resources/logback-spring.xml`
-  - `docs/decisions/phase34_operability_observability_baseline.md`
-  - `docs/decisions/phase36_api_contract_observability_demo.md`
-- 반드시 설명할 클래스
-  - `CriticalDependenciesHealthIndicator`
-  - `PrometheusScrapeController`
-  - `RequestLoggingFilter`
-  - `CorrelationIdFilter`
-- 입문자 설명
-  - liveness와 readiness의 차이
-  - Prometheus와 Swagger는 각각 무엇을 위한 도구인가
-- 취업 포인트
-  - 운영 관측성과 계약 문서를 실제 코드로 제공한 점
-
-#### 22. 알림을 신뢰성 있는 전달 구조로 바꾸기: Outbox, retry, dead-letter
-- 핵심 질문
-  - 외부 채널 호출은 왜 동기 처리하면 안 되는가?
-- 주요 파일
-  - `domain/notification/service/NotificationDispatchService.java`
-  - `domain/notification/entity/*`
-  - `V12__add_notification_outbox.sql`
-  - `docs/decisions/phase40_notification_outbox_and_incident_channel.md`
-  - `docs/portfolio/case-studies/auth-incident-response.md`
-- 반드시 설명할 메서드
-  - `dispatch(...)`
-  - `processReadyDeliveriesOnSchedule()`
-  - `processReadyDeliveriesBatch()`
-  - `claimReadyDeliveries(...)`
-  - `resolveRetryDelay(...)`
-- 입문자 설명
-  - Outbox 패턴과 dead-letter queue의 역할
-- 취업 포인트
-  - 알림을 기능이 아니라 운영 파이프라인으로 다룬 경험
-
-#### 23. 운영형 워크플로우: 반 정원, waitlist, offer, 출결 변경 요청
-- 핵심 질문
-  - CRUD를 상태 전이형 워크플로우로 바꾸려면 무엇이 달라져야 하는가?
-- 주요 파일
-  - `domain/classroom/service/ClassroomCapacityService.java`
-  - `domain/kidapplication/entity/KidApplication.java`
-  - `domain/kidapplication/service/KidApplicationService.java`
-  - `domain/attendance/service/AttendanceChangeRequestService.java`
-  - `V13__add_admission_workflow_attendance_requests_and_domain_audit.sql`
-  - `docs/decisions/phase41_admission_capacity_waitlist_workflow.md`
-  - `docs/decisions/phase42_attendance_change_request_workflow.md`
-- 반드시 설명할 메서드
-  - `ClassroomCapacityService.validateSeatAvailable(...)`
-  - `KidApplication.placeOnWaitlist(...)`
-  - `KidApplication.offerSeat(...)`
-  - `KidApplication.acceptOffer(...)`
-  - `KidApplicationService.expireOffers()`
-  - `AttendanceChangeRequestService.create(...)`
-  - `AttendanceChangeRequestService.approve(...)`
-- 입문자 설명
-  - 상태 전이, 좌석 예약, 요청자와 승인자 분리
-- 취업 포인트
-  - 운영 현실을 코드 모델로 끌어올린 설계 경험
-
-#### 24. 업무 감사 로그와 운영자 책임 추적
-- 핵심 질문
-  - 비즈니스 상태 변화는 왜 별도 감사 로그가 필요한가?
-- 주요 파일
-  - `domain/domainaudit/entity/DomainAuditLog.java`
-  - `domain/domainaudit/service/DomainAuditLogService.java`
-  - `domain/domainaudit/service/DomainAuditLogQueryService.java`
-  - `domain/domainaudit/controller/DomainAuditLogController.java`
-  - `docs/decisions/phase43_domain_audit_log.md`
-- 반드시 설명할 메서드
-  - `DomainAuditLogService.record(...)`
-  - `DomainAuditLogService.recordSystem(...)`
-- 입문자 설명
-  - 인증 로그와 업무 로그의 목적 차이
-- 취업 포인트
-  - “누가 무엇을 바꿨는가”를 남기는 운영 감각
-
-#### 25. 성능 스토리를 만드는 법: 측정 -> 개선 -> 재측정
-- 핵심 질문
-  - 성능 개선은 어떻게 포트폴리오 스토리로 바꿀 수 있는가?
-- 주요 파일 / 문서
-  - `docs/portfolio/performance/*`
-  - `domain/dashboard/service/DashboardService.java`
-  - `domain/notepad/service/NotepadService.java`
-  - `src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java`
-- 반드시 설명할 포인트
-  - 쿼리 수 / 응답 시간 / p95, p99
-  - 인덱스, 캐시, 조회 구조 개선
-- 입문자 설명
-  - “빠르다”가 아니라 “어떻게 측정했고 무엇을 바꿨는가”로 말해야 한다는 점
-- 취업 포인트
-  - 정량적 성능 개선을 문서와 테스트로 남긴 경험
-
-#### 26. 이 프로젝트를 취업용 포트폴리오로 완성하는 문서 패키지
-- 핵심 질문
-  - 코드가 좋아도 왜 문서 구조가 중요한가?
-- 주요 파일 / 문서
-  - `docs/portfolio/architecture/system-architecture.md`
-  - `docs/portfolio/demo/demo-preflight.md`
-  - `docs/portfolio/demo/demo-runbook.md`
-  - `docs/portfolio/hiring-pack/backend-hiring-pack.md`
-  - `docs/portfolio/interview/*`
-  - `docs/README.md`
-- 반드시 설명할 포인트
-  - README는 입구
-  - decisions는 근거
-  - architecture는 구조 설명
-  - demo는 재현 절차
-  - hiring pack은 채용 담당자용 압축본
-- 입문자 설명
-  - 문서도 설계의 일부라는 점
-- 취업 포인트
-  - 코드를 “읽히게 만들기 위한 문서 구조”까지 설계한 경험
+### Part I. 성능과 포트폴리오 마감
+- `25. 성능 개선을 코드가 아니라 스토리로 설명하는 방법`
+- `26. 데모, 아키텍처, 면접 패키지까지 묶어 프로젝트를 완성하기`
 
 ## 7) 글쓰기 작업 규칙
 
@@ -761,36 +324,27 @@
   - rate limit 초과
   - readiness DOWN / liveness UP
 
-## 8) 실제 집필 우선순위
+## 8) 유지보수 / 리라이트 우선순위
 
-### 1차 우선 집필
-- 02. `build.gradle`과 Spring Boot 프로젝트 뼈대
-- 03. Docker + MySQL + Redis + local 실행 환경
-- 08. 회원가입 / 로그인 / `SecurityConfig`
-- 14. 멀티테넌시 권한 경계 하드닝
+이제 시리즈 전체 초안은 완성됐으므로, 우선순위는 “처음 쓰기”가 아니라 “더 읽기 좋고 더 재현 가능하게 다듬기” 기준으로 잡습니다.
 
-이유:
-- 입문자 유입이 가장 많다.
-- 프로젝트 차별점이 빨리 드러난다.
-- 이후 글의 맥락을 설명하기 쉽다.
+### 1차 우선 리라이트
+- `README`, `01`, `10`, `26`
+- 이유
+  - 독자가 처음 만나는 진입점과 마감 글의 완성도가 전체 인상을 좌우한다
+  - 연대기 혼선이나 과도한 후반부 스포일러를 먼저 줄여야 한다
 
-### 2차 우선 집필
-- 15. Testcontainers
-- 17. JWT 세션 레지스트리
-- 19. OAuth2 lifecycle
-- 23. waitlist / offer / attendance request workflow
+### 2차 우선 리라이트
+- `06`, `22`, `23`, `24`
+- 이유
+  - 공통 규약, 운영형 워크플로우, 감사 로그는 재현성 설명이 가장 자주 흔들리는 구간이다
+  - 단계 체크포인트 스크립트와 산출물 체크리스트가 특히 효과적이다
 
-이유:
-- “이 프로젝트가 왜 흔한 CRUD 포트폴리오와 다른가”를 가장 강하게 보여준다.
-
-### 3차 우선 집필
-- 21. Observability
-- 22. Notification outbox
-- 24. Domain audit
-- 26. Hiring pack / demo / interview docs
-
-이유:
-- 후반부지만 취업용 설명력은 매우 높다.
+### 3차 우선 리라이트
+- 공개 배포용 링크 변환
+- 이유
+  - 현재 문서는 작업 공간판이라 절대경로 링크를 사용한다
+  - GitHub/Velog/Notion 공개 전에는 repo-relative 또는 permalink 변환이 필요하다
 
 ## 9) 집필 운영 방식
 
@@ -825,9 +379,10 @@
   - 대응: 먼저 문제를 쉬운 말로 설명하고, 그 다음 용어를 붙인다
 
 ## 11) 다음 액션
-- `blog/00_series_plan.md`를 이 문서 기준의 간략판으로 유지
-- 실제 본문은 `blog/02-gradle-spring-boot-bootstrap.md`부터 작성 시작
-- 각 글을 작성할 때 `BLOG_PROGRESS.md`에 진행 로그와 근거 파일을 남긴다
+- `blog/README.md`를 독자용/작성자용 동선 기준으로 계속 유지
+- 재현성이 약한 글에는 `blog/scripts/checkpoint-XX.sh`를 추가
+- 공개 배포 직전에는 절대경로 링크를 repo-relative 또는 GitHub permalink로 변환
+- 각 리라이트 배치의 근거와 검증 결과를 `BLOG_PROGRESS.md`에 계속 누적
 
 ## 12) 재현성 강화 실행 배치
 
@@ -851,3 +406,16 @@
 - 대상: `16`~`26`
 - 이유
   - 상태 전이, 감사 로그, 관측성은 체크포인트와 실패 대응까지 같이 있어야 재현성이 생긴다
+
+### Batch R5. 단계 체크포인트 스크립트 도입
+- 대상: 설명형 검증이 약했던 핵심 글
+  - `06`, `10`, `22`, `23`, `24`, `26`
+- 이유
+  - 최종 저장소 기준 통합 스위트만으로는 “이 단계까지 왔다”를 확인하기 어렵다
+  - 파일/메서드/문서 산출물을 점검하는 경량 스크립트가 필요하다
+
+### Batch R6. 공개 배포용 링크 전략 정리
+- 대상: `blog/README.md`, 공개 전 변환 체크리스트
+- 이유
+  - 현재 절대경로 링크는 작업 공간에서는 편하지만 공개 플랫폼에서는 깨진다
+  - 집필 원본과 배포용 변환본의 경계를 문서화해야 한다
