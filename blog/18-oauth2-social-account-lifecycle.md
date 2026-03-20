@@ -223,3 +223,82 @@ sequenceDiagram
 - “소셜 로그인 자체보다 계정 lifecycle 정책을 더 중요하게 봤습니다.”
 - “이메일 충돌은 자동 연결하지 않고, 명시적 소셜 연결 플로우를 따로 만들었습니다.”
 - “소셜 계정을 별도 테이블로 정규화하고, unlink 이력과 provider 불변성을 보장했습니다.”
+
+## 10. 시작 상태
+
+- `11`~`17` 글까지 따라와서 기본 로그인, JWT 세션, 보안 정책이 이미 동작해야 합니다.
+- Google/Kakao 같은 OAuth provider 설정이 준비돼 있지 않아도 됩니다. 이 글은 먼저 **계정 정책과 lifecycle 설계**를 이해하는 단계입니다.
+- 목표는 세 가지입니다.
+  - 일반 소셜 로그인과 명시적 계정 연결 분리
+  - 소셜 전용 계정의 로컬 비밀번호 bootstrap
+  - 같은 provider의 다른 계정으로 교체 금지
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- OAuth2 성공 처리 / link intent:
+  - src/main/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandler.java
+  - src/main/java/com/erp/global/security/oauth2/OAuth2LinkSessionService.java
+- 소셜 계정 정책:
+  - src/main/java/com/erp/domain/auth/service/SocialAccountLinkService.java
+  - src/main/java/com/erp/domain/member/entity/MemberSocialAccount.java
+  - src/main/java/com/erp/domain/member/controller/MemberApiController.java
+  - src/main/java/com/erp/domain/auth/controller/SocialAccountLinkController.java
+- 뷰:
+  - src/main/java/com/erp/domain/auth/controller/AuthViewController.java
+  - src/main/resources/templates/auth/settings.html
+- 스키마:
+  - src/main/resources/db/migration/V8__normalize_member_social_accounts.sql
+  - src/main/resources/db/migration/V9__preserve_social_account_history.sql
+- 검증:
+  - src/test/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandlerTest.java
+  - src/test/java/com/erp/api/MemberApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase27_oauth2_account_conflict_policy.md
+  - docs/decisions/phase28_explicit_social_account_linking.md
+  - docs/decisions/phase30_social_account_unlink_policy.md
+  - docs/decisions/phase31_member_social_account_normalization.md
+  - docs/decisions/phase32_social_provider_identity_immutability.md
+```
+
+## 12. 구현 체크리스트
+
+1. `OAuth2AuthenticationSuccessHandler`에서 일반 로그인과 link intent를 분기합니다.
+2. 이메일 충돌 시 자동 병합하지 않고 명시적 오류와 안내 문구를 제공합니다.
+3. `MemberSocialAccount`를 별도 테이블로 정규화하고 provider/providerId를 관리합니다.
+4. `SocialAccountLinkService`에 연결, 해제, provider 불변성 정책을 넣습니다.
+5. 소셜 전용 계정은 settings 화면에서 로컬 비밀번호를 설정할 수 있게 합니다.
+6. 테스트로 충돌, 연결, 해제, provider replacement 차단을 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew --no-daemon fastTest \
+  --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"
+
+./gradlew --no-daemon integrationTest \
+  --tests "com.erp.api.MemberApiIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- 소셜 로그인 성공과 소셜 계정 연결이 다른 흐름으로 동작한다
+- 기존 이메일과 충돌하면 자동 연결되지 않고 명시적 에러로 처리된다
+- 같은 provider의 다른 계정으로 바꾸는 시나리오는 차단된다
+
+## 14. 글 종료 체크포인트
+
+- 소셜 계정 정보가 `member` 부속 컬럼이 아니라 별도 테이블로 분리돼 있다
+- 연결과 로그인 흐름을 구분해 설명할 수 있다
+- 마지막 로그인 수단 보호와 provider 불변성 정책을 설명할 수 있다
+- settings 화면까지 포함해 lifecycle이 사용자 기능으로 닫혀 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 소셜 로그인 성공 시 기존 계정에 자동으로 붙어 버린다
+  - 원인: 이메일이 같다는 이유만으로 계정을 자동 병합하면 정책이 무너집니다
+  - 확인할 것: `OAuth2AuthenticationSuccessHandler.onAuthenticationSuccess(...)`
+
+- 증상: unlink 후 다른 같은 provider 계정으로 다시 연결된다
+  - 원인: unlink를 삭제로 처리하거나, 과거 이력을 보지 않을 수 있습니다
+  - 확인할 것: `MemberSocialAccount.unlink()`, `SocialAccountLinkService.linkSocialAccount(...)`, `V9__preserve_social_account_history.sql`

@@ -179,3 +179,67 @@ sequenceDiagram
 - “Redis fixed-window rate limit으로 로그인과 refresh 남용을 제한했습니다.”
 - “로그인 성공은 실패 예산에서 제외해 UX를 보정했고, refresh는 별도 정책으로 관리했습니다.”
 - “`X-Forwarded-For`를 무조건 믿지 않고 trusted proxy 모델을 코드로 분리했습니다.”
+
+## 10. 시작 상태
+
+- `16` 글까지 따라와서 세션 기반 JWT 인증과 refresh rotation이 동작해야 합니다.
+- Redis가 실행 중이어야 하고, 로그인/refresh API가 이미 존재해야 합니다.
+- 이 글의 목표는 **보안 장치를 더 붙이는 것**이 아니라, 인증 엔드포인트의 남용 방지와 IP 신뢰 모델을 운영 기준으로 정리하는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- rate limit:
+  - src/main/java/com/erp/domain/auth/service/AuthRateLimitService.java
+  - src/main/java/com/erp/domain/auth/service/AuthService.java
+- client IP trust model:
+  - src/main/java/com/erp/global/security/ClientIpResolver.java
+  - src/main/java/com/erp/global/security/ClientIpProperties.java
+  - src/main/resources/application.yml
+- API 연결:
+  - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
+- 검증:
+  - src/test/java/com/erp/api/AuthApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase21_auth_rate_limit.md
+  - docs/decisions/phase24_auth_client_ip_trust_model.md
+  - docs/decisions/phase25_login_rate_limit_policy_refinement.md
+```
+
+## 12. 구현 체크리스트
+
+1. `AuthRateLimitService`에 로그인과 refresh를 위한 별도 제한 정책을 둡니다.
+2. 로그인은 `사전 확인 -> 실패 기록 -> 성공 시 이메일 실패 초기화` 순서로 흐르게 만듭니다.
+3. `ClientIpProperties`로 trusted proxy 목록을 설정 파일에서 받습니다.
+4. `ClientIpResolver`에서 trusted proxy일 때만 `X-Forwarded-For`, `X-Real-IP`를 신뢰하게 만듭니다.
+5. `AuthApiController`에서 직접 헤더를 읽지 말고 `clientIpResolver.resolve(request)`를 사용합니다.
+6. `AuthApiIntegrationTest`로 rate limit, 성공 로그인 초기화, 헤더 스푸핑 차단을 같이 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew --no-daemon integrationTest --tests "com.erp.api.AuthApiIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- 로그인 실패 누적 시 `429`가 나온다
+- 정상 로그인은 이메일 실패 카운터를 지운다
+- 신뢰하지 않는 프록시에서 매번 다른 `X-Forwarded-For`를 보내도 우회되지 않는다
+
+## 14. 글 종료 체크포인트
+
+- 로그인과 refresh가 서로 다른 rate limit 정책을 가진다
+- 성공 로그인은 실패 예산을 소비하지 않는다
+- IP 해석 로직이 컨트롤러 분기문이 아니라 별도 resolver로 분리돼 있다
+- “헤더 값”이 아니라 “어떤 프록시를 신뢰할 것인가”를 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 정상 사용자도 몇 번 로그인하면 계속 막힌다
+  - 원인: 성공 로그인 뒤 이메일 실패 카운터를 비우지 않았을 수 있습니다
+  - 확인할 것: `AuthRateLimitService.clearLoginFailures(...)`, `AuthService.login(...)`
+
+- 증상: 로컬에서는 헤더 테스트가 잘 되는데 운영 정책 설명이 불안하다
+  - 원인: `X-Forwarded-For`를 무조건 신뢰하는 방식으로 구현했을 수 있습니다
+  - 확인할 것: `ClientIpResolver.resolve(...)`, `ClientIpProperties.trustedProxies`

@@ -264,3 +264,78 @@ sequenceDiagram
 - “인증 이벤트를 일반 애플리케이션 로그가 아니라 별도 `auth_audit_log` 도메인으로 분리했습니다.”
 - “감사 로그 저장은 `REQUIRES_NEW`로 분리해 인증 본 흐름과 실패 전파를 분리했습니다.”
 - “principal 전용 조회/API/CSV export/운영 화면까지 연결해 실제 운영자가 쓰는 구조를 만들었습니다.”
+
+## 10. 시작 상태
+
+- `16`~`18` 글까지 따라와서 로그인, refresh, 소셜 연결 흐름이 이미 동작해야 합니다.
+- 이 글의 목표는 **인증 기능 그 자체가 아니라 인증 운영 증적을 남기고 조회하는 것**입니다.
+- 최소 전제는 다음 두 가지입니다.
+  - principal 계정이 존재할 것
+  - 인증 이벤트가 어떤 이유로 실패했는지 코드 수준에서 구분 가능할 것
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 스키마:
+  - src/main/resources/db/migration/V10__create_auth_audit_log.sql
+  - src/main/resources/db/migration/V11__denormalize_auth_audit_log_and_add_retention_archive.sql
+- 저장 / 조회:
+  - src/main/java/com/erp/domain/authaudit/service/AuthAuditLogService.java
+  - src/main/java/com/erp/domain/authaudit/service/AuthAuditLogQueryService.java
+  - src/main/java/com/erp/domain/authaudit/service/AuthAuditRetentionService.java
+- API / 화면:
+  - src/main/java/com/erp/domain/authaudit/controller/AuthAuditLogController.java
+  - src/main/java/com/erp/domain/authaudit/controller/AuthAuditLogViewController.java
+  - src/main/resources/templates/authaudit/audit-logs.html
+- 호출 지점:
+  - src/main/java/com/erp/domain/auth/service/AuthService.java
+  - src/main/java/com/erp/domain/member/controller/MemberApiController.java
+  - src/main/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandler.java
+- 검증:
+  - src/test/java/com/erp/api/AuthApiIntegrationTest.java
+  - src/test/java/com/erp/api/AuthAuditApiIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase33_auth_social_audit_log.md
+  - docs/decisions/phase35_auth_audit_query_api.md
+  - docs/decisions/phase38_auth_audit_retention_and_denormalization.md
+```
+
+## 12. 구현 체크리스트
+
+1. `auth_audit_log` 테이블을 만들고, tenant 범위 조회를 위해 `kindergarten_id`를 같이 저장합니다.
+2. `AuthAuditLogService`를 `REQUIRES_NEW` 성격의 별도 저장 서비스로 둡니다.
+3. 로그인 성공/실패, refresh 성공/실패, 소셜 연결/해제 이벤트에서 감사 로그를 남깁니다.
+4. `AuthAuditLogQueryService`에서 principal 전용 조회와 CSV export를 구현합니다.
+5. `AuthAuditLogViewController`와 `audit-logs.html`로 운영 화면을 연결합니다.
+6. `AuthAuditApiIntegrationTest`로 tenant 범위와 export 동작을 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew --no-daemon integrationTest \
+  --tests "com.erp.api.AuthApiIntegrationTest" \
+  --tests "com.erp.api.AuthAuditApiIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- 로그인/refresh/소셜 이벤트가 실제 감사 로그로 남는다
+- principal만 감사 로그 조회와 CSV export를 할 수 있다
+- 다른 유치원 범위 로그는 조회되지 않는다
+
+## 14. 글 종료 체크포인트
+
+- 인증 이벤트가 일반 앱 로그와 별도 테이블로 관리된다
+- 저장, 조회, 보관 정책이 각기 다른 서비스 책임으로 분리돼 있다
+- 감사 로그가 API와 운영 화면 두 경로에서 모두 소비된다
+- “왜 `REQUIRES_NEW`로 분리했는가”를 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 인증은 실패했는데 감사 로그도 같이 사라진다
+  - 원인: 인증 본 트랜잭션과 같은 경계에서 저장하면 롤백에 함께 묶일 수 있습니다
+  - 확인할 것: `AuthAuditLogService`의 저장 트랜잭션 경계
+
+- 증상: 조회 API는 되는데 tenant 범위가 불안하다
+  - 원인: `member` 조인만으로 범위를 계산하거나 principal 검증을 서비스에서 하지 않았을 수 있습니다
+  - 확인할 것: `AuthAuditLogQueryService.getAuditLogsForPrincipal(...)`, `kindergarten_id` 저장 여부

@@ -254,3 +254,76 @@ sequenceDiagram
 - “OpenAPI, health, Prometheus, correlation id를 따로따로 붙인 것이 아니라 관리면이라는 하나의 설계 문제로 묶어 다뤘습니다.”
 - “readiness는 실제 DB/Redis probe를 반영하고, liveness와 분리해 검증했습니다.”
 - “문서/메트릭 공개 경로는 SecurityConfig와 RoleRedirectInterceptor를 같이 점검해 운영 노출 정책까지 맞췄습니다.”
+
+## 10. 시작 상태
+
+- 인증과 감사 로그까지 갖춘 뒤, 이제 **운영자가 시스템 상태를 보고 추적하는 면**을 만들 단계입니다.
+- 이 글은 기능 API를 하나 더 만드는 글이 아니라, 아래를 하나의 관리면으로 묶는 글입니다.
+  - OpenAPI
+  - health / readiness
+  - Prometheus metrics
+  - correlation id / request logging
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- OpenAPI / 공개 경로:
+  - src/main/java/com/erp/global/config/OpenApiConfig.java
+  - src/main/java/com/erp/global/config/SecurityConfig.java
+  - src/main/java/com/erp/global/security/RoleRedirectInterceptor.java
+- health / metrics:
+  - src/main/java/com/erp/global/monitoring/CriticalDependenciesHealthIndicator.java
+  - src/main/java/com/erp/global/monitoring/PrometheusRegistryConfig.java
+  - src/main/java/com/erp/global/monitoring/PrometheusScrapeController.java
+  - src/main/resources/application.yml
+- request tracing:
+  - src/main/java/com/erp/global/logging/CorrelationIdFilter.java
+  - src/main/java/com/erp/global/logging/RequestLoggingFilter.java
+  - src/main/resources/logback-spring.xml
+- 검증:
+  - src/test/java/com/erp/integration/ObservabilityIntegrationTest.java
+- 결정 로그:
+  - docs/decisions/phase34_operability_observability_baseline.md
+  - docs/decisions/phase36_api_contract_observability_demo.md
+  - docs/decisions/phase39_management_plane_and_active_session_control.md
+  - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+```
+
+## 12. 구현 체크리스트
+
+1. `OpenApiConfig`로 `/v3/api-docs`, `/swagger-ui.html` 문서를 생성합니다.
+2. `SecurityConfig`와 `RoleRedirectInterceptor`에서 공개 경로와 인프라 경로 정책을 같이 정리합니다.
+3. `CriticalDependenciesHealthIndicator`로 DB/Redis 상태를 readiness에 연결합니다.
+4. `PrometheusRegistryConfig`, `PrometheusScrapeController`로 메트릭 수집 경로를 노출합니다.
+5. `CorrelationIdFilter`, `RequestLoggingFilter`로 요청 추적 정보를 구조적으로 남깁니다.
+6. `ObservabilityIntegrationTest`로 health, readiness, metrics, correlation id를 검증합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew --no-daemon integrationTest --tests "com.erp.integration.ObservabilityIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- `/actuator/health`와 `/actuator/health/readiness`가 의도한 정책으로 노출된다
+- dependency 장애 시 readiness만 `DOWN`이 된다
+- `/actuator/prometheus`에서 주요 메트릭을 읽을 수 있다
+- 응답 헤더에 `X-Correlation-Id`가 포함된다
+
+## 14. 글 종료 체크포인트
+
+- OpenAPI, health, metrics, request tracing을 하나의 운영 설계로 설명할 수 있다
+- readiness와 liveness의 질문 차이를 코드와 테스트로 보여줄 수 있다
+- 공개 경로 정책이 보안 설정과 인터셉터에서 동시에 맞춰져 있다
+- 로그가 “많이 남는가”가 아니라 “나중에 추적 가능한가” 기준으로 설계돼 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: Swagger는 열리는데 페이지 진입 시 예상치 못한 리다이렉트가 발생한다
+  - 원인: `SecurityConfig` 허용 경로와 `RoleRedirectInterceptor` 인프라 경로 규칙이 어긋났을 수 있습니다
+  - 확인할 것: `SecurityConfig.buildPublicEndpoints()`, `RoleRedirectInterceptor.isInfrastructurePath(...)`
+
+- 증상: readiness와 liveness가 둘 다 같은 결과만 낸다
+  - 원인: 의존성 probe를 readiness group에만 연결하지 않았을 수 있습니다
+  - 확인할 것: `CriticalDependenciesHealthIndicator`, `application.yml`의 management health 설정
