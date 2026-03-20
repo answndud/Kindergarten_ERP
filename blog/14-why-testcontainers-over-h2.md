@@ -162,3 +162,62 @@ Testcontainers는 H2보다 느립니다.
 - “H2 대신 MySQL/Redis Testcontainers로 테스트를 현실화했습니다.”
 - “테스트에서도 `Flyway + validate`를 유지해 엔티티와 스키마 drift를 검증했습니다.”
 - “테스트 개수보다 운영과 닮은 검증 환경이 더 중요하다고 판단했습니다.”
+
+## 10. 시작 상태
+
+- `02`~`05`까지 따라와서 JPA, Flyway, Redis 설정이 들어간 상태여야 합니다.
+- 기본 통합 테스트 구조가 있지만 아직 H2/Mock 기반이거나 현실성이 약한 상태를 가정합니다.
+- 이 글의 목표는 **테스트 인프라를 실제 MySQL/Redis에 가깝게 바꾸는 것**입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 의존성 / 테스트 설정:
+  - build.gradle
+  - src/test/resources/application-test.yml
+- 컨테이너 / 테스트 기반:
+  - src/test/java/com/erp/common/TestcontainersSupport.java
+  - src/test/java/com/erp/common/BaseIntegrationTest.java
+  - src/test/java/com/erp/ErpApplicationTests.java
+- 결정 로그:
+  - docs/decisions/phase15_testcontainers_integration_test_stack.md
+```
+
+## 12. 구현 체크리스트
+
+1. `build.gradle`에 Testcontainers 의존성을 추가합니다.
+2. `application-test.yml`에서 `Flyway + validate` 전략을 유지합니다.
+3. `TestcontainersSupport`로 MySQL/Redis 컨테이너를 공통으로 띄웁니다.
+4. `BaseIntegrationTest`가 이 컨테이너 기반을 상속하도록 정리합니다.
+5. 실제 컨텍스트 로드와 대표 통합 테스트로 회귀를 확인합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew compileJava compileTestJava
+./gradlew test --tests "com.erp.ErpApplicationTests"
+./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- 테스트 시작 시 MySQL/Redis 컨테이너가 올라온다
+- Flyway migration 후 JPA validate가 통과한다
+- 대표 통합 테스트가 H2가 아닌 실제 컨테이너 기반으로 돈다
+
+## 14. 글 종료 체크포인트
+
+- 테스트 DB와 Redis가 컨테이너 기반으로 올라온다
+- 테스트도 `Flyway + validate`를 유지한다
+- `BaseIntegrationTest`가 현실적인 공통 기반이 된다
+- “운영 스택과 닮은 테스트 환경”을 설명할 수 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: 로컬에서는 테스트가 뜨지 않음
+  - 원인: Docker daemon이 꺼져 있거나 Testcontainers가 컨테이너를 띄우지 못했을 수 있습니다
+  - 확인할 것: `docker ps`, Docker Desktop 실행 상태
+
+- 증상: 테스트에서 스키마 오류가 남
+  - 원인: Flyway migration과 엔티티 매핑이 어긋났는데 H2 시절에는 가려졌을 수 있습니다
+  - 확인할 것: `application-test.yml`의 `validate` 유지 여부와 migration 누락 여부

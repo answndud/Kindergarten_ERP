@@ -189,3 +189,65 @@ sequenceDiagram
 - “역할 기반 인증만으로는 IDOR를 막을 수 없어서, 데이터 소속 기반 인가를 서비스 계층 정책으로 올렸습니다.”
 - “학부모는 내 자녀만, 교직원은 같은 유치원만 접근 가능하도록 `AccessPolicyService`를 SSOT로 만들었습니다.”
 - “취약 시나리오를 통합 테스트 실패 케이스로 고정해 재발 가능성을 줄였습니다.”
+
+## 10. 시작 상태
+
+- `11`, `12` 글까지 따라와서 로그인과 JWT 인증이 동작해야 합니다.
+- 핵심 도메인 API(`Kid`, `Attendance`, `Notepad`, `Announcement`, `Notification`)가 최소한 존재해야 합니다.
+- 이 글의 목표는 **로그인한 사용자라면 다 볼 수 있었던 데이터 접근을 tenant/관계 기반으로 좁히는 것**입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 공통 인가 정책:
+  - src/main/java/com/erp/global/security/access/AccessPolicyService.java
+- 정책을 사용하는 서비스:
+  - src/main/java/com/erp/domain/kid/service/KidService.java
+  - src/main/java/com/erp/domain/attendance/service/AttendanceService.java
+  - src/main/java/com/erp/domain/notepad/service/NotepadService.java
+  - src/main/java/com/erp/domain/announcement/service/AnnouncementService.java
+  - src/main/java/com/erp/domain/notification/service/NotificationService.java
+- 검증 파일:
+  - src/test/java/com/erp/api/KidApiIntegrationTest.java
+  - src/test/java/com/erp/api/AttendanceApiIntegrationTest.java
+  - src/test/java/com/erp/api/NotepadApiIntegrationTest.java
+  - src/test/java/com/erp/api/AnnouncementApiIntegrationTest.java
+  - src/test/java/com/erp/api/NotificationApiIntegrationTest.java
+```
+
+## 12. 구현 체크리스트
+
+1. `AccessPolicyService`에 같은 유치원, 내 자녀, 실제 수신자 여부 같은 인가 규칙을 모읍니다.
+2. 각 도메인 서비스가 requester 기반으로 정책 검사를 호출하게 바꿉니다.
+3. 단순 `hasRole()`로는 막히지 않는 IDOR 시나리오를 다시 정리합니다.
+4. 타 유치원 접근 차단 테스트를 기능별로 추가합니다.
+5. 실패 케이스를 공통 `BusinessException` / `ErrorCode`로 유지합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew test --tests "com.erp.api.KidApiIntegrationTest" --tests "com.erp.api.AttendanceApiIntegrationTest" --tests "com.erp.api.NotepadApiIntegrationTest" --tests "com.erp.api.AnnouncementApiIntegrationTest" --tests "com.erp.api.NotificationApiIntegrationTest"
+```
+
+성공하면 확인할 것:
+
+- 다른 유치원 데이터 접근이 실패 케이스로 고정된다
+- 학부모는 자기 자녀 범위만 읽을 수 있다
+- 서비스 계층에서 동일 정책이 재사용된다
+
+## 14. 글 종료 체크포인트
+
+- 역할 기반 인증 위에 데이터 소속 기반 인가가 추가돼 있다
+- `AccessPolicyService`가 인가 SSOT가 된다
+- 주요 도메인 서비스가 requester 기반 검사를 수행한다
+- 교차-유치원 접근 실패 테스트가 존재한다
+
+## 15. 자주 막히는 지점
+
+- 증상: 컨트롤러에서는 막았는데 다른 진입점에서 우회 가능함
+  - 원인: 인가 정책이 서비스가 아니라 특정 컨트롤러에만 박혀 있을 수 있습니다
+  - 확인할 것: 실제 검증 호출이 서비스 계층에 있는지 확인
+
+- 증상: 같은 역할인데도 일부 데이터는 보여야 하고 일부는 막혀야 해서 헷갈림
+  - 원인: 역할과 데이터 관계를 같은 개념으로 취급하면 정책이 거칠어집니다
+  - 확인할 것: `read`와 `manage`, `같은 유치원`과 `내 자녀` 같은 관계 규칙을 분리했는지 확인
