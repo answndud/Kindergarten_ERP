@@ -622,3 +622,58 @@ flowchart TD
 
 즉, 이 글의 핵심은 “Gradle 문법 설명”이 아닙니다.  
 **프로젝트를 시작할 때 어떤 뼈대를 잡아야 나중에 운영형 백엔드로 성장시킬 수 있는가**를 이해하는 것입니다.
+
+## 10. 시작 상태
+
+- 빈 Spring Boot 저장소이거나, 최소한 Git 저장소만 있는 상태를 가정합니다.
+- Java 17과 Gradle wrapper를 사용할 수 있어야 합니다.
+- 아직 Docker, DB, Redis는 없어도 됩니다. 이 글의 목표는 **프로젝트가 부팅되는 최소 뼈대**를 만드는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 새 파일:
+  - settings.gradle
+  - build.gradle
+  - src/main/java/com/erp/ErpApplication.java
+- 이후 확장 참고:
+  - .github/workflows/ci.yml
+```
+
+## 12. 구현 체크리스트
+
+1. `settings.gradle`에 루트 프로젝트 이름을 정의합니다.
+2. `build.gradle`에 Java / Spring Boot / dependency 관리 플러그인과 starter 의존성을 넣습니다.
+3. `src/main/java/com/erp/ErpApplication.java`를 만들어 `main()` 진입점을 만듭니다.
+4. `./gradlew tasks`로 Gradle wrapper와 태스크 구성이 정상인지 확인합니다.
+5. `./gradlew bootRun`으로 최소 부팅이 되는지 확인합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew tasks
+./gradlew bootRun
+```
+
+성공하면 확인할 것:
+
+- `./gradlew tasks`가 Gradle 태스크 목록을 출력한다
+- `./gradlew bootRun` 시 Spring Boot 애플리케이션이 예외 없이 뜬다
+- 기본적으로 `Tomcat started on port 8080`에 해당하는 로그가 보인다
+
+## 14. 글 종료 체크포인트
+
+- 프로젝트 루트에 `settings.gradle`, `build.gradle`이 존재한다
+- `src/main/java/com/erp/ErpApplication.java`가 존재한다
+- Gradle wrapper로 애플리케이션이 기동된다
+- 아직 기능이 없어도 “부팅 가능한 Spring Boot 뼈대”가 완성돼 있다
+
+## 15. 자주 막히는 지점
+
+- 증상: `ErpApplication`이 실행되지 않음
+  - 원인: 패키지 위치가 `com.erp` 루트가 아니어서 컴포넌트 스캔 기준이 꼬일 수 있습니다
+  - 확인할 것: `src/main/java/com/erp/ErpApplication.java` 경로인지 확인
+
+- 증상: `./gradlew bootRun`에서 Java 버전 오류 발생
+  - 원인: 로컬 Java가 17이 아니거나 Gradle 설정과 맞지 않을 수 있습니다
+  - 확인할 것: `java -version`, `build.gradle`의 자바 버전 설정 확인

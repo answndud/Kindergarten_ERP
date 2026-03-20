@@ -548,3 +548,61 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 즉, 이 글의 취업 포인트는 “Docker를 사용했다”가 아니라  
 **개발 환경을 어떻게 설계해야 프로젝트가 커져도 흔들리지 않는가**를 설명할 수 있다는 점입니다.
+
+## 10. 시작 상태
+
+- `02` 글까지 따라와서 Spring Boot 프로젝트 뼈대가 있어야 합니다.
+- Docker Desktop 또는 Docker Engine이 실행 중이어야 합니다.
+- 아직 애플리케이션에서 DB/Redis를 실제로 쓰지 않아도 됩니다. 이 글의 목표는 **의존 인프라 실행 환경을 먼저 고정하는 것**입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 새 파일:
+  - docker/docker-compose.yml
+  - docker/docker-compose.monitoring.yml
+  - docker/.env
+  - docker/monitoring/prometheus/prometheus.yml
+- 참고 연결 파일:
+  - src/main/resources/application.yml
+  - src/main/resources/application-local.yml
+```
+
+## 12. 구현 체크리스트
+
+1. MySQL과 Redis가 들어 있는 `docker/docker-compose.yml`을 작성합니다.
+2. 민감 값은 `docker/.env`로 분리합니다.
+3. Prometheus와 Grafana는 `docker/docker-compose.monitoring.yml`로 분리합니다.
+4. `docker compose -f docker/docker-compose.yml up -d`로 기본 스택을 실행합니다.
+5. 필요하면 monitoring overlay를 추가로 띄웁니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml ps
+docker compose -f docker/docker-compose.monitoring.yml up -d
+docker compose -f docker/docker-compose.monitoring.yml ps
+```
+
+성공하면 확인할 것:
+
+- MySQL과 Redis 컨테이너가 `Up` 상태다
+- monitoring overlay를 켰다면 Prometheus와 Grafana도 `Up` 상태다
+- 호스트에서 `localhost:3306`, `localhost:6379`를 사용할 수 있다
+
+## 14. 글 종료 체크포인트
+
+- `docker/docker-compose.yml`만으로 기본 개발 스택을 띄울 수 있다
+- monitoring overlay는 별도 compose로 선택적으로 켤 수 있다
+- 로컬 앱이 이후 `localhost` 기준으로 MySQL/Redis에 붙을 준비가 됐다
+
+## 15. 자주 막히는 지점
+
+- 증상: MySQL 컨테이너가 바로 죽음
+  - 원인: `docker/.env` 값이 비어 있거나 root/user/password 조합이 꼬였을 수 있습니다
+  - 확인할 것: `docker compose -f docker/docker-compose.yml logs mysql`
+
+- 증상: 포트 충돌
+  - 원인: 로컬에 이미 MySQL이나 Redis가 떠 있을 수 있습니다
+  - 확인할 것: `lsof -i :3306`, `lsof -i :6379`

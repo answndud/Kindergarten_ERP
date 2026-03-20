@@ -7,6 +7,10 @@
 1. Java / Spring Boot 입문자가 “이런 순서로 프로젝트를 설계하고 개발하면 되는구나”를 이해하게 만들기
 2. 취업 준비생이 “기능 구현 -> 보안 -> 테스트 -> 운영 -> 포트폴리오 패키징”으로 성장하는 흐름을 따라가게 만들기
 
+그리고 이제 세 번째 목표가 추가됐습니다.
+
+3. 독자가 `blog/`만 보고도 각 단계의 **중간 체크포인트를 재현**할 수 있게 만들기
+
 ## 블로그 작업 SSOT
 
 - [BLOG_PLAN.md](/Users/alex/project/kindergarten_ERP/erp/BLOG_PLAN.md)
@@ -14,6 +18,8 @@
   - 집필 순서와 범위
 - [BLOG_PROGRESS.md](/Users/alex/project/kindergarten_ERP/erp/BLOG_PROGRESS.md)
   - 블로그 작업 진행 로그
+- [blog/00_rebuild_guide.md](/Users/alex/project/kindergarten_ERP/erp/blog/00_rebuild_guide.md)
+  - 블로그를 재현형 구현 가이드로 강화하는 공통 규칙
 
 기존 [PLAN.md](/Users/alex/project/kindergarten_ERP/erp/PLAN.md), [PROGRESS.md](/Users/alex/project/kindergarten_ERP/erp/PROGRESS.md)는 **애플리케이션 개발 작업용 SSOT**로 유지합니다.
 
@@ -26,6 +32,8 @@
   - 독자 학습 목표
 - `_post_template.md`
   - 실제 글을 쓸 때 사용할 공통 템플릿
+- `_rebuild_template.md`
+  - 재현형 체크포인트 섹션 템플릿
 
 ## 이 시리즈가 다루는 범위
 
@@ -109,5 +117,6 @@
 ## 시작 순서
 
 1. `00_series_plan.md`로 연재 전체를 본다.
-2. `_post_template.md`로 글 형식을 맞춘다.
-3. 실제 읽기는 위 인덱스를 따라 `01`번부터 순서대로 진행한다.
+2. `00_rebuild_guide.md`로 재현형 읽기 규칙을 본다.
+3. `_post_template.md`, `_rebuild_template.md`로 글 형식을 확인한다.
+4. 실제 읽기는 위 인덱스를 따라 `01`번부터 순서대로 진행한다.

@@ -687,3 +687,60 @@ sequenceDiagram
 
 이 질문에 답할 수 있으면, 단순히 Spring Boot 설정 파일을 쓴 수준이 아니라  
 **환경별 운영 정책을 설계한 경험**으로 설명할 수 있습니다.
+
+## 10. 시작 상태
+
+- `02`, `03` 글까지 따라와서 Spring Boot 뼈대와 Docker 인프라가 준비돼 있어야 합니다.
+- 이 글의 목표는 **앱이 어떤 환경에서 어떤 설정으로 실행되는지**를 고정하는 것입니다.
+- 아직 모든 기능 구현이 없어도 괜찮습니다. 중요한 것은 설정 파일과 프로파일 책임을 나누는 것입니다.
+
+## 11. 이번 글에서 바뀌는 파일
+
+```text
+- 새 파일 또는 핵심 설정 파일:
+  - src/main/resources/application.yml
+  - src/main/resources/application-local.yml
+  - src/main/resources/application-demo.yml
+  - src/main/resources/application-prod.yml
+- 연결되는 코드:
+  - src/main/java/com/erp/global/config/DataLoader.java
+  - src/main/java/com/erp/global/config/OpenApiConfig.java
+  - src/main/java/com/erp/global/config/SecurityConfig.java
+```
+
+## 12. 구현 체크리스트
+
+1. `application.yml`에 모든 환경이 공유하는 공통 기준선을 둡니다.
+2. `application-local.yml`에 로컬 MySQL/Redis 접속 정보와 개발용 설정을 둡니다.
+3. `application-demo.yml`에는 시연 친화 설정만 얹습니다.
+4. `application-prod.yml`에는 공개면 축소와 운영 기준 설정을 둡니다.
+5. `--spring.profiles.active=local`과 `demo`로 각각 실행해 차이를 확인합니다.
+
+## 13. 실행 / 검증 명령
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=local'
+./gradlew bootRun --args='--spring.profiles.active=demo'
+```
+
+성공하면 확인할 것:
+
+- `local`로 실행하면 로컬 MySQL/Redis를 바라본다
+- `demo`로 실행하면 local 그룹을 포함하면서 데모 전용 설정이 추가된다
+- 환경별로 Swagger나 관리면 노출 정책을 property로 제어할 수 있다
+
+## 14. 글 종료 체크포인트
+
+- 공통 설정과 환경별 설정이 분리돼 있다
+- `local`, `demo`, `prod`의 책임이 문장으로 설명 가능하다
+- `demo`는 시연 시작점, `prod`는 운영 제한점이라는 기준이 선다
+
+## 15. 자주 막히는 지점
+
+- 증상: 어떤 설정이 어디서 덮였는지 모르겠음
+  - 원인: 공통 설정과 프로파일 설정 경계를 의식하지 않고 값을 흩뿌린 경우가 많습니다
+  - 확인할 것: 먼저 `application.yml`에 공통, 그 다음 `application-*.yml`에 차이만 남겼는지 확인
+
+- 증상: `demo`가 따로 동작하지 않음
+  - 원인: `spring.profiles.group.demo=local` 같은 profile group 개념을 놓쳤을 수 있습니다
+  - 확인할 것: 실행 로그에서 활성 프로파일과 포함 프로파일을 확인
