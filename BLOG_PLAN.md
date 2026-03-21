@@ -5,7 +5,7 @@
 
 ## 문서 역할
 - 이 문서는 `blog/` 아래 실제 글을 쓰기 전에 기준이 되는 **블로그 집필 SSOT**다.
-- 기존 [PLAN.md](/Users/alex/project/kindergarten_ERP/erp/PLAN.md), [PROGRESS.md](/Users/alex/project/kindergarten_ERP/erp/PROGRESS.md)는 애플리케이션 개발용 SSOT이고, 이 문서는 오직 **블로그 시리즈 설계와 집필 운영**만 다룬다.
+- 기존 [PLAN.md](./PLAN.md), [PROGRESS.md](./PROGRESS.md)는 애플리케이션 개발용 SSOT이고, 이 문서는 오직 **블로그 시리즈 설계와 집필 운영**만 다룬다.
 - 목표는 단순 회고가 아니라, **Java / Spring Boot 입문자도 이 저장소를 따라가며 “이런 순서로 설계하고 구현하면 되는구나”를 이해할 수 있는 수준의 시리즈**를 만드는 것이다.
 
 ## 0) 코드베이스 스냅샷
@@ -230,7 +230,7 @@
 ## 6) 게시 순서
 
 이 섹션은 **현재 실제 공개 글 순서**를 반영한 SSOT입니다.
-세부 글 제목과 Part 구분은 [blog/README.md](/Users/alex/project/kindergarten_ERP/erp/blog/README.md)와 동일하게 유지합니다.
+세부 글 제목과 Part 구분은 [blog/README.md](./blog/README.md)와 동일하게 유지합니다.
 
 ### Part A. 문제 정의
 - `01. 왜 유치원 ERP를 주제로 잡았는가`
@@ -341,10 +341,10 @@
   - 단계 체크포인트 스크립트와 산출물 체크리스트가 특히 효과적이다
 
 ### 3차 우선 리라이트
-- 공개 배포용 링크 변환
+- 외부 플랫폼용 permalink 변환
 - 이유
-  - 현재 문서는 작업 공간판이라 절대경로 링크를 사용한다
-  - GitHub/Velog/Notion 공개 전에는 repo-relative 또는 permalink 변환이 필요하다
+  - 현재 `blog/`와 `docs/portfolio/*`는 repo-relative 링크로 정리됐다
+  - Velog/Notion 공개 전에는 GitHub permalink 기반으로 한 번 더 바꿔야 한다
 
 ## 9) 집필 운영 방식
 
@@ -381,7 +381,7 @@
 ## 11) 다음 액션
 - `blog/README.md`를 독자용/작성자용 동선 기준으로 계속 유지
 - 재현성이 약한 글에는 `blog/scripts/checkpoint-XX.sh`를 추가
-- 공개 배포 직전에는 절대경로 링크를 repo-relative 또는 GitHub permalink로 변환
+- 외부 플랫폼 배포 직전에는 repo-relative 링크를 GitHub permalink로 변환
 - 각 리라이트 배치의 근거와 검증 결과를 `BLOG_PROGRESS.md`에 계속 누적
 
 ## 12) 재현성 강화 실행 배치
@@ -417,5 +417,5 @@
 ### Batch R6. 공개 배포용 링크 전략 정리
 - 대상: `blog/README.md`, 공개 전 변환 체크리스트
 - 이유
-  - 현재 절대경로 링크는 작업 공간에서는 편하지만 공개 플랫폼에서는 깨진다
-  - 집필 원본과 배포용 변환본의 경계를 문서화해야 한다
+  - repo-relative 링크는 GitHub에서는 잘 동작하지만 외부 플랫폼에서는 그대로 유지되지 않는다
+  - 집필 원본과 배포용 permalink 변환본의 경계를 문서화해야 한다

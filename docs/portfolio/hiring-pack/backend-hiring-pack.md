@@ -8,11 +8,11 @@
 
 ## 2. 5분 읽기 순서
 
-1. [시스템 아키텍처](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/architecture/system-architecture.md)
-2. [데모 Preflight](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/demo/demo-preflight.md)
-3. [데모 Runbook](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/demo/demo-runbook.md)
-4. [Auth Incident Response Case Study](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/case-studies/auth-incident-response.md)
-5. [Interview One Pager](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/interview/interview_one_pager.md)
+1. [시스템 아키텍처](../architecture/system-architecture.md)
+2. [데모 Preflight](../demo/demo-preflight.md)
+3. [데모 Runbook](../demo/demo-runbook.md)
+4. [Auth Incident Response Case Study](../case-studies/auth-incident-response.md)
+5. [Interview One Pager](../interview/interview_one_pager.md)
 
 ## 3. 대표 스토리 4개
 

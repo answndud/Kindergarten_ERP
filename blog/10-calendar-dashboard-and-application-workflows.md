@@ -27,7 +27,7 @@ Kindergarten ERP에서는 이 확장을 아래 도메인으로 풀었습니다.
 
 ### 2-1. 조회 모델
 
-대시보드는 원본 엔티티를 그대로 보여주는 기능이 아닙니다.  
+대시보드는 원본 엔티티를 그대로 보여주는 기능이 아닙니다.
 여러 repository 결과를 조합해 요약 통계를 만드는 조회 모델입니다.
 
 ### 2-2. 상태 전이
@@ -93,7 +93,7 @@ flowchart TD
 
 ### 5-1. `CalendarEventService`: 범위가 있는 일정 시스템
 
-[CalendarEventService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/calendar/service/CalendarEventService.java)의 핵심 메서드는 아래입니다.
+[CalendarEventService.java](../src/main/java/com/erp/domain/calendar/service/CalendarEventService.java)의 핵심 메서드는 아래입니다.
 
 - `createEvent(...)`
 - `getEvent(...)`
@@ -112,7 +112,7 @@ flowchart TD
 
 ### 5-2. `DashboardService`: 엔티티가 아니라 숫자를 만드는 서비스
 
-[DashboardService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/dashboard/service/DashboardService.java)의 핵심 메서드는 아래입니다.
+[DashboardService.java](../src/main/java/com/erp/domain/dashboard/service/DashboardService.java)의 핵심 메서드는 아래입니다.
 
 - `getDashboardStatistics(...)`
 - `evictDashboardStatisticsCache(...)`
@@ -123,12 +123,12 @@ flowchart TD
 - `calculateAnnouncementReadRate(...)`
 - `countActiveKidSchoolDays(...)`
 
-즉, 대시보드는 단순히 `findAll()`해서 보여주는 기능이 아니라  
+즉, 대시보드는 단순히 `findAll()`해서 보여주는 기능이 아니라
 여러 repository 결과를 조합해 의미 있는 숫자를 만드는 계층입니다.
 
 ### 5-3. `KindergartenApplicationService`: 교사 지원 승인 흐름
 
-[KindergartenApplicationService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/kindergartenapplication/service/KindergartenApplicationService.java)의 핵심 메서드는 아래입니다.
+[KindergartenApplicationService.java](../src/main/java/com/erp/domain/kindergartenapplication/service/KindergartenApplicationService.java)의 핵심 메서드는 아래입니다.
 
 - `apply(...)`
 - `approve(...)`
@@ -148,7 +148,7 @@ flowchart TD
 
 ### 5-4. `KidApplicationService`: 학부모 입학 신청의 첫 상태 전이
 
-[KidApplicationService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java)의 핵심 메서드는 아래입니다.
+[KidApplicationService.java](../src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java)의 핵심 메서드는 아래입니다.
 
 - `apply(...)`
 - `approve(...)`
@@ -210,11 +210,11 @@ sequenceDiagram
 
 그리고 설계 변천은 아래 결정 로그와 연결됩니다.
 
-- [phase07_application.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase07_application.md)
-- [phase10_calendar.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase10_calendar.md)
-- [phase18_dashboard_metric_redefinition.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase18_dashboard_metric_redefinition.md)
+- [phase07_application.md](../docs/decisions/phase07_application.md)
+- [phase10_calendar.md](../docs/decisions/phase10_calendar.md)
+- [phase18_dashboard_metric_redefinition.md](../docs/decisions/phase18_dashboard_metric_redefinition.md)
 
-즉, 이 단계는 “기능을 더 붙였다”가 아니라  
+즉, 이 단계는 “기능을 더 붙였다”가 아니라
 프로젝트가 진짜 운영 흐름을 다루기 시작한 단계입니다.
 
 ## 8. 회고
@@ -224,10 +224,10 @@ sequenceDiagram
 1. 조회는 단순 목록에서 끝나지 않는다
 2. 현실 세계의 승인 흐름은 생각보다 상태가 많다
 
-처음에는 지원 기능도 단순 승인/거절이면 충분해 보입니다.  
+처음에는 지원 기능도 단순 승인/거절이면 충분해 보입니다.
 하지만 이 기본 뼈대를 먼저 만들어 두었기 때문에, 나중에 waitlist, offer expiry 같은 더 현실적인 흐름으로 확장할 수 있었습니다.
 
-즉, 이 단계부터 프로젝트가 “기능 구현 연습”에서  
+즉, 이 단계부터 프로젝트가 “기능 구현 연습”에서
 “운영형 백엔드 설계 연습”으로 넘어갑니다.
 
 ## 9. 취업 포인트

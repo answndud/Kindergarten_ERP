@@ -13,7 +13,7 @@ Kindergarten ERP는 이 문제를 아래 두 축으로 풀었습니다.
 - JUnit `@Tag`
 - GitHub Actions job 분리
 
-즉, 테스트를 “파일 경로”가 아니라 **의미**로 나누고,  
+즉, 테스트를 “파일 경로”가 아니라 **의미**로 나누고,
 CI도 그 의미에 맞게 job을 분리했습니다.
 
 ## 2. 먼저 알아둘 개념
@@ -38,7 +38,7 @@ CI도 그 의미에 맞게 job을 분리했습니다.
 
 ### 2-3. Artifact
 
-CI 실패 시에도 test report를 artifact로 올려 두면  
+CI 실패 시에도 test report를 artifact로 올려 두면
 웹 UI에서 결과를 다시 확인하기 쉽습니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -74,7 +74,7 @@ flowchart TD
 
 ### 5-1. `build.gradle`: 태그 기반 task 등록
 
-[build.gradle](/Users/alex/project/kindergarten_ERP/erp/build.gradle)의 핵심 task는 아래입니다.
+[build.gradle](../build.gradle)의 핵심 task는 아래입니다.
 
 - `fastTest`
 - `integrationTest`
@@ -101,7 +101,7 @@ flowchart TD
 
 ### 5-3. `.github/workflows/ci.yml`: CI를 3개 job으로 분리
 
-[ci.yml](/Users/alex/project/kindergarten_ERP/erp/.github/workflows/ci.yml)의 핵심 job은 아래입니다.
+[ci.yml](../.github/workflows/ci.yml)의 핵심 job은 아래입니다.
 
 - `fast-checks`
 - `integration-tests`
@@ -162,7 +162,7 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 1. 테스트를 의미 없이 한 바구니에 넣지 말 것
 2. CI는 “돌아간다”보다 “어디서 왜 실패했는지 빨리 보인다”가 중요하다
 
-태그 기반 분리는 단순해 보이지만,  
+태그 기반 분리는 단순해 보이지만,
 프로젝트가 커질수록 테스트 전략 설명력이 훨씬 좋아집니다.
 
 ## 9. 취업 포인트

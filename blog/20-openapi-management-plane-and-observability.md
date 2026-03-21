@@ -9,7 +9,7 @@
 - DB나 Redis가 죽었을 때 readiness는 어떻게 반응하나요?
 - 요청 하나를 로그에서 어떻게 추적하나요?
 
-이 질문에 대답하지 못하면 기능이 많아도  
+이 질문에 대답하지 못하면 기능이 많아도
 “운영 준비가 덜 된 프로젝트”처럼 보이기 쉽습니다.
 
 Kindergarten ERP는 이 문제를 아래 네 묶음으로 풀었습니다.
@@ -23,7 +23,7 @@ Kindergarten ERP는 이 문제를 아래 네 묶음으로 풀었습니다.
 
 ### 2-1. OpenAPI는 문서가 아니라 계약이다
 
-정적 문서를 따로 만들 수도 있지만, 시간이 지나면 쉽게 틀어집니다.  
+정적 문서를 따로 만들 수도 있지만, 시간이 지나면 쉽게 틀어집니다.
 실행 중인 서버가 직접 API 계약을 내보내게 만드는 편이 더 낫습니다.
 
 ### 2-2. liveness와 readiness는 다르다
@@ -33,12 +33,12 @@ Kindergarten ERP는 이 문제를 아래 네 묶음으로 풀었습니다.
 - readiness
   - 지금 트래픽을 받아도 되는가?
 
-DB/Redis가 죽었다고 해서 JVM 프로세스가 죽은 것은 아닙니다.  
+DB/Redis가 죽었다고 해서 JVM 프로세스가 죽은 것은 아닙니다.
 그래서 둘을 분리해야 합니다.
 
 ### 2-3. 관리면(management surface)은 “열 것”과 “닫을 것”을 정해야 한다
 
-OpenAPI, health, Prometheus는 유용하지만  
+OpenAPI, health, Prometheus는 유용하지만
 무조건 다 공개하면 정보 노출이 됩니다.
 
 그래서 이 프로젝트는 설정값으로 노출 범위를 조절하게 만들었습니다.
@@ -87,7 +87,7 @@ flowchart TD
 
 ### 5-1. `OpenApiConfig`: 실행 중인 API 계약 만들기
 
-[OpenApiConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/OpenApiConfig.java)의 핵심 메서드는 아래입니다.
+[OpenApiConfig.java](../src/main/java/com/erp/global/config/OpenApiConfig.java)의 핵심 메서드는 아래입니다.
 
 - `apiV1GroupedOpenApi()`
 - `kindergartenErpOpenApi(...)`
@@ -98,12 +98,12 @@ flowchart TD
 - 제목, 버전, 설명 지정
 - JWT cookie 기반 인증 구조를 `cookieAuth`로 문서화
 
-입문자 관점에서 중요한 점은, OpenAPI도 결국 `@Bean`으로 등록되는  
+입문자 관점에서 중요한 점은, OpenAPI도 결국 `@Bean`으로 등록되는
 일반적인 Spring 설정이라는 것입니다.
 
 ### 5-2. `SecurityConfig`: management surface를 공개/보호하는 기준점
 
-[SecurityConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/SecurityConfig.java)의 핵심은 `securityFilterChain(...)`과 `buildPublicEndpoints()`입니다.
+[SecurityConfig.java](../src/main/java/com/erp/global/config/SecurityConfig.java)의 핵심은 `securityFilterChain(...)`과 `buildPublicEndpoints()`입니다.
 
 `buildPublicEndpoints()`는 아래 경로를 설정 기반으로 조절합니다.
 
@@ -112,22 +112,22 @@ flowchart TD
 - `/v3/api-docs`
 - `/actuator/prometheus`
 
-여기서 [ManagementSurfaceProperties.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/ManagementSurfaceProperties.java)가 같이 동작합니다.
+여기서 [ManagementSurfaceProperties.java](../src/main/java/com/erp/global/security/ManagementSurfaceProperties.java)가 같이 동작합니다.
 
 - `publicApiDocs`
 - `exposePrometheusOnAppPort`
 
-즉 OpenAPI와 Prometheus를 무조건 공개하지 않고,  
+즉 OpenAPI와 Prometheus를 무조건 공개하지 않고,
 프로퍼티로 노출 정책을 제어합니다.
 
 ### 5-3. `RoleRedirectInterceptor`: Security 설정만 열어서는 끝나지 않는다
 
 많은 입문자가 놓치는 지점이 여기입니다.
 
-Spring Security에서 경로를 열어도,  
+Spring Security에서 경로를 열어도,
 MVC interceptor가 다시 `/login`으로 보내면 결과적으로 접근이 막힙니다.
 
-[RoleRedirectInterceptor.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/RoleRedirectInterceptor.java)의
+[RoleRedirectInterceptor.java](../src/main/java/com/erp/global/security/RoleRedirectInterceptor.java)의
 
 - `isInfrastructurePath(...)`
 
@@ -143,7 +143,7 @@ MVC interceptor가 다시 `/login`으로 보내면 결과적으로 접근이 막
 
 ### 5-4. `CriticalDependenciesHealthIndicator`: readiness를 실제 의존성 상태로 연결
 
-[CriticalDependenciesHealthIndicator.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/monitoring/CriticalDependenciesHealthIndicator.java)의 핵심 메서드는 아래입니다.
+[CriticalDependenciesHealthIndicator.java](../src/main/java/com/erp/global/monitoring/CriticalDependenciesHealthIndicator.java)의 핵심 메서드는 아래입니다.
 
 - `health()`
 - `probeDatabase()`
@@ -156,27 +156,27 @@ MVC interceptor가 다시 `/login`으로 보내면 결과적으로 접근이 막
 
 을 수행하고, 둘 다 살아 있을 때만 `UP`을 반환합니다.
 
-즉 readiness는 그냥 “엔드포인트 켜짐”이 아니라  
+즉 readiness는 그냥 “엔드포인트 켜짐”이 아니라
 **핵심 외부 의존성이 실제로 응답하는가**를 묻습니다.
 
 ### 5-5. `PrometheusRegistryConfig`와 `PrometheusScrapeController`
 
-[PrometheusRegistryConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/monitoring/PrometheusRegistryConfig.java)는  
+[PrometheusRegistryConfig.java](../src/main/java/com/erp/global/monitoring/PrometheusRegistryConfig.java)는
 Micrometer Prometheus registry를 등록합니다.
 
-[PrometheusScrapeController.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/monitoring/PrometheusScrapeController.java)는
+[PrometheusScrapeController.java](../src/main/java/com/erp/global/monitoring/PrometheusScrapeController.java)는
 
 - registry가 있을 때만
 - 앱 포트 노출이 허용된 경우에만
 
 `/actuator/prometheus`를 제공합니다.
 
-즉 “Prometheus 의존성을 넣었다”가 아니라  
+즉 “Prometheus 의존성을 넣었다”가 아니라
 **조건부로 안전하게 노출하는 경로**까지 설계한 것입니다.
 
 ### 5-6. `CorrelationIdFilter`와 `RequestLoggingFilter`
 
-[CorrelationIdFilter.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/logging/CorrelationIdFilter.java)의 핵심은 아래입니다.
+[CorrelationIdFilter.java](../src/main/java/com/erp/global/logging/CorrelationIdFilter.java)의 핵심은 아래입니다.
 
 - `shouldNotFilter(...)`
 - `doFilterInternal(...)`
@@ -188,7 +188,7 @@ Micrometer Prometheus registry를 등록합니다.
 - 없으면 UUID를 생성하고
 - MDC와 응답 헤더에 넣습니다
 
-[RequestLoggingFilter.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/logging/RequestLoggingFilter.java)는  
+[RequestLoggingFilter.java](../src/main/java/com/erp/global/logging/RequestLoggingFilter.java)는
 요청이 끝난 뒤 아래 정보를 key=value 형태로 남깁니다.
 
 - `method`
@@ -197,7 +197,7 @@ Micrometer Prometheus registry를 등록합니다.
 - `durationMs`
 - `clientIp`
 
-즉 “로그를 많이 남긴다”가 아니라  
+즉 “로그를 많이 남긴다”가 아니라
 **나중에 추적 가능한 최소 정보만 구조적으로 남긴다**는 철학입니다.
 
 ## 6. 실제 흐름
@@ -221,7 +221,7 @@ sequenceDiagram
 
 ## 7. 테스트로 검증하기
 
-대표 테스트는 [ObservabilityIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/integration/ObservabilityIntegrationTest.java)입니다.
+대표 테스트는 [ObservabilityIntegrationTest.java](../src/test/java/com/erp/integration/ObservabilityIntegrationTest.java)입니다.
 
 이 테스트는 아래를 확인합니다.
 
@@ -233,7 +233,7 @@ sequenceDiagram
 - Swagger UI / OpenAPI JSON 접근 가능
 - `X-Correlation-Id` echo
 
-즉 이 영역은 “설정 파일만 추가한 기능”이 아니라  
+즉 이 영역은 “설정 파일만 추가한 기능”이 아니라
 실제로 회귀 테스트가 붙은 운영 기능입니다.
 
 ## 8. 회고

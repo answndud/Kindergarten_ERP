@@ -15,8 +15,8 @@
 - 교사/원장 검토 흐름이 없다
 - 잘못 바꾸면 원본 상태가 바로 오염된다
 
-Kindergarten ERP는 이 문제를  
-`Attendance`와 `AttendanceChangeRequest`를 분리해서 풀었습니다.  
+Kindergarten ERP는 이 문제를
+`Attendance`와 `AttendanceChangeRequest`를 분리해서 풀었습니다.
 그리고 중요한 상태 변화는 `domain_audit_log`에 남기도록 설계했습니다.
 
 ## 2. 먼저 알아둘 개념
@@ -37,12 +37,12 @@ Kindergarten ERP는 이 문제를
 - 업무 감사 로그
   - 입학 승인, 출결 요청 승인, 공지 수정/삭제
 
-즉 “누가 무엇을 했는가”라는 질문은 같지만  
+즉 “누가 무엇을 했는가”라는 질문은 같지만
 보는 사람과 분석 목적이 다릅니다.
 
 ### 2-3. 감사 로그는 마지막에 덧붙이는 것이 아니라 상태 전이와 같이 가야 한다
 
-상태 전이 직후 같은 트랜잭션에서 감사 로그를 남겨야  
+상태 전이 직후 같은 트랜잭션에서 감사 로그를 남겨야
 증적이 비지 않습니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -88,7 +88,7 @@ flowchart TD
 
 ### 5-1. `AttendanceChangeRequest`: 요청 자체가 상태를 가진다
 
-[AttendanceChangeRequest.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/attendance/entity/AttendanceChangeRequest.java)의 핵심 메서드는 아래입니다.
+[AttendanceChangeRequest.java](../src/main/java/com/erp/domain/attendance/entity/AttendanceChangeRequest.java)의 핵심 메서드는 아래입니다.
 
 - `create(...)`
 - `approve(...)`
@@ -96,15 +96,15 @@ flowchart TD
 - `cancel()`
 - `isPending()`
 
-즉 이 엔티티는 단순 DTO 저장소가 아니라  
+즉 이 엔티티는 단순 DTO 저장소가 아니라
 `PENDING -> APPROVED / REJECTED / CANCELLED` 상태 전이를 직접 갖습니다.
 
-특히 `ensurePending()`으로  
+특히 `ensurePending()`으로
 이미 처리된 요청을 다시 처리하지 못하게 막습니다.
 
 ### 5-2. `AttendanceChangeRequestService.create(...)`: 학부모 요청 생성
 
-[AttendanceChangeRequestService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/attendance/service/AttendanceChangeRequestService.java)의
+[AttendanceChangeRequestService.java](../src/main/java/com/erp/domain/attendance/service/AttendanceChangeRequestService.java)의
 `create(...)`는 아래 순서로 동작합니다.
 
 1. requester 조회
@@ -115,7 +115,7 @@ flowchart TD
 6. 교사/원장에게 알림
 7. `domainAuditLogService.record(...)`
 
-여기서 중요한 점은  
+여기서 중요한 점은
 요청 생성과 감사 로그 기록이 같은 흐름으로 묶여 있다는 점입니다.
 
 ### 5-3. `approve(...)`: 최종 `Attendance`는 승인 시점에만 반영
@@ -150,7 +150,7 @@ flowchart TD
 
 ### 5-5. `DomainAuditLog`: 업무 상태 전이 기록 전용 엔티티
 
-[DomainAuditLog.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/domainaudit/entity/DomainAuditLog.java)는 아래 정보를 담습니다.
+[DomainAuditLog.java](../src/main/java/com/erp/domain/domainaudit/entity/DomainAuditLog.java)는 아래 정보를 담습니다.
 
 - `kindergartenId`
 - `actorId`
@@ -171,36 +171,36 @@ flowchart TD
 
 ### 5-6. `DomainAuditLogService`: 기록은 여기서 통일
 
-[DomainAuditLogService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogService.java)의 핵심 메서드는 아래입니다.
+[DomainAuditLogService.java](../src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogService.java)의 핵심 메서드는 아래입니다.
 
 - `record(...)`
 - `recordSystem(...)`
 
-`record(...)`는 사용자 행위를 기록하고,  
+`record(...)`는 사용자 행위를 기록하고,
 `recordSystem(...)`는 스케줄러 같은 시스템 행위를 기록할 때 씁니다.
 
-예를 들어 입학 제안 만료처럼  
+예를 들어 입학 제안 만료처럼
 사람이 직접 누르지 않은 사건도 감사 로그에 남길 수 있습니다.
 
 ### 5-7. `DomainAuditLogQueryService`와 운영 화면
 
-[DomainAuditLogQueryService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogQueryService.java)의 핵심 메서드는 아래입니다.
+[DomainAuditLogQueryService.java](../src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogQueryService.java)의 핵심 메서드는 아래입니다.
 
 - `getAuditLogsForPrincipal(...)`
 - `exportAuditLogsCsvForPrincipal(...)`
 
-[DomainAuditLogController.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogController.java)는
+[DomainAuditLogController.java](../src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogController.java)는
 
 - `/api/v1/domain-audit-logs`
 - `/api/v1/domain-audit-logs/export`
 
 를 제공하고,
 
-[DomainAuditLogViewController.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogViewController.java)와  
-[audit-logs.html](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/templates/domainaudit/audit-logs.html)은
+[DomainAuditLogViewController.java](../src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogViewController.java)와
+[audit-logs.html](../src/main/resources/templates/domainaudit/audit-logs.html)은
 원장용 운영 콘솔을 제공합니다.
 
-즉 업무 감사 로그도 저장에서 끝나지 않고  
+즉 업무 감사 로그도 저장에서 끝나지 않고
 조회와 export까지 닫힙니다.
 
 ## 6. 실제 흐름
@@ -226,20 +226,20 @@ sequenceDiagram
 
 대표 테스트는 아래입니다.
 
-- [AttendanceChangeRequestApiIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/api/AttendanceChangeRequestApiIntegrationTest.java)
+- [AttendanceChangeRequestApiIntegrationTest.java](../src/test/java/com/erp/api/AttendanceChangeRequestApiIntegrationTest.java)
   - 학부모 요청 생성
   - 교사/원장 승인/거절
   - 권한 실패
-- [DomainAuditApiIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java)
+- [DomainAuditApiIntegrationTest.java](../src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java)
   - principal 범위 조회
   - CSV export
 
-즉 이 기능은 화면이 아니라  
+즉 이 기능은 화면이 아니라
 상태 전이와 감사 기록을 통합 테스트로 고정합니다.
 
 ## 8. 회고
 
-이 기능의 핵심은 출결 수정 화면이 아닙니다.  
+이 기능의 핵심은 출결 수정 화면이 아닙니다.
 핵심은 아래 분리입니다.
 
 - 요청 aggregate와 확정 aggregate 분리
