@@ -12,7 +12,7 @@
 
 즉, 전형적인 IDOR(Insecure Direct Object Reference) 위험이 있었습니다.
 
-이 글에서는 왜 역할 기반 접근만으로는 부족했는지,  
+이 글에서는 왜 역할 기반 접근만으로는 부족했는지,
 그리고 왜 `AccessPolicyService`를 서비스 계층 인가 SSOT로 올렸는지를 설명합니다.
 
 ## 2. 먼저 알아둘 개념
@@ -72,14 +72,14 @@ flowchart TD
     E --> H["실제 수신자인가?"]
 ```
 
-즉, 단순히 `hasRole("PARENT")` 같은 규칙만으로는  
+즉, 단순히 `hasRole("PARENT")` 같은 규칙만으로는
 “이 학부모가 이 원생 데이터를 볼 수 있는가?”를 보장할 수 없었습니다.
 
 ## 5. 코드 설명
 
 ### 5-1. `AccessPolicyService`: 인가 정책을 한 곳으로 모은다
 
-[AccessPolicyService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/access/AccessPolicyService.java)의 핵심 메서드는 아래입니다.
+[AccessPolicyService.java](../src/main/java/com/erp/global/security/access/AccessPolicyService.java)의 핵심 메서드는 아래입니다.
 
 - `getRequester(...)`
 - `validateSameKindergarten(...)`
@@ -89,7 +89,7 @@ flowchart TD
 - `validateNotepadReadAccess(...)`
 - `validateNotificationReceiverAccess(...)`
 
-이 메서드들의 역할은 “역할 체크”가 아닙니다.  
+이 메서드들의 역할은 “역할 체크”가 아닙니다.
 이미 로그인한 사용자가 **실제로 그 데이터에 접근 가능한 관계인지**를 검증하는 것입니다.
 
 ### 5-2. 왜 `read`와 `manage`를 나눴는가
@@ -104,7 +104,7 @@ flowchart TD
 - 출결 수정
 - 다른 학부모 자녀 데이터 읽기
 
-그래서 `read`와 `manage`를 분리하지 않으면  
+그래서 `read`와 `manage`를 분리하지 않으면
 권한 모델이 너무 거칠어집니다.
 
 ### 5-3. 서비스 계층에서 실제로 어떻게 쓰였는가
@@ -117,7 +117,7 @@ flowchart TD
 - `AnnouncementService`
 - `NotificationService`
 
-즉, 인가 정책이 특정 컨트롤러에 박혀 있는 것이 아니라  
+즉, 인가 정책이 특정 컨트롤러에 박혀 있는 것이 아니라
 도메인 서비스 안으로 내려가 있습니다.
 
 ### 5-4. 왜 컨트롤러가 아니라 서비스 계층에 뒀는가
@@ -166,14 +166,14 @@ sequenceDiagram
 - `NotificationApiIntegrationTest`
   - 타 유치원 수신자에게 알림 발송 차단
 
-즉, “이론상 안전하다”가 아니라  
+즉, “이론상 안전하다”가 아니라
 실제 취약 시나리오를 실패 케이스로 고정했습니다.
 
 ## 8. 회고
 
 이 작업은 취업 포트폴리오 관점에서 매우 중요합니다.
 
-기능이 많아도 데이터 경계가 약하면  
+기능이 많아도 데이터 경계가 약하면
 결국 “운영 감각 없는 CRUD 프로젝트”로 보이기 쉽습니다.
 
 반대로 이런 보안 하드닝 작업은

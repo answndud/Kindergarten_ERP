@@ -9,7 +9,7 @@
 - CSV로 export해서 외부 분석 도구에 넣을 수 있어야 하지 않을까?
 - 운영 콘솔 조회가 느려지면 어떡하지?
 
-즉 “로그를 남긴다” 다음 단계는  
+즉 “로그를 남긴다” 다음 단계는
 **로그를 운영 도구로 쓸 수 있게 만드는 것**입니다.
 
 Kindergarten ERP는 이 단계를 아래 네 축으로 정리했습니다.
@@ -23,7 +23,7 @@ Kindergarten ERP는 이 단계를 아래 네 축으로 정리했습니다.
 
 ### 2-1. 로그 저장과 로그 운영은 다른 문제다
 
-저장은 쓰기(write) 문제이고,  
+저장은 쓰기(write) 문제이고,
 운영 도구는 읽기(read) 문제입니다.
 
 그래서 아래를 따로 설계해야 합니다.
@@ -34,10 +34,10 @@ Kindergarten ERP는 이 단계를 아래 네 축으로 정리했습니다.
 
 ### 2-2. active log와 archive log를 나누는 이유
 
-최근 로그는 자주 조회합니다.  
+최근 로그는 자주 조회합니다.
 오래된 로그는 가끔만 봅니다.
 
-둘을 같은 테이블에 계속 쌓아 두면  
+둘을 같은 테이블에 계속 쌓아 두면
 활성 조회 비용이 점점 커질 수 있습니다.
 
 그래서 이 프로젝트는 auth audit에 대해
@@ -49,10 +49,10 @@ Kindergarten ERP는 이 단계를 아래 네 축으로 정리했습니다.
 
 ### 2-3. 운영 콘솔도 성능 검증이 필요하다
 
-초보 프로젝트는 사용자 API 성능만 보지만,  
+초보 프로젝트는 사용자 API 성능만 보지만,
 실무에서는 관리자 화면도 중요한 운영 경로입니다.
 
-원장이 매번 보는 감사 로그 목록/CSV export가 느리면  
+원장이 매번 보는 감사 로그 목록/CSV export가 느리면
 그 역시 운영 문제입니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -99,12 +99,12 @@ flowchart TD
 
 ### 5-1. `AuthAuditLogRepository`: tenant 기준 검색으로 단순화
 
-[AuthAuditLogRepository.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/authaudit/repository/AuthAuditLogRepository.java)의 핵심 메서드는 아래입니다.
+[AuthAuditLogRepository.java](../src/main/java/com/erp/domain/authaudit/repository/AuthAuditLogRepository.java)의 핵심 메서드는 아래입니다.
 
 - `searchByKindergartenId(...)`
 - `searchAllByKindergartenId(...)`
 
-중요한 점은 이 repository가 더 이상  
+중요한 점은 이 repository가 더 이상
 매번 `member -> kindergarten` join으로 tenant를 계산하지 않는다는 것입니다.
 
 그 이유는 write-time에 `kindergartenId`를 비정규화해 기록했기 때문입니다.
@@ -120,12 +120,12 @@ flowchart TD
 
 ### 5-2. `AuthAuditLogQueryService`: 목록과 export를 한 서비스에 모은다
 
-[AuthAuditLogQueryService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/authaudit/service/AuthAuditLogQueryService.java)의 핵심 메서드는 아래입니다.
+[AuthAuditLogQueryService.java](../src/main/java/com/erp/domain/authaudit/service/AuthAuditLogQueryService.java)의 핵심 메서드는 아래입니다.
 
 - `getAuditLogsForPrincipal(...)`
 - `exportAuditLogsCsvForPrincipal(...)`
 
-이 서비스는 먼저 principal의 kindergarten을 확인한 뒤  
+이 서비스는 먼저 principal의 kindergarten을 확인한 뒤
 repository 검색 메서드를 호출합니다.
 
 그리고 export에서는 `toCsv(...)`를 통해 바로 CSV 문자열을 만듭니다.
@@ -138,17 +138,17 @@ repository 검색 메서드를 호출합니다.
 
 ### 5-3. `DomainAuditLogQueryService`: 업무 감사 로그도 같은 운영 패턴으로
 
-[DomainAuditLogQueryService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogQueryService.java)도 동일한 구조를 가집니다.
+[DomainAuditLogQueryService.java](../src/main/java/com/erp/domain/domainaudit/service/DomainAuditLogQueryService.java)도 동일한 구조를 가집니다.
 
 - `getAuditLogsForPrincipal(...)`
 - `exportAuditLogsCsvForPrincipal(...)`
 
-즉 이 프로젝트는 auth audit와 domain audit를 목적은 분리하되,  
+즉 이 프로젝트는 auth audit와 domain audit를 목적은 분리하되,
 운영 도구 관점에서는 같은 사용성을 제공하려고 맞췄습니다.
 
 ### 5-4. `AuthAuditRetentionService`: 오래된 인증 로그를 archive로 이동
 
-[AuthAuditRetentionService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/authaudit/service/AuthAuditRetentionService.java)의 핵심 메서드는 아래입니다.
+[AuthAuditRetentionService.java](../src/main/java/com/erp/domain/authaudit/service/AuthAuditRetentionService.java)의 핵심 메서드는 아래입니다.
 
 - `runScheduledRetention()`
 - `executeRetention()`
@@ -170,23 +170,23 @@ repository 검색 메서드를 호출합니다.
 
 ### 5-5. `AuthAuditRetentionIntegrationTest`: 보관 정책도 테스트한다
 
-[AuthAuditRetentionIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/integration/AuthAuditRetentionIntegrationTest.java)는 아래를 검증합니다.
+[AuthAuditRetentionIntegrationTest.java](../src/test/java/com/erp/integration/AuthAuditRetentionIntegrationTest.java)는 아래를 검증합니다.
 
 - 오래된 active row가 archive table로 이동하는가
 - 오래된 archive row가 purge되는가
 
-즉 retention은 운영 문서에만 적힌 약속이 아니라  
+즉 retention은 운영 문서에만 적힌 약속이 아니라
 실제 테스트로 보장되는 정책입니다.
 
 ### 5-6. `AuditConsolePerformanceSmokeTest`: 운영 화면도 query budget을 가진다
 
-[AuditConsolePerformanceSmokeTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java)는
+[AuditConsolePerformanceSmokeTest.java](../src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java)는
 아래 두 경로를 검증합니다.
 
 - auth audit list / export
 - domain audit list / export
 
-핵심은 “빨라야 한다”는 추상적 말이 아니라  
+핵심은 “빨라야 한다”는 추상적 말이 아니라
 **예상 쿼리 예산 안에 들어오는가**를 테스트로 잡아 둔다는 점입니다.
 
 예를 들어 auth audit list는
@@ -218,9 +218,9 @@ sequenceDiagram
 
 대표 테스트는 아래입니다.
 
-- [AuthAuditRetentionIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/integration/AuthAuditRetentionIntegrationTest.java)
+- [AuthAuditRetentionIntegrationTest.java](../src/test/java/com/erp/integration/AuthAuditRetentionIntegrationTest.java)
   - archive / purge
-- [AuditConsolePerformanceSmokeTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java)
+- [AuditConsolePerformanceSmokeTest.java](../src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java)
   - auth/domain audit list/export query budget
 
 즉 이 영역은 운영 문서를 넘어
@@ -238,7 +238,7 @@ sequenceDiagram
 - 관리자 화면도 결국 제품의 일부라서 성능 검증이 필요하다
 - write-time 설계와 read-time 설계는 별개로 최적화해야 한다
 
-이 단계까지 오면 감사 로그는 더 이상 부가 기능이 아닙니다.  
+이 단계까지 오면 감사 로그는 더 이상 부가 기능이 아닙니다.
 서비스 운영을 설명하는 중심 축이 됩니다.
 
 ## 9. 취업 포인트

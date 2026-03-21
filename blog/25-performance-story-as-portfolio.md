@@ -9,7 +9,7 @@
 - 캐시부터 붙이면 되는 건가?
 - 면접에서는 어떤 순서로 말해야 하지?
 
-Kindergarten ERP는 성능 개선을 단순 최적화 작업이 아니라  
+Kindergarten ERP는 성능 개선을 단순 최적화 작업이 아니라
 **포트폴리오 스토리**로 만들기 위해 별도 문서와 테스트 체계를 쌓았습니다.
 
 핵심 메시지는 한 문장입니다.
@@ -28,19 +28,19 @@ Kindergarten ERP는 성능 개선을 단순 최적화 작업이 아니라
 4. 개선
 5. 개선 후 재측정
 
-이 흐름이 없으면  
+이 흐름이 없으면
 Redis, 인덱스, 캐시 같은 기술을 많이 써도 설득력이 떨어집니다.
 
 ### 2-2. 평균보다 상위 지연이 중요할 때가 많다
 
-사용자는 “항상 느리다”보다  
+사용자는 “항상 느리다”보다
 “가끔 버벅인다”를 더 많이 느낍니다.
 
 그래서 p95, p99, query count 같은 지표가 중요합니다.
 
 ### 2-3. 성능 문서도 SSOT가 필요하다
 
-이 프로젝트는 성능 관련 문서를 코드와 분리하지 않고  
+이 프로젝트는 성능 관련 문서를 코드와 분리하지 않고
 `docs/portfolio/performance`에 모아 포트폴리오 서사로 정리했습니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -82,7 +82,7 @@ flowchart TD
 
 ### 5-1. `NotepadPerformanceStoryTest`: N+1 제거를 숫자로 증명
 
-[NotepadPerformanceStoryTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/performance/NotepadPerformanceStoryTest.java)의 핵심 메서드는 아래입니다.
+[NotepadPerformanceStoryTest.java](../src/test/java/com/erp/performance/NotepadPerformanceStoryTest.java)의 핵심 메서드는 아래입니다.
 
 - `compareLegacyVsOptimizedReadCountFlow()`
 - `prepareNotepads(...)`
@@ -96,12 +96,12 @@ flowchart TD
 
 을 각각 실행하고 Hibernate statistics로 query count를 셉니다.
 
-즉 “N+1 없앴다”는 말을 감이 아니라  
+즉 “N+1 없앴다”는 말을 감이 아니라
 **레거시 경로와 비교한 숫자**로 보여줍니다.
 
 ### 5-2. `DashboardPerformanceStoryTest`: 집계 쿼리와 캐시 무효화를 함께 본다
 
-[DashboardPerformanceStoryTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/performance/DashboardPerformanceStoryTest.java)의 핵심 메서드는 아래입니다.
+[DashboardPerformanceStoryTest.java](../src/test/java/com/erp/performance/DashboardPerformanceStoryTest.java)의 핵심 메서드는 아래입니다.
 
 - `compareLegacyVsOptimizedDashboardStatistics()`
 - `dashboardCacheHit_ReducesQueries()`
@@ -128,15 +128,15 @@ flowchart TD
 4. 액션 실행
 5. elapsed / query count 수집
 
-초보자가 꼭 배울 점은  
+초보자가 꼭 배울 점은
 측정 코드도 재현 가능해야 한다는 점입니다.
 
-한 번 빨랐다는 경험담보다  
+한 번 빨랐다는 경험담보다
 같은 함수로 반복 측정 가능한 구조가 훨씬 좋습니다.
 
 ### 5-4. 성능 문서 폴더 자체가 포트폴리오다
 
-[docs/portfolio/performance/README.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/performance/README.md)는  
+[docs/portfolio/performance/README.md](../docs/portfolio/performance/README.md)는
 성능 스토리의 원칙을 정의합니다.
 
 특히 아래 순서를 고정한 점이 중요합니다.
@@ -150,15 +150,15 @@ flowchart TD
 
 이 철학 아래에서
 
-- [03-notepad-readcount-nplusone.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/performance/03-notepad-readcount-nplusone.md)
-- [04-dashboard-stats.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/performance/04-dashboard-stats.md)
-- [05-index-tuning-dashboard-notepad.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/performance/05-index-tuning-dashboard-notepad.md)
+- [03-notepad-readcount-nplusone.md](../docs/portfolio/performance/03-notepad-readcount-nplusone.md)
+- [04-dashboard-stats.md](../docs/portfolio/performance/04-dashboard-stats.md)
+- [05-index-tuning-dashboard-notepad.md](../docs/portfolio/performance/05-index-tuning-dashboard-notepad.md)
 
 이 단계별로 이어집니다.
 
 ### 5-5. `20-performance-story-script.md`: 면접용 답변도 미리 설계한다
 
-[20-performance-story-script.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/performance/20-performance-story-script.md)는  
+[20-performance-story-script.md](../docs/portfolio/performance/20-performance-story-script.md)는
 기술 설명이 아니라 실제 답변 스크립트입니다.
 
 예를 들어 아래 숫자를 한 흐름으로 정리합니다.
@@ -175,7 +175,7 @@ flowchart TD
 - 코드와 테스트가 어떤 문서를 뒷받침하는지 연결
 - 면접 직전에 볼 1장 요약본 제공
 
-즉 성능 개선도 “코드만 잘 짠다”로 끝내지 않고  
+즉 성능 개선도 “코드만 잘 짠다”로 끝내지 않고
 증거 구조까지 정리했습니다.
 
 ## 6. 실제 흐름
@@ -197,9 +197,9 @@ sequenceDiagram
 
 대표 테스트는 아래입니다.
 
-- [NotepadPerformanceStoryTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/performance/NotepadPerformanceStoryTest.java)
+- [NotepadPerformanceStoryTest.java](../src/test/java/com/erp/performance/NotepadPerformanceStoryTest.java)
   - N+1 제거 증명
-- [DashboardPerformanceStoryTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/performance/DashboardPerformanceStoryTest.java)
+- [DashboardPerformanceStoryTest.java](../src/test/java/com/erp/performance/DashboardPerformanceStoryTest.java)
   - 집계 쿼리, 캐시, 무효화, 인덱스 효과 검증
 
 그리고 문서 쪽에서는
@@ -211,7 +211,7 @@ sequenceDiagram
 
 까지 이어져 있습니다.
 
-즉 성능은 “테스트만 있음”도 아니고 “문서만 있음”도 아닙니다.  
+즉 성능은 “테스트만 있음”도 아니고 “문서만 있음”도 아닙니다.
 둘이 함께 있어야 포트폴리오가 됩니다.
 
 ## 8. 회고

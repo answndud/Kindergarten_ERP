@@ -51,6 +51,7 @@
 | 2026-03-20 23:39 | DONE | `blog/README.md`, `BLOG_PLAN.md`, `blog/01-why-kindergarten-erp-domain.md`, `blog/00_rebuild_guide.md`, `blog/_rebuild_template.md`, `blog/06`, `blog/10`, `blog/22`, `blog/23`, `blog/24`, `blog/26`, `docs/portfolio/demo/*`를 수정했다. 독자용/작성자용 시작 순서 분리, 01편 축약, 10편 역할 재정의, 데모 계정/클릭 순서 보강, 산출물 체크리스트 추가 방향을 반영했다 | checkpoint script 추가 및 검증 실행 |
 | 2026-03-20 23:46 | DONE | `blog/scripts/checkpoint-06.sh`, `checkpoint-10.sh`, `checkpoint-22.sh`, `checkpoint-23.sh`, `checkpoint-24.sh`, `checkpoint-26.sh`를 추가했다. 최종 저장소 기준 통합 스위트와 별개로 각 글 단계의 산출물을 경량 검증하는 스크립트다 | 스크립트 문법/실행 검증 후 add/commit/push |
 | 2026-03-20 23:55 | DONE | `bash -n blog/scripts/checkpoint-*.sh`, `./gradlew compileJava compileTestJava`, `./blog/scripts/checkpoint-06.sh`, `./blog/scripts/checkpoint-10.sh`, `./blog/scripts/checkpoint-22.sh`, `./blog/scripts/checkpoint-23.sh`, `./blog/scripts/checkpoint-24.sh`, `./blog/scripts/checkpoint-26.sh`, `git diff --check`를 통과시켰다 | add/commit/push |
+| 2026-03-21 00:07 | DONE | `blog/*.md`, `BLOG_PLAN.md`, `docs/portfolio/*`를 재검토하고 절대경로 Markdown 링크를 repo-relative 링크로 일괄 변환했다. 이제 GitHub 저장소 안에서 블로그와 포트폴리오 문서 링크가 바로 열리도록 정리됐다 | 링크 정책 문구와 포맷 검사 갱신 후 add/commit/push |
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`

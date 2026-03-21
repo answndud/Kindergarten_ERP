@@ -2,7 +2,7 @@
 
 ## 1. 이번 글에서 풀 문제
 
-좋은 프로젝트를 만드는 것과  
+좋은 프로젝트를 만드는 것과
 좋은 프로젝트를 **보여 주는 것**은 다릅니다.
 
 실제로 취업 준비에서는 아래 문제가 자주 생깁니다.
@@ -12,7 +12,7 @@
 - 아키텍처 설명이 길어지고 산만해진다
 - 면접 질문에 답할 때 자료가 흩어져 있다
 
-Kindergarten ERP는 마지막 단계에서 이 문제를  
+Kindergarten ERP는 마지막 단계에서 이 문제를
 별도 문서 패키지로 정리했습니다.
 
 - demo profile
@@ -21,7 +21,7 @@ Kindergarten ERP는 마지막 단계에서 이 문제를
 - hiring pack
 - interview one pager / Q&A
 
-즉 프로젝트를 **개발**하는 단계에서 끝내지 않고,  
+즉 프로젝트를 **개발**하는 단계에서 끝내지 않고,
 **전달 가능한 포트폴리오**로 마무리했습니다.
 
 ## 2. 먼저 알아둘 개념
@@ -38,12 +38,12 @@ Kindergarten ERP는 마지막 단계에서 이 문제를
 
 ### 2-2. 아키텍처 문서는 길게 쓰는 것보다 진입점이 중요하다
 
-면접관이 모든 phase 문서를 순서대로 읽지는 않습니다.  
+면접관이 모든 phase 문서를 순서대로 읽지는 않습니다.
 그래서 “지금 이 프로젝트를 5분 안에 이해하려면 무엇부터 읽어야 하는가”를 설계해야 합니다.
 
 ### 2-3. 포트폴리오 문서도 SSOT가 필요하다
 
-문서가 많을수록 오히려 혼란이 생길 수 있습니다.  
+문서가 많을수록 오히려 혼란이 생길 수 있습니다.
 그래서 active 문서 묶음이 필요합니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -86,22 +86,22 @@ flowchart TD
 
 ### 5-1. `application-demo.yml`: 데모 전용 시작점을 만든다
 
-[application-demo.yml](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/application-demo.yml)은  
+[application-demo.yml](../src/main/resources/application-demo.yml)은
 아주 크지 않은 파일이지만 역할이 중요합니다.
 
-여기서 데모 모드에 필요한 설정을 분리해  
+여기서 데모 모드에 필요한 설정을 분리해
 아래 실행 명령을 고정합니다.
 
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=demo'
 ```
 
-즉 면접 시연 시작점을  
+즉 면접 시연 시작점을
 개발용 `local`과 구분된 하나의 이름으로 만들었습니다.
 
 ### 5-2. `DataLoader`: 데모를 위한 실제 데이터 준비
 
-[DataLoader.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/DataLoader.java)는  
+[DataLoader.java](../src/main/java/com/erp/global/config/DataLoader.java)는
 `local` profile에서 시드 데이터를 넣습니다.
 
 `demo` profile은 `local` 그룹을 포함하므로, 실제 시연에서도 같은 시드 데이터를 그대로 사용합니다.
@@ -118,7 +118,7 @@ flowchart TD
 - `createAnnouncement(...)`
 - `createAuthAuditLog(...)`
 
-초보자가 꼭 봐야 할 점은  
+초보자가 꼭 봐야 할 점은
 더미 데이터도 그냥 무작위가 아니라 **시연 시나리오를 위해 설계된 데이터**라는 점입니다.
 
 예를 들어 이 시드 데이터는 아래를 바로 보여줄 수 있게 돕습니다.
@@ -134,12 +134,12 @@ flowchart TD
 - teacher: `teacher1@test.com / test1234!`
 - parent: `parent1@test.com / test1234!`
 
-즉 demo 데이터는 테스트 편의가 아니라  
+즉 demo 데이터는 테스트 편의가 아니라
 프로젝트 설명력을 위한 자산입니다.
 
 ### 5-3. `demo-preflight.md`: 시연 직전 체크리스트
 
-[demo-preflight.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/demo/demo-preflight.md)는  
+[demo-preflight.md](../docs/portfolio/demo/demo-preflight.md)는
 시연 직전에 확인해야 할 것을 정리합니다.
 
 - Docker 실행 여부
@@ -149,12 +149,12 @@ flowchart TD
 - 반드시 확인할 데이터
 - 실패 시 백업 플랜
 
-이 문서가 중요한 이유는  
+이 문서가 중요한 이유는
 시연 실패 확률을 줄여 주기 때문입니다.
 
 ### 5-4. `demo-runbook.md`: 실제 5분 시연 순서를 고정한다
 
-[demo-runbook.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/demo/demo-runbook.md)는  
+[demo-runbook.md](../docs/portfolio/demo/demo-runbook.md)는
 아래 순서를 제안합니다.
 
 1. Swagger/OpenAPI
@@ -169,7 +169,7 @@ flowchart TD
 
 ### 5-5. `system-architecture.md`: 현재 프로젝트를 한 장으로 설명하는 SSOT
 
-[system-architecture.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/architecture/system-architecture.md)는  
+[system-architecture.md](../docs/portfolio/architecture/system-architecture.md)는
 이 프로젝트의 현재 아키텍처를 압축한 문서입니다.
 
 여기서 특히 좋은 점은
@@ -187,7 +187,7 @@ flowchart TD
 
 ### 5-6. `backend-hiring-pack.md`: 채용 담당자를 위한 시작 문서
 
-[backend-hiring-pack.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/hiring-pack/backend-hiring-pack.md)는  
+[backend-hiring-pack.md](../docs/portfolio/hiring-pack/backend-hiring-pack.md)는
 “이 프로젝트를 왜 봐야 하는가”부터 시작합니다.
 
 그리고 아래 문서 순서를 안내합니다.
@@ -198,15 +198,15 @@ flowchart TD
 4. auth incident case study
 5. interview one pager
 
-이 문서가 중요한 이유는  
+이 문서가 중요한 이유는
 문서가 많아졌을 때 **읽는 순서 자체를 설계**했기 때문입니다.
 
 ### 5-7. `interview_one_pager`와 `interview_qa_script`
 
-[interview_one_pager.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/interview/interview_one_pager.md)는  
+[interview_one_pager.md](../docs/portfolio/interview/interview_one_pager.md)는
 핵심 역량을 한 장으로 압축합니다.
 
-[interview_qa_script.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/interview/interview_qa_script.md)는  
+[interview_qa_script.md](../docs/portfolio/interview/interview_qa_script.md)는
 예상 질문에 대한 짧은 답변과 꼬리 질문 포인트를 정리합니다.
 
 즉,
@@ -218,10 +218,10 @@ flowchart TD
 
 ### 5-8. `auth-incident-response.md`: 대표 사례 하나를 깊게 설명한다
 
-[auth-incident-response.md](/Users/alex/project/kindergarten_ERP/erp/docs/portfolio/case-studies/auth-incident-response.md)는  
+[auth-incident-response.md](../docs/portfolio/case-studies/auth-incident-response.md)는
 보안 사건 하나를 케이스 스터디로 묶습니다.
 
-이 문서가 좋은 이유는  
+이 문서가 좋은 이유는
 여러 기능을 흩어 설명하지 않고,
 
 - 로그인 실패 기록
@@ -250,7 +250,7 @@ sequenceDiagram
 
 ## 7. 테스트로 검증하기
 
-이 글은 직접적인 단위 테스트보다  
+이 글은 직접적인 단위 테스트보다
 “문서와 실행 환경이 실제 코드와 맞는가”를 중요하게 봅니다.
 
 그래도 코드 근거는 분명합니다.
@@ -261,7 +261,7 @@ sequenceDiagram
 - audit console 경로
 - health/readiness 경로
 
-즉 문서가 코드와 동떨어진 슬라이드가 아니라  
+즉 문서가 코드와 동떨어진 슬라이드가 아니라
 실행 가능한 시스템 위에 서 있습니다.
 
 ## 8. 회고
@@ -279,7 +279,7 @@ sequenceDiagram
 - 어떤 문서를 먼저 읽게 할 것인가
 - 어떤 질문에 어떻게 답할 것인가
 
-이 단계까지 가야 비로소  
+이 단계까지 가야 비로소
 프로젝트가 “개발 결과물”에서 “전달 가능한 포트폴리오”로 바뀝니다.
 
 ## 9. 취업 포인트

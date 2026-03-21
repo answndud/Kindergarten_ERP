@@ -14,7 +14,7 @@ Kindergarten ERP는 이 문제를 아래 세 축으로 풀었습니다.
 - `JwtFilter`
 - `AuthService`
 
-이번 글은 “JWT를 붙였다”가 아니라  
+이번 글은 “JWT를 붙였다”가 아니라
 **쿠키 기반 JWT 인증 흐름을 실제 요청 사이클에 연결하는 방법**을 설명합니다.
 
 ## 2. 먼저 알아둘 개념
@@ -28,7 +28,7 @@ Kindergarten ERP는 이 문제를 아래 세 축으로 풀었습니다.
 
 ### 2-2. Authentication
 
-Spring Security는 단순 토큰 문자열이 아니라  
+Spring Security는 단순 토큰 문자열이 아니라
 `Authentication` 객체가 `SecurityContext`에 들어 있어야 “로그인된 사용자”로 인식합니다.
 
 즉, 토큰을 읽어 `Authentication`으로 바꾸는 단계가 필요합니다.
@@ -37,7 +37,7 @@ Spring Security는 단순 토큰 문자열이 아니라
 
 이 프로젝트는 JWT를 `Authorization` 헤더 대신 쿠키에 담습니다.
 
-장점은 브라우저 기반 앱에서 관리가 편하다는 점이고,  
+장점은 브라우저 기반 앱에서 관리가 편하다는 점이고,
 단점은 CSRF와 쿠키 보안 옵션을 더 신경 써야 한다는 점입니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -75,7 +75,7 @@ flowchart TD
 
 ### 5-1. `JwtTokenProvider`: 토큰 생성과 파싱을 전담한다
 
-[JwtTokenProvider.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/jwt/JwtTokenProvider.java)의 핵심 메서드는 아래입니다.
+[JwtTokenProvider.java](../src/main/java/com/erp/global/security/jwt/JwtTokenProvider.java)의 핵심 메서드는 아래입니다.
 
 - `createAccessToken(...)`
 - `createRefreshToken(...)`
@@ -99,12 +99,12 @@ flowchart TD
 - `tokenType`
 - `jti`
 
-즉, 단순히 “누구인지”만이 아니라  
+즉, 단순히 “누구인지”만이 아니라
 나중에 세션 레지스트리, rotation, revoke와 연결할 수 있는 정보를 같이 넣었습니다.
 
 ### 5-3. `AuthService.login()`: 로그인 성공 후 토큰을 발급한다
 
-[AuthService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthService.java)의 핵심 메서드는 아래입니다.
+[AuthService.java](../src/main/java/com/erp/domain/auth/service/AuthService.java)의 핵심 메서드는 아래입니다.
 
 - `login(...)`
 - `issueTokens(...)`
@@ -124,7 +124,7 @@ flowchart TD
 
 ### 5-4. `JwtFilter`: 요청마다 쿠키를 읽어 인증으로 복원한다
 
-[JwtFilter.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/jwt/JwtFilter.java)의 핵심 메서드는 아래입니다.
+[JwtFilter.java](../src/main/java/com/erp/global/security/jwt/JwtFilter.java)의 핵심 메서드는 아래입니다.
 
 - `doFilter(...)`
 - `resolveToken(...)`
@@ -169,7 +169,7 @@ sequenceDiagram
 - 인증되지 않은 요청은 `401` 공통 포맷
 - refresh 흐름 회귀 검증
 
-또한 [phase17_jwt_refresh_session_rotation.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase17_jwt_refresh_session_rotation.md)에서
+또한 [phase17_jwt_refresh_session_rotation.md](../docs/decisions/phase17_jwt_refresh_session_rotation.md)에서
 이 JWT 구조가 이후 세션 레지스트리와 어떻게 연결되는지도 설명합니다.
 
 ## 8. 회고

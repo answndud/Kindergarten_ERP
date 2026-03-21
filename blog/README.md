@@ -13,21 +13,21 @@
 
 ## 블로그 작업 SSOT
 
-- [BLOG_PLAN.md](/Users/alex/project/kindergarten_ERP/erp/BLOG_PLAN.md)
+- [BLOG_PLAN.md](../BLOG_PLAN.md)
   - 블로그 시리즈 전체 계획
   - 집필 순서와 범위
-- [BLOG_PROGRESS.md](/Users/alex/project/kindergarten_ERP/erp/BLOG_PROGRESS.md)
+- [BLOG_PROGRESS.md](../BLOG_PROGRESS.md)
   - 블로그 작업 진행 로그
-- [blog/00_rebuild_guide.md](/Users/alex/project/kindergarten_ERP/erp/blog/00_rebuild_guide.md)
+- [blog/00_rebuild_guide.md](./00_rebuild_guide.md)
   - 블로그를 재현형 구현 가이드로 강화하는 공통 규칙
 
-기존 [PLAN.md](/Users/alex/project/kindergarten_ERP/erp/PLAN.md), [PROGRESS.md](/Users/alex/project/kindergarten_ERP/erp/PROGRESS.md)는 **애플리케이션 개발 작업용 SSOT**로 유지합니다.
+기존 [PLAN.md](../PLAN.md), [PROGRESS.md](../PROGRESS.md)는 **애플리케이션 개발 작업용 SSOT**로 유지합니다.
 
 ## 링크 정책
 
-- 이 `blog/` 작업 공간판은 Codex/로컬 워크스페이스에서 바로 열 수 있게 **절대경로 링크**를 사용합니다.
-- 공개 블로그로 옮길 때는 repo-relative 링크나 GitHub permalink로 변환해야 합니다.
-- 즉, 현재 문서는 `집필/검수용 원본`, 공개 플랫폼 글은 `배포용 변환본`이라고 보면 됩니다.
+- `blog/`와 이 시리즈가 직접 참조하는 `docs/portfolio/*` 문서는 **repo-relative 링크**로 정리돼 있습니다.
+- 따라서 GitHub 저장소 안에서는 바로 읽을 수 있습니다.
+- 다만 Velog, Notion 같은 외부 플랫폼으로 옮길 때는 GitHub permalink처럼 절대 URL 체계로 한 번 더 변환해야 합니다.
 
 ## 이 폴더의 역할
 
@@ -69,56 +69,56 @@
 
 ### Part A. 문제 정의
 
-1. [왜 유치원 ERP를 주제로 잡았는가](/Users/alex/project/kindergarten_ERP/erp/blog/01-why-kindergarten-erp-domain.md)
+1. [왜 유치원 ERP를 주제로 잡았는가](./01-why-kindergarten-erp-domain.md)
 
 ### Part B. 부트스트랩과 공통 설정
 
-2. [Gradle과 Spring Boot 뼈대 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/02-gradle-spring-boot-bootstrap.md)
-3. [Docker로 MySQL / Redis 개발 환경 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/03-docker-mysql-redis-dev-environment.md)
-4. [application.yml과 profile 전략 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/04-application-yml-and-profile-strategy.md)
-5. [JPA / Flyway / QueryDSL / Redis / Cache 공통 기반 잡기](/Users/alex/project/kindergarten_ERP/erp/blog/05-jpa-flyway-querydsl-redis-cache-foundation.md)
-6. [global / domain 패키지 구조를 어떻게 잡았는가](/Users/alex/project/kindergarten_ERP/erp/blog/06-global-and-domain-package-structure.md)
+2. [Gradle과 Spring Boot 뼈대 만들기](./02-gradle-spring-boot-bootstrap.md)
+3. [Docker로 MySQL / Redis 개발 환경 만들기](./03-docker-mysql-redis-dev-environment.md)
+4. [application.yml과 profile 전략 설계하기](./04-application-yml-and-profile-strategy.md)
+5. [JPA / Flyway / QueryDSL / Redis / Cache 공통 기반 잡기](./05-jpa-flyway-querydsl-redis-cache-foundation.md)
+6. [global / domain 패키지 구조를 어떻게 잡았는가](./06-global-and-domain-package-structure.md)
 
 ### Part C. 핵심 도메인 만들기
 
-7. [Member, Kindergarten, Classroom으로 첫 관계 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/07-member-kindergarten-classroom-modeling.md)
-8. [Kid, ParentKid, Attendance로 첫 업무 Aggregate 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/08-kid-parentkid-attendance-aggregate.md)
-9. [알림장, 공지, 알림으로 기능 확장하기](/Users/alex/project/kindergarten_ERP/erp/blog/09-notepad-announcement-notification-expansion.md)
-10. [일정, 대시보드, 신청 도메인으로 조회와 상태 전이를 넓히기](/Users/alex/project/kindergarten_ERP/erp/blog/10-calendar-dashboard-and-application-workflows.md)
+7. [Member, Kindergarten, Classroom으로 첫 관계 만들기](./07-member-kindergarten-classroom-modeling.md)
+8. [Kid, ParentKid, Attendance로 첫 업무 Aggregate 만들기](./08-kid-parentkid-attendance-aggregate.md)
+9. [알림장, 공지, 알림으로 기능 확장하기](./09-notepad-announcement-notification-expansion.md)
+10. [일정, 대시보드, 신청 도메인으로 조회와 상태 전이를 넓히기](./10-calendar-dashboard-and-application-workflows.md)
 
 ### Part D. 인증과 보안
 
-11. [SecurityConfig와 회원가입/로그인 기본 흐름 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/11-securityconfig-signup-login-basics.md)
-12. [JwtTokenProvider, JwtFilter, AuthService로 쿠키 JWT 연결하기](/Users/alex/project/kindergarten_ERP/erp/blog/12-jwt-cookie-auth-flow.md)
-13. [멀티테넌시 보안 문제를 어떻게 발견하고 고쳤는가](/Users/alex/project/kindergarten_ERP/erp/blog/13-multitenant-access-hardening.md)
+11. [SecurityConfig와 회원가입/로그인 기본 흐름 만들기](./11-securityconfig-signup-login-basics.md)
+12. [JwtTokenProvider, JwtFilter, AuthService로 쿠키 JWT 연결하기](./12-jwt-cookie-auth-flow.md)
+13. [멀티테넌시 보안 문제를 어떻게 발견하고 고쳤는가](./13-multitenant-access-hardening.md)
 
 ### Part E. 테스트와 CI
 
-14. [왜 H2가 아니라 Testcontainers였는가](/Users/alex/project/kindergarten_ERP/erp/blog/14-why-testcontainers-over-h2.md)
-15. [GitHub Actions와 태그 기반 테스트 스위트 분리](/Users/alex/project/kindergarten_ERP/erp/blog/15-github-actions-and-tagged-test-suites.md)
+14. [왜 H2가 아니라 Testcontainers였는가](./14-why-testcontainers-over-h2.md)
+15. [GitHub Actions와 태그 기반 테스트 스위트 분리](./15-github-actions-and-tagged-test-suites.md)
 
 ### Part F. 인증을 운영형으로 발전시키기
 
-16. [Refresh rotation과 활성 세션 제어](/Users/alex/project/kindergarten_ERP/erp/blog/16-refresh-rotation-and-active-session-control.md)
-17. [Rate limit과 Client IP 신뢰 모델](/Users/alex/project/kindergarten_ERP/erp/blog/17-rate-limit-and-client-ip-trust-model.md)
-18. [OAuth2와 소셜 계정 lifecycle을 안전하게 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/18-oauth2-social-account-lifecycle.md)
+16. [Refresh rotation과 활성 세션 제어](./16-refresh-rotation-and-active-session-control.md)
+17. [Rate limit과 Client IP 신뢰 모델](./17-rate-limit-and-client-ip-trust-model.md)
+18. [OAuth2와 소셜 계정 lifecycle을 안전하게 설계하기](./18-oauth2-social-account-lifecycle.md)
 
 ### Part G. 운영성, 감사 추적, 장애 대응
 
-19. [인증 감사 로그와 원장용 운영 콘솔 만들기](/Users/alex/project/kindergarten_ERP/erp/blog/19-auth-audit-log-and-operations-console.md)
-20. [OpenAPI, 관리면, 관측성을 한 번에 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/20-openapi-management-plane-and-observability.md)
-21. [알림 전달을 Outbox, Retry, Dead-letter로 바꾸기](/Users/alex/project/kindergarten_ERP/erp/blog/21-notification-outbox-and-incident-channel.md)
+19. [인증 감사 로그와 원장용 운영 콘솔 만들기](./19-auth-audit-log-and-operations-console.md)
+20. [OpenAPI, 관리면, 관측성을 한 번에 설계하기](./20-openapi-management-plane-and-observability.md)
+21. [알림 전달을 Outbox, Retry, Dead-letter로 바꾸기](./21-notification-outbox-and-incident-channel.md)
 
 ### Part H. 운영형 워크플로우
 
-22. [반 정원, 대기열, 입학 제안 워크플로우 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/22-classroom-capacity-and-waitlist-workflow.md)
-23. [출결 변경 요청과 업무 감사 로그를 함께 설계하기](/Users/alex/project/kindergarten_ERP/erp/blog/23-attendance-change-request-and-domain-audit.md)
-24. [감사 로그를 운영 도구로 키우기](/Users/alex/project/kindergarten_ERP/erp/blog/24-audit-logs-as-operations-tools.md)
+22. [반 정원, 대기열, 입학 제안 워크플로우 설계하기](./22-classroom-capacity-and-waitlist-workflow.md)
+23. [출결 변경 요청과 업무 감사 로그를 함께 설계하기](./23-attendance-change-request-and-domain-audit.md)
+24. [감사 로그를 운영 도구로 키우기](./24-audit-logs-as-operations-tools.md)
 
 ### Part I. 성능과 포트폴리오 마감
 
-25. [성능 개선을 코드가 아니라 스토리로 설명하는 방법](/Users/alex/project/kindergarten_ERP/erp/blog/25-performance-story-as-portfolio.md)
-26. [데모, 아키텍처, 면접 패키지까지 묶어 프로젝트를 완성하기](/Users/alex/project/kindergarten_ERP/erp/blog/26-demo-architecture-and-interview-pack.md)
+25. [성능 개선을 코드가 아니라 스토리로 설명하는 방법](./25-performance-story-as-portfolio.md)
+26. [데모, 아키텍처, 면접 패키지까지 묶어 프로젝트를 완성하기](./26-demo-architecture-and-interview-pack.md)
 
 ## 독자용 시작 순서
 

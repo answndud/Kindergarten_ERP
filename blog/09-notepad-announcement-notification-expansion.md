@@ -49,7 +49,7 @@
 
 ### 2-3. Soft Delete와 읽음 처리
 
-사용자 알림은 보통 바로 물리 삭제하지 않고 soft delete를 사용합니다.  
+사용자 알림은 보통 바로 물리 삭제하지 않고 soft delete를 사용합니다.
 또한 읽음 여부는 개별 사용자 상태로 관리해야 합니다.
 
 ## 3. 이번 글에서 다룰 파일
@@ -93,7 +93,7 @@ flowchart TD
 
 ### 5-1. `Notepad`: 전체/반/원생 범위를 가진 알림장
 
-[Notepad.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notepad/entity/Notepad.java)의 핵심은 범위 분기입니다.
+[Notepad.java](../src/main/java/com/erp/domain/notepad/entity/Notepad.java)의 핵심은 범위 분기입니다.
 
 생성 메서드는 아래 세 개입니다.
 
@@ -111,7 +111,7 @@ flowchart TD
 
 ### 5-2. `NotepadService`: 생성과 알림 fan-out을 같이 다룬다
 
-[NotepadService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notepad/service/NotepadService.java)의 핵심 메서드는 아래입니다.
+[NotepadService.java](../src/main/java/com/erp/domain/notepad/service/NotepadService.java)의 핵심 메서드는 아래입니다.
 
 - `createClassroomNotepad(...)`
 - `createGlobalNotepad(...)`
@@ -130,7 +130,7 @@ flowchart TD
 
 ### 5-3. `Announcement`: 유치원 전체 공지와 중요 공지
 
-[Announcement.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/announcement/entity/Announcement.java)의 핵심 생성 메서드는 아래입니다.
+[Announcement.java](../src/main/java/com/erp/domain/announcement/entity/Announcement.java)의 핵심 생성 메서드는 아래입니다.
 
 - `create(...)`
 - `createImportant(...)`
@@ -153,7 +153,7 @@ flowchart TD
 
 ### 5-4. `AnnouncementService`: 공지 작성이 대시보드와 감사 로그까지 연결된다
 
-[AnnouncementService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/announcement/service/AnnouncementService.java)의 핵심 메서드는 아래입니다.
+[AnnouncementService.java](../src/main/java/com/erp/domain/announcement/service/AnnouncementService.java)의 핵심 메서드는 아래입니다.
 
 - `createAnnouncement(...)`
 - `getAnnouncement(...)`
@@ -176,7 +176,7 @@ flowchart TD
 
 ### 5-5. `Notification`: 수신자 중심의 이벤트 박스
 
-[Notification.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/entity/Notification.java)의 핵심 생성 메서드는 아래입니다.
+[Notification.java](../src/main/java/com/erp/domain/notification/entity/Notification.java)의 핵심 생성 메서드는 아래입니다.
 
 - `create(...)`
 - `createWithRelatedEntity(...)`
@@ -192,7 +192,7 @@ flowchart TD
 
 ### 5-6. `NotificationService`: 내부 이벤트를 사용자 알림으로 바꾸는 계층
 
-[NotificationService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/service/NotificationService.java)의 핵심 메서드는 아래입니다.
+[NotificationService.java](../src/main/java/com/erp/domain/notification/service/NotificationService.java)의 핵심 메서드는 아래입니다.
 
 - `notify(...)`
 - `notifyWithLink(...)`
@@ -201,7 +201,7 @@ flowchart TD
 - `markAsRead(...)`
 - `delete(...)`
 
-즉, 다른 도메인이 직접 알림 엔티티를 만지지 않고  
+즉, 다른 도메인이 직접 알림 엔티티를 만지지 않고
 NotificationService를 통해 사용자 알림으로 변환됩니다.
 
 ## 6. 실제 흐름
@@ -234,11 +234,11 @@ sequenceDiagram
 
 그리고 설계 의도는 아래 결정 로그에 남아 있습니다.
 
-- [phase05_notepad.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase05_notepad.md)
-- [phase06_announcement.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase06_announcement.md)
-- [phase08_notification.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase08_notification.md)
+- [phase05_notepad.md](../docs/decisions/phase05_notepad.md)
+- [phase06_announcement.md](../docs/decisions/phase06_announcement.md)
+- [phase08_notification.md](../docs/decisions/phase08_notification.md)
 
-즉, 알림장/공지/알림이 단순 CRUD가 아니라  
+즉, 알림장/공지/알림이 단순 CRUD가 아니라
 실제 사용자 소통 흐름으로 검증되고 있습니다.
 
 ## 8. 회고

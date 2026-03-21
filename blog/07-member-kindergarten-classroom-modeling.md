@@ -19,7 +19,7 @@
 - 반은 반드시 유치원에 속한다
 - 반에는 담임 교사가 배정될 수 있다
 
-즉, 이 세 엔티티는 단순 마스터 데이터가 아니라  
+즉, 이 세 엔티티는 단순 마스터 데이터가 아니라
 **권한과 운영 흐름의 뼈대**입니다.
 
 ## 2. 먼저 알아둘 개념
@@ -87,7 +87,7 @@ flowchart TD
 
 ### 5-1. `Member`: 이 프로젝트의 모든 사용자 시작점
 
-[Member.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/member/entity/Member.java)의 핵심 필드는 아래입니다.
+[Member.java](../src/main/java/com/erp/domain/member/entity/Member.java)의 핵심 필드는 아래입니다.
 
 - `email`
 - `password`
@@ -113,12 +113,12 @@ flowchart TD
 - `markPending()`
 - `withdraw()`
 
-즉, `Member`는 단순 회원 테이블이 아니라  
+즉, `Member`는 단순 회원 테이블이 아니라
 인증 방식, 역할, 상태, 소속을 함께 관리하는 중심 엔티티입니다.
 
 ### 5-2. `Kindergarten`: 소속과 경계를 만드는 엔티티
 
-[Kindergarten.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/kindergarten/entity/Kindergarten.java)는
+[Kindergarten.java](../src/main/java/com/erp/domain/kindergarten/entity/Kindergarten.java)는
 
 - `name`
 - `address`
@@ -133,15 +133,15 @@ flowchart TD
 - `create(...)`
 - `update(...)`
 
-언뜻 단순해 보이지만, 이 엔티티가 중요한 이유는  
+언뜻 단순해 보이지만, 이 엔티티가 중요한 이유는
 이후 거의 모든 접근 제어가 “같은 유치원 소속인가?” 기준으로 흘러가기 때문입니다.
 
-즉, `Kindergarten`은 단순 마스터 데이터가 아니라  
+즉, `Kindergarten`은 단순 마스터 데이터가 아니라
 **테넌트 경계의 기준 엔티티**입니다.
 
 ### 5-3. `Classroom`: 유치원과 교사를 묶는 단위
 
-[Classroom.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/classroom/entity/Classroom.java)의 핵심 필드는 아래입니다.
+[Classroom.java](../src/main/java/com/erp/domain/classroom/entity/Classroom.java)의 핵심 필드는 아래입니다.
 
 - `kindergarten`
 - `name`
@@ -209,12 +209,12 @@ sequenceDiagram
 
 즉, 도메인 모델이 실제 API 계약으로 바로 이어집니다.
 
-또한 최근에는 [phase41_admission_capacity_waitlist_workflow.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase41_admission_capacity_waitlist_workflow.md)에서
+또한 최근에는 [phase41_admission_capacity_waitlist_workflow.md](../docs/decisions/phase41_admission_capacity_waitlist_workflow.md)에서
 `Classroom.capacity`가 waitlist/offer 워크플로우와도 연결됐습니다.
 
 ## 8. 회고
 
-처음에는 `Classroom`에 정원이 없었습니다.  
+처음에는 `Classroom`에 정원이 없었습니다.
 하지만 프로젝트가 운영형 워크플로우로 커지면서 정원이 반드시 필요해졌습니다.
 
 이건 중요한 교훈입니다.
@@ -222,7 +222,7 @@ sequenceDiagram
 - 엔티티는 처음부터 완벽하지 않아도 된다
 - 하지만 확장될 방향을 막아 두면 나중에 더 힘들어진다
 
-`Classroom`이 유치원과 교사, 정원까지 함께 품고 있었기 때문에  
+`Classroom`이 유치원과 교사, 정원까지 함께 품고 있었기 때문에
 나중에 waitlist 기능을 붙이기 훨씬 쉬웠습니다.
 
 ## 9. 취업 포인트

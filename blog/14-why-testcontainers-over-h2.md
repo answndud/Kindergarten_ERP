@@ -20,12 +20,12 @@
 
 ### 2-1. Testcontainers
 
-Testcontainers는 테스트 실행 중 Docker 컨테이너를 띄워  
+Testcontainers는 테스트 실행 중 Docker 컨테이너를 띄워
 실제 인프라에 가까운 환경에서 검증하게 해 주는 도구입니다.
 
 ### 2-2. 운영과 닮은 테스트
 
-포트폴리오에서 중요한 것은 테스트 개수보다  
+포트폴리오에서 중요한 것은 테스트 개수보다
 “얼마나 믿을 수 있는 환경에서 검증했는가”입니다.
 
 ### 2-3. `Flyway + validate`
@@ -79,7 +79,7 @@ flowchart TD
 
 ### 5-2. `application-test.yml`: 테스트도 validate를 유지한다
 
-[application-test.yml](/Users/alex/project/kindergarten_ERP/erp/src/test/resources/application-test.yml)의 핵심은 아래입니다.
+[application-test.yml](../src/test/resources/application-test.yml)의 핵심은 아래입니다.
 
 - `spring.jpa.hibernate.ddl-auto=validate`
 - `spring.flyway.enabled=true`
@@ -88,7 +88,7 @@ flowchart TD
 
 ### 5-3. `TestcontainersSupport`: 동적 인프라 주입의 중심
 
-[TestcontainersSupport.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/common/TestcontainersSupport.java)의 핵심은 아래입니다.
+[TestcontainersSupport.java](../src/test/java/com/erp/common/TestcontainersSupport.java)의 핵심은 아래입니다.
 
 - `MYSQL`
 - `REDIS`
@@ -104,7 +104,7 @@ flowchart TD
 
 ### 5-4. `BaseIntegrationTest`: 통합 테스트 공통 기반
 
-[BaseIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/common/BaseIntegrationTest.java)는
+[BaseIntegrationTest.java](../src/test/java/com/erp/common/BaseIntegrationTest.java)는
 
 - 컨테이너 인프라 상속
 - 테스트 데이터 초기화
@@ -141,12 +141,12 @@ sequenceDiagram
 - `BaseIntegrationTest`
   - 모든 API 통합 테스트의 기반
 
-그리고 결정 로그인 [phase15_testcontainers_integration_test_stack.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase15_testcontainers_integration_test_stack.md)에
+그리고 결정 로그인 [phase15_testcontainers_integration_test_stack.md](../docs/decisions/phase15_testcontainers_integration_test_stack.md)에
 왜 H2를 버리고 이 구조로 갔는지 정리돼 있습니다.
 
 ## 8. 회고
 
-Testcontainers는 H2보다 느립니다.  
+Testcontainers는 H2보다 느립니다.
 하지만 이 프로젝트에서는 그 비용을 감수할 가치가 있었습니다.
 
 이유는 단순합니다.

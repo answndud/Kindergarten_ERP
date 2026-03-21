@@ -10,7 +10,7 @@ Spring Boot를 처음 공부할 때 데이터 접근 계층에서 가장 많이 
 - Cache는 성능 이슈가 생긴 뒤에 붙여도 되는 것 아닌가?
 - QueryDSL은 아직 복잡한 검색이 없는데 왜 초반에 넣었지?
 
-Kindergarten ERP 프로젝트는 이 질문을 “나중에 생각하자”로 미루지 않았습니다.  
+Kindergarten ERP 프로젝트는 이 질문을 “나중에 생각하자”로 미루지 않았습니다.
 오히려 초반에 공통 토대를 먼저 잡아 두고, 그 위에서 기능을 키우는 방식을 택했습니다.
 
 이번 글에서 설명할 핵심 결론은 이렇습니다.
@@ -60,7 +60,7 @@ Flyway는 SQL 파일 기반 DB 마이그레이션 도구입니다.
 
 ### 2-3. `ddl-auto=validate`
 
-`spring.jpa.hibernate.ddl-auto=validate`는  
+`spring.jpa.hibernate.ddl-auto=validate`는
 “JPA가 스키마를 직접 만들지는 말고, 현재 엔티티와 DB 스키마가 맞는지만 확인하라”는 뜻입니다.
 
 즉,
@@ -149,7 +149,7 @@ flowchart TD
 
 ### 4-1. JPA는 객체 상태와 연관관계에 집중한다
 
-예를 들어 [Member.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/member/entity/Member.java)나 [Attendance.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/attendance/entity/Attendance.java)는
+예를 들어 [Member.java](../src/main/java/com/erp/domain/member/entity/Member.java)나 [Attendance.java](../src/main/java/com/erp/domain/attendance/entity/Attendance.java)는
 
 - 어떤 필드가 필요한지
 - 어떤 연관관계가 있는지
@@ -173,10 +173,10 @@ flowchart TD
 
 ### 4-3. QueryDSL은 “지금보다 미래”를 위한 투자였다
 
-프로젝트 초반에는 복잡한 검색 조건이 많지 않았지만,  
+프로젝트 초반에는 복잡한 검색 조건이 많지 않았지만,
 반/원생/출결/공지/신청으로 가면 동적 필터와 정렬이 늘어날 것이 보였습니다.
 
-그래서 QueryDSL은 “당장 화려하게 쓰기 위해서”가 아니라  
+그래서 QueryDSL은 “당장 화려하게 쓰기 위해서”가 아니라
 **타입 안전한 동적 쿼리 확장 포인트를 미리 열어 두기 위해** 넣었습니다.
 
 ### 4-4. Redis와 Cache는 나중에 붙인 것이 아니라 초반에 공통 설정으로 열어 뒀다
@@ -192,7 +192,7 @@ flowchart TD
 
 ### 5-1. `build.gradle`: 공통 인프라 의존성을 어디까지 초반에 넣을 것인가
 
-[build.gradle](/Users/alex/project/kindergarten_ERP/erp/build.gradle)의 핵심 의존성은 아래입니다.
+[build.gradle](../build.gradle)의 핵심 의존성은 아래입니다.
 
 ```groovy
 implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -204,7 +204,7 @@ implementation 'org.flywaydb:flyway-mysql'
 runtimeOnly 'com.mysql:mysql-connector-j'
 ```
 
-여기서 중요한 건 “기술을 많이 넣었다”가 아닙니다.  
+여기서 중요한 건 “기술을 많이 넣었다”가 아닙니다.
 각각의 역할이 명확하다는 점입니다.
 
 - `data-jpa`
@@ -220,12 +220,12 @@ runtimeOnly 'com.mysql:mysql-connector-j'
 - `mysql-connector-j`
   - 실제 MySQL 연결 드라이버
 
-입문자 입장에서는 “기술을 붙일 때마다 책임을 하나씩 설명할 수 있는가”가 중요합니다.  
+입문자 입장에서는 “기술을 붙일 때마다 책임을 하나씩 설명할 수 있는가”가 중요합니다.
 설명할 수 없다면, 아직 넣을 시점이 아닐 가능성이 큽니다.
 
 ### 5-2. `application.yml`과 프로파일별 설정: JPA와 Flyway의 역할을 명확히 분리하기
 
-이 프로젝트의 공통 설정은 [application.yml](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/application.yml)에 있습니다.
+이 프로젝트의 공통 설정은 [application.yml](../src/main/resources/application.yml)에 있습니다.
 
 핵심 값은 아래입니다.
 
@@ -255,7 +255,7 @@ spring:
 
 연관 엔티티를 여러 개 가져올 때 N+1을 완화하기 위한 기본 안전장치입니다.
 
-이 설정 하나로 모든 성능 문제가 해결되지는 않지만,  
+이 설정 하나로 모든 성능 문제가 해결되지는 않지만,
 초반부터 “ORM이 자동으로 다 해주겠지”라고 방치하지 않았다는 점이 중요합니다.
 
 #### `flyway.enabled: true`
@@ -264,22 +264,22 @@ spring:
 
 그리고 local / prod / test는 각자 아래처럼 다르게 조정됩니다.
 
-- [application-local.yml](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/application-local.yml)
+- [application-local.yml](../src/main/resources/application-local.yml)
   - `ddl-auto=validate`
   - `flyway.clean-disabled=false`
-- [application-prod.yml](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/application-prod.yml)
+- [application-prod.yml](../src/main/resources/application-prod.yml)
   - `ddl-auto=none`
   - `flyway.clean-disabled=true`
-- [application-test.yml](/Users/alex/project/kindergarten_ERP/erp/src/test/resources/application-test.yml)
+- [application-test.yml](../src/test/resources/application-test.yml)
   - `ddl-auto=validate`
   - `flyway.enabled=true`
 
-즉, 개발/테스트에서도 스키마 생성 책임은 Flyway에 주고,  
+즉, 개발/테스트에서도 스키마 생성 책임은 Flyway에 주고,
 JPA는 “이 엔티티와 현재 스키마가 맞는가?”만 확인하게 했습니다.
 
 ### 5-3. `JpaConfig`와 `BaseEntity`: 엔티티의 공통 규약을 먼저 만든다
 
-[JpaConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/JpaConfig.java)는 매우 짧습니다.
+[JpaConfig.java](../src/main/java/com/erp/global/config/JpaConfig.java)는 매우 짧습니다.
 
 ```java
 @Configuration
@@ -293,7 +293,7 @@ public class JpaConfig {
 - JPA Auditing 활성화
 - `@CreatedDate`, `@LastModifiedDate`가 자동 동작하게 만들기
 
-이 설정은 [BaseEntity.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/common/BaseEntity.java)와 연결됩니다.
+이 설정은 [BaseEntity.java](../src/main/java/com/erp/global/common/BaseEntity.java)와 연결됩니다.
 
 핵심 필드는 두 개입니다.
 
@@ -304,10 +304,10 @@ public class JpaConfig {
 
 예를 들어 아래 엔티티들이 `BaseEntity`를 상속합니다.
 
-- [Member.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/member/entity/Member.java)
-- [Attendance.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/attendance/entity/Attendance.java)
-- [Announcement.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/announcement/entity/Announcement.java)
-- [Notification.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/notification/entity/Notification.java)
+- [Member.java](../src/main/java/com/erp/domain/member/entity/Member.java)
+- [Attendance.java](../src/main/java/com/erp/domain/attendance/entity/Attendance.java)
+- [Announcement.java](../src/main/java/com/erp/domain/announcement/entity/Announcement.java)
+- [Notification.java](../src/main/java/com/erp/domain/notification/entity/Notification.java)
 
 이 설계의 장점은 간단합니다.
 
@@ -317,7 +317,7 @@ public class JpaConfig {
 
 ### 5-4. `V1__init_schema.sql`: 초기 스키마는 SQL로 명시한다
 
-[V1__init_schema.sql](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/db/migration/V1__init_schema.sql)은 이 프로젝트의 첫 번째 스키마입니다.
+[V1__init_schema.sql](../src/main/resources/db/migration/V1__init_schema.sql)은 이 프로젝트의 첫 번째 스키마입니다.
 
 이 파일에서는 아래 테이블을 만듭니다.
 
@@ -345,12 +345,12 @@ CREATE INDEX idx_attendance_kid_date ON attendance(kid_id, date);
 CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 ```
 
-즉, 스키마는 “일단 테이블만 만들고 나중에 인덱스 추가”가 아니라  
+즉, 스키마는 “일단 테이블만 만들고 나중에 인덱스 추가”가 아니라
 **예상 조회 패턴까지 포함해 설계**한 것입니다.
 
 #### JPA 엔티티와 SQL이 서로 맞물리게 설계한다
 
-예를 들어 [Attendance.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/attendance/entity/Attendance.java)는
+예를 들어 [Attendance.java](../src/main/java/com/erp/domain/attendance/entity/Attendance.java)는
 
 - `@Table(name = "attendance", uniqueConstraints = ...)`
 - `@ManyToOne(fetch = FetchType.LAZY)`
@@ -366,21 +366,21 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 
 ### 5-5. 마이그레이션은 한 번으로 끝나지 않는다: `V5`, `V8`, `V13`
 
-초기 스키마만 잘 만든다고 끝이 아닙니다.  
+초기 스키마만 잘 만든다고 끝이 아닙니다.
 진짜 중요한 건 **변화를 누적 관리하는 방식**입니다.
 
 이 프로젝트의 마이그레이션은 현재 `V1`부터 `V13`까지 쌓여 있습니다.
 
 대표 예시를 세 개만 보면 흐름이 보입니다.
 
-#### [V5__add_performance_indexes_for_dashboard_and_notepad.sql](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/db/migration/V5__add_performance_indexes_for_dashboard_and_notepad.sql)
+#### [V5__add_performance_indexes_for_dashboard_and_notepad.sql](../src/main/resources/db/migration/V5__add_performance_indexes_for_dashboard_and_notepad.sql)
 
 이 파일은 성능 개선을 위해 인덱스를 추가합니다.
 
-즉, Flyway는 단순히 “테이블 생성기”가 아니라  
+즉, Flyway는 단순히 “테이블 생성기”가 아니라
 운영 중 발견한 조회 패턴 최적화까지 이력으로 남기는 도구입니다.
 
-#### [V8__normalize_member_social_accounts.sql](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/db/migration/V8__normalize_member_social_accounts.sql)
+#### [V8__normalize_member_social_accounts.sql](../src/main/resources/db/migration/V8__normalize_member_social_accounts.sql)
 
 이 파일은 기존 `member` 테이블의 소셜 로그인 필드를 별도 `member_social_account` 테이블로 정규화합니다.
 
@@ -394,7 +394,7 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 
 즉, 스키마 변경과 데이터 이관을 같이 다룰 수 있습니다.
 
-#### [V13__add_admission_workflow_attendance_requests_and_domain_audit.sql](/Users/alex/project/kindergarten_ERP/erp/src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql)
+#### [V13__add_admission_workflow_attendance_requests_and_domain_audit.sql](../src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql)
 
 이 파일은
 
@@ -408,23 +408,23 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 
 ### 5-6. `QuerydslConfig`: 아직 많이 안 써도, 진입점은 미리 열어 둔다
 
-[QuerydslConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/QuerydslConfig.java)는 `JPAQueryFactory` 빈 하나를 등록합니다.
+[QuerydslConfig.java](../src/main/java/com/erp/global/config/QuerydslConfig.java)는 `JPAQueryFactory` 빈 하나를 등록합니다.
 
 핵심 메서드는 아래입니다.
 
 - `jpaQueryFactory()`
   - `EntityManager`를 받아 `JPAQueryFactory`를 생성
 
-그리고 [MemberRepositoryCustom.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/member/repository/MemberRepositoryCustom.java), [MemberRepositoryImpl.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/member/repository/MemberRepositoryImpl.java)에 커스텀 repository 확장 지점이 준비돼 있습니다.
+그리고 [MemberRepositoryCustom.java](../src/main/java/com/erp/domain/member/repository/MemberRepositoryCustom.java), [MemberRepositoryImpl.java](../src/main/java/com/erp/domain/member/repository/MemberRepositoryImpl.java)에 커스텀 repository 확장 지점이 준비돼 있습니다.
 
-정직하게 말하면, 현재 코드베이스에서 QueryDSL 활용도는 아직 높지 않습니다.  
+정직하게 말하면, 현재 코드베이스에서 QueryDSL 활용도는 아직 높지 않습니다.
 하지만 이건 오히려 입문자에게 중요한 교훈입니다.
 
 **모든 준비를 당장 100% 활용할 필요는 없지만, 확장 포인트를 미리 열어 두면 이후 리팩터링 비용이 줄어든다**는 점입니다.
 
 ### 5-7. `RedisConfig`: 짧게 살아야 하는 상태를 관계형 DB에서 분리한다
 
-[RedisConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/RedisConfig.java)는 두 핵심 빈을 만듭니다.
+[RedisConfig.java](../src/main/java/com/erp/global/config/RedisConfig.java)는 두 핵심 빈을 만듭니다.
 
 - `redisConnectionFactory()`
 - `redisTemplate()`
@@ -436,7 +436,7 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 
 즉, 키는 문자열로, 값은 JSON으로 다루게 했습니다.
 
-이 설정은 나중에 [AuthSessionRegistryService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthSessionRegistryService.java)에서 바로 힘을 발휘합니다.
+이 설정은 나중에 [AuthSessionRegistryService.java](../src/main/java/com/erp/domain/auth/service/AuthSessionRegistryService.java)에서 바로 힘을 발휘합니다.
 
 예를 들어 이 서비스의 핵심 메서드들은 아래입니다.
 
@@ -457,7 +457,7 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 
 ### 5-8. `CacheConfig`: 계산 결과는 메모리 캐시로 짧게 보호한다
 
-[CacheConfig.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/config/CacheConfig.java)는 Caffeine 기반 캐시 매니저를 등록합니다.
+[CacheConfig.java](../src/main/java/com/erp/global/config/CacheConfig.java)는 Caffeine 기반 캐시 매니저를 등록합니다.
 
 현재 설정은 아래 하나입니다.
 
@@ -465,7 +465,7 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 - `expireAfterWrite(60초)`
 - `maximumSize(500)`
 
-이 캐시는 [DashboardService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/dashboard/service/DashboardService.java)와 연결됩니다.
+이 캐시는 [DashboardService.java](../src/main/java/com/erp/domain/dashboard/service/DashboardService.java)와 연결됩니다.
 
 핵심 메서드는 두 개입니다.
 
@@ -480,14 +480,14 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 - 무효화 지점도 서비스 메서드로 명시돼 있다
 - “전체 캐시”가 아니라 읽기 많은 특정 계산만 캐시한다
 
-즉, 캐시를 시스템 전체에 무분별하게 뿌리지 않고  
+즉, 캐시를 시스템 전체에 무분별하게 뿌리지 않고
 **비용이 큰 읽기 한 지점에 좁게 적용**했습니다.
 
 ### 5-9. 테스트에서도 같은 전략을 유지한다: `application-test.yml` + `TestcontainersSupport`
 
 이 부분이 취업 포트폴리오에서는 특히 중요합니다.
 
-[application-test.yml](/Users/alex/project/kindergarten_ERP/erp/src/test/resources/application-test.yml)을 보면
+[application-test.yml](../src/test/resources/application-test.yml)을 보면
 
 ```yaml
 spring:
@@ -504,7 +504,7 @@ spring:
 - Flyway가 실제 마이그레이션을 적용하며
 - 엔티티와 스키마 일치 여부는 validate로 확인합니다.
 
-그리고 [TestcontainersSupport.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/common/TestcontainersSupport.java)는
+그리고 [TestcontainersSupport.java](../src/test/java/com/erp/common/TestcontainersSupport.java)는
 
 - MySQL 8.0.36 컨테이너
 - Redis 7 컨테이너
@@ -572,7 +572,7 @@ sequenceDiagram
     JPA-->>Test: 엔티티-스키마 일치 확인
 ```
 
-이 흐름이 중요한 이유는, 테스트가 “가짜 스키마”가 아니라  
+이 흐름이 중요한 이유는, 테스트가 “가짜 스키마”가 아니라
 **실제 마이그레이션 결과 위에서 돈다**는 점입니다.
 
 ## 7. 테스트로 검증하기
@@ -581,7 +581,7 @@ sequenceDiagram
 
 ### 7-1. 컨텍스트 로드 테스트
 
-[ErpApplicationTests.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/ErpApplicationTests.java)는 가장 단순한 테스트처럼 보이지만 의미가 큽니다.
+[ErpApplicationTests.java](../src/test/java/com/erp/ErpApplicationTests.java)는 가장 단순한 테스트처럼 보이지만 의미가 큽니다.
 
 - `@SpringBootTest`
 - `@ActiveProfiles("test")`
@@ -598,7 +598,7 @@ sequenceDiagram
 
 ### 7-2. 통합 테스트 기반 클래스
 
-[BaseIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/common/BaseIntegrationTest.java)는
+[BaseIntegrationTest.java](../src/test/java/com/erp/common/BaseIntegrationTest.java)는
 
 - `@SpringBootTest`
 - `@ActiveProfiles("test")`
@@ -612,7 +612,7 @@ sequenceDiagram
 
 ### 7-3. 왜 H2 대신 이 방식을 택했는가
 
-[phase15_testcontainers_integration_test_stack.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase15_testcontainers_integration_test_stack.md)에 정리된 이유가 명확합니다.
+[phase15_testcontainers_integration_test_stack.md](../docs/decisions/phase15_testcontainers_integration_test_stack.md)에 정리된 이유가 명확합니다.
 
 - H2는 MySQL과 SQL/DDL 차이가 있다
 - `create-drop`은 편하지만 운영 스키마 기준 검증이 아니다
@@ -642,17 +642,17 @@ sequenceDiagram
 - 운영형 마이그레이션 누적
 - MySQL/Redis Testcontainers 검증
 
-정직하게 말하면 QueryDSL은 현재 코드에서 활용도가 아직 높지 않습니다.  
+정직하게 말하면 QueryDSL은 현재 코드에서 활용도가 아직 높지 않습니다.
 하지만 이 사실도 숨길 필요는 없습니다.
 
 오히려 “어떤 확장 포인트는 미리 열어 두었고, 어떤 것은 아직 활용을 넓혀 가는 중이다”라고 설명하는 편이 더 실무적입니다.
 
-다음 글에서는 이렇게 깔아 둔 공통 토대 위에,  
+다음 글에서는 이렇게 깔아 둔 공통 토대 위에,
 `global`과 `domain` 패키지 구조를 어떻게 나누고 공통 응답/예외 규약을 어떻게 세웠는지 설명하겠습니다.
 
 ## 9. 취업 포인트
 
-이 글의 핵심은 기술 나열이 아닙니다.  
+이 글의 핵심은 기술 나열이 아닙니다.
 면접에서는 아래처럼 설명하는 것이 더 좋습니다.
 
 - “JPA와 Flyway의 책임을 분리해서 스키마 drift를 줄였습니다.”
@@ -668,7 +668,7 @@ sequenceDiagram
 4. QueryDSL을 초반에 도입한 이유는 무엇인가요?
 5. Cache를 어디에, 어떤 기준으로 적용했나요?
 
-이 질문에 답할 수 있으면, 단순히 Spring Boot 기능을 붙인 수준이 아니라  
+이 질문에 답할 수 있으면, 단순히 Spring Boot 기능을 붙인 수준이 아니라
 **운영형 백엔드의 기초 토대를 설계한 경험**으로 말할 수 있습니다.
 
 ## 10. 시작 상태

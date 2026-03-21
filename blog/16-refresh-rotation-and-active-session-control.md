@@ -78,7 +78,7 @@ flowchart TD
 
 ### 5-1. `AuthSessionRegistryService`: 세션 저장소의 중심
 
-[AuthSessionRegistryService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthSessionRegistryService.java)의 핵심 메서드는 아래입니다.
+[AuthSessionRegistryService.java](../src/main/java/com/erp/domain/auth/service/AuthSessionRegistryService.java)의 핵심 메서드는 아래입니다.
 
 - `registerSession(...)`
 - `rotateSession(...)`
@@ -87,12 +87,12 @@ flowchart TD
 - `revokeSession(...)`
 - `revokeOtherSessions(...)`
 
-즉, 이 서비스는 refresh token 저장을 넘어  
+즉, 이 서비스는 refresh token 저장을 넘어
 활성 세션 전체를 관리하는 역할을 맡습니다.
 
 ### 5-2. `JwtTokenProvider`: `sessionId`와 `tokenType`을 claims에 넣는다
 
-[JwtTokenProvider.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/jwt/JwtTokenProvider.java)는
+[JwtTokenProvider.java](../src/main/java/com/erp/global/security/jwt/JwtTokenProvider.java)는
 
 - `sessionId`
 - `tokenType`
@@ -100,12 +100,12 @@ flowchart TD
 
 를 토큰에 넣습니다.
 
-이 정보가 있어야 access token과 refresh token이  
+이 정보가 있어야 access token과 refresh token이
 같은 세션 단위로 연결될 수 있습니다.
 
 ### 5-3. `JwtFilter`: access token도 Redis 세션 활성 여부를 확인한다
 
-[JwtFilter.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/jwt/JwtFilter.java)의 핵심은 `doFilter(...)`입니다.
+[JwtFilter.java](../src/main/java/com/erp/global/security/jwt/JwtFilter.java)의 핵심은 `doFilter(...)`입니다.
 
 이 메서드는
 
@@ -121,25 +121,25 @@ flowchart TD
 
 ### 5-4. `AuthService`: issue, rotate, revoke를 하나의 흐름으로 묶는다
 
-[AuthService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthService.java)의 핵심 메서드는 아래입니다.
+[AuthService.java](../src/main/java/com/erp/domain/auth/service/AuthService.java)의 핵심 메서드는 아래입니다.
 
 - `issueTokens(...)`
 - `refreshAccessToken(...)`
 - `revokeSession(...)`
 - `revokeOtherSessions(...)`
 
-즉, 인증 서비스는 비밀번호 검사만이 아니라  
+즉, 인증 서비스는 비밀번호 검사만이 아니라
 세션 lifecycle 전체를 관리하는 오케스트레이터가 됩니다.
 
 ### 5-5. `AuthApiController`: 사용자가 세션을 실제로 제어하게 한다
 
-[AuthApiController.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/controller/AuthApiController.java)의 핵심 API는 아래입니다.
+[AuthApiController.java](../src/main/java/com/erp/domain/auth/controller/AuthApiController.java)의 핵심 API는 아래입니다.
 
 - `GET /api/v1/auth/sessions`
 - `DELETE /api/v1/auth/sessions/{sessionId}`
 - `DELETE /api/v1/auth/sessions/others`
 
-즉, 세션 설계를 “백엔드 내부 구현”에서 끝내지 않고  
+즉, 세션 설계를 “백엔드 내부 구현”에서 끝내지 않고
 사용자가 볼 수 있고 끌 수 있는 기능까지 닫았습니다.
 
 ## 6. 실제 흐름
@@ -173,8 +173,8 @@ sequenceDiagram
 
 그리고 설계 의도는 아래 문서에 정리돼 있습니다.
 
-- [phase17_jwt_refresh_session_rotation.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase17_jwt_refresh_session_rotation.md)
-- [phase39_management_plane_and_active_session_control.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase39_management_plane_and_active_session_control.md)
+- [phase17_jwt_refresh_session_rotation.md](../docs/decisions/phase17_jwt_refresh_session_rotation.md)
+- [phase39_management_plane_and_active_session_control.md](../docs/decisions/phase39_management_plane_and_active_session_control.md)
 
 ## 8. 회고
 

@@ -40,12 +40,12 @@ Kindergarten ERP는 이 문제를 꽤 깊게 다뤘습니다.
 
 소셜 provider가 준 이메일이 이미 로컬 계정과 충돌할 수 있습니다.
 
-이때 자동으로 합치면 위험합니다.  
+이때 자동으로 합치면 위험합니다.
 그래서 이 프로젝트는 자동 연결을 막고 충돌로 처리합니다.
 
 ### 2-3. 소셜 계정 불변성
 
-같은 provider의 계정을 다른 계정으로 교체 가능하게 두면  
+같은 provider의 계정을 다른 계정으로 교체 가능하게 두면
 계정 탈취와 복구가 매우 어려워집니다.
 
 그래서 이 프로젝트는 “같은 provider 교체 금지”를 정책으로 택했습니다.
@@ -94,7 +94,7 @@ flowchart TD
 
 ### 5-1. `OAuth2AuthenticationSuccessHandler`: 단순 redirect가 아니라 정책 엔진
 
-[OAuth2AuthenticationSuccessHandler.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandler.java)의 핵심 메서드는 아래입니다.
+[OAuth2AuthenticationSuccessHandler.java](../src/main/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandler.java)의 핵심 메서드는 아래입니다.
 
 - `onAuthenticationSuccess(...)`
 - `handleSocialLink(...)`
@@ -126,7 +126,7 @@ flowchart TD
 
 ### 5-3. `SocialAccountLinkService`: 연결/해제 정책은 서비스에서 강제한다
 
-[SocialAccountLinkService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/SocialAccountLinkService.java)의 핵심 메서드는 아래입니다.
+[SocialAccountLinkService.java](../src/main/java/com/erp/domain/auth/service/SocialAccountLinkService.java)의 핵심 메서드는 아래입니다.
 
 - `linkSocialAccount(...)`
 - `unlinkSocialAccount(...)`
@@ -139,7 +139,7 @@ flowchart TD
 
 ### 5-4. `MemberSocialAccount`: 소셜 계정을 별도 테이블로 정규화한다
 
-[MemberSocialAccount.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/member/entity/MemberSocialAccount.java)는
+[MemberSocialAccount.java](../src/main/java/com/erp/domain/member/entity/MemberSocialAccount.java)는
 
 - `provider`
 - `providerId`
@@ -154,7 +154,7 @@ flowchart TD
 - `unlink()`
 - `relink()`
 
-즉, 소셜 계정은 더 이상 `member` 테이블의 부속 컬럼이 아니라  
+즉, 소셜 계정은 더 이상 `member` 테이블의 부속 컬럼이 아니라
 독립적인 도메인 엔티티가 됩니다.
 
 ### 5-5. `V8`, `V9`: 스키마도 lifecycle에 맞게 진화한다
@@ -215,7 +215,7 @@ sequenceDiagram
 - 마지막 로그인 수단 보호는 어떻게 하는가?
 - 같은 provider 교체는 허용하는가?
 
-이 프로젝트는 바로 이 지점을 깊게 다뤘기 때문에  
+이 프로젝트는 바로 이 지점을 깊게 다뤘기 때문에
 포트폴리오 설명력이 훨씬 좋아졌습니다.
 
 ## 9. 취업 포인트

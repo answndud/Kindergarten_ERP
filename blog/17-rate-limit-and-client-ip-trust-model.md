@@ -2,7 +2,7 @@
 
 ## 1. 이번 글에서 풀 문제
 
-인증이 동작한다고 끝이 아닙니다.  
+인증이 동작한다고 끝이 아닙니다.
 이제 “남용”을 막아야 합니다.
 
 이 프로젝트에서 추가로 풀어야 했던 문제는 아래였습니다.
@@ -35,7 +35,7 @@
 
 ### 2-3. Trusted Proxy
 
-`X-Forwarded-For`는 프록시가 붙여 주는 헤더지만,  
+`X-Forwarded-For`는 프록시가 붙여 주는 헤더지만,
 아무 요청자나 임의로 넣을 수 있기 때문에 무조건 신뢰하면 안 됩니다.
 
 즉, **어떤 프록시를 신뢰할지**를 코드로 정해야 합니다.
@@ -76,7 +76,7 @@ flowchart TD
 
 ### 5-1. `AuthRateLimitService`: 단순하지만 설명 가능한 제한
 
-[AuthRateLimitService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthRateLimitService.java)의 핵심 메서드는 아래입니다.
+[AuthRateLimitService.java](../src/main/java/com/erp/domain/auth/service/AuthRateLimitService.java)의 핵심 메서드는 아래입니다.
 
 - `validateLoginAllowed(...)`
 - `recordLoginFailure(...)`
@@ -106,7 +106,7 @@ refresh 정책은 아래입니다.
 
 ### 5-3. `ClientIpResolver`: 헤더 스푸핑을 그대로 믿지 않는다
 
-[ClientIpResolver.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/global/security/ClientIpResolver.java)의 핵심 메서드는 아래입니다.
+[ClientIpResolver.java](../src/main/java/com/erp/global/security/ClientIpResolver.java)의 핵심 메서드는 아래입니다.
 
 - `resolve(...)`
 - `isTrustedProxy(...)`
@@ -123,10 +123,10 @@ refresh 정책은 아래입니다.
 
 ### 5-4. `AuthApiController`와 `AuthService` 연결
 
-[AuthApiController.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/controller/AuthApiController.java)는
+[AuthApiController.java](../src/main/java/com/erp/domain/auth/controller/AuthApiController.java)는
 로그인/refresh 진입 전에 `clientIpResolver.resolve(request)`를 통해 client IP를 확보합니다.
 
-[AuthService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/auth/service/AuthService.java)는 이 값을 받아
+[AuthService.java](../src/main/java/com/erp/domain/auth/service/AuthService.java)는 이 값을 받아
 
 - rate limit
 - audit log
@@ -160,9 +160,9 @@ sequenceDiagram
 
 그리고 설계 변천은 아래 문서로 이어집니다.
 
-- [phase21_auth_rate_limit.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase21_auth_rate_limit.md)
-- [phase24_auth_client_ip_trust_model.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase24_auth_client_ip_trust_model.md)
-- [phase25_login_rate_limit_policy_refinement.md](/Users/alex/project/kindergarten_ERP/erp/docs/decisions/phase25_login_rate_limit_policy_refinement.md)
+- [phase21_auth_rate_limit.md](../docs/decisions/phase21_auth_rate_limit.md)
+- [phase24_auth_client_ip_trust_model.md](../docs/decisions/phase24_auth_client_ip_trust_model.md)
+- [phase25_login_rate_limit_policy_refinement.md](../docs/decisions/phase25_login_rate_limit_policy_refinement.md)
 
 ## 8. 회고
 
@@ -171,7 +171,7 @@ sequenceDiagram
 1. rate limit은 “있다”보다 “어떤 기준으로 계산하는가”가 중요하다
 2. IP를 본다면 반드시 trust model을 같이 설계해야 한다
 
-즉, 보안 기능은 체크리스트처럼 붙이는 것이 아니라  
+즉, 보안 기능은 체크리스트처럼 붙이는 것이 아니라
 운영 환경을 가정하고 설계해야 합니다.
 
 ## 9. 취업 포인트

@@ -15,17 +15,17 @@
 - 나중에 자리가 생기면 입학 제안을 보내야 한다면?
 - 제안이 일정 시간 내 수락되지 않으면?
 
-Kindergarten ERP는 이 문제를  
+Kindergarten ERP는 이 문제를
 **정원(capacity) + 대기열(waitlist) + 제안(offer) + 만료(expiry)** 모델로 풀었습니다.
 
 ## 2. 먼저 알아둘 개념
 
 ### 2-1. “정원”은 화면 정보가 아니라 제약 조건이다
 
-`현재 몇 명인가`를 보여주는 것과  
+`현재 몇 명인가`를 보여주는 것과
 `더 받을 수 있는가`를 판단하는 것은 다릅니다.
 
-정원은 단순 표시값이 아니라  
+정원은 단순 표시값이 아니라
 도메인 규칙을 막는 제약 조건이어야 합니다.
 
 ### 2-2. 상태 전이로 생각해야 한다
@@ -44,7 +44,7 @@ Kindergarten ERP는 이 문제를
 
 ### 2-3. “예약된 자리”도 정원 계산에 포함해야 한다
 
-이미 원생으로 등록된 아이만 세면 부족합니다.  
+이미 원생으로 등록된 아이만 세면 부족합니다.
 입학 제안을 받고 아직 수락 대기 중인 자리는 사실상 예약석입니다.
 
 그래서 이 프로젝트는
@@ -96,7 +96,7 @@ stateDiagram-v2
 
 ### 5-1. `Classroom`: 정원 규칙을 갖는 엔티티
 
-[Classroom.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/classroom/entity/Classroom.java)는  
+[Classroom.java](../src/main/java/com/erp/domain/classroom/entity/Classroom.java)는
 이제 단순히 반 이름만 갖는 엔티티가 아닙니다.
 
 이 글에서 주목할 메서드는 아래입니다.
@@ -106,12 +106,12 @@ stateDiagram-v2
 
 즉 정원 관련 계산 일부를 엔티티 자신이 책임집니다.
 
-초보자는 서비스에 모든 계산을 몰아넣기 쉽지만,  
+초보자는 서비스에 모든 계산을 몰아넣기 쉽지만,
 반 자체의 규칙이라면 엔티티로 일부 끌고 오는 편이 읽기 좋습니다.
 
 ### 5-2. `ClassroomCapacityService`: 정원 계산을 공통 규칙으로 만든다
 
-[ClassroomCapacityService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/classroom/service/ClassroomCapacityService.java)의 핵심 메서드는 아래입니다.
+[ClassroomCapacityService.java](../src/main/java/com/erp/domain/classroom/service/ClassroomCapacityService.java)의 핵심 메서드는 아래입니다.
 
 - `lockClassroom(...)`
 - `summarize(...)`
@@ -137,7 +137,7 @@ stateDiagram-v2
 
 ### 5-3. `KidApplication`: 신청 엔티티가 직접 상태 전이를 가진다
 
-[KidApplication.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/kidapplication/entity/KidApplication.java)의 핵심 메서드는 아래입니다.
+[KidApplication.java](../src/main/java/com/erp/domain/kidapplication/entity/KidApplication.java)의 핵심 메서드는 아래입니다.
 
 - `placeOnWaitlist(...)`
 - `offerSeat(...)`
@@ -145,15 +145,15 @@ stateDiagram-v2
 - `markOfferExpired()`
 - `approveDirect(...)`
 
-이 설계가 좋은 이유는  
-“어떤 상태에서 어떤 상태로 갈 수 있는가”가 서비스가 아니라  
+이 설계가 좋은 이유는
+“어떤 상태에서 어떤 상태로 갈 수 있는가”가 서비스가 아니라
 엔티티 메서드 이름으로 드러난다는 점입니다.
 
 즉 상태 전이 규칙이 코드에서 읽힙니다.
 
 ### 5-4. `KidApplicationService.approve(...)`: 좌석이 있으면 바로 승인
 
-[KidApplicationService.java](/Users/alex/project/kindergarten_ERP/erp/src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java)의
+[KidApplicationService.java](../src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java)의
 `approve(...)`는 아래 순서로 동작합니다.
 
 1. 신청서 잠금 조회
@@ -163,7 +163,7 @@ stateDiagram-v2
 5. 실제 `Kid` 생성
 6. `application.approveDirect(...)`
 
-즉 정원이 충분하면  
+즉 정원이 충분하면
 전통적인 “바로 승인” 흐름도 여전히 지원합니다.
 
 ### 5-5. `placeOnWaitlist(...)`와 `offer(...)`
@@ -195,7 +195,7 @@ stateDiagram-v2
 
 를 수행합니다.
 
-즉 제안을 보냈다고 바로 입학 완료가 아니라,  
+즉 제안을 보냈다고 바로 입학 완료가 아니라,
 **수락 시점에만 확정 aggregate를 만든다**는 점이 핵심입니다.
 
 ### 5-7. `expireOffers()`: 스케줄러로 만료 처리
@@ -211,7 +211,7 @@ stateDiagram-v2
 
 를 수행합니다.
 
-초보자가 배우기 좋은 포인트는  
+초보자가 배우기 좋은 포인트는
 “시간 기반 상태 변화도 백엔드가 책임질 수 있다”는 점입니다.
 
 ## 6. 실제 흐름
@@ -240,26 +240,26 @@ sequenceDiagram
 
 대표 테스트는 아래입니다.
 
-- [KidApplicationApiIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java)
+- [KidApplicationApiIntegrationTest.java](../src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java)
   - waitlist / offer / accept / expire
-- [ClassroomApiIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/api/ClassroomApiIntegrationTest.java)
+- [ClassroomApiIntegrationTest.java](../src/test/java/com/erp/api/ClassroomApiIntegrationTest.java)
   - 정원 변경 검증
-- [KidApiIntegrationTest.java](/Users/alex/project/kindergarten_ERP/erp/src/test/java/com/erp/api/KidApiIntegrationTest.java)
+- [KidApiIntegrationTest.java](../src/test/java/com/erp/api/KidApiIntegrationTest.java)
   - 정원 초과 차단이나 실제 원생 생성 연동 검증
 
-이 테스트들이 중요한 이유는  
+이 테스트들이 중요한 이유는
 단순 JSON 응답이 아니라 **상태 전이와 좌석 규칙**을 검증하기 때문입니다.
 
 ## 8. 회고
 
-이 기능은 CRUD로 보면 복잡해 보입니다.  
+이 기능은 CRUD로 보면 복잡해 보입니다.
 하지만 실제 운영 문제를 그대로 옮겨 보면 오히려 더 자연스럽습니다.
 
 - 자리가 없으면 대기열
 - 자리가 나면 제안
 - 일정 시간 안에 수락 안 하면 만료
 
-즉 코드가 복잡해진 것이 아니라,  
+즉 코드가 복잡해진 것이 아니라,
 도메인 현실을 더 정확히 반영한 것입니다.
 
 ## 9. 취업 포인트
