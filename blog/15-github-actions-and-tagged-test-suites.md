@@ -41,6 +41,16 @@ CI도 그 의미에 맞게 job을 분리했습니다.
 CI 실패 시에도 test report를 artifact로 올려 두면
 웹 UI에서 결과를 다시 확인하기 쉽습니다.
 
+### 2-4. 어떤 테스트를 어느 task에 넣을지 먼저 나누자
+
+태그 전략은 “이 테스트가 어디 속하는가”를 먼저 정하면 이해가 쉽습니다.
+
+| 분류 | 예시 | 기대 목적 |
+|---|---|---|
+| `fast` | 보안 핸들러, 순수 서비스 로직 | 빠른 피드백 |
+| `integration` | API 통합 테스트, Testcontainers 기반 흐름 | 실제 스택 검증 |
+| `performance` | 운영 콘솔/query budget smoke | 성능 회귀 감시 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -165,11 +175,30 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 태그 기반 분리는 단순해 보이지만,
 프로젝트가 커질수록 테스트 전략 설명력이 훨씬 좋아집니다.
 
+### 현재 구현의 한계
+
+태그 기반 전략은 강력하지만, **태그를 빠뜨리면 테스트가 조용히 빠질 수 있다는 운영 규율 문제**가 있습니다.
+그래서 새 테스트를 추가할 때 항상 어떤 task에 속하는지 같이 결정해야 하고, CI가 있다고 해서 로컬 빠른 피드백 루프를 대신할 수는 없습니다.
+
 ## 9. 취업 포인트
 
 - “테스트를 `fast`, `integration`, `performance` 태그로 나눠 목적 기반 실행 전략을 만들었습니다.”
 - “GitHub Actions도 3개 job으로 분리해 빠른 피드백과 현실적인 통합 검증을 같이 가져갔습니다.”
 - “테스트가 많은 것보다, 어떻게 분류하고 언제 돌리는지가 더 중요하다고 생각했습니다.”
+
+### 9-1. 1문장 답변
+
+- “테스트를 파일 경로가 아니라 `fast / integration / performance`라는 목적 기준 태그로 나누고, GitHub Actions도 같은 기준으로 job을 분리했습니다.”
+
+### 9-2. 30초 답변
+
+- “이 프로젝트는 테스트가 늘어나면서 속도와 신뢰도를 같이 잡아야 했습니다. 그래서 `build.gradle`에 `fastTest`, `integrationTest`, `performanceSmokeTest` task를 만들고, 각 테스트 클래스에 `@Tag`를 붙여 목적별로 분류했습니다. 그리고 GitHub Actions도 같은 기준으로 3개 job으로 분리해, 빠른 실패는 빨리 보고 실제 통합 검증은 Docker 가능한 runner에서 따로 수행하게 했습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 패키지 경로 대신 태그를 택했나요?”
+- “태그를 빼먹으면 어떻게 관리하나요?”
+- “왜 performance smoke도 CI에 넣었나요?”
 
 ## 10. 시작 상태
 
@@ -215,14 +244,21 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 - 빠른 실패는 `fastTest`에서 먼저 잡힌다
 - 통합/성능 스모크는 Docker 가능한 환경에서 분리 실행된다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `build.gradle`에 `fastTest`, `integrationTest`, `performanceSmokeTest` task가 존재한다
+- 대표 테스트 클래스에 `@Tag("fast")`, `@Tag("integration")`, `@Tag("performance")`가 붙어 있다
+- `.github/workflows/ci.yml`이 3개 job 구조를 사용한다
+- 아티팩트 업로드가 실패 분석 경로로 연결돼 있다
+
+## 15. 글 종료 체크포인트
 
 - 테스트가 목적 기반 태그로 분류돼 있다
 - `build.gradle`과 `ci.yml`이 같은 실행 전략을 공유한다
 - fast / integration / performance smoke를 따로 돌릴 수 있다
 - CI 실패 원인을 job 단위로 더 빨리 찾을 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 특정 테스트가 아무 task에서도 안 돈다
   - 원인: 클래스가 존재해도 `@Tag`가 없으면 분리 task에서 빠질 수 있습니다

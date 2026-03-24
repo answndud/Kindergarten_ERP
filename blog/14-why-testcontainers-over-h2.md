@@ -37,6 +37,19 @@ Testcontainers는 테스트 실행 중 Docker 컨테이너를 띄워
 
 를 유지하면 엔티티-스키마 drift를 더 잘 잡을 수 있습니다.
 
+### 2-4. 무엇이 H2와 달라지는지 먼저 비교하자
+
+초보자는 “H2보다 실제 DB가 더 좋다” 정도로만 이해하기 쉽습니다.
+하지만 바뀌는 지점을 표로 보면 훨씬 명확합니다.
+
+| 항목 | H2/Mock 기반 | Testcontainers 기반 |
+|---|---|---|
+| DB 종류 | H2 | MySQL 8 |
+| Redis | mock 가능 | 실제 Redis |
+| 스키마 생성 | JPA `create-drop`에 기대기 쉬움 | Flyway migration + JPA validate |
+| 장점 | 빠르고 간단함 | 운영과 더 비슷함 |
+| 단점 | 운영과 차이가 큼 | 느리고 Docker가 필요함 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -157,11 +170,30 @@ Testcontainers는 H2보다 느립니다.
 
 즉, 현실과 다른 테스트는 빨라도 설득력이 약했습니다.
 
+### 현재 구현의 한계
+
+Testcontainers는 신뢰도를 크게 올리지만 **속도 비용과 Docker 의존성**이 있습니다.
+그래서 모든 테스트를 무조건 integration으로 몰아넣는 것이 아니라, 뒤 글에서 `fast / integration / performance`로 다시 나눠 실행 전략을 분리합니다.
+
 ## 9. 취업 포인트
 
 - “H2 대신 MySQL/Redis Testcontainers로 테스트를 현실화했습니다.”
 - “테스트에서도 `Flyway + validate`를 유지해 엔티티와 스키마 drift를 검증했습니다.”
 - “테스트 개수보다 운영과 닮은 검증 환경이 더 중요하다고 판단했습니다.”
+
+### 9-1. 1문장 답변
+
+- “H2와 mock Redis 대신 MySQL/Redis Testcontainers를 도입해, 운영과 닮은 테스트 환경에서 `Flyway + validate`를 실제로 검증했습니다.”
+
+### 9-2. 30초 답변
+
+- “이 프로젝트는 MySQL, Redis, Flyway에 실제로 의존하기 때문에 H2 기반 통합 테스트로는 신뢰도가 부족했습니다. 그래서 `TestcontainersSupport`로 MySQL과 Redis를 띄우고, `application-test.yml`에서도 JPA가 스키마를 만드는 대신 Flyway migration 후 validate만 하도록 바꿨습니다. 느려지긴 했지만, 운영 스택과 훨씬 비슷한 환경에서 깨지는 지점을 잡을 수 있게 됐습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 H2로는 부족했나요?”
+- “Testcontainers 도입 후 느려진 테스트는 어떻게 관리했나요?”
+- “왜 테스트에서도 `Flyway + validate`를 유지했나요?”
 
 ## 10. 시작 상태
 
@@ -195,6 +227,12 @@ Testcontainers는 H2보다 느립니다.
 
 ```bash
 ./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+빠르게 관련 테스트만 보고 싶다면 아래 명령을 추가로 사용할 수 있습니다.
+
+```bash
 ./gradlew test --tests "com.erp.ErpApplicationTests"
 ./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"
 ```
@@ -205,14 +243,21 @@ Testcontainers는 H2보다 느립니다.
 - Flyway migration 후 JPA validate가 통과한다
 - 대표 통합 테스트가 H2가 아닌 실제 컨테이너 기반으로 돈다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `build.gradle`에 Testcontainers 관련 의존성이 존재한다
+- `application-test.yml`이 `Flyway + validate`를 사용한다
+- `TestcontainersSupport`, `BaseIntegrationTest`가 공통 기반으로 연결돼 있다
+- `ErpApplicationTests`와 대표 integration 테스트가 컨테이너 기반으로 실행된다
+
+## 15. 글 종료 체크포인트
 
 - 테스트 DB와 Redis가 컨테이너 기반으로 올라온다
 - 테스트도 `Flyway + validate`를 유지한다
 - `BaseIntegrationTest`가 현실적인 공통 기반이 된다
 - “운영 스택과 닮은 테스트 환경”을 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 로컬에서는 테스트가 뜨지 않음
   - 원인: Docker daemon이 꺼져 있거나 Testcontainers가 컨테이너를 띄우지 못했을 수 있습니다
