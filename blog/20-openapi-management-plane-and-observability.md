@@ -43,6 +43,18 @@ OpenAPI, health, Prometheus는 유용하지만
 
 그래서 이 프로젝트는 설정값으로 노출 범위를 조절하게 만들었습니다.
 
+### 2-4. 엔드포인트별 기대 노출 정책을 먼저 표로 보자
+
+운영 문서는 용어보다 “무엇을 누구에게 열 것인가”를 먼저 이해해야 합니다.
+
+| 경로 | 누가 쓰는가 | 기대 정책 | 이유 |
+|---|---|---|---|
+| `/swagger-ui.html`, `/v3/api-docs` | 개발자 / 면접관 | dev/demo에서는 열 수 있고 prod에서는 통제 가능해야 함 | API 계약 확인용 |
+| `/actuator/health` | 로드밸런서 / 운영자 | 제한적으로 공개 가능 | 프로세스 생존 확인용 |
+| `/actuator/health/readiness` | 오케스트레이터 / 운영자 | 의존성 상태 반영 | 트래픽 수신 가능 여부 판단용 |
+| `/actuator/prometheus` | Prometheus | 설정에 따라 노출 | 수집 시스템 전용 |
+| 일반 업무 페이지/API | 사용자 | 인증/권한 필요 | 운영 면과 업무 면은 분리해야 하기 때문 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -249,11 +261,31 @@ sequenceDiagram
 - 보안 경로는 SecurityConfig와 interceptor를 같이 봐야 한다
 - 로그는 많이 남기는 것이 아니라, 추적 가능한 형식으로 남겨야 한다
 
+### 현재 구현의 한계
+
+이 글의 관리면은 **설정값으로 노출 범위를 조절하는 방식**입니다.
+즉 프로덕션에서 더 강한 격리가 필요하다면 management 전용 포트 분리나 별도 네트워크 레벨 보호까지 갈 수 있습니다.
+이 글은 그 전 단계로, 한 애플리케이션 안에서 공개/보호 정책과 readiness 개념을 먼저 정리하는 데 초점을 둡니다.
+
 ## 9. 취업 포인트
 
 - “OpenAPI, health, Prometheus, correlation id를 따로따로 붙인 것이 아니라 관리면이라는 하나의 설계 문제로 묶어 다뤘습니다.”
 - “readiness는 실제 DB/Redis probe를 반영하고, liveness와 분리해 검증했습니다.”
 - “문서/메트릭 공개 경로는 SecurityConfig와 RoleRedirectInterceptor를 같이 점검해 운영 노출 정책까지 맞췄습니다.”
+
+### 9-1. 1문장 답변
+
+- “OpenAPI, health, Prometheus, correlation id를 따로 붙이지 않고 관리면이라는 하나의 설계 문제로 묶고, 공개 정책과 readiness를 코드/테스트로 같이 관리했습니다.”
+
+### 9-2. 30초 답변
+
+- “이 단계에서는 API 계약, 상태 확인, 메트릭 수집, 요청 추적을 하나의 관리면으로 설계했습니다. `OpenApiConfig`로 실행 중인 API 계약을 제공하고, `SecurityConfig`와 `RoleRedirectInterceptor`로 공개 경로를 통제하며, `CriticalDependenciesHealthIndicator`로 DB/Redis 상태를 readiness에 반영했습니다. 또 `CorrelationIdFilter`, `RequestLoggingFilter`로 요청 추적 기준을 맞춰 운영자가 실제로 장애를 따라갈 수 있게 했습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 liveness와 readiness를 굳이 나눴나요?”
+- “왜 SecurityConfig만이 아니라 interceptor까지 같이 봐야 하나요?”
+- “프로덕션에서 management 전용 포트를 분리하지 않은 이유는 무엇인가요?”
 
 ## 10. 시작 상태
 
@@ -301,8 +333,17 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+관련 테스트만 빠르게 보고 싶다면 아래 명령을 추가로 사용할 수 있습니다.
+
+```bash
 ./gradlew --no-daemon integrationTest --tests "com.erp.integration.ObservabilityIntegrationTest"
 ```
+
+다만 블로그 기준 안정 검증 경로는 전체 `integrationTest`입니다.
 
 성공하면 확인할 것:
 
@@ -311,14 +352,22 @@ sequenceDiagram
 - `/actuator/prometheus`에서 주요 메트릭을 읽을 수 있다
 - 응답 헤더에 `X-Correlation-Id`가 포함된다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `OpenApiConfig`가 `/api/v1/**` 기준 OpenAPI 문서를 제공한다
+- `SecurityConfig`, `RoleRedirectInterceptor`가 관리면 공개 경로 정책을 함께 맞춘다
+- `CriticalDependenciesHealthIndicator`가 DB/Redis probe를 readiness에 반영한다
+- `CorrelationIdFilter`, `RequestLoggingFilter`가 추적 가능한 요청 로그를 남긴다
+- `ObservabilityIntegrationTest`가 health/readiness/metrics/correlation id를 검증한다
+
+## 15. 글 종료 체크포인트
 
 - OpenAPI, health, metrics, request tracing을 하나의 운영 설계로 설명할 수 있다
 - readiness와 liveness의 질문 차이를 코드와 테스트로 보여줄 수 있다
 - 공개 경로 정책이 보안 설정과 인터셉터에서 동시에 맞춰져 있다
 - 로그가 “많이 남는가”가 아니라 “나중에 추적 가능한가” 기준으로 설계돼 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: Swagger는 열리는데 페이지 진입 시 예상치 못한 리다이렉트가 발생한다
   - 원인: `SecurityConfig` 허용 경로와 `RoleRedirectInterceptor` 인프라 경로 규칙이 어긋났을 수 있습니다

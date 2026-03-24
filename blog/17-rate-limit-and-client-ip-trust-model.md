@@ -40,6 +40,17 @@
 
 즉, **어떤 프록시를 신뢰할지**를 코드로 정해야 합니다.
 
+### 2-4. 어떤 요청을 어떤 기준으로 막을지 먼저 정하자
+
+이 글은 구현보다 정책표를 먼저 이해하는 편이 훨씬 쉽습니다.
+
+| 상황 | 보는 값 | 기대 결과 | 이유 |
+|---|---|---|---|
+| 로그인 실패 반복 | IP + 이메일 | `429` 또는 차단 | brute-force를 줄이기 위해 |
+| refresh 요청 폭주 | IP | `429` 또는 차단 | 토큰 재발급 남용을 막기 위해 |
+| 정상 로그인 성공 | 이메일 실패 카운터 | 초기화 | 정상 사용자가 누적 예산 때문에 막히지 않게 하기 위해 |
+| `X-Forwarded-For` 포함 요청 | trusted proxy 여부 | trusted proxy일 때만 헤더 사용 | 헤더 스푸핑 우회를 막기 위해 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -174,11 +185,31 @@ sequenceDiagram
 즉, 보안 기능은 체크리스트처럼 붙이는 것이 아니라
 운영 환경을 가정하고 설계해야 합니다.
 
+### 현재 구현의 한계
+
+이 글의 rate limit은 **설명 가능성과 단순성**을 위해 fixed window를 택했습니다.
+그래서 경계 시점에서는 sliding window나 token bucket보다 약간 거칠게 동작할 수 있습니다.
+또 trusted proxy 모델도 결국 운영 프록시 구성이 바뀌면 설정을 같이 갱신해야 하므로, 인프라 토폴로지와 분리된 완전한 해법은 아닙니다.
+
 ## 9. 취업 포인트
 
 - “Redis fixed-window rate limit으로 로그인과 refresh 남용을 제한했습니다.”
 - “로그인 성공은 실패 예산에서 제외해 UX를 보정했고, refresh는 별도 정책으로 관리했습니다.”
 - “`X-Forwarded-For`를 무조건 믿지 않고 trusted proxy 모델을 코드로 분리했습니다.”
+
+### 9-1. 1문장 답변
+
+- “로그인과 refresh를 Redis fixed-window rate limit으로 분리 관리하고, client IP는 trusted proxy일 때만 forwarded header를 신뢰하게 만들어 헤더 스푸핑 우회를 막았습니다.”
+
+### 9-2. 30초 답변
+
+- “이 단계에서는 인증 기능 위에 남용 방어를 올렸습니다. 로그인은 IP와 이메일 두 축으로, refresh는 IP 단일 축으로 제한하고, 성공 로그인 뒤에는 이메일 실패 카운터를 지워 정상 사용자가 불필요하게 막히지 않게 했습니다. 또 `ClientIpResolver`를 두어 trusted proxy일 때만 `X-Forwarded-For`를 읽게 해서, 단순 헤더 스푸핑으로 rate limit을 우회하지 못하게 했습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 sliding window나 token bucket 대신 fixed window를 택했나요?”
+- “shared IP 환경에서는 오탐을 어떻게 설명하나요?”
+- “reverse proxy 구성이 바뀌면 이 정책은 어떻게 같이 관리하나요?”
 
 ## 10. 시작 상태
 
@@ -218,8 +249,17 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+관련 테스트만 빠르게 보고 싶다면 아래 명령을 추가로 쓸 수 있습니다.
+
+```bash
 ./gradlew --no-daemon integrationTest --tests "com.erp.api.AuthApiIntegrationTest"
 ```
+
+다만 블로그 기준 안정 검증 경로는 전체 `integrationTest`입니다.
 
 성공하면 확인할 것:
 
@@ -227,14 +267,22 @@ sequenceDiagram
 - 정상 로그인은 이메일 실패 카운터를 지운다
 - 신뢰하지 않는 프록시에서 매번 다른 `X-Forwarded-For`를 보내도 우회되지 않는다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `AuthRateLimitService`가 로그인/refresh 제한 정책을 분리한다
+- `ClientIpResolver`, `ClientIpProperties`가 trusted proxy 모델을 표현한다
+- `AuthApiController`가 직접 헤더를 읽지 않고 resolver를 사용한다
+- `AuthService`가 성공 로그인 시 이메일 실패 카운터를 초기화한다
+- `AuthApiIntegrationTest`가 rate limit과 헤더 스푸핑 차단을 검증한다
+
+## 15. 글 종료 체크포인트
 
 - 로그인과 refresh가 서로 다른 rate limit 정책을 가진다
 - 성공 로그인은 실패 예산을 소비하지 않는다
 - IP 해석 로직이 컨트롤러 분기문이 아니라 별도 resolver로 분리돼 있다
 - “헤더 값”이 아니라 “어떤 프록시를 신뢰할 것인가”를 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 정상 사용자도 몇 번 로그인하면 계속 막힌다
   - 원인: 성공 로그인 뒤 이메일 실패 카운터를 비우지 않았을 수 있습니다

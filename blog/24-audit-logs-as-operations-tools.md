@@ -55,6 +55,17 @@ Kindergarten ERP는 이 단계를 아래 네 축으로 정리했습니다.
 원장이 매번 보는 감사 로그 목록/CSV export가 느리면
 그 역시 운영 문제입니다.
 
+### 2-4. 운영 질문에 따라 어떤 로그를 볼지 먼저 나누자
+
+auth audit와 domain audit를 모두 보여 주더라도, 둘이 같은 질문에 답하는 것은 아닙니다.
+
+| 운영 질문 | 보는 로그 | 이유 |
+|---|---|---|
+| 누가 로그인에 계속 실패하는가 | auth audit | 인증 사건 자체를 추적하기 위해 |
+| 어떤 업무 상태가 누가 바꿨는가 | domain audit | 업무 전이 이력을 보기 위해 |
+| 원장이 화면에서 필터 후 CSV로 내릴 수 있는가 | 둘 다 | 운영 도구로 실제 사용하기 위해 |
+| 오래된 인증 로그를 어떻게 정리할 것인가 | auth audit retention | 장기 운영 비용을 통제하기 위해 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -241,11 +252,31 @@ sequenceDiagram
 이 단계까지 오면 감사 로그는 더 이상 부가 기능이 아닙니다.
 서비스 운영을 설명하는 중심 축이 됩니다.
 
+### 현재 구현의 한계
+
+현재 retention/archive 정책은 **auth audit**에 집중돼 있습니다.
+즉 모든 종류의 감사 로그를 동일한 lifecycle로 일반화한 것은 아니며, domain audit는 현재 조회/export 중심으로 운영됩니다.
+이 점을 같이 말해 두면 “무엇을 했고, 무엇은 아직 안 했다”가 더 명확해집니다.
+
 ## 9. 취업 포인트
 
 - “감사 로그를 저장하는 것에서 끝내지 않고, 조회/CSV export/보관 정책/성능 smoke까지 운영 도구로 키웠습니다.”
 - “auth audit는 `kindergartenId` 비정규화와 archive table로 장기 운영 비용을 낮췄습니다.”
 - “운영자 콘솔도 query budget 테스트를 붙여 사용자 API와 같은 수준으로 회귀를 관리했습니다.”
+
+### 9-1. 1문장 답변
+
+- “감사 로그를 저장용 테이블로 두지 않고, principal 범위 조회/CSV export/retention/성능 smoke까지 붙여 실제 운영 도구로 키웠습니다.”
+
+### 9-2. 30초 답변
+
+- “이 단계에서는 audit를 운영자 도구로 완성하는 데 집중했습니다. auth audit는 `kindergartenId` 비정규화와 archive/purge 정책으로 장기 운영 비용을 낮추고, domain audit는 principal 범위 목록/CSV export로 업무 이력 확인에 맞췄습니다. 또 `AuditConsolePerformanceSmokeTest`를 통해 관리자 화면 list/export도 query budget 안에 들어오는지 회귀 검증합니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 auth audit만 archive/purge를 먼저 넣었나요?”
+- “조회 API와 export를 같은 서비스에서 처리한 이유는 무엇인가요?”
+- “운영자 콘솔 성능을 왜 별도 smoke test로 봤나요?”
 
 ## 10. 시작 상태
 
