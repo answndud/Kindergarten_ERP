@@ -59,6 +59,17 @@ Kindergarten ERP는 이 문제를 `auth_audit_log`라는 별도 도메인으로 
 - 페이지네이션
 - CSV export
 
+### 2-4. 어떤 인증 사건을 왜 남기는지 먼저 고정하자
+
+감사 로그는 “가능한 모든 걸 다 넣는 것”보다 “운영자가 나중에 무엇을 찾을지”를 먼저 정하는 편이 좋습니다.
+
+| 사건 | 남겨야 하는 이유 | 운영자가 나중에 보는 질문 |
+|---|---|---|
+| 로그인 성공 | 정상 접근 패턴 확인 | 누가 언제 로그인했는가 |
+| 로그인 실패 | brute-force / 오입력 추적 | 특정 이메일에서 반복 실패가 있었는가 |
+| refresh 성공/실패 | 세션 이상 징후 확인 | 토큰 갱신이 비정상적으로 많이 일어나는가 |
+| 소셜 연결/해제 실패 | 계정 정책 문제 추적 | 왜 소셜 연결이 실패했는가 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -259,11 +270,31 @@ sequenceDiagram
 하지만 포트폴리오에서는 로그인 이후의 운영성까지 보여줄수록
 훨씬 더 백엔드다운 프로젝트가 됩니다.
 
+### 현재 구현의 선택과 한계
+
+이 글은 **인증 사건(auth audit)** 에 집중합니다.
+즉, 입학 승인이나 출결 요청 같은 업무 상태 전이는 아직 별도 `domain_audit_log`로 다뤄야 합니다.
+또 CSV export는 운영 편의를 위한 기본 기능이지, 외부 SIEM이나 장기 보관 시스템까지 대체하는 구조는 아닙니다.
+
 ## 9. 취업 포인트
 
 - “인증 이벤트를 일반 애플리케이션 로그가 아니라 별도 `auth_audit_log` 도메인으로 분리했습니다.”
 - “감사 로그 저장은 `REQUIRES_NEW`로 분리해 인증 본 흐름과 실패 전파를 분리했습니다.”
 - “principal 전용 조회/API/CSV export/운영 화면까지 연결해 실제 운영자가 쓰는 구조를 만들었습니다.”
+
+### 9-1. 1문장 답변
+
+- “인증 이벤트를 일반 로그와 분리한 `auth_audit_log` 도메인으로 저장하고, principal 범위 조회/API/CSV export/운영 화면까지 연결해 실제 운영자가 쓰는 인증 증적 체계를 만들었습니다.”
+
+### 9-2. 30초 답변
+
+- “이 단계에서는 인증 이벤트를 디버깅 로그가 아니라 운영 증적으로 다뤘습니다. `AuthAuditLogService`는 로그인/refresh/소셜 연결 이벤트를 `REQUIRES_NEW` 트랜잭션으로 기록하고, `AuthAuditLogQueryService`는 principal의 tenant 범위 안에서 목록 조회와 CSV export를 제공합니다. 그리고 `AuthAuditLogViewController`와 운영 화면을 연결해, 저장한 데이터를 실제로 보는 흐름까지 닫았습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 일반 애플리케이션 로그로는 부족했나요?”
+- “왜 `REQUIRES_NEW`를 택했나요?”
+- “auth audit와 domain audit는 무엇이 다른가요?”
 
 ## 10. 시작 상태
 
@@ -312,10 +343,19 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+관련 테스트만 빠르게 확인하고 싶다면 아래 명령을 추가로 쓸 수 있습니다.
+
+```bash
 ./gradlew --no-daemon integrationTest \
   --tests "com.erp.api.AuthApiIntegrationTest" \
   --tests "com.erp.api.AuthAuditApiIntegrationTest"
 ```
+
+다만 블로그 기준 안정 검증 경로는 전체 `integrationTest`입니다.
 
 성공하면 확인할 것:
 
@@ -323,14 +363,22 @@ sequenceDiagram
 - principal만 감사 로그 조회와 CSV export를 할 수 있다
 - 다른 유치원 범위 로그는 조회되지 않는다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `V10__create_auth_audit_log.sql`, `V11__denormalize_auth_audit_log_and_add_retention_archive.sql`이 존재한다
+- `AuthAuditLogService`가 로그인/refresh/소셜 연결 이벤트 저장을 담당한다
+- `AuthAuditLogQueryService`가 principal 범위 조회와 CSV export를 담당한다
+- `AuthAuditLogController`, `AuthAuditLogViewController`, `authaudit/audit-logs.html`이 연결돼 있다
+- `AuthApiIntegrationTest`, `AuthAuditApiIntegrationTest`가 저장/조회 정책을 검증한다
+
+## 15. 글 종료 체크포인트
 
 - 인증 이벤트가 일반 앱 로그와 별도 테이블로 관리된다
 - 저장, 조회, 보관 정책이 각기 다른 서비스 책임으로 분리돼 있다
 - 감사 로그가 API와 운영 화면 두 경로에서 모두 소비된다
 - “왜 `REQUIRES_NEW`로 분리했는가”를 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 인증은 실패했는데 감사 로그도 같이 사라진다
   - 원인: 인증 본 트랜잭션과 같은 경계에서 저장하면 롤백에 함께 묶일 수 있습니다

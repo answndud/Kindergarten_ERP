@@ -40,6 +40,17 @@ Spring Security는 단순 토큰 문자열이 아니라
 장점은 브라우저 기반 앱에서 관리가 편하다는 점이고,
 단점은 CSRF와 쿠키 보안 옵션을 더 신경 써야 한다는 점입니다.
 
+### 2-4. 토큰이 언제 만들어지고 어디서 쓰이는지 먼저 보자
+
+초보자가 가장 많이 헷갈리는 지점은 “토큰을 누가 만들고, 누가 읽고, 누가 검증하느냐”입니다.
+
+| 상황 | 담당 클래스 | 하는 일 |
+|---|---|---|
+| 로그인 성공 직후 | `AuthService` + `JwtTokenProvider` | access/refresh token 생성 후 쿠키에 담음 |
+| 보호된 API 요청 | `JwtFilter` | 쿠키에서 access token을 읽고 인증 복원 |
+| refresh 요청 | `AuthService` + `JwtTokenProvider` | refresh token 검증 후 새 access token 발급 |
+| 보안 규칙 적용 | `SecurityConfig` | JWT 필터를 체인에 연결하고 공개/보호 경로를 구분 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -68,7 +79,7 @@ flowchart TD
 핵심 기준은 아래였습니다.
 
 1. 토큰 생성 규칙은 `JwtTokenProvider`에 모은다
-2. 로그인/로그아웃/갱신 orchestration은 `AuthService`가 맡는다
+2. 로그인/로그아웃/갱신 흐름 조율은 `AuthService`가 맡는다
 3. 요청마다 인증 복원은 `JwtFilter`가 맡는다
 
 ## 5. 코드 설명
@@ -182,11 +193,31 @@ sequenceDiagram
 
 이 구조가 있었기 때문에 나중에 refresh rotation과 세션 관리도 무리 없이 얹을 수 있었습니다.
 
+### 현재 구현의 한계
+
+이 글 단계의 JWT 구조만으로는 “토큰을 발급하고 다음 요청에서 인증을 복원한다”까지가 핵심입니다.
+즉, **즉시 세션 차단**, **활성 세션 목록**, **refresh rotation** 같은 운영형 요구사항은 아직 닫히지 않습니다.
+그래서 이 글은 기본 연결 단계로 이해하고, 다음 글에서 세션 레지스트리와 rotation으로 확장해야 합니다.
+
 ## 9. 취업 포인트
 
-- “JWT 발급은 `JwtTokenProvider`, 인증 복원은 `JwtFilter`, 로그인 orchestration은 `AuthService`로 책임을 나눴습니다.”
+- “JWT 발급은 `JwtTokenProvider`, 인증 복원은 `JwtFilter`, 로그인 흐름 조율은 `AuthService`로 책임을 나눴습니다.”
 - “토큰에 `sessionId`, `tokenType`, `jti`를 넣어 이후 세션 관리와 rotation으로 확장 가능한 구조를 먼저 만들었습니다.”
 - “쿠키 기반 JWT를 택했기 때문에 CSRF와 쿠키 보안 설정까지 함께 설계했습니다.”
+
+### 9-1. 1문장 답변
+
+- “쿠키 기반 JWT를 쓰되, 토큰 생성은 `JwtTokenProvider`, 요청 인증 복원은 `JwtFilter`, 로그인 흐름은 `AuthService`로 나눠 이후 세션 관리까지 확장 가능한 구조로 만들었습니다.”
+
+### 9-2. 30초 답변
+
+- “이 단계에서는 JWT를 프로젝트 요청 사이클에 정확히 연결하는 데 집중했습니다. 로그인 성공 시 `AuthService`가 `JwtTokenProvider`를 통해 access/refresh token을 만들고 쿠키로 내려주고, 이후 요청은 `JwtFilter`가 쿠키를 읽어 `SecurityContext`를 복원합니다. 또 claim에 `sessionId`, `tokenType`, `jti`를 넣어 다음 단계의 refresh rotation과 세션 관리로 자연스럽게 이어지게 설계했습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 헤더 기반 JWT 대신 쿠키 기반 JWT를 택했나요?”
+- “왜 `JwtFilter`가 직접 회원 조회까지 하나요?”
+- “이 단계 JWT 구조만으로는 무엇이 아직 부족한가요?”
 
 ## 10. 시작 상태
 
@@ -219,24 +250,41 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
-./gradlew test --tests "com.erp.api.AuthApiIntegrationTest"
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
+
+빠르게 관련 테스트만 보고 싶다면 아래 명령을 추가로 사용할 수 있습니다.
+
+```bash
+./gradlew --no-daemon integrationTest --tests "com.erp.api.AuthApiIntegrationTest"
+```
+
+다만 일부 환경에서는 좁힌 `--tests` 실행이 불안정할 수 있으므로, 블로그 기준 안정 검증 경로는 전체 `integrationTest`입니다.
 
 성공하면 확인할 것:
 
 - 로그인 성공 시 HTTP-only access/refresh 쿠키가 발급된다
 - 다음 요청에서 `JwtFilter`가 쿠키를 읽어 인증을 복원한다
-- refresh 경로 회귀 테스트가 통과한다
+- refresh 경로 회귀 테스트가 통합 스위트 안에서 유지된다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `JwtTokenProvider`가 access/refresh 토큰 생성과 claim 파싱을 담당한다
+- `JwtFilter`가 access token 쿠키를 읽고 인증을 복원한다
+- `AuthService.login(...)`이 로그인 성공 후 쿠키 발급 흐름을 수행한다
+- `SecurityConfig`가 JWT 필터를 보안 체인에 연결한다
+- `AuthApiIntegrationTest`가 로그인/인증/refresh 회귀를 검증한다
+
+## 15. 글 종료 체크포인트
 
 - 토큰 생성 책임이 `JwtTokenProvider`로 분리돼 있다
 - 요청 인증 복원 책임이 `JwtFilter`로 분리돼 있다
 - 로그인 orchestration은 `AuthService`가 맡는다
 - 브라우저 요청이 쿠키 기반으로 인증되는 최소 JWT 구조가 완성돼 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 로그인은 되는데 다음 요청이 계속 익명 사용자로 처리됨
   - 원인: `JwtFilter` 등록 순서나 access token 쿠키 이름이 맞지 않을 수 있습니다

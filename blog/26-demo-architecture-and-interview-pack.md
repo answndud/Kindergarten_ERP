@@ -46,6 +46,19 @@ Kindergarten ERP는 마지막 단계에서 이 문제를
 문서가 많을수록 오히려 혼란이 생길 수 있습니다.
 그래서 active 문서 묶음이 필요합니다.
 
+### 2-4. 데모 당일에는 무엇을 어떤 순서로 보여줄지 먼저 고정하자
+
+시연은 즉흥적으로 하면 거의 항상 길어집니다.
+아래처럼 “계정 / 화면 / 목적”을 먼저 정해 두는 편이 좋습니다.
+
+| 순서 | 계정 | 화면/행동 | 보여 주려는 메시지 |
+|---|---|---|---|
+| 1 | principal | `/swagger-ui.html` | API 계약과 문서화 기준 |
+| 2 | parent | 신청/요청 생성 | 사용자 입력이 실제로 발생하는 흐름 |
+| 3 | principal | `/applications/pending`, `/attendance-requests` | 승인 워크플로우와 권한 |
+| 4 | principal | `/domain-audit-logs`, `/audit-logs` | 운영 증적과 감사 추적 |
+| 5 | principal | `/actuator/health/readiness`, Grafana, CI | 운영성과 관측성 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -282,11 +295,31 @@ sequenceDiagram
 이 단계까지 가야 비로소
 프로젝트가 “개발 결과물”에서 “전달 가능한 포트폴리오”로 바뀝니다.
 
+### 현재 구현의 한계
+
+이 글의 데모 구조는 **면접/시연 친화성**에 맞춰져 있습니다.
+즉 `demo` profile이 완전히 별도 스테이징 환경을 만드는 것은 아니고, `local` 그룹과 시드 데이터를 재사용합니다.
+그래서 시연 안정성은 높지만, 실제 배포 환경과 100% 동일한 운영 검증까지 대신하는 것은 아닙니다.
+
 ## 9. 취업 포인트
 
 - “`demo` profile, seed data, preflight, runbook을 분리해 시연 실패 확률을 낮췄습니다.”
 - “아키텍처 SSOT, hiring pack, interview one pager, Q&A 스크립트까지 만들어 설명 경로를 설계했습니다.”
 - “코드 작성에서 끝나지 않고, 면접관이 이해하는 순서까지 설계한 것이 이 프로젝트 마감 단계의 핵심입니다.”
+
+### 9-1. 1문장 답변
+
+- “코드를 구현하는 데서 끝나지 않고, `demo` profile, seed data, architecture SSOT, hiring pack, interview 문서까지 묶어 면접관이 이해하는 순서 자체를 설계했습니다.”
+
+### 9-2. 30초 답변
+
+- “프로젝트 마감 단계에서는 기능 추가보다 전달 방식을 설계했습니다. `application-demo.yml`과 `DataLoader`로 시연 시작점을 고정하고, `demo-preflight.md`와 `demo-runbook.md`로 당일 실행 순서를 문서화했습니다. 또 `system-architecture.md`, `backend-hiring-pack.md`, `interview_one_pager.md`, `interview_qa_script.md`를 연결해 면접관이 5분 안에 프로젝트 구조를 이해하고 꼬리 질문까지 이어 갈 수 있게 했습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 demo 전용 profile이 필요했나요?”
+- “문서가 많아지면 오히려 복잡해지지 않나요?”
+- “데모 문서와 실제 시드 데이터가 어긋나지 않게 어떻게 관리했나요?”
 
 ## 10. 시작 상태
 
