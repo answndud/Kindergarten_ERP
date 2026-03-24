@@ -328,14 +328,13 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
-./blog/scripts/checkpoint-06.sh
 # 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
-- `checkpoint-06.sh`가 통과해 공통 규약 파일과 핵심 패턴이 존재한다
+- 산출물 체크리스트 기준으로 공통 규약 파일과 핵심 패턴이 존재한다
 - 이 시점의 코어 도메인 통합 스위트가 전체적으로 깨지지 않는다
 - 애플리케이션이 현재 공통 규약 상태로 정상 기동한다
 - 대표 API가 `ApiResponse<T>` 구조를 사용한다

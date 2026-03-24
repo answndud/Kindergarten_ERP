@@ -32,7 +32,7 @@
 ### D. 실행 / 검증 명령
 - 복붙 가능한 명령
 - 가능하면 아래 두 층으로 나눈다
-  - 단계 체크포인트: `blog/scripts/checkpoint-XX.sh`
+  - 단계 체크포인트: 필요한 글에 한해 `blog/scripts/checkpoint-XX.sh`
   - 현재 저장소 기준 안정 검증: `compileJava compileTestJava`, `integrationTest`, `performanceSmokeTest`
 - 성공 시 무엇이 보여야 하는지까지 포함
 
@@ -66,7 +66,8 @@
 그래서 블로그 검증은 아래 두 층으로 나눕니다.
 
 1. 단계 체크포인트 검증
-   - `blog/scripts/checkpoint-XX.sh`
+   - 필요한 글에만 `blog/scripts/checkpoint-XX.sh`
+   - 스크립트가 없다면 `산출물 체크리스트 + 실행 / 검증 명령` 조합으로 대체
    - 파일/메서드/문서/마이그레이션이 해당 단계 산출물대로 있는지 확인
 2. 현재 저장소 기준 안정 검증
    - `./gradlew compileJava compileTestJava`
@@ -77,11 +78,13 @@
 
 ## 5. 권장 읽기 순서
 
-1. `00_series_plan.md`
+1. `blog/README.md`
 2. `00_rebuild_guide.md`
-3. 각 글 본문
-4. 글 끝의 산출물 체크리스트와 검증 명령
-5. 필요하면 `blog/scripts/checkpoint-XX.sh`
+3. `00_quality_checklist.md`
+4. `00_series_plan.md`
+5. 각 글 본문
+6. 글 끝의 산출물 체크리스트와 검증 명령
+7. 필요한 글만 `blog/scripts/checkpoint-XX.sh`
 
 ## 6. 우선 보강 대상
 

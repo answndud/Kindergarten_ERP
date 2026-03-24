@@ -293,7 +293,6 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
-./blog/scripts/checkpoint-24.sh
 # 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ./gradlew --no-daemon performanceSmokeTest
@@ -301,7 +300,7 @@ sequenceDiagram
 
 성공하면 확인할 것:
 
-- `checkpoint-24.sh`가 통과해 retention/export/performance 산출물이 맞는다
+- 산출물 체크리스트 기준으로 retention/export/performance 산출물이 맞는다
 - 통합 스위트 안에서 `AuthAuditApiIntegrationTest`, `DomainAuditApiIntegrationTest`, `AuthAuditRetentionIntegrationTest`가 통과한다
 - `performanceSmokeTest`에서 `AuditConsolePerformanceSmokeTest`가 통과한다
 - 감사 로그가 조회, export, retention까지 운영 도구로 닫혀 있다

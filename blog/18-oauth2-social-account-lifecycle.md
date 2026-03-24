@@ -19,9 +19,9 @@ Kindergarten ERP는 이 문제를 꽤 깊게 다뤘습니다.
 
 - 자동 소셜 가입
 - 명시적 소셜 계정 연결
-- 로컬 비밀번호 bootstrap
+- 로컬 비밀번호를 처음 심기(bootstrap)
 - 안전한 unlink
-- provider identity immutability
+- 같은 provider 계정 바꾸기 금지(식별자 불변성)
 
 즉, 소셜 로그인 자체보다 **계정 lifecycle 정책**이 핵심이었습니다.
 
@@ -49,6 +49,19 @@ Kindergarten ERP는 이 문제를 꽤 깊게 다뤘습니다.
 계정 탈취와 복구가 매우 어려워집니다.
 
 그래서 이 프로젝트는 “같은 provider 교체 금지”를 정책으로 택했습니다.
+
+### 2-4. 상황별 정책표
+
+이 글은 정책이 많아서, 아래 표를 먼저 보는 편이 이해가 쉽습니다.
+
+| 상황 | 허용 여부 | 사용자에게 보이는 결과 | 이유 |
+|---|---|---|---|
+| 처음 소셜 로그인, 기존 계정 없음 | 허용 | 신규 소셜 회원 생성 | 처음 진입 경로이기 때문 |
+| 이미 연결된 소셜 계정으로 로그인 | 허용 | 바로 로그인 | 이미 검증된 연결이 있기 때문 |
+| 기존 로컬 계정과 이메일 충돌 | 금지 | 충돌 안내 후 수동 연결 유도 | 자동 병합은 위험하기 때문 |
+| 로그인된 계정에 새 provider 연결 | 허용 | settings에서 연결 성공 | 명시적 의도가 있기 때문 |
+| 마지막 로그인 수단만 남은 상태에서 unlink | 금지 | 해제 거부 | 계정 잠금을 막아야 하기 때문 |
+| 같은 provider의 다른 계정으로 교체 | 금지 | 연결 거부 | 계정 식별 안정성을 지키기 위해서 |
 
 ## 3. 이번 글에서 다룰 파일
 
@@ -84,7 +97,7 @@ flowchart TD
 
 핵심 기준은 아래였습니다.
 
-1. 로그인과 link intent를 구분한다
+1. 로그인과 연결 의도(link intent)를 구분한다
 2. 이메일 충돌은 자동 연결하지 않는다
 3. 소셜 계정은 별도 테이블로 정규화한다
 4. unlink는 안전한 다른 로그인 수단이 있을 때만 허용한다
@@ -107,7 +120,7 @@ flowchart TD
 
 - 신규 소셜 가입
 - 기존 소셜 로그인
-- link intent 처리
+- 연결 의도(link intent) 처리
 - 충돌 차단
 - 감사 로그
 
@@ -204,6 +217,11 @@ sequenceDiagram
 
 즉, 이 기능은 한 번에 완성된 것이 아니라 정책을 점진적으로 다듬은 결과입니다.
 
+> 현재 구현의 선택과 한계
+> 이 프로젝트는 같은 provider의 다른 계정으로 교체하는 기능을 의도적으로 막았습니다.
+> 사용성보다 계정 식별 안정성과 복구 용이성을 우선한 선택입니다.
+> 따라서 실제 계정 교체가 필요하면 사용자 자기 수정이 아니라 운영 정책으로 풀어야 합니다.
+
 ## 8. 회고
 
 소셜 로그인은 “붙였다”로 끝나면 생각보다 약합니다.
@@ -223,6 +241,20 @@ sequenceDiagram
 - “소셜 로그인 자체보다 계정 lifecycle 정책을 더 중요하게 봤습니다.”
 - “이메일 충돌은 자동 연결하지 않고, 명시적 소셜 연결 플로우를 따로 만들었습니다.”
 - “소셜 계정을 별도 테이블로 정규화하고, unlink 이력과 provider 불변성을 보장했습니다.”
+
+### 9-1. 1문장 답변
+
+- “소셜 로그인을 붙인 것이 아니라, 계정 충돌·연결·해제·교체 금지까지 포함한 계정 정책을 설계했습니다.”
+
+### 9-2. 30초 답변
+
+- “소셜 로그인은 편해 보이지만 실제로는 계정 정책이 더 중요합니다. 이 프로젝트는 이메일 충돌 시 자동 병합하지 않고, 로그인과 소셜 연결을 분리했습니다. 소셜 계정은 `member_social_account`로 정규화했고, 마지막 로그인 수단 보호와 같은 provider 교체 금지 정책까지 서비스 계층에서 강제했습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 이메일이 같아도 자동 연결하지 않았나요?”
+- “왜 소셜 계정을 별도 테이블로 뺐나요?”
+- “같은 provider 계정 교체를 막은 이유는 무엇인가요?”
 
 ## 10. 시작 상태
 
@@ -273,12 +305,21 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon fastTest
+./gradlew --no-daemon integrationTest
+```
+
+코드 흐름만 빠르게 보고 싶다면 아래처럼 관련 테스트만 좁혀 실행할 수 있습니다.
+
+```bash
 ./gradlew --no-daemon fastTest \
   --tests "com.erp.global.security.oauth2.OAuth2AuthenticationSuccessHandlerTest"
-
 ./gradlew --no-daemon integrationTest \
   --tests "com.erp.api.MemberApiIntegrationTest"
 ```
+
+다만 블로그의 기본 검증 경로는 전체 `fastTest`, `integrationTest`입니다. 일부 환경에서는 좁힌 `--tests` 실행이 XML result writer 충돌로 실패할 수 있기 때문입니다.
 
 성공하면 확인할 것:
 
@@ -286,14 +327,22 @@ sequenceDiagram
 - 기존 이메일과 충돌하면 자동 연결되지 않고 명시적 에러로 처리된다
 - 같은 provider의 다른 계정으로 바꾸는 시나리오는 차단된다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `OAuth2AuthenticationSuccessHandler`가 일반 로그인과 연결 흐름을 구분한다
+- `MemberSocialAccount` 테이블과 `V8`, `V9` 마이그레이션이 존재한다
+- `SocialAccountLinkService`가 연결 / 해제 / provider 불변성 정책을 담당한다
+- `settings.html`에서 소셜 연결 상태와 로컬 비밀번호 bootstrap UI를 볼 수 있다
+- `OAuth2AuthenticationSuccessHandlerTest`, `MemberApiIntegrationTest`가 정책을 검증한다
+
+## 15. 글 종료 체크포인트
 
 - 소셜 계정 정보가 `member` 부속 컬럼이 아니라 별도 테이블로 분리돼 있다
 - 연결과 로그인 흐름을 구분해 설명할 수 있다
 - 마지막 로그인 수단 보호와 provider 불변성 정책을 설명할 수 있다
 - settings 화면까지 포함해 lifecycle이 사용자 기능으로 닫혀 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 소셜 로그인 성공 시 기존 계정에 자동으로 붙어 버린다
   - 원인: 이메일이 같다는 이유만으로 계정을 자동 병합하면 정책이 무너집니다

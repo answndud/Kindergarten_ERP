@@ -380,7 +380,7 @@
 
 ## 11) 다음 액션
 - `blog/README.md`를 독자용/작성자용 동선 기준으로 계속 유지
-- 재현성이 약한 글에는 `blog/scripts/checkpoint-XX.sh`를 추가
+- 재현성이 약한 글은 먼저 `산출물 체크리스트 + 안정 검증 명령`으로 보강하고, 꼭 필요할 때만 checkpoint script를 추가
 - 외부 플랫폼 배포 직전에는 repo-relative 링크를 GitHub permalink로 변환
 - 각 리라이트 배치의 근거와 검증 결과를 `BLOG_PROGRESS.md`에 계속 누적
 
@@ -388,7 +388,7 @@
 
 ### Batch R1. 공통 재현형 규칙 문서
 - `blog/00_rebuild_guide.md`
-- `blog/_rebuild_template.md`
+- `blog/00_quality_checklist.md`
 - `blog/README.md`에 재현형 읽기 순서 연결
 
 ### Batch R2. 부트스트랩 구간 우선 보강

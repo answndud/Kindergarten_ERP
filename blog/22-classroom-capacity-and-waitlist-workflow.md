@@ -309,14 +309,13 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
-./blog/scripts/checkpoint-22.sh
 # 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
-- `checkpoint-22.sh`가 통과해 정원/대기열/offer 산출물이 맞는다
+- 산출물 체크리스트 기준으로 정원/대기열/offer 산출물이 맞는다
 - 통합 스위트 안에서 `KidApplicationApiIntegrationTest`, `ClassroomApiIntegrationTest`, `KidApiIntegrationTest`가 통과한다
 - 좌석 계산이 현재 재원 수와 활성 offer를 함께 반영한다
 - 입학 신청이 waitlist/offer/accept/expire 흐름을 가진다
