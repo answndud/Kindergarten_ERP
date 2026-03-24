@@ -44,6 +44,17 @@ refresh token을 쓸 때마다 새 refresh token으로 갈아끼우는 전략입
 
 그래서 이 프로젝트는 필터 단계에서 Redis 세션 활성 여부까지 다시 확인합니다.
 
+### 2-4. 세션이 어떻게 바뀌는지 표로 먼저 보자
+
+이 글은 용어가 많아서, 먼저 상태 변화를 표로 보는 편이 이해하기 쉽습니다.
+
+| 상황 | 서버가 하는 일 | 사용자가 느끼는 결과 |
+|---|---|---|
+| 로그인 성공 | `sessionId` 생성, Redis 세션 등록, access/refresh 발급 | 새 기기에서 로그인됨 |
+| refresh 호출 | 기존 refresh 교체, 같은 세션 메타데이터 갱신 | 로그인 연장이 됨 |
+| 특정 세션 종료 | 해당 `sessionId` revoke | 그 기기만 다시 로그인해야 함 |
+| 다른 기기 세션 종료 | 현재 세션 제외 revoke | 내 기기만 남고 다른 기기는 끊김 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -129,7 +140,7 @@ flowchart TD
 - `revokeOtherSessions(...)`
 
 즉, 인증 서비스는 비밀번호 검사만이 아니라
-세션 lifecycle 전체를 관리하는 오케스트레이터가 됩니다.
+세션이 생성되고 갱신되고 종료되는 전체 흐름을 관리하는 서비스가 됩니다.
 
 ### 5-5. `AuthApiController`: 사용자가 세션을 실제로 제어하게 한다
 
@@ -176,6 +187,11 @@ sequenceDiagram
 - [phase17_jwt_refresh_session_rotation.md](../docs/decisions/phase17_jwt_refresh_session_rotation.md)
 - [phase39_management_plane_and_active_session_control.md](../docs/decisions/phase39_management_plane_and_active_session_control.md)
 
+> 현재 구현의 한계
+> 이 구조는 access token 자체를 DB에 저장하는 방식이 아니라, Redis에 저장된 세션 활성 여부에 의존합니다.
+> 그래서 세션 revoke는 빨라지지만, 반대로 Redis가 인증 경로의 중요한 의존성이 됩니다.
+> 이 때문에 readiness와 모니터링을 함께 보는 운영 구성이 뒤에서 필요해집니다.
+
 ## 8. 회고
 
 이 단계에서 가장 중요한 교훈은 아래입니다.
@@ -195,6 +211,20 @@ sequenceDiagram
 - “JWT claims에 `sessionId`를 넣고 Redis 세션 레지스트리와 연결했습니다.”
 - “refresh token rotation을 적용하고, 필터 단계에서 활성 세션 여부를 다시 확인해 access token revoke까지 보장했습니다.”
 - “세션 설계를 사용자 기능(`/sessions`)까지 닫아서 운영 가능한 인증 구조를 만들었습니다.”
+
+### 9-1. 1문장 답변
+
+- “JWT를 단순 문자열이 아니라 `sessionId`를 가진 세션 시스템으로 확장해, rotation과 기기별 로그아웃까지 가능하게 만들었습니다.”
+
+### 9-2. 30초 답변
+
+- “기본 JWT만으로는 여러 기기 로그인과 즉시 로그아웃 제어가 약했습니다. 그래서 `sessionId`를 토큰 claims에 넣고 Redis 세션 레지스트리를 도입했습니다. refresh는 rotation하고, `JwtFilter`는 서명 검증 뒤에 세션 활성 여부까지 다시 봅니다. 그 결과 사용자가 세션 목록을 보고 특정 기기만 끊는 기능까지 제공할 수 있게 됐습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 refresh token 저장소를 세션 레지스트리로 확장했나요?”
+- “access token을 어떻게 사실상 즉시 끊을 수 있나요?”
+- “이 구조에서 Redis가 죽으면 인증은 어떻게 되나요?”
 
 ## 10. 시작 상태
 
@@ -236,8 +266,17 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+관련 테스트만 빠르게 보고 싶다면 아래 명령을 추가로 쓸 수 있습니다.
+
+```bash
 ./gradlew --no-daemon integrationTest --tests "com.erp.api.AuthApiIntegrationTest"
 ```
+
+다만 일부 환경에서는 좁힌 `--tests` 실행이 불안정할 수 있으므로, 블로그 기준 안정 검증 경로는 전체 `integrationTest`입니다.
 
 성공하면 확인할 것:
 
@@ -245,14 +284,22 @@ sequenceDiagram
 - `/api/v1/auth/sessions`에서 현재 세션과 다른 기기 세션이 구분돼 보인다
 - 특정 세션 종료 후 해당 세션 access token도 필터 단계에서 차단된다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `JwtTokenProvider`가 `memberId`, `sessionId`, `tokenType` claim을 담는다
+- `AuthSessionRegistryService`가 Redis에 세션 메타데이터와 refresh token을 저장한다
+- `AuthApiController`에 세션 목록 조회와 세션 종료 API가 있다
+- `AuthService.refreshAccessToken(...)`가 refresh rotation을 수행한다
+- `AuthApiIntegrationTest`가 refresh rotation과 세션 revoke를 검증한다
+
+## 15. 글 종료 체크포인트
 
 - access/refresh token이 둘 다 `sessionId`를 기준으로 묶인다
 - Redis에서 세션 메타데이터와 refresh token을 함께 관리한다
 - 사용자가 자신의 세션을 목록으로 보고 정리할 수 있다
 - refresh rotation과 세션 revoke를 같은 설계로 설명할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: refresh rotation 뒤에도 이전 refresh token이 계속 먹는다
   - 원인: Redis에 저장된 refresh token을 교체하지 않았거나, `sessionId` 기준 비교가 빠졌을 수 있습니다

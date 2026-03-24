@@ -304,14 +304,13 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
-./blog/scripts/checkpoint-23.sh
 # 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
-- `checkpoint-23.sh`가 통과해 출결 요청 aggregate와 업무 감사 로그 산출물이 맞는다
+- 산출물 체크리스트 기준으로 출결 요청 aggregate와 업무 감사 로그 산출물이 맞는다
 - 통합 스위트 안에서 `AttendanceChangeRequestApiIntegrationTest`, `DomainAuditApiIntegrationTest`가 통과한다
 - 학부모가 최종 출석을 직접 바꾸지 못하고 요청만 생성한다
 - 승인/거절/취소가 모두 업무 감사 로그로 남는다

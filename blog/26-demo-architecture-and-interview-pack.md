@@ -327,7 +327,6 @@ sequenceDiagram
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ./gradlew compileJava compileTestJava
-./blog/scripts/checkpoint-26.sh
 ./gradlew --no-daemon integrationTest
 ./gradlew bootRun --args='--spring.profiles.active=demo'
 ```

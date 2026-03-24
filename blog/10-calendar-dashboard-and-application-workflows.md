@@ -292,14 +292,13 @@ sequenceDiagram
 
 ```bash
 ./gradlew compileJava compileTestJava
-./blog/scripts/checkpoint-10.sh
 # 현재 완성 저장소 기준 안정 검증
 ./gradlew --no-daemon integrationTest
 ```
 
 성공하면 확인할 것:
 
-- `checkpoint-10.sh`가 통과해 캘린더/대시보드/지원 워크플로우 기본 산출물이 맞는다
+- 산출물 체크리스트 기준으로 캘린더/대시보드/지원 워크플로우 기본 산출물이 맞는다
 - 통합 스위트 안에서 `CalendarApiIntegrationTest`, `DashboardApiIntegrationTest`, `KidApplicationApiIntegrationTest`, `KindergartenApplicationApiIntegrationTest`가 통과한다
 - 일정이 scope와 권한 기준으로 조회된다
 - 대시보드 숫자가 현재 계산식 기준으로 정상 반환된다

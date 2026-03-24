@@ -48,6 +48,18 @@ Outbox 패턴은 핵심 데이터 저장 뒤,
 
 그래야 운영자가 놓치지 않습니다.
 
+### 2-4. 상태 전이를 표로 먼저 보자
+
+Outbox는 글로 읽으면 복잡해 보이지만, 실제로는 아래 표 하나로 이해할 수 있습니다.
+
+| 상황 | outbox 상태 | 의미 |
+|---|---|---|
+| 알림 저장 직후 | `PENDING` | 아직 외부 채널로 보내지지 않음 |
+| worker가 집음 | `PROCESSING` | 지금 보내는 중 |
+| 외부 채널 성공 | `DELIVERED` | 전달 완료 |
+| 외부 채널 실패, 재시도 가능 | 다시 `PENDING` | 나중에 다시 시도 |
+| 외부 채널 실패, 재시도 소진 | `DEAD_LETTER` | 운영자가 봐야 하는 최종 실패 |
+
 ## 3. 이번 글에서 다룰 파일
 
 ```text
@@ -185,7 +197,7 @@ flowchart TD
 - principal in-app 알림
 - incident webhook
 
-으로 fan-out할 수 있습니다.
+으로 여러 채널에 퍼뜨릴 수 있습니다.
 
 ### 5-6. `NotificationOutboxRepository`: worker가 실제로 의존하는 조회 규칙
 
@@ -197,6 +209,11 @@ flowchart TD
 
 즉 repository도 CRUD가 아니라
 **worker가 어떤 순서로 잡아 가야 하는지**를 표현합니다.
+
+> 현재 구현의 한계
+> 현재 구현은 단일 worker 또는 작은 규모를 전제로 설명하기 좋은 구조입니다.
+> 하지만 `claimReadyDeliveries(...)`는 원자적 lock claim이 아니라 조회 후 상태 변경 방식이라, 멀티 인스턴스로 크게 확장하면 같은 row를 동시에 집는 문제를 추가로 막아야 합니다.
+> 면접에서는 “다음 단계로는 `FOR UPDATE SKIP LOCKED` 또는 원자적 UPDATE claim을 검토하겠다”까지 말할 수 있으면 더 좋습니다.
 
 ## 6. 실제 흐름
 
@@ -258,6 +275,20 @@ Outbox를 처음 보면 구조가 복잡해 보일 수 있습니다.
 - “실패는 warn 로그가 아니라 `PENDING -> DELIVERED / DEAD_LETTER` 상태 전이로 남겼습니다.”
 - “채널 선택은 `NotificationDeliveryPolicyService`로 분리해 incident webhook 같은 운영 채널 확장을 쉽게 만들었습니다.”
 
+### 9-1. 1문장 답변
+
+- “알림 저장과 외부 전달을 분리하고, 실패를 상태 전이로 남기는 outbox 구조로 바꿨습니다.”
+
+### 9-2. 30초 답변
+
+- “처음에는 알림 저장 직후 외부 채널을 바로 호출하면 되지만, 운영에서는 실패 복구가 어렵습니다. 그래서 내부 알림 생성과 외부 전달을 `notification_outbox`로 분리했습니다. worker가 `PENDING` row를 집어 처리하고, 성공하면 `DELIVERED`, 실패하면 재시도나 `DEAD_LETTER`로 전이합니다. 덕분에 incident webhook 같은 운영 채널도 같은 구조로 확장할 수 있습니다.”
+
+### 9-3. 예상 꼬리 질문
+
+- “왜 외부 채널 호출을 원래 트랜잭션 안에서 하지 않았나요?”
+- “재시도와 dead-letter는 어떤 기준으로 나누나요?”
+- “멀티 인스턴스로 커지면 claim 동시성은 어떻게 보강할 건가요?”
+
 ## 10. 시작 상태
 
 - 앱 내부 알림 기능은 이미 존재하고, 인증 이상 징후 같은 운영 이벤트도 발생시킬 수 있어야 합니다.
@@ -302,10 +333,19 @@ Outbox를 처음 보면 구조가 복잡해 보일 수 있습니다.
 ## 13. 실행 / 검증 명령
 
 ```bash
+./gradlew compileJava compileTestJava
+./gradlew --no-daemon integrationTest
+```
+
+관련 테스트만 빠르게 확인하고 싶다면 아래처럼 좁혀 실행할 수 있습니다.
+
+```bash
 ./gradlew --no-daemon integrationTest \
   --tests "com.erp.integration.NotificationOutboxIntegrationTest" \
   --tests "com.erp.integration.NotificationOutboxRetryIntegrationTest"
 ```
+
+다만 outbox 구간은 일부 환경에서 좁힌 `--tests` 실행 시 Gradle XML result writer 충돌이 재현되므로, 블로그 기준 안정 검증 경로는 전체 `integrationTest`입니다.
 
 성공하면 확인할 것:
 
@@ -313,14 +353,22 @@ Outbox를 처음 보면 구조가 복잡해 보일 수 있습니다.
 - 성공한 채널은 `DELIVERED`로 끝난다
 - 반복 실패는 재시도 후 `DEAD_LETTER`로 남는다
 
-## 14. 글 종료 체크포인트
+## 14. 산출물 체크리스트
+
+- `V12__add_notification_outbox.sql`과 `NotificationOutbox` 엔티티가 존재한다
+- `NotificationDispatchService`가 알림 저장과 외부 전송을 분리한다
+- `NotificationDeliveryPolicyService`가 채널 선택 규칙을 담당한다
+- 이메일 / incident webhook sender가 같은 채널 인터페이스를 구현한다
+- `NotificationOutboxIntegrationTest`, `NotificationOutboxRetryIntegrationTest`가 상태 전이를 검증한다
+
+## 15. 글 종료 체크포인트
 
 - 핵심 트랜잭션과 외부 채널 호출이 분리돼 있다
 - outbox 상태 전이로 전달 결과를 설명할 수 있다
 - 채널 선택 규칙이 비즈니스 서비스 내부 분기문으로 흩어져 있지 않다
 - incident webhook 같은 운영 채널을 같은 구조로 확장할 수 있다
 
-## 15. 자주 막히는 지점
+## 16. 자주 막히는 지점
 
 - 증상: 외부 채널 실패가 알림 생성 API 자체를 깨뜨린다
   - 원인: outbox 적재와 외부 전송을 같은 즉시 호출로 처리했을 수 있습니다
