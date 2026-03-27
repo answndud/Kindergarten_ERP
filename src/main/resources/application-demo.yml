@@ -2,8 +2,20 @@
 # 데모 환경 설정
 # ===========================================
 
+app:
+  seed:
+    enabled: true
+    log-credentials: false
+  security:
+    management-surface:
+      public-api-docs: true
+      expose-prometheus-on-app-port: true
+
 springdoc:
+  api-docs:
+    enabled: true
   swagger-ui:
+    enabled: true
     try-it-out-enabled: true
     persist-authorization: true
 

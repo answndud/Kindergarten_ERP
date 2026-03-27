@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true")
 @OpenAPIDefinition(
         info = @Info(
                 title = "Kindergarten ERP API",

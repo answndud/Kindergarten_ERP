@@ -1,113 +1,123 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 21차 (운영형 워크플로우 + 세션/알림 신뢰성 + 취업용 문서 패키지)
+- 후속 고도화 22차 (보안 기본값 하드닝 + 도메인 신뢰성 보강 + 배포/문서/블로그 싱크)
 
 ## 현재 배치 상태
-- 완료: Batch A (`management plane 하드닝 + 활성 세션 관리`)
-- 완료: Batch B (`notification_outbox` + retry/dead-letter + 외부 incident channel`)
-- 완료: Batch C (`waitlist 입학/지원 + 출결 요청/승인 + domain audit log`)
-- 완료: Batch D (`CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축`)
-- 후속 문서 작업: 블로그 시리즈 초보자 친화성/면접 대응력 점검 및 편집 체크리스트 정리
-- 마감 정리: 삭제된 블로그 템플릿/체크포인트 스크립트 정리 후 작업 트리 청소
+- 완료: 이전 Batch A~D (`management plane`, `활성 세션`, `outbox`, `waitlist/domain audit`, `tagged CI`, `hiring-pack`) 구현 및 문서화
+- 완료: 블로그 시리즈 초보자 친화성/면접 대응력 리라이트
+- 신규 착수: 서브에이전트 병렬 리뷰를 바탕으로 `보안/운영 기본값`, `서비스/API 권한/동시성`, `배포/CI/운영 문서`, `블로그 싱크`를 한 배치 계획으로 재정리
 
 ## 1) 목표 / 범위
-- 포트폴리오 관점에서 가장 값이 큰 다음 개선 5개를 실제 코드/테스트/문서까지 포함해 순차 구현한다.
-- 기능 추가 범위로 `domain_audit_log`를 도입해 핵심 업무 상태 변경의 운영 증적을 남긴다.
-- 문서 범위는 단순 README 보강이 아니라, 채용 담당자/면접관이 빠르게 흡수할 수 있는 아키텍처/데모/케이스 스터디/채용용 패키지까지 포함한다.
-- 구현 결과는 모두 "기능 구현 + 검증 + 결정 로그 + 인터뷰/데모 문서"까지 한 세트로 남긴다.
+- 프로젝트를 “기능 많은 포트폴리오”에서 “기본값까지 안전한 운영형 포트폴리오”로 끌어올린다.
+- 코드 수정은 반드시 `테스트 + 결정 로그 + README/가이드 + 블로그 본문`까지 한 세트로 닫는다.
+- 이번 배치의 핵심 범위는 아래 4가지다.
+  1. `safe-by-default` 설정과 관리면(Management Surface) 하드닝
+  2. 신청서 상세 권한, 출결 요청, outbox 등 서비스/API 신뢰성 보강
+  3. CI/배포/운영 계약 정리
+  4. 위 변경 사항을 초보자용 블로그와 면접/운영 문서에 정확히 동기화
 
 ## 2) 세부 작업 단계
-1. 운영 plane 하드닝
-   - `management.server.port` 분리 가능 구조와 prod 보호 정책 설계
-   - prod에서 Swagger/Prometheus 노출 정책 정리
-   - health/readiness는 유지하되 management 접근 제어와 문서/데모 경로를 분리
+1. Batch A: 안전한 기본값으로 뒤집기
+   - `application.yml`, `application-local.yml`, `application-prod.yml`, `ManagementSurfaceProperties`, `SecurityConfig`, `PrometheusScrapeController`, `DataLoader` 점검
+   - 기본 활성 프로파일 제거
+   - JWT/OAuth fallback secret 제거 또는 prod fail-fast 검증 추가
+   - Swagger/OpenAPI, Prometheus app-port 노출 기본값을 fail-closed로 전환
+   - local/demo 전용 seed와 자격증명은 이중 게이트(`profile + enabled flag`)로 제한
+   - 운영 필수 env matrix와 `.env.example` 또는 동등 문서 추가
+   - 동기화 문서/블로그
+     - `README.md`
+     - `docs/guides/developer-guide.md`
+     - `docs/portfolio/demo/demo-preflight.md`
+     - `blog/03-docker-mysql-redis-dev-environment.md`
+     - `blog/04-application-yml-and-profile-strategy.md`
+     - `blog/11-securityconfig-signup-login-basics.md`
+     - `blog/12-jwt-cookie-auth-flow.md`
+     - `blog/17-rate-limit-and-client-ip-trust-model.md`
+     - `blog/20-openapi-management-plane-and-observability.md`
 
-2. 활성 세션 관리
-   - 세션 메타데이터 저장 구조(`ip`, `userAgent`, `lastSeenAt`, `createdAt`) 도입
-   - 내 세션 목록 조회 API/화면
-   - 개별 세션 강제 종료 및 현재 세션/다른 기기 구분
-   - 세션 lifecycle 문서화 및 회귀 테스트
+2. Batch B: 서비스/API 권한 경계와 상태 전이 보강
+   - `KidApplication`, `KindergartenApplication` 상세 조회 권한을 본인/승인권자/원장 중심으로 재정의
+   - `AttendanceChangeRequest` 생성 race 방지용 유니크 제약 또는 원자적 생성 전략 추가
+   - `KindergartenApplication` 상태 전이/예외를 `BusinessException` 중심으로 정리하고 필요시 lock 전략 보강
+   - `DashboardService` 캐시 eviction을 입학 승인/offer 수락/교사 승인 경로까지 확장
+   - `Notepad`의 감사/삭제 모델을 현재 운영 기준과 얼마나 맞출지 결정하고, 최소한 문서에서 한계를 명시
+   - 동기화 문서/블로그
+     - `README.md`
+     - `docs/decisions/*` 신규 결정 로그
+     - `blog/10-calendar-dashboard-and-application-workflows.md`
+     - `blog/22-classroom-capacity-and-waitlist-workflow.md`
+     - `blog/23-attendance-change-request-and-domain-audit.md`
+     - `blog/24-audit-logs-as-operations-tools.md`
 
-3. 알림 신뢰성 고도화
-   - `notification_outbox` 기반 비동기 dispatch 설계
-   - critical 알림 타입만 outbox에 적재하는 fan-out 정책 도입
-   - retry / dead-letter / delivery status / stale processing timeout 도입
-   - 인증 이상 징후 알림 타입 분리(`AUTH_ANOMALY_DETECTED`) 및 Slack-compatible webhook 연결
-   - 운영 runbook과 실패 시나리오 테스트 보강
+3. Batch C: 비동기 전달/배포/CI 신뢰성 보강
+   - `NotificationDispatchService`/`NotificationOutboxRepository`의 claim을 원자적으로 변경
+   - outbox 동시 claim 회귀 테스트 추가
+   - `.github/workflows/ci.yml`의 duplicate job key 제거
+   - CI에 packaging artifact 검증 추가
+   - `docker-compose.yml`, `docker-compose.monitoring.yml` 포트 바인딩/기본 자격증명/로컬 전용 경계 정리
+   - monitoring/demo runbook을 실제 compose 경로와 일치시키기
+   - Redis를 auth critical dependency로 문서/알림/runbook에 명시
+   - 동기화 문서/블로그
+     - `README.md`
+     - `docs/guides/developer-guide.md`
+     - `docs/portfolio/demo/demo-runbook.md`
+     - `docs/portfolio/case-studies/auth-incident-response.md`
+     - `blog/14-why-testcontainers-over-h2.md`
+     - `blog/15-github-actions-and-tagged-test-suites.md`
+     - `blog/19-auth-audit-log-and-operations-console.md`
+     - `blog/20-openapi-management-plane-and-observability.md`
+     - `blog/21-notification-outbox-and-incident-channel.md`
+     - `blog/26-demo-architecture-and-interview-pack.md`
 
-4. 도메인 워크플로우 확장
-   - 반 정원(capacity)과 입학/지원 waitlist 상태 도입
-   - `WAITLISTED`, `OFFERED`, `OFFER_EXPIRED` 상태 설계
-   - 입학 제안 수락/만료 배치 구현
-   - 출결 요청/승인 워크플로우(학부모 요청 -> 교사 승인) 도입
-
-5. 업무 감사 로그(`domain_audit_log`)
-   - 입학 승인/거절, 교사 지원 승인/거절, 공지 수정/삭제, 소셜 연결 해제 등 핵심 상태 전이에 대한 audit 저장
-   - actor / tenant / action / target / summary / metadata 저장
-   - 원장용 조회 API/화면 또는 기존 감사 로그 콘솔과의 분리 정책 설계
-
-6. 테스트/CI 신뢰성 보강
-   - `fastTest`/`integrationTest`를 path include에서 JUnit suite 기반으로 전환
-   - `performanceSmokeTest`를 별도 task/job으로 분리해 운영 성능 smoke를 CI에 포함
-   - auth/security leaf unit test 보강
-   - Redis/MySQL 장애 시 readiness DOWN, liveness 유지 시나리오 검증
-   - auth/domain audit list/export 경로 성능 smoke 및 scheduled job cluster-safe 전략 검토
-
-7. 취업용 문서 패키지 재구성
-   - 활성 아키텍처 문서 (`C4 + auth flow + audit/alert flow + ERD`)
-   - 재현형 데모 문서 (`demo_preflight`, `demo_runbook`)
-   - `auth incident response` 케이스 스터디
-   - 채용용 요약 문서(`hiring-pack`)와 핵심 링크 구조 정리
-   - README / docs index / interview script를 최신 경로 기준으로 재정렬
-
-8. 배치 전략
-   - 범위가 큰 만큼 4개 사용자 가치 배치로 쪼개서 진행
-   - 각 배치는 코드 + 테스트 + docs + push + CI 확인까지 닫고 다음 배치로 이동
-   - 예상 배치:
-     - Batch A: 운영 plane 하드닝 + 활성 세션 관리
-     - Batch B: 알림 outbox/retry + 외부 incident channel
-     - Batch C: waitlist 입학/지원 + 출결 요청/승인 + domain audit log
-     - Batch D: CI/tagging + failure mode/performance smoke + 아키텍처/데모/채용 문서 압축
+4. Batch D: 블로그/문서 최종 싱크 마감
+   - 위 3개 배치의 코드 변경을 기준으로 블로그 글의 상황표, 구현 한계, 검증 명령, 산출물 체크리스트 재동기화
+   - “현재 구현의 한계” 박스를 실제 코드 기준으로 업데이트
+   - 면접 답변 문서와 블로그 메시지가 충돌하지 않게 정리
+   - 후보 문서
+     - `BLOG_PLAN.md`, `BLOG_PROGRESS.md`
+     - `blog/README.md`
+     - `blog/00_rebuild_guide.md`
+     - `blog/00_quality_checklist.md`
+     - `blog/01-why-kindergarten-erp-domain.md`
+     - `blog/11`, `12`, `17`, `20`, `21`, `22`, `23`, `24`, `26`
+     - `docs/portfolio/interview/*`
 
 ## 3) 검증 계획
-- 공통 컴파일/회귀
+- Batch A
   - `./gradlew compileJava compileTestJava`
-  - 배치별 대상 테스트 + `./gradlew test`
-- CI/스위트 검증
-  - `./gradlew fastTest integrationTest`
-  - GitHub Actions run 확인
-- 운영/문서 검증
-  - YAML/JSON/mermaid/문서 링크 검증
+  - security/config 관련 테스트 또는 신규 통합 테스트
+  - 공개 경로/관리 경로 권한 수동 검증
   - `git diff --check`
-- 성능/운영성 검증
-  - auth/export/load 시나리오 재측정
-  - degraded mode / scheduler / outbox retry 테스트
-- 데모 검증
-  - demo profile, monitoring overlay, runbook 재현 확인
+- Batch B
+  - 권한 성공/실패 통합 테스트
+  - race/concurrency 재현 테스트 또는 최소 회귀 테스트
+  - 대시보드 캐시 invalidation 검증
+  - `./gradlew --no-daemon integrationTest`
+- Batch C
+  - outbox 동시 claim 테스트
+  - `./gradlew --no-daemon fastTest`
+  - `./gradlew --no-daemon integrationTest`
+  - CI YAML 파싱
+  - 필요시 GitHub Actions run 확인
+- Batch D
+  - 링크/경로 검토
+  - `git diff --check`
+  - README, demo runbook, blog 검증 명령의 상호 정합성 수동 점검
 
 ## 4) 리스크 및 대응
-- 범위가 커서 한 번에 구현하면 품질과 문서 밀도가 떨어질 수 있음
-  - 대응: 4개 배치로 나누고, 배치마다 코드/테스트/문서를 동시에 마감한다
-- waitlist/세션/outbox는 상태 전이와 동시성 리스크가 큼
-  - 대응: 상태 다이어그램을 먼저 문서화하고 optimistic/pessimistic 전략과 idempotency 정책을 명시한다
-- management plane 하드닝이 demo 편의성을 떨어뜨릴 수 있음
-  - 대응: `demo/local`과 `prod`의 노출 정책을 분리하고 문서에서 명확히 구분한다
-- 문서가 다시 과잉 분산될 수 있음
-  - 대응: 새 문서는 `hiring-pack`, `architecture`, `case-studies`, `demo`에 압축하고 phase 문서는 의사결정 로그로만 유지한다
+- `safe-by-default`로 바꾸면 local/demo 편의가 떨어질 수 있음
+  - 대응: 편의 설정은 유지하되 profile/flag를 이중 게이트로 묶고, 문서에 명시적으로 분리
+- outbox/출결 요청 동시성은 설계보다 테스트가 더 어려울 수 있음
+  - 대응: 원자적 DB 제약/claim 전략을 먼저 고정하고, 테스트는 최소 재현 경로부터 추가
+- 권한 경계 수정은 기존 화면/API 기대와 충돌할 수 있음
+  - 대응: 컨트롤러 계약을 깨지 않는 선에서 서비스 접근 정책을 우선 수정하고 실패 응답 테스트를 추가
+- 블로그가 코드보다 더 낙관적으로 설명돼 있는 부분이 있음
+  - 대응: 각 배치마다 “무엇이 위험했고 어떻게 바꿨는지”를 블로그 본문과 결정 로그에 함께 반영
 
-## 5) 후속 문서 품질 작업
-- 목표 / 범위
-  - `blog/` 시리즈가 정말 초보자도 이해하고 구현하고 면접 준비까지 할 수 있는 수준인지 재점검한다.
-  - 결과물은 단순 리뷰 코멘트가 아니라, 각 글에 반복 적용할 수 있는 편집 체크리스트와 우선순위 기준으로 남긴다.
-  - 현재 작업 트리에서 사용자가 삭제한 템플릿/체크포인트 스크립트는 복구하지 않고, 그 상태를 전제로 문서 동선을 현실화한다.
-- 세부 단계
-  1. `blog/README.md`, `BLOG_PLAN.md`, 대표 본문을 다시 읽고 초보자/면접 관점의 빈틈을 수집한다.
-  2. 재현성, 용어 난이도, 코드-문서 정합성, 면접 답변 준비, 한계 고지 기준의 체크리스트를 만든다.
-  3. 블로그 인덱스/가이드 문서가 현재 작업 트리와 모순되지 않도록 최소한의 문구를 정리한다.
-- 검증 계획
-  - `git diff --check`
-  - 새 체크리스트 문서와 인덱스 링크 수동 검토
-- 리스크 및 대응
-  - 사용자 삭제 파일을 실수로 되살리면 현재 의도와 충돌할 수 있음
-    - 대응: 삭제 파일은 복구하지 않고, 문서에서 해당 의존성을 제거하거나 선택 요소로 낮춘다
+## 5) 서브에이전트 기반 작업 원칙
+- `Faraday`: 보안/시크릿/management surface 검토 및 검증 포인트
+- `Banach`: 서비스/API 권한 경계, 상태 전이, 동시성 검토 및 회귀 범위
+- `Turing`: 구성/배포/CI/monitoring 문서와 실행 경로 정합성 검토
+- `Lagrange`: 블로그/포트폴리오 문서의 메시지, 초보자 설명, 면접 답변 싱크 검토
+- 각 배치 시작 전 관련 서브에이전트에게 다시 범위를 쪼개서 확인시키고, 코드/문서 변경 후에는 동일한 축으로 재검토한다.

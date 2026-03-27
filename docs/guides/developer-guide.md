@@ -2,6 +2,7 @@
 
 이 문서는 이 저장소에서 기능을 추가/수정하는 개발자를 위한 실무 가이드입니다.
 유저 관점 설명은 `docs/guides/user-guide.md`를 참고하세요.
+실행 환경별 필수 변수와 기본 노출 정책은 `docs/guides/env-contract.md`를 SSOT로 봅니다.
 
 ---
 
@@ -36,16 +37,20 @@ docker compose -f docker/docker-compose.yml down
 
 ```bash
 ./gradlew clean build
-./gradlew bootRun
 ./gradlew bootRun --args='--spring.profiles.active=local'
+./gradlew bootRun --args='--spring.profiles.active=demo'
 ```
+
+- 기본값은 fail-closed입니다. `SPRING_PROFILES_ACTIVE`를 명시하지 않으면 부팅을 허용하지 않습니다.
+- local 시드가 필요하면 `APP_SEED_ENABLED=true`를 함께 넘기세요.
 
 ## 테스트
 
 ```bash
+./gradlew fastTest
+./gradlew integrationTest
+./gradlew performanceSmokeTest
 ./gradlew test
-./gradlew test --tests "com.erp.api.AttendanceApiIntegrationTest"
-./gradlew check
 ```
 
 ---
@@ -90,6 +95,7 @@ docker compose -f docker/docker-compose.yml down
 
 - `@PreAuthorize` + `SecurityConfig` URL 규칙 병행
 - 역할 enum은 반드시 `PRINCIPAL`, `TEACHER`, `PARENT`만 사용
+- Swagger/OpenAPI, app-port Prometheus, demo seed는 기본 공개가 아니라 명시적 opt-in입니다.
 
 ## 상태 기반 강제 리다이렉트
 
@@ -216,6 +222,8 @@ docker compose -f docker/docker-compose.yml down
 - 일부 API/뷰가 병행되어 있어 컨벤션 통일 작업 여지가 있습니다.
 - `kindergarten/select` 는 안내 성격이 남아 있는 화면입니다.
 - 공지사항 API 컨트롤러에는 임시 주석이 남아 있으므로 수정 시 인증 주체 연계를 먼저 점검하세요.
+- `local`/`demo`는 의도적으로 Swagger/OpenAPI와 app-port Prometheus를 열지만, `prod`는 기본적으로 닫혀 있어야 합니다.
+- `DataLoader`와 local 전용 로그인 bootstrap은 `local profile + app.seed.enabled=true`일 때만 동작하도록 유지합니다.
 
 ---
 

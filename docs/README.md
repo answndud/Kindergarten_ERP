@@ -7,11 +7,12 @@
 처음 보는 사람은 아래 순서로 읽으면 됩니다.
 
 1. `README.md`
-2. `docs/portfolio/hiring-pack/backend-hiring-pack.md`
-3. `docs/portfolio/architecture/system-architecture.md`
-4. `docs/portfolio/demo/demo-preflight.md`
-5. `docs/portfolio/demo/demo-runbook.md`
-6. `docs/portfolio/case-studies/auth-incident-response.md`
+2. `docs/guides/env-contract.md`
+3. `docs/portfolio/hiring-pack/backend-hiring-pack.md`
+4. `docs/portfolio/architecture/system-architecture.md`
+5. `docs/portfolio/demo/demo-preflight.md`
+6. `docs/portfolio/demo/demo-runbook.md`
+7. `docs/portfolio/case-studies/auth-incident-response.md`
 
 ## Active Docs
 
@@ -19,6 +20,8 @@
 
 - `docs/guides/developer-guide.md`
   - 개발/구조/테스트/문서화 규칙
+- `docs/guides/env-contract.md`
+  - local/demo/prod 실행 환경 변수와 안전한 기본값 계약
 - `docs/guides/user-guide.md`
   - 역할별 사용 흐름
 

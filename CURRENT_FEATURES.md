@@ -12,13 +12,17 @@
 
 ### 인프라 실행
 ```bash
+cp docker/.env.example docker/.env
 docker compose -f docker/docker-compose.yml up -d
 ```
 
 ### 애플리케이션 실행
 ```bash
-./gradlew bootRun
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
+
+- 시드 데이터가 필요하면 `APP_SEED_ENABLED=true`를 함께 넘깁니다.
+- Swagger/OpenAPI와 app-port Prometheus는 `local`/`demo`에서만 의도적으로 공개합니다.
 
 ### 접속
 - 앱: `http://localhost:8080`
@@ -125,5 +129,6 @@ curl -X GET http://localhost:8080/api/v1/auth/me -b cookies.txt
 ## 6) 참고 문서
 
 - 전체 개요: `README.md`
-- 단계별 개발 기록: `docs/phase/`
-- 성능 최적화 기록: `docs/performance-optimization/`
+- 환경 변수 계약: `docs/guides/env-contract.md`
+- 단계별 개발 기록: `docs/decisions/`
+- 성능 최적화 기록: `docs/portfolio/performance/`

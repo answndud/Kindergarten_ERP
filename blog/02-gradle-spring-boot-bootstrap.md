@@ -646,19 +646,19 @@ flowchart TD
 2. `build.gradle`에 Java / Spring Boot / dependency 관리 플러그인과 starter 의존성을 넣습니다.
 3. `src/main/java/com/erp/ErpApplication.java`를 만들어 `main()` 진입점을 만듭니다.
 4. `./gradlew tasks`로 Gradle wrapper와 태스크 구성이 정상인지 확인합니다.
-5. `./gradlew bootRun`으로 최소 부팅이 되는지 확인합니다.
+5. `./gradlew bootRun --args='--spring.profiles.active=local'`로 최소 부팅이 되는지 확인합니다.
 
 ## 13. 실행 / 검증 명령
 
 ```bash
 ./gradlew tasks
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
 성공하면 확인할 것:
 
 - `./gradlew tasks`가 Gradle 태스크 목록을 출력한다
-- `./gradlew bootRun` 시 Spring Boot 애플리케이션이 예외 없이 뜬다
+- `./gradlew bootRun --args='--spring.profiles.active=local'` 시 Spring Boot 애플리케이션이 예외 없이 뜬다
 - 기본적으로 `Tomcat started on port 8080`에 해당하는 로그가 보인다
 
 ## 14. 글 종료 체크포인트
@@ -674,6 +674,6 @@ flowchart TD
   - 원인: 패키지 위치가 `com.erp` 루트가 아니어서 컴포넌트 스캔 기준이 꼬일 수 있습니다
   - 확인할 것: `src/main/java/com/erp/ErpApplication.java` 경로인지 확인
 
-- 증상: `./gradlew bootRun`에서 Java 버전 오류 발생
+- 증상: `./gradlew bootRun --args='--spring.profiles.active=local'`에서 Java 버전 오류 발생
   - 원인: 로컬 Java가 17이 아니거나 Gradle 설정과 맞지 않을 수 있습니다
   - 확인할 것: `java -version`, `build.gradle`의 자바 버전 설정 확인

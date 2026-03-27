@@ -1,12 +1,16 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 21차 (운영형 워크플로우 + 세션/알림 신뢰성 + 취업용 문서 패키지)
+- 후속 고도화 22차 (보안 기본값 하드닝 + 도메인 신뢰성 보강 + 배포/문서/블로그 싱크)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-27 16:35 | DONE | Batch A 코드/설정 하드닝 반영. `application*.yml`, `SecurityConfig`, `OpenApiConfig`, `PrometheusScrapeController`, `ManagementSurfaceProperties`, `DataLoader`, `LocalAuthLoginBootstrapService`를 수정해 기본 프로파일 제거, fail-closed management surface, seed explicit opt-in, startup fail-fast validator, env contract 문서 경로를 반영했다 | 관련 테스트/문서/블로그 싱크와 정적 검증 마감 |
+| 2026-03-27 16:46 | DONE | Batch A 문서/블로그 싱크 반영. `README`, `docs/README`, `developer-guide`, `demo-preflight`, `demo-runbook`, `backend-hiring-pack`, `CURRENT_FEATURES`, `AGENTS`, `blog/02`, `03`, `04`, `11`, `12`, `17`, `20`, `phase45`를 현재 코드 기준으로 갱신했다 | 컴파일/테스트와 포맷 검증 결과 기록 |
+| 2026-03-27 16:52 | DONE | 정적 검증 완료. `git diff --check` 통과, 활성 문서 기준 stale 서술 검색을 재실행했다. 단, 이 실행 환경에는 Java 17 toolchain이 없어 `./gradlew compileJava compileTestJava` 및 대상 테스트 실행은 환경 문제로 실패했다 | 사용자에게 구현 결과와 환경 제약을 함께 공유 |
+| 2026-03-27 16:06 | IN_PROGRESS | 서브에이전트 4개(`Faraday`, `Banach`, `Turing`, `Lagrange`)로 보안/시크릿, 서비스/API, 구성/배포, 문서/블로그를 병렬 리뷰했다. 핵심 리스크를 `fail-open 기본 설정`, `management surface 공개 기본값`, `신청서 상세 조회 권한`, `outbox/출결 요청 동시성`, `CI/배포 문서 드리프트`로 정리하고 `PLAN.md`, `BLOG_PLAN.md` 기준 후속 배치를 재설계하기로 했다 | `PLAN.md`, `BLOG_PLAN.md`, `BLOG_PROGRESS.md` 갱신 후 Batch A(`safe-by-default 설정 + management surface + 시크릿/env 계약`) 범위 확정 |
 | 2026-03-25 00:01 | DONE | 사용자가 삭제한 `blog/_post_template.md`, `blog/_rebuild_template.md`, `blog/scripts/checkpoint-*.sh`를 저장소 변경으로 정리해 작업 트리 청소를 마감했다. 기능/문서 추가 없이 삭제 반영만 커밋하고 push해 다음 세션에서 불필요한 dirty state가 남지 않게 했다 | 후속 작업 없으면 종료 |
 | 2026-03-24 13:00 | DONE | 블로그 품질 리라이트 3차 완료. `blog/07`, `08`, `09`, `14`, `15`, `22`, `23`에 초보자용 구분표, 현재 구현의 한계, 1문장/30초 답변, 예상 꼬리 질문을 추가했고, `07/08/09/14/15`에는 산출물 체크리스트를 보강했다. 남은 핵심 본문들이 거의 같은 밀도로 읽히도록 구조를 맞췄다 | 전체 시리즈 최종 교정 필요 여부 판단 |
 | 2026-03-24 12:52 | DONE | 블로그 품질 리라이트 2차 완료. `blog/12`, `17`, `19`, `20`, `24`, `26`에 상황표, 현재 구현의 한계, 1문장/30초 답변, 예상 꼬리 질문, 산출물 체크리스트를 보강했다. 인증/운영 글의 검증 명령도 좁힌 `--tests`보다 전체 `integrationTest`를 기본 안정 경로로 바꿔 초보자가 따라갈 때 덜 흔들리게 정리했다 | 남은 글(`07`, `08`, `09`, `14`, `15`, `22`, `23`) 중 설명 밀도가 높은 글 추가 리라이트 여부 판단 |
@@ -194,6 +198,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 없음
-- 블로커: 없음
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: Batch A 구현 완료, 로컬 Java 17 toolchain이 준비된 환경에서 compile/test 검증 필요
+- 블로커: 현재 Codex 실행 환경에 Java 17 toolchain 부재

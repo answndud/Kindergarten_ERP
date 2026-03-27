@@ -7,7 +7,6 @@ spring:
     name: erp
 
   profiles:
-    active: local  # 기본 활성 프로파일
     group:
       demo:
         - local
@@ -28,7 +27,7 @@ spring:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-key-here-must-be-at-least-32-characters}
+  secret: ${JWT_SECRET}
   access-token-validity: 900000      # 15분 (밀리초)
   refresh-token-validity: 604800000  # 7일 (밀리초)
   cookie-secure: true
@@ -53,7 +52,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info
   endpoint:
     health:
       group:
@@ -69,7 +68,7 @@ management:
       enabled: true
   info:
     env:
-      enabled: true
+      enabled: false
 
 info:
   app:
@@ -110,10 +109,13 @@ notification:
       webhook-url: ${NOTIFICATION_INCIDENT_WEBHOOK:}
 
 app:
+  seed:
+    enabled: false
+    log-credentials: false
   security:
     management-surface:
-      public-api-docs: true
-      expose-prometheus-on-app-port: true
+      public-api-docs: false
+      expose-prometheus-on-app-port: false
     client-ip:
       trusted-proxies: []
     auth-alert:
@@ -130,8 +132,10 @@ app:
 
 springdoc:
   api-docs:
+    enabled: false
     path: /v3/api-docs
   swagger-ui:
+    enabled: false
     path: /swagger-ui.html
     display-request-duration: true
     operations-sorter: alpha
