@@ -46,14 +46,15 @@
 #### 실행 전 준비 (최초 1회)
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+cp docker/.env.example docker/.env
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
 ```
 
 - MySQL/Redis가 떠 있어야 정상 실행됩니다.
 - 종료 시:
 
 ```bash
-docker compose -f docker/docker-compose.yml down
+docker compose --env-file docker/.env -f docker/docker-compose.yml down
 ```
 
 ### 공통 진입

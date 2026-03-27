@@ -7,6 +7,7 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-27 18:24 | DONE | Batch C와 맞춰 블로그/문서 싱크를 마감했다. `blog/03`은 `--env-file docker/.env`와 localhost bind compose 기준으로, `blog/14`와 `15`는 Testcontainers/CI/package-smoke 역할 분리 기준으로, `blog/19`, `20`, `21`, `26`은 auth incident, Redis critical dependency, outbox atomic claim, demo/CI/runbook 메시지를 현재 코드 기준으로 다시 맞췄다 | 다음 코드 배치 착수 전까지 유지 |
 | 2026-03-27 17:34 | DONE | Batch B + Java 21 기준선에 맞춘 블로그/문서 싱크를 검증까지 마감했다. `blog/02`, `10`, `22`, `23`, `24`와 active 인터뷰/가이드 문서가 현재 코드와 같은 메시지를 말하는지 다시 확인했고, Java 21 기준 실행/설명으로 정리했다 | 다음 코드 배치 착수 전까지 유지 |
 | 2026-03-27 16:52 | DONE | Batch B와 Java 21 기준선에 맞춰 블로그/문서 싱크를 반영했다. `blog/02`는 Java 21 빌드 기준선으로, `blog/10`, `22`, `23`, `24`는 신청서 상세 권한, 출결 요청 DB 가드, 대시보드 캐시 무효화, 감사 로그 조회 범위를 현재 코드 기준으로 다시 맞췄다 | 테스트/포맷 검증 결과를 PROGRESS와 함께 마감 |
 | 2026-03-27 16:46 | DONE | Batch A 코드와 맞춰 블로그/문서 싱크를 반영했다. `blog/02`, `03`, `04`, `11`, `12`, `17`, `20`에 fail-closed 기본값, explicit profile 실행, seed opt-in, management surface 기본 폐쇄 메시지를 반영했고, README/developer-guide/demo 문서와 말이 맞도록 정리했다 | Batch B에서 권한 경계/상태 전이 변경 시 `10`, `22`, `23`, `24`를 같은 방식으로 동기화 |

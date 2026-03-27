@@ -243,6 +243,16 @@ Testcontainers는 신뢰도를 크게 올리지만 **속도 비용과 Docker 의
 - Flyway migration 후 JPA validate가 통과한다
 - 대표 통합 테스트가 H2가 아닌 실제 컨테이너 기반으로 돈다
 
+여기서 한 단계 더 생각하면 좋습니다.
+
+- `integrationTest`
+  - MySQL/Redis 같은 실제 의존성을 검증
+- `package-smoke`
+  - 실행 가능한 bootJar와 compose config를 검증
+
+즉 Testcontainers는 “운영과 닮은 테스트”의 핵심 축이고,
+배포 단위 검증은 이후 CI 글에서 별도 축으로 분리합니다.
+
 ## 14. 산출물 체크리스트
 
 - `build.gradle`에 Testcontainers 관련 의존성이 존재한다

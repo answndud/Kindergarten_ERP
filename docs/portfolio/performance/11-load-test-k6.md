@@ -12,7 +12,7 @@
 ## 사전 조건
 
 1. 애플리케이션 실행: `./gradlew bootRun --args='--spring.profiles.active=local'`
-2. MySQL/Redis 실행: `docker compose -f docker/docker-compose.yml up -d`
+2. MySQL/Redis 실행: `cp docker/.env.example docker/.env && docker compose --env-file docker/.env -f docker/docker-compose.yml up -d`
 3. 테스트 계정 및 데이터 준비
    - 학부모 계정: Notepad 목록 조회 가능
    - 원장 계정: Dashboard 통계 조회 가능

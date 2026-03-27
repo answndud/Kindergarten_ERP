@@ -19,7 +19,7 @@
 - 멀티테넌시 권한 경계 하드닝: IDOR 성격 접근 문제를 requester 기반 서비스 검증으로 정리
 - 인증 lifecycle: JWT session rotation, active session registry, rate limit, trusted proxy, audit trail
 - 운영형 워크플로우: 반 정원, waitlist/offer, 출결 변경 요청 승인, 업무 감사 로그
-- 운영성: Actuator readiness, Prometheus/Grafana, outbox retry/dead-letter, Testcontainers CI
+- 운영성: Actuator readiness, Prometheus/Grafana, outbox retry/dead-letter + atomic claim, Testcontainers CI
 - secure-by-default 설정: local/demo 편의 기능과 prod 기본값을 분리하고, 공개 surface는 명시적으로만 연다
 
 ## 4. 바로 보여줄 수 있는 증거

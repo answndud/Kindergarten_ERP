@@ -374,7 +374,8 @@ local/demo처럼 노출을 의도한 환경에서만 Swagger/OpenAPI와 app-port
 - `notification` row 저장은 그대로 즉시 완료
 - 외부 채널은 `notification_outbox`에 적재 후 worker가 비동기 전달
 - 실패는 로그만 남기지 않고 retry/dead-letter 상태로 관리
-- 현재는 단일 인스턴스 기준 claim 전략이고, 멀티 인스턴스 lock은 다음 단계 확장 포인트라고 설명
+- claim 단계는 MySQL 8 `FOR UPDATE SKIP LOCKED`로 원자화해 멀티 인스턴스에서도 같은 row를 중복 집지 않게 함
+- 대신 downstream webhook exactly-once 보장은 별도 고려 대상이라고 설명
 
 ### Q23-2. 인증 이상 징후 감지, in-app alert, external incident delivery는 어떻게 이어지나요?
 
@@ -393,11 +394,11 @@ local/demo처럼 노출을 의도한 환경에서만 Swagger/OpenAPI와 app-port
 ### Q24. 가장 아쉬운 점은 무엇인가요?
 
 짧은 답변:
-외부 incident webhook과 retry/dead-letter까지는 넣었지만, outbox claim은 아직 단일 인스턴스 기준이라 멀티 인스턴스 안전성까지는 더 보강할 여지가 있습니다.
+외부 incident webhook과 retry/dead-letter, atomic claim까지는 닫았지만, downstream exactly-once 보장과 outbox 전용 운영 콘솔은 더 보강할 여지가 있습니다.
 
 꼬리 질문 대응 포인트:
-- 지금은 조회 후 상태 전이 방식이라 cluster-safe lock이 아님
-- 다음 단계는 `FOR UPDATE SKIP LOCKED` 또는 메시지 브로커 검토
+- 현재는 MySQL 8 `FOR UPDATE SKIP LOCKED`를 사용해 cluster-safe claim을 확보
+- 다음 단계는 메시지 브로커 도입 또는 downstream idempotency key 강화 검토
 - 운영 알림도 webhook에서 Alertmanager/Slack/Email 정책까지 확장 가능
 - outbox 상태는 현재 DB와 통합 테스트로 검증하고 있으며, 전용 운영 콘솔은 아직 없다고 설명
 

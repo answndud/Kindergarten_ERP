@@ -285,7 +285,8 @@ cd kindergarten-erp
 cp docker/.env.example docker/.env
 
 # MySQL + Redis 컨테이너 시작
-docker compose -f docker/docker-compose.yml up -d
+cp docker/.env.example docker/.env
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
 
 # 상태 확인
 docker ps
@@ -339,13 +340,14 @@ export SPRING_PROFILES_ACTIVE=demo
 ### 3-3. Monitoring Overlay 실행
 
 ```bash
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
 ```
 
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000`
 - Grafana 계정은 `docker/.env`의 `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`를 사용합니다.
 - Grafana는 provisioning으로 `Kindergarten ERP Observability` 대시보드를 자동 로드합니다.
+- 로컬 compose 포트는 기본적으로 `127.0.0.1`에만 바인딩됩니다. 외부 공개가 필요하면 `docker/.env`의 bind/port 값을 명시적으로 바꾸세요.
 - 애플리케이션은 host에서 `local` 또는 `demo` 프로파일로 `http://localhost:8080`에서 실행 중이라고 가정합니다.
 
 ### 3-4. 테스트 실행
@@ -366,28 +368,29 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 - 통합 테스트는 MySQL/Redis Testcontainers 기반으로 실행됩니다.
 - 로컬 테스트 실행에는 Docker Desktop 또는 Docker Engine이 필요합니다.
-- CI는 `fastTest`, `integrationTest`, `performanceSmokeTest`를 분리해 실행합니다.
+- CI는 `fastTest`, `package-smoke`, `integrationTest`, `performanceSmokeTest`를 분리해 실행합니다.
+- `package-smoke`는 `bootJar` 생성, JAR 구조 확인, compose config 해석까지 검증하고 산출물을 artifact로 업로드합니다.
 - CI workflow action은 Node24 네이티브 major(`checkout@v5`, `setup-java@v5`, `setup-gradle@v5`, `upload-artifact@v6`)로 유지합니다.
 
 ### 4. 접속
 
 - 애플리케이션: http://localhost:8080
-- MySQL: localhost:3306 (`docker/.env` 기준)
-- Redis: localhost:6379
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000
+- MySQL: localhost:3306 (`docker/.env` 기준, 기본 localhost bind)
+- Redis: localhost:6379 (`docker/.env` 기준, 기본 localhost bind)
+- Prometheus: http://localhost:9090 (`docker/.env` 기준, 기본 localhost bind)
+- Grafana: http://localhost:3000 (`docker/.env` 기준, 기본 localhost bind)
 
 ### 5. 종료
 
 ```bash
 # Docker 컨테이너 종료
-docker compose -f docker/docker-compose.yml down
+docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 # 데이터 포함 완전 삭제
-docker compose -f docker/docker-compose.yml down -v
+docker compose --env-file docker/.env -f docker/docker-compose.yml down -v
 
 # monitoring overlay까지 함께 종료
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down -v
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down -v
 ```
 
 ---
@@ -603,11 +606,13 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 - 로컬 전체 검증은 `./gradlew test`로 유지합니다.
 - 통합 테스트는 H2 mock 환경이 아니라 MySQL/Redis Testcontainers를 사용합니다.
-- GitHub Actions는 `fastTest`, `integrationTest`, `performanceSmokeTest`를 별도 job으로 실행합니다.
+- GitHub Actions는 `fastTest`, `package-smoke`, `integrationTest`, `performanceSmokeTest`를 별도 job으로 실행합니다.
+- `package-smoke`는 bootJar 생성과 compose config 해석을 함께 검증합니다.
 - Swagger/OpenAPI와 Prometheus scrape도 통합 테스트로 공개 경로를 회귀 검증합니다.
 - 초기 CI 실패 원인이었던 `gradle-wrapper.jar` 추적 누락도 복구했습니다.
 - Node 20 deprecation annotation 대응을 위해 workflow action을 Node24 네이티브 major로 올렸습니다.
 - 실패 시 `fastTest`/`integrationTest` 리포트를 각각 artifact로 업로드하도록 구성했습니다.
+- 패키징 단계는 실행 가능한 bootJar를 artifact로 업로드해 배포 단위를 함께 검증합니다.
 
 ---
 
@@ -665,6 +670,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | tagged CI/readiness failure mode/hiring pack | `docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md` |
 | fail-closed 기본 설정/management surface | `docs/decisions/phase45_fail_closed_runtime_defaults.md` |
 | 신청서 권한 경계/출결 요청 DB 가드/Java 21 기준선 | `docs/decisions/phase46_service_boundaries_java21_baseline.md` |
+| outbox atomic claim/compose localhost binding/package smoke | `docs/decisions/phase47_outbox_atomic_claim_and_ops_contract.md` |
 
 ---
 

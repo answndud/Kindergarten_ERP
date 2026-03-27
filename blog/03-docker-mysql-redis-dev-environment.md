@@ -467,7 +467,7 @@ flowchart LR
 
 ```bash
 cp docker/.env.example docker/.env
-docker compose -f docker/docker-compose.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
@@ -480,7 +480,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ```bash
 cp docker/.env.example docker/.env
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
 ./gradlew bootRun --args='--spring.profiles.active=demo'
 ```
 
@@ -579,17 +579,17 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 1. MySQL과 Redis가 들어 있는 `docker/docker-compose.yml`을 작성합니다.
 2. local 인프라 값은 `docker/.env.example -> docker/.env` 흐름으로 분리합니다.
 3. Prometheus와 Grafana는 `docker/docker-compose.monitoring.yml`로 분리합니다.
-4. `docker compose -f docker/docker-compose.yml up -d`로 기본 스택을 실행합니다.
+4. `docker compose --env-file docker/.env -f docker/docker-compose.yml up -d`로 기본 스택을 실행합니다.
 5. 필요하면 monitoring overlay를 추가로 띄웁니다.
 
 ## 13. 실행 / 검증 명령
 
 ```bash
 cp docker/.env.example docker/.env
-docker compose -f docker/docker-compose.yml up -d
-docker compose -f docker/docker-compose.yml ps
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml ps
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml ps
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml ps
 ```
 
 성공하면 확인할 것:
@@ -597,6 +597,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 - MySQL과 Redis 컨테이너가 `Up` 상태다
 - monitoring overlay를 켰다면 Prometheus와 Grafana도 `Up` 상태다
 - 호스트에서 `localhost:3306`, `localhost:6379`를 사용할 수 있다
+- compose 기본값이 `127.0.0.1` bind라서 로컬 개발 장비 밖으로는 열리지 않는다
 
 ## 14. 글 종료 체크포인트
 
@@ -608,7 +609,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 - 증상: MySQL 컨테이너가 바로 죽음
   - 원인: `docker/.env` 값이 비어 있거나 root/user/password 조합이 꼬였을 수 있습니다
-  - 확인할 것: `docker compose -f docker/docker-compose.yml logs mysql`
+  - 확인할 것: `docker compose --env-file docker/.env -f docker/docker-compose.yml logs mysql`
 
 - 증상: 포트 충돌
   - 원인: 로컬에 이미 MySQL이나 Redis가 떠 있을 수 있습니다

@@ -9,7 +9,8 @@
 - 완료: Batch A (`safe-by-default 설정 + management surface + env 계약`) 구현 및 문서/블로그 동기화
 - 완료: Batch B(`서비스/API 권한/동시성`) 구현 및 문서/블로그 동기화
 - 완료: Batch B-2(`Java 21 기준선 업그레이드`) 구현 및 문서/블로그 동기화
-- 다음 대기: Batch C(`outbox atomic claim + 배포/CI/monitoring 신뢰성`) 착수 가능
+- 완료: Batch C(`outbox atomic claim + 배포/CI/monitoring 신뢰성`) 구현 및 문서/블로그 동기화
+- 다음 대기: Batch D(`블로그/문서 최종 싱크 마감`) 착수 가능
 
 ## 1) 목표 / 범위
 - 프로젝트를 “기능 많은 포트폴리오”에서 “기본값까지 안전한 운영형 포트폴리오”로 끌어올린다.

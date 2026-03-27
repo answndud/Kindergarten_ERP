@@ -6,10 +6,10 @@
 
 - Docker:
   - `cp docker/.env.example docker/.env`
-  - `docker compose -f docker/docker-compose.yml up -d`
+  - `docker compose --env-file docker/.env -f docker/docker-compose.yml up -d`
 - 앱: `./gradlew bootRun --args='--spring.profiles.active=demo'`
 - monitoring overlay가 필요하면:
-  - `docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d`
+  - `docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d`
 
 ## 2. 접속 주소
 
@@ -19,6 +19,7 @@
 - Readiness: `http://localhost:8080/actuator/health/readiness`
 - Prometheus: `http://localhost:8080/actuator/prometheus` (`demo`에서만 app port 공개)
 - Grafana: `http://localhost:3000`
+- 로컬 monitoring 포트는 `docker/.env` 기본값 기준 `127.0.0.1`에만 바인딩됩니다.
 
 ## 3. 데모 계정
 
@@ -56,5 +57,5 @@
 
 - 앱은 실행 중인 터미널에서 `Ctrl+C`
 - Docker 정리:
-  - `docker compose -f docker/docker-compose.yml down`
-  - `docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down`
+  - `docker compose --env-file docker/.env -f docker/docker-compose.yml down`
+  - `docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down`

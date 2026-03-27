@@ -19,6 +19,7 @@
 ### Docker 인프라
 
 - `docker/.env.example`를 `docker/.env`로 복사
+- compose 실행은 `--env-file docker/.env`를 기본으로 사용
 - 대상 값
   - `MYSQL_ROOT_PASSWORD`
   - `MYSQL_DATABASE`
@@ -26,6 +27,11 @@
   - `MYSQL_PASSWORD`
   - `GRAFANA_ADMIN_USER`
   - `GRAFANA_ADMIN_PASSWORD`
+  - `DOCKER_BIND_HOST`
+  - `MYSQL_PUBLISHED_PORT`
+  - `REDIS_PUBLISHED_PORT`
+  - `PROMETHEUS_PUBLISHED_PORT`
+  - `GRAFANA_PUBLISHED_PORT`
 
 ### 앱 프로세스
 
@@ -107,3 +113,13 @@
 3. Swagger/OpenAPI가 prod에서 비활성화돼 있는가
 4. Prometheus가 app port가 아니라 management plane 또는 내부 경로로만 노출되는가
 5. `app.seed.enabled`가 prod에서 꺼져 있는가
+
+## 6. 로컬 compose 기본값
+
+- local/demo Docker compose는 기본적으로 `DOCKER_BIND_HOST=127.0.0.1`로만 포트를 엽니다.
+- 기본 published port는 아래와 같습니다.
+  - MySQL `3306`
+  - Redis `6379`
+  - Prometheus `9090`
+  - Grafana `3000`
+- 외부 공개가 필요하면 `docker/.env`에서 값을 명시적으로 바꾸고, demo/runbook 문서도 같이 수정해야 합니다.

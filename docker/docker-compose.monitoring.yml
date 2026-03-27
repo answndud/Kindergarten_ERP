@@ -4,7 +4,7 @@ services:
     container_name: kindergarden_prometheus
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "${DOCKER_BIND_HOST:-127.0.0.1}:${PROMETHEUS_PUBLISHED_PORT:-9090}:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=15d
@@ -23,10 +23,10 @@ services:
     depends_on:
       - prometheus
     ports:
-      - "3000:3000"
+      - "${DOCKER_BIND_HOST:-127.0.0.1}:${GRAFANA_PUBLISHED_PORT:-3000}:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin1234!}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?set GRAFANA_ADMIN_USER in docker/.env}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in docker/.env}
       GF_USERS_DEFAULT_THEME: light
     volumes:
       - grafana_data:/var/lib/grafana

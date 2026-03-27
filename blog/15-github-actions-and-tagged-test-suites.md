@@ -63,6 +63,7 @@ CI 실패 시에도 test report를 artifact로 올려 두면
 - docs/decisions/phase19_ci_fast_integration_split.md
 - docs/decisions/phase22_github_actions_node24_native_actions.md
 - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+- docs/decisions/phase47_outbox_atomic_claim_and_ops_contract.md
 ```
 
 ## 4. 설계 구상
@@ -76,8 +77,9 @@ CI 실패 시에도 test report를 artifact로 올려 두면
 ```mermaid
 flowchart TD
     A["fastTest"] --> D["Fast Checks job"]
-    B["integrationTest"] --> E["Integration Suite job"]
-    C["performanceSmokeTest"] --> F["Performance Smoke job"]
+    B["bootJar + compose config"] --> E["Package Smoke job"]
+    C["integrationTest"] --> F["Integration Suite job"]
+    G["performanceSmokeTest"] --> H["Performance Smoke job"]
 ```
 
 ## 5. 코드 설명
@@ -109,17 +111,19 @@ flowchart TD
 
 즉, 테스트 클래스 이름보다 목적이 더 중요합니다.
 
-### 5-3. `.github/workflows/ci.yml`: CI를 3개 job으로 분리
+### 5-3. `.github/workflows/ci.yml`: CI를 4개 job으로 분리
 
 [ci.yml](../.github/workflows/ci.yml)의 핵심 job은 아래입니다.
 
 - `fast-checks`
+- `package-smoke`
 - `integration-tests`
 - `performance-smoke`
 
 그리고 각 job은 아래 명령을 수행합니다.
 
 - `./gradlew --no-daemon fastTest`
+- `./gradlew --no-daemon bootJar`
 - `./gradlew --no-daemon integrationTest`
 - `./gradlew --no-daemon performanceSmokeTest`
 
@@ -136,12 +140,14 @@ sequenceDiagram
     participant Push as Git Push
     participant CI as GitHub Actions
     participant Fast as fast-checks
+    participant Package as package-smoke
     participant Int as integration-tests
     participant Perf as performance-smoke
 
     Push->>CI: workflow trigger
     CI->>Fast: fastTest
     Fast-->>CI: report upload
+    CI->>Package: bootJar + compose config
     CI->>Int: integrationTest
     CI->>Perf: performanceSmokeTest
 ```
@@ -152,6 +158,7 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 
 ```bash
 ./gradlew fastTest
+./gradlew bootJar
 ./gradlew integrationTest
 ./gradlew performanceSmokeTest
 ```
@@ -162,6 +169,7 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 - `phase19_ci_fast_integration_split`
 - `phase22_github_actions_node24_native_actions`
 - `phase44_tagged_ci_readiness_and_hiring_pack`
+- `phase47_outbox_atomic_claim_and_ops_contract`
 
 즉, CI도 한 번에 완성된 것이 아니라 점진적으로 고도화됐습니다.
 
@@ -171,6 +179,7 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 
 1. 테스트를 의미 없이 한 바구니에 넣지 말 것
 2. CI는 “돌아간다”보다 “어디서 왜 실패했는지 빨리 보인다”가 중요하다
+3. 테스트 통과와 배포 단위 생성은 다른 문제라서 `bootJar`와 compose config도 같이 검증할 것
 
 태그 기반 분리는 단순해 보이지만,
 프로젝트가 커질수록 테스트 전략 설명력이 훨씬 좋아집니다.
@@ -183,7 +192,7 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 ## 9. 취업 포인트
 
 - “테스트를 `fast`, `integration`, `performance` 태그로 나눠 목적 기반 실행 전략을 만들었습니다.”
-- “GitHub Actions도 3개 job으로 분리해 빠른 피드백과 현실적인 통합 검증을 같이 가져갔습니다.”
+- “GitHub Actions도 `fast-checks`, `package-smoke`, `integration-tests`, `performance-smoke`로 나눠 빠른 피드백과 배포 단위 검증을 같이 가져갔습니다.”
 - “테스트가 많은 것보다, 어떻게 분류하고 언제 돌리는지가 더 중요하다고 생각했습니다.”
 
 ### 9-1. 1문장 답변
@@ -192,13 +201,14 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 
 ### 9-2. 30초 답변
 
-- “이 프로젝트는 테스트가 늘어나면서 속도와 신뢰도를 같이 잡아야 했습니다. 그래서 `build.gradle`에 `fastTest`, `integrationTest`, `performanceSmokeTest` task를 만들고, 각 테스트 클래스에 `@Tag`를 붙여 목적별로 분류했습니다. 그리고 GitHub Actions도 같은 기준으로 3개 job으로 분리해, 빠른 실패는 빨리 보고 실제 통합 검증은 Docker 가능한 runner에서 따로 수행하게 했습니다.”
+- “이 프로젝트는 테스트가 늘어나면서 속도와 신뢰도를 같이 잡아야 했습니다. 그래서 `build.gradle`에 `fastTest`, `integrationTest`, `performanceSmokeTest` task를 만들고, 각 테스트 클래스에 `@Tag`를 붙여 목적별로 분류했습니다. 그리고 GitHub Actions도 `fast-checks`, `package-smoke`, `integration-tests`, `performance-smoke`로 나눠, 빠른 실패는 빨리 보고 실행 가능한 bootJar와 compose config, 실제 통합 검증까지 같이 확인하게 했습니다.”
 
 ### 9-3. 예상 꼬리 질문
 
 - “왜 패키지 경로 대신 태그를 택했나요?”
 - “태그를 빼먹으면 어떻게 관리하나요?”
 - “왜 performance smoke도 CI에 넣었나요?”
+- “왜 package-smoke를 fast-checks와 따로 뒀나요?”
 
 ## 10. 시작 상태
 
@@ -228,7 +238,8 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 2. 각 task가 `includeTags` 기준으로 테스트를 집계하게 만듭니다.
 3. 대표 테스트 클래스에 `@Tag("fast")`, `@Tag("integration")`, `@Tag("performance")`를 붙입니다.
 4. `.github/workflows/ci.yml`에서 job을 분리해 각 task를 실행합니다.
-5. 로컬과 CI가 같은 task 이름을 쓰도록 맞춥니다.
+5. `package-smoke`에서 `bootJar`와 compose config를 같이 검증합니다.
+6. 로컬과 CI가 같은 task 이름을 쓰도록 맞춥니다.
 
 ## 13. 실행 / 검증 명령
 
@@ -242,13 +253,14 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 
 - 태그 기준으로 각 테스트 묶음이 따로 실행된다
 - 빠른 실패는 `fastTest`에서 먼저 잡힌다
+- 실행 가능한 `bootJar`와 compose config는 `package-smoke`에서 먼저 확인된다
 - 통합/성능 스모크는 Docker 가능한 환경에서 분리 실행된다
 
 ## 14. 산출물 체크리스트
 
 - `build.gradle`에 `fastTest`, `integrationTest`, `performanceSmokeTest` task가 존재한다
 - 대표 테스트 클래스에 `@Tag("fast")`, `@Tag("integration")`, `@Tag("performance")`가 붙어 있다
-- `.github/workflows/ci.yml`이 3개 job 구조를 사용한다
+- `.github/workflows/ci.yml`이 fast / package / integration / performance job 구조를 사용한다
 - 아티팩트 업로드가 실패 분석 경로로 연결돼 있다
 
 ## 15. 글 종료 체크포인트

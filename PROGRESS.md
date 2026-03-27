@@ -7,6 +7,10 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-27 18:18 | DONE | Batch C 핵심 코드 반영. `NotificationOutboxRepository`에 MySQL 8 `FOR UPDATE SKIP LOCKED` 기반 claim query를 추가하고 `NotificationDispatchService.claimReadyDeliveries(...)`를 원자적 claim 방식으로 전환했다. 동시에 `docker/docker-compose*.yml`은 localhost bind 기본값과 required env 계약으로 정리했고, `.github/workflows/ci.yml`에는 `package-smoke` job을 추가해 `bootJar`와 compose config 검증을 넣었다 | 전체 회귀/packaging/compose 검증과 문서 동기화 마감 |
+| 2026-03-27 18:24 | DONE | Batch C 테스트/문서 동기화 반영. `NotificationOutboxClaimConcurrencyIntegrationTest`를 추가해 동시 worker claim 회귀를 검증했고, `README`, `env-contract`, `developer-guide`, demo runbook/preflight, interview/case-study 문서와 `blog/03`, `14`, `15`, `19`, `20`, `21`, `26`, `phase47`을 현재 코드 기준으로 맞췄다 | Java 21 기준 전체 검증과 포맷 검사 실행 |
+| 2026-03-27 18:31 | DONE | 검증 완료. `JAVA_HOME=$(/usr/libexec/java_home -v 21)` 기준 `./gradlew compileJava compileTestJava`, `./gradlew --no-daemon bootJar`, `./gradlew --no-daemon test --tests \"com.erp.integration.NotificationOutboxIntegrationTest\" --tests \"com.erp.integration.NotificationOutboxRetryIntegrationTest\" --tests \"com.erp.integration.NotificationOutboxClaimConcurrencyIntegrationTest\"`, `./gradlew --no-daemon fastTest integrationTest`, `ruby -e \"require 'yaml'; YAML.load_file('.github/workflows/ci.yml')\"`, `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config`, `docker compose --env-file docker/.env.example -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml config`, `git diff --check`를 모두 통과했다 | add/commit/push 및 원격 반영 |
+| 2026-03-27 18:05 | IN_PROGRESS | Batch C 착수. `NotificationDispatchService`, `NotificationOutboxRepository`, 관련 통합 테스트, `.github/workflows/ci.yml`, `docker/docker-compose*.yml`, active 운영 문서/블로그를 다시 읽고 범위를 `outbox atomic claim`, `packaging artifact 검증`, `localhost 바인딩 기본값`, `runbook/blog 싱크`로 고정했다. 서브에이전트(`Banach`, `Turing`, `Lagrange`)에도 각각 동시성, CI/배포, 문서 메시지 검토를 병렬 요청했다 | outbox claim 구현과 compose/CI/문서 수정 반영 |
 | 2026-03-27 17:22 | DONE | Batch B 서비스/API 신뢰성 보강 반영. `KidApplication`, `KindergartenApplication` 상세 조회 권한을 신청자/승인권자 중심으로 좁혔고, `KindergartenApplication` 상태 전이를 `BusinessException` 기반으로 정리했다. `AttendanceChangeRequest`에는 DB 유니크 가드용 `V14` 마이그레이션을 추가했고, 입학 승인/offer 수락/교사 승인 경로에서 대시보드 캐시를 함께 비우도록 확장했다 | Java 21 기준선 검증과 문서/블로그 동기화 마감 |
 | 2026-03-27 17:34 | DONE | Java 21 기준선 업그레이드 반영. `build.gradle`을 Java 21 release 기준으로 올리고, `.github/workflows/ci.yml`의 setup-java 버전을 21로 정리했으며 중복 `performance-smoke` job key를 제거했다. `README`, `AGENTS`, active docs, blog 본문도 Java 21 기준으로 다시 맞췄다 | 전체 회귀와 포맷 검증 실행 |
 | 2026-03-27 17:46 | DONE | 검증 완료. `JAVA_HOME=$(/usr/libexec/java_home -v 21)` 기준 `./gradlew compileJava compileTestJava`, 대상 API/서비스 테스트, `./gradlew --no-daemon test --tests \"com.erp.integration.ObservabilityIntegrationTest\" --tests \"com.erp.integration.ViewEndpointTest\"`, `./gradlew --no-daemon fastTest integrationTest`, `ruby -e \"require 'yaml'; YAML.load_file('.github/workflows/ci.yml')\"`, `git diff --check`를 모두 통과했다. 실행 환경 기본 JDK가 25라서 Java 21을 명시적으로 주입해 검증했다 | add/commit/push 및 원격 반영 |
@@ -203,5 +207,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 후속 고도화 23차 Batch B + Batch B-2 마감
+- 활성 작업: 후속 고도화 23차 Batch C 마감
 - 블로커: 없음

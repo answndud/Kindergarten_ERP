@@ -13,7 +13,7 @@
 ### 인프라 실행
 ```bash
 cp docker/.env.example docker/.env
-docker compose -f docker/docker-compose.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
 ```
 
 ### 애플리케이션 실행

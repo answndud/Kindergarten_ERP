@@ -1,7 +1,6 @@
 package com.erp.domain.notification.service;
 
 import com.erp.domain.notification.config.NotificationDeliveryProperties;
-import com.erp.domain.notification.entity.NotificationDeliveryStatus;
 import com.erp.domain.notification.entity.Notification;
 import com.erp.domain.notification.entity.NotificationOutbox;
 import com.erp.domain.notification.repository.NotificationOutboxRepository;
@@ -10,12 +9,12 @@ import com.erp.domain.notification.service.channel.NotificationChannelSender;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -75,27 +74,26 @@ public class NotificationDispatchService {
         int batchSize = resolveWorkerBatchSize();
         LocalDateTime staleBefore = now.minus(resolveProcessingTimeout());
 
-        List<NotificationOutbox> readyBatch = notificationOutboxRepository
-                .findByStatusAndNextAttemptAtLessThanEqualOrderByNextAttemptAtAscIdAsc(
-                        NotificationDeliveryStatus.PENDING,
-                        now,
-                        PageRequest.of(0, batchSize)
-                );
-
-        if (readyBatch.isEmpty()) {
-            readyBatch = notificationOutboxRepository
-                    .findByStatusAndProcessingStartedAtLessThanEqualOrderByProcessingStartedAtAscIdAsc(
-                            NotificationDeliveryStatus.PROCESSING,
-                            staleBefore,
-                            PageRequest.of(0, batchSize)
-                    );
+        List<Long> claimedIds = notificationOutboxRepository.claimPendingIds(now, batchSize);
+        if (claimedIds.isEmpty()) {
+            claimedIds = notificationOutboxRepository.claimStaleProcessingIds(staleBefore, batchSize);
         }
+        if (claimedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Integer> claimOrder = new HashMap<>();
+        for (int index = 0; index < claimedIds.size(); index++) {
+            claimOrder.put(claimedIds.get(index), index);
+        }
+
+        List<NotificationOutbox> readyBatch = notificationOutboxRepository.findByIdIn(claimedIds).stream()
+                .sorted(java.util.Comparator.comparingInt(outbox -> claimOrder.getOrDefault(outbox.getId(), Integer.MAX_VALUE)))
+                .toList();
 
         readyBatch.forEach(outbox -> outbox.markProcessing(now));
         notificationOutboxRepository.flush();
-        return readyBatch.stream()
-                .map(NotificationOutbox::getId)
-                .toList();
+        return claimedIds;
     }
 
     private void processClaimedDelivery(Long outboxId) {

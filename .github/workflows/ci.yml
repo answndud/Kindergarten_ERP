@@ -89,6 +89,53 @@ jobs:
             build/test-results/integrationTest
           if-no-files-found: ignore
 
+  package-smoke:
+    name: Package Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: fast-checks
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Verify Docker availability
+        run: docker version
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Build bootJar artifact
+        run: ./gradlew --no-daemon bootJar
+
+      - name: Verify bootJar contents
+        run: |
+          JAR_PATH="$(ls build/libs/*.jar | head -n 1)"
+          test -n "$JAR_PATH"
+          jar tf "$JAR_PATH" | grep 'BOOT-INF/classes'
+
+      - name: Resolve compose configs
+        run: |
+          docker compose --env-file docker/.env.example -f docker/docker-compose.yml config >/tmp/docker-compose.base.yml
+          docker compose --env-file docker/.env.example -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml config >/tmp/docker-compose.monitoring.yml
+
+      - name: Upload bootJar artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: bootjar-artifact
+          path: build/libs/*.jar
+          if-no-files-found: error
+
   performance-smoke:
     name: Performance Smoke
     runs-on: ubuntu-latest

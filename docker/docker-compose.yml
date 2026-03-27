@@ -6,13 +6,13 @@ services:
     container_name: kindergarden_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in docker/.env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set MYSQL_DATABASE in docker/.env}
+      MYSQL_USER: ${MYSQL_USER:?set MYSQL_USER in docker/.env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in docker/.env}
       TZ: Asia/Seoul
     ports:
-      - "3306:3306"
+      - "${DOCKER_BIND_HOST:-127.0.0.1}:${MYSQL_PUBLISHED_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init:/docker-entrypoint-initdb.d
@@ -28,7 +28,7 @@ services:
     container_name: kindergarden_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${DOCKER_BIND_HOST:-127.0.0.1}:${REDIS_PUBLISHED_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
