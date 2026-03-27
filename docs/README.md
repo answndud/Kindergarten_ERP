@@ -45,7 +45,7 @@
 - `docs/decisions/`
   - 기능/보안/테스트/운영 관련 결정 로그
   - 최신 개선 흐름은 `phase14` 이후 문서를 우선 보면 됩니다.
-  - 최근 배치는 `phase44_tagged_ci_readiness_and_hiring_pack.md`까지 이어집니다.
+  - 최근 배치는 `phase46_service_boundaries_java21_baseline.md`까지 이어집니다.
   - 인증 이상 징후/모니터링/외부 incident 전달 흐름은 `phase37 -> phase40` 순서로 읽는 것을 권장합니다.
   - 운영형 워크플로우 확장은 `phase39 -> phase40 -> phase41 -> phase42 -> phase43 -> phase44` 순서로 읽는 것을 권장합니다.
 

@@ -24,8 +24,8 @@
 
 ## 4. 바로 보여줄 수 있는 증거
 
-- 실행 중 API 계약: `/swagger-ui.html`, `/v3/api-docs` (`local`/`demo`에서만 공개)
-- 운영 probe: `/actuator/health`, `/actuator/health/readiness`, `/actuator/prometheus` (`prometheus`는 local/demo 또는 management plane에서만 노출)
+- 실행 중 API 계약: `/swagger-ui.html`, `/v3/api-docs` (노출을 의도한 `local`/`demo` 환경에서만 공개)
+- 운영 probe: `/actuator/health`, `/actuator/health/readiness`, `/actuator/prometheus` (`prometheus`는 노출을 의도한 `local`/`demo` 또는 management plane에서만 노출)
 - 운영 콘솔: `/audit-logs`, `/domain-audit-logs`
 - CI: GitHub Actions `Backend CI`
 

@@ -220,6 +220,46 @@ class KidApplicationApiIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.data[1].status").value("OFFERED"));
     }
 
+    @Test
+    @DisplayName("입학 신청 상세 조회 - 본인 학부모는 조회할 수 있다")
+    void getKidApplication_Success_ApplicantParent() throws Exception {
+        Member applicant = testData.createTestMember("kid-detail-parent@test.com", "상세학부모", MemberRole.PARENT, "test1234");
+        long applicationId = applyKidApplication(applicant, classroom.getId(), "상세원아");
+
+        mockMvc.perform(get("/api/v1/kid-applications/{id}", applicationId)
+                        .with(authenticated(applicant)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(applicationId))
+                .andExpect(jsonPath("$.data.kidName").value("상세원아"));
+    }
+
+    @Test
+    @DisplayName("입학 신청 상세 조회 - 같은 유치원의 다른 학부모는 조회할 수 없다")
+    void getKidApplication_Fail_SameKindergartenOtherParent() throws Exception {
+        Member applicant = testData.createTestMember("kid-detail-owner@test.com", "신청자", MemberRole.PARENT, "test1234");
+        long applicationId = applyKidApplication(applicant, classroom.getId(), "권한원아");
+
+        mockMvc.perform(get("/api/v1/kid-applications/{id}", applicationId)
+                        .with(authenticated(parentMember)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AP005"));
+    }
+
+    @Test
+    @DisplayName("입학 신청 상세 조회 - 같은 유치원의 교사는 조회할 수 있다")
+    void getKidApplication_Success_SameKindergartenTeacher() throws Exception {
+        Member applicant = testData.createTestMember("kid-detail-staff-parent@test.com", "신청자2", MemberRole.PARENT, "test1234");
+        long applicationId = applyKidApplication(applicant, classroom.getId(), "교사조회원아");
+
+        mockMvc.perform(get("/api/v1/kid-applications/{id}", applicationId)
+                        .with(authenticated(teacherMember)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(applicationId));
+    }
+
     private long applyKidApplication(Member applicant, Long preferredClassroomId, String kidName) throws Exception {
         String applyBody = """
                 {

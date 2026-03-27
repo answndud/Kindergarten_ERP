@@ -40,6 +40,7 @@ Kindergarten ERP에서는 이 확장을 아래 도메인으로 풀었습니다.
 - 학부모 입학 신청: `PENDING -> APPROVED / REJECTED / CANCELLED`
 
 그리고 학부모 입학 신청이 나중에 `WAITLISTED`, `OFFERED`, `OFFER_EXPIRED`까지 확장되는 과정은 `22`편에서 따로 다룹니다.
+또 신청서 상세 조회 권한을 본인/승인권자 중심으로 다시 좁히는 후속 보강도 `22`편 이후 운영 관점에서 함께 다룹니다.
 
 ### 2-3. 범위 기반 캘린더
 

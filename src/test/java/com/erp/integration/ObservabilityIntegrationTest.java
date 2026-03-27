@@ -80,17 +80,20 @@ class ObservabilityIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("Prometheus endpoint는 기본 설정에서 app port에 노출되지 않는다")
     void actuatorPrometheus_IsNotExposed_OnAppPortByDefault() throws Exception {
-        mockMvc.perform(get("/actuator/prometheus"))
+        mockMvc.perform(get("/actuator/prometheus")
+                        .with(authenticated(principalMember)))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("Swagger UI와 OpenAPI 문서는 기본 설정에서 비활성화된다")
     void swaggerUi_AndApiDocs_AreDisabledByDefault() throws Exception {
-        mockMvc.perform(get("/swagger-ui/index.html"))
+        mockMvc.perform(get("/swagger-ui/index.html")
+                        .with(authenticated(principalMember)))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(get("/v3/api-docs"))
+        mockMvc.perform(get("/v3/api-docs")
+                        .with(authenticated(principalMember)))
                 .andExpect(status().isNotFound());
     }
 

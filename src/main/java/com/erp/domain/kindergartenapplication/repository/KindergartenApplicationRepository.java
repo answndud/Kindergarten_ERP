@@ -2,7 +2,9 @@ package com.erp.domain.kindergartenapplication.repository;
 
 import com.erp.domain.kindergartenapplication.entity.ApplicationStatus;
 import com.erp.domain.kindergartenapplication.entity.KindergartenApplication;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -69,4 +71,11 @@ public interface KindergartenApplicationRepository extends JpaRepository<Kinderg
 
     @Query("SELECT a FROM KindergartenApplication a WHERE a.teacher.id = :teacherId AND a.status = 'PENDING' AND a.deletedAt IS NULL")
     List<KindergartenApplication> findPendingApplicationsByTeacherId(@Param("teacherId") Long teacherId);
+
+    @Query("SELECT a FROM KindergartenApplication a WHERE a.id = :applicationId AND a.deletedAt IS NULL")
+    Optional<KindergartenApplication> findByIdAndDeletedAtIsNull(@Param("applicationId") Long applicationId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM KindergartenApplication a WHERE a.id = :applicationId AND a.deletedAt IS NULL")
+    Optional<KindergartenApplication> findByIdAndDeletedAtIsNullForUpdate(@Param("applicationId") Long applicationId);
 }

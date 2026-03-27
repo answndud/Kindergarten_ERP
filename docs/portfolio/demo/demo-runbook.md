@@ -5,7 +5,7 @@
 ## 0-1. 데모 모드 전제
 
 - 앱은 `SPRING_PROFILES_ACTIVE=demo`로 실행합니다.
-- `demo`는 seed data를 켜고 Swagger/OpenAPI와 app-port Prometheus를 시연용으로 명시적으로 엽니다.
+- `demo`는 seed data를 켜고 Swagger/OpenAPI와 app-port Prometheus를 시연용으로 의도적으로 공개합니다.
 - 운영 환경에서는 이 경로들이 기본 공개가 아니라는 점을 함께 설명합니다.
 
 ## 0. 기본 계정
@@ -26,7 +26,7 @@
 
 ### API 계약
 
-- `정적 문서가 아니라 코드와 같이 배포되는 계약 문서이고, local/demo에서만 의도적으로 노출합니다.`
+- `정적 문서가 아니라 코드와 같이 배포되는 계약 문서이고, 노출을 의도한 local/demo 환경에서만 공개합니다.`
 
 ### 입학 워크플로우
 

@@ -16,7 +16,7 @@ Spring Boot 프로젝트를 처음 시작할 때 가장 흔한 실수는 두 가
 그리고 더 중요한 질문도 같이 다룹니다.
 
 - 왜 프로젝트 이름은 `settings.gradle`에 따로 두는가?
-- 왜 Java 17, Spring Boot 3.5.9, Gradle 조합으로 시작했는가?
+- 왜 Java 21, Spring Boot 3.5.9, Gradle 조합으로 시작했는가?
 - 왜 `build.gradle`은 시간이 지나면서 점점 커지게 되는가?
 - 왜 나중에는 `fastTest`, `integrationTest`, `performanceSmokeTest` 같은 태스크까지 붙였는가?
 
@@ -261,26 +261,29 @@ description = 'erp'
 
 이 둘을 맞춰 두면 프로젝트 전체가 훨씬 읽기 쉬워집니다.
 
-#### 5-3-3. Java Toolchain
+#### 5-3-3. Java 기준선
 
 ```groovy
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
 }
 ```
 
-이 설정은 “이 프로젝트는 Java 17 기준으로 컴파일한다”는 뜻입니다.
+이 설정은 “이 프로젝트는 Java 21 기준으로 컴파일하되, 로컬 JDK가 21 이상이면 `--release 21`로 결과물을 맞춘다”는 뜻입니다.
 
-##### 왜 Java 17인가
+##### 왜 Java 21인가
 
 - 현재 LTS 버전이라 안정적입니다.
 - Spring Boot 3.x와 잘 맞습니다.
-- record, var 같은 현대적 문법을 사용할 수 있습니다.
+- record, var, pattern matching for switch 같은 현대적 문법을 사용할 수 있습니다.
 
 취업용 프로젝트에서는 너무 오래된 버전도, 너무 실험적인 버전도 피하는 편이 좋습니다.
-Java 17은 그 균형이 좋은 선택입니다.
+Java 21은 그 균형이 좋은 선택입니다.
 
 #### 5-3-4. `compileOnly`와 `annotationProcessor`
 
@@ -610,7 +613,7 @@ flowchart TD
 
 이 글은 면접에서 아래 질문으로 이어질 가능성이 큽니다.
 
-- 왜 Java 17과 Spring Boot 3.x를 선택했나요?
+- 왜 Java 21과 Spring Boot 3.x를 선택했나요?
 - 왜 Gradle을 썼나요?
 - `build.gradle`에서 테스트 태스크를 왜 분리했나요?
 - 처음부터 어떤 의존성을 넣고, 어떤 것은 나중에 추가했나요?
@@ -626,7 +629,7 @@ flowchart TD
 ## 10. 시작 상태
 
 - 빈 Spring Boot 저장소이거나, 최소한 Git 저장소만 있는 상태를 가정합니다.
-- Java 17과 Gradle wrapper를 사용할 수 있어야 합니다.
+- Java 21 이상 JDK와 Gradle wrapper를 사용할 수 있어야 합니다.
 - 아직 Docker, DB, Redis는 없어도 됩니다. 이 글의 목표는 **프로젝트가 부팅되는 최소 뼈대**를 만드는 것입니다.
 
 ## 11. 이번 글에서 바뀌는 파일

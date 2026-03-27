@@ -148,6 +148,30 @@ class AttendanceChangeRequestApiIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.code").value("AP007"));
     }
 
+    @Test
+    @DisplayName("같은 원생과 날짜에 대기 중인 출결 요청이 있으면 중복 생성할 수 없다")
+    void createAttendanceChangeRequest_Fail_WhenPendingAlreadyExists() throws Exception {
+        createAttendanceChangeRequest();
+
+        String requestBody = """
+                {
+                    "kidId": 1,
+                    "date": "2025-01-14",
+                    "status": "ABSENT",
+                    "note": "중복 요청"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/attendance-requests")
+                        .with(authenticated(parentMember))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AT005"));
+    }
+
     private long createAttendanceChangeRequest() throws Exception {
         String requestBody = """
                 {

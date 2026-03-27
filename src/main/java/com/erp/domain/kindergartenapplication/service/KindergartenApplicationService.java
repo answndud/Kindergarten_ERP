@@ -2,6 +2,7 @@ package com.erp.domain.kindergartenapplication.service;
 
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
+import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.kindergartenapplication.dto.request.KindergartenApplicationRequest;
 import com.erp.domain.kindergartenapplication.dto.request.RejectRequest;
 import com.erp.domain.kindergartenapplication.dto.response.KindergartenApplicationResponse;
@@ -19,6 +20,7 @@ import com.erp.domain.notification.entity.NotificationType;
 import com.erp.domain.notification.service.NotificationService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ public class KindergartenApplicationService {
     private final KindergartenRepository kindergartenRepository;
     private final NotificationService notificationService;
     private final DomainAuditLogService domainAuditLogService;
+    private final DashboardService dashboardService;
+    private final AccessPolicyService accessPolicyService;
 
     /**
      * 교사가 유치원에 지원
@@ -104,20 +108,14 @@ public class KindergartenApplicationService {
      */
     @Transactional
     public void approve(Long applicationId, Long principalId) {
-        KindergartenApplication application = applicationRepository.findById(applicationId)
+        KindergartenApplication application = applicationRepository.findByIdAndDeletedAtIsNullForUpdate(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
-
-        if (!application.isPending()) {
-            throw new BusinessException(ErrorCode.APPLICATION_NOT_PENDING);
-        }
 
         Member principal = memberRepository.findById(principalId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 원장이 해당 유치원의 소유자인지 확인
         validatePrincipalAccess(principal, application.getKindergarten().getId());
-
-        // 지원서 승인
         application.approve(principal);
 
         // 교사에게 유치원 배정
@@ -136,6 +134,7 @@ public class KindergartenApplicationService {
                 principal.getName() + "이(가) " + teacher.getName() + " 교사의 지원을 승인했습니다.",
                 java.util.Map.of("teacherId", teacher.getId())
         );
+        dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
 
         // 다른 대기 중인 지원서 자동 거절
         rejectOtherPendingApplications(application.getId(), teacher.getId(), principal);
@@ -146,12 +145,8 @@ public class KindergartenApplicationService {
      */
     @Transactional
     public void reject(Long applicationId, RejectRequest request, Long principalId) {
-        KindergartenApplication application = applicationRepository.findById(applicationId)
+        KindergartenApplication application = applicationRepository.findByIdAndDeletedAtIsNullForUpdate(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
-
-        if (!application.isPending()) {
-            throw new BusinessException(ErrorCode.APPLICATION_NOT_PENDING);
-        }
 
         Member principal = memberRepository.findById(principalId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
@@ -179,7 +174,7 @@ public class KindergartenApplicationService {
      */
     @Transactional
     public void cancel(Long applicationId, Long teacherId) {
-        KindergartenApplication application = applicationRepository.findById(applicationId)
+        KindergartenApplication application = applicationRepository.findByIdAndDeletedAtIsNullForUpdate(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
 
         if (!application.getTeacher().getId().equals(teacherId)) {
@@ -234,19 +229,11 @@ public class KindergartenApplicationService {
      */
     @Transactional(readOnly = true)
     public KindergartenApplicationResponse getApplication(Long applicationId, Long memberId) {
-        KindergartenApplication application = applicationRepository.findById(applicationId)
+        KindergartenApplication application = applicationRepository.findByIdAndDeletedAtIsNull(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        // 권한 확인: 본인 또는 해당 유치원의 원장/교사
-        boolean hasAccess = application.getTeacher().getId().equals(memberId) ||
-                (member.getKindergarten() != null && member.getKindergarten().getId().equals(application.getKindergarten().getId()));
-
-        if (!hasAccess) {
-            throw new BusinessException(ErrorCode.APPLICATION_ACCESS_DENIED);
-        }
+        Member member = accessPolicyService.getRequester(memberId);
+        accessPolicyService.validateKindergartenApplicationReadAccess(member, application);
 
         return KindergartenApplicationResponse.from(application);
     }
@@ -279,7 +266,9 @@ public class KindergartenApplicationService {
     }
 
     private void validatePrincipalAccess(Member principal, Long kindergartenId) {
-        if (principal.getKindergarten() == null || !principal.getKindergarten().getId().equals(kindergartenId)) {
+        if (principal.getRole() != MemberRole.PRINCIPAL
+                || principal.getKindergarten() == null
+                || !principal.getKindergarten().getId().equals(kindergartenId)) {
             throw new BusinessException(ErrorCode.KINDERGARTEN_ACCESS_DENIED);
         }
     }

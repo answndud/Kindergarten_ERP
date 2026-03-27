@@ -122,11 +122,21 @@ flowchart TD
 3. 대상 원아 접근 권한 확인
 4. 같은 날짜에 이미 pending 요청이 있는지 확인
 5. `AttendanceChangeRequest.create(...)`
-6. 교사/원장에게 알림
-7. `domainAuditLogService.record(...)`
+6. 저장 시 DB 제약으로 한 번 더 중복 pending 요청을 방지
+7. 교사/원장에게 알림
+8. `domainAuditLogService.record(...)`
 
 여기서 중요한 점은
 요청 생성과 감사 로그 기록이 같은 흐름으로 묶여 있다는 점입니다.
+
+또 하나 중요한 점은
+중복 요청 방지를 서비스의 `exists(...)` 검사에만 맡기지 않았다는 것입니다.
+현재 저장소는 `attendance_change_request`에
+`PENDING` 상태일 때만 값을 갖는 generated column + unique 제약을 두고,
+저장 시 `DataIntegrityViolationException`이 나면
+비즈니스 예외(`AT005`)로 번역합니다.
+
+즉 “미리 한 번 확인하고, DB에서 마지막으로 한 번 더 막는” 이중 구조입니다.
 
 ### 5-3. `approve(...)`: 최종 `Attendance`는 승인 시점에만 반영
 
@@ -212,6 +222,14 @@ flowchart TD
 
 즉 업무 감사 로그도 저장에서 끝나지 않고
 조회와 export까지 닫힙니다.
+
+여기서 조회 범위는 명확합니다.
+
+| 주체 | domain audit 조회/API/CSV export |
+|---|---|
+| 원장 | 가능 |
+| 교사 | 불가 |
+| 학부모 | 불가 |
 
 ## 6. 실제 흐름
 

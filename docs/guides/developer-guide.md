@@ -12,7 +12,7 @@
 - 핵심 역할: `PRINCIPAL`, `TEACHER`, `PARENT`
 - 아키텍처: `domain/{controller,service,repository,entity,dto}` + `global/*`
 - 기술 스택:
-  - Java 17
+  - Java 21
   - Spring Boot 3.5.9
   - Spring Data JPA + QueryDSL
   - Spring Security + JWT(HTTP-only cookie)

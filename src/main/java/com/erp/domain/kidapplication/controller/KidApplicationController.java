@@ -74,6 +74,7 @@ public class KidApplicationController {
      * 입학 신청 상세 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
     public ResponseEntity<ApiResponse<KidApplicationResponse>> getApplication(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {

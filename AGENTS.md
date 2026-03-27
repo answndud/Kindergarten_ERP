@@ -8,7 +8,7 @@
 - 프로젝트: Kindergarten ERP (유치원 운영 관리 시스템)
 - 주요 사용자: 원장(PRINCIPAL), 교사(TEACHER), 학부모(PARENT)
 - 철학: **Simple is Best**
-- 기술: Java 17, Spring Boot 3.5.9, JPA, QueryDSL, Security, JWT, Flyway
+- 기술: Java 21, Spring Boot 3.5.9, JPA, QueryDSL, Security, JWT, Flyway
 - DB/Infra: MySQL 8, Redis
 - 화면: Thymeleaf + HTMX + Alpine.js + Tailwind(CDN)
 - 아키텍처: `domain/{controller,service,repository,entity,dto}` + `global/*`
@@ -68,7 +68,7 @@ docker compose -f docker/docker-compose.yml down
 
 ### 5.1 Formatting / General
 
-- Java 17 기준 문법 사용 (record/var 허용, 가독성 우선).
+- Java 21 기준 문법 사용 (record/var 허용, 가독성 우선).
 - 들여쓰기 4 spaces.
 - 메서드는 한 가지 책임에 집중하고 길어지면 private 메서드로 분리.
 - 주석은 "왜"가 없으면 추가하지 않는다.

@@ -6,6 +6,14 @@ import com.erp.domain.attendance.entity.AttendanceStatus;
 import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.kid.entity.Gender;
 import com.erp.domain.kid.entity.Kid;
+import com.erp.domain.kid.entity.Relationship;
+import com.erp.domain.kidapplication.dto.request.AcceptKidApplicationOfferRequest;
+import com.erp.domain.kidapplication.dto.request.ApproveKidApplicationRequest;
+import com.erp.domain.kidapplication.dto.request.KidApplicationRequest;
+import com.erp.domain.kidapplication.dto.request.OfferKidApplicationRequest;
+import com.erp.domain.kidapplication.service.KidApplicationService;
+import com.erp.domain.kindergartenapplication.dto.request.KindergartenApplicationRequest;
+import com.erp.domain.kindergartenapplication.service.KindergartenApplicationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -16,6 +24,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.closeTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -28,6 +37,12 @@ class DashboardApiIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private KidApplicationService kidApplicationService;
+
+    @Autowired
+    private KindergartenApplicationService kindergartenApplicationService;
 
     @AfterEach
     void clearDashboardCache() {
@@ -117,6 +132,90 @@ class DashboardApiIntegrationTest extends BaseIntegrationTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.attendanceRate7Days").value(closeTo(100.0, 0.01)));
+    }
+
+    @Test
+    @DisplayName("입학 즉시 승인 시 대시보드 캐시가 무효화되어 원생/학부모 수가 갱신된다")
+    void dashboardCacheEvictedOnKidApplicationApprove() {
+        var before = dashboardService.getDashboardStatistics(kindergarten);
+        var applicant = testData.createTestMember("dashboard-parent@test.com", "대시보드학부모", com.erp.domain.member.entity.MemberRole.PARENT, "test1234");
+
+        Long applicationId = kidApplicationService.apply(
+                new KidApplicationRequest(
+                        kindergarten.getId(),
+                        "대시보드원아",
+                        LocalDate.of(2020, 2, 2),
+                        Gender.FEMALE,
+                        classroom.getId(),
+                        "대시보드 캐시 검증"
+                ),
+                applicant.getId()
+        );
+
+        kidApplicationService.approve(
+                applicationId,
+                new ApproveKidApplicationRequest(classroom.getId(), Relationship.MOTHER),
+                principalMember.getId()
+        );
+
+        var after = dashboardService.getDashboardStatistics(kindergarten);
+
+        assertThat(after.totalKids()).isEqualTo(before.totalKids() + 1);
+        assertThat(after.totalParents()).isEqualTo(before.totalParents() + 1);
+    }
+
+    @Test
+    @DisplayName("입학 offer 수락 시 대시보드 캐시가 무효화되어 원생 수가 갱신된다")
+    void dashboardCacheEvictedOnKidApplicationOfferAccept() {
+        var applicant = testData.createTestMember("dashboard-offer-parent@test.com", "오퍼학부모", com.erp.domain.member.entity.MemberRole.PARENT, "test1234");
+
+        Long applicationId = kidApplicationService.apply(
+                new KidApplicationRequest(
+                        kindergarten.getId(),
+                        "오퍼원아",
+                        LocalDate.of(2020, 3, 3),
+                        Gender.MALE,
+                        classroom.getId(),
+                        "offer 수락 캐시 검증"
+                ),
+                applicant.getId()
+        );
+
+        kidApplicationService.offer(
+                applicationId,
+                new OfferKidApplicationRequest(classroom.getId(), "좌석 확보"),
+                principalMember.getId()
+        );
+
+        var before = dashboardService.getDashboardStatistics(kindergarten);
+
+        kidApplicationService.acceptOffer(
+                applicationId,
+                new AcceptKidApplicationOfferRequest(Relationship.FATHER),
+                applicant.getId()
+        );
+
+        var after = dashboardService.getDashboardStatistics(kindergarten);
+
+        assertThat(after.totalKids()).isEqualTo(before.totalKids() + 1);
+    }
+
+    @Test
+    @DisplayName("교사 지원 승인 시 대시보드 캐시가 무효화되어 교사 수가 갱신된다")
+    void dashboardCacheEvictedOnKindergartenApplicationApprove() {
+        var before = dashboardService.getDashboardStatistics(kindergarten);
+        var applicantTeacher = testData.createTestMember("dashboard-teacher@test.com", "대시보드교사", com.erp.domain.member.entity.MemberRole.TEACHER, "test1234");
+
+        Long applicationId = kindergartenApplicationService.apply(
+                applicantTeacher.getId(),
+                new KindergartenApplicationRequest(kindergarten.getId(), "대시보드 교사 지원")
+        );
+
+        kindergartenApplicationService.approve(applicationId, principalMember.getId());
+
+        var after = dashboardService.getDashboardStatistics(kindergarten);
+
+        assertThat(after.totalTeachers()).isEqualTo(before.totalTeachers() + 1);
     }
 
     private List<LocalDate> schoolDaysBetween(LocalDate startDate, LocalDate endDate) {

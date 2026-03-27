@@ -2,6 +2,7 @@ package com.erp.domain.kindergartenapplication.service;
 
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
+import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.domain.domainaudit.service.DomainAuditLogService;
 import com.erp.domain.kindergartenapplication.entity.KindergartenApplication;
 import com.erp.domain.kindergartenapplication.repository.KindergartenApplicationRepository;
@@ -50,6 +51,9 @@ public class KindergartenApplicationServiceTest {
     @Mock
     private DomainAuditLogService domainAuditLogService;
 
+    @Mock
+    private DashboardService dashboardService;
+
     @InjectMocks
     private KindergartenApplicationService kindergartenApplicationService;
 
@@ -71,7 +75,7 @@ public class KindergartenApplicationServiceTest {
         ReflectionTestUtils.setField(approvedTarget, "id", 10L);
         ReflectionTestUtils.setField(otherPending, "id", 11L);
 
-        when(applicationRepository.findById(10L)).thenReturn(Optional.of(approvedTarget));
+        when(applicationRepository.findByIdAndDeletedAtIsNullForUpdate(10L)).thenReturn(Optional.of(approvedTarget));
         when(memberRepository.findById(20L)).thenReturn(Optional.of(principal));
         when(applicationRepository.findPendingApplicationsByTeacherId(1L))
                 .thenReturn(List.of(approvedTarget, otherPending));
@@ -93,7 +97,7 @@ public class KindergartenApplicationServiceTest {
         Member principalWithoutKindergarten = Member.create("principal@test.com", "encoded", "원장", "010", MemberRole.PRINCIPAL);
         KindergartenApplication application = KindergartenApplication.create(teacher, kgA, "지원합니다");
 
-        when(applicationRepository.findById(10L)).thenReturn(Optional.of(application));
+        when(applicationRepository.findByIdAndDeletedAtIsNullForUpdate(10L)).thenReturn(Optional.of(application));
         when(memberRepository.findById(20L)).thenReturn(Optional.of(principalWithoutKindergarten));
 
         Throwable throwable = catchThrowable(() -> kindergartenApplicationService.approve(10L, 20L));

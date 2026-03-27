@@ -3,6 +3,8 @@ package com.erp.domain.kindergartenapplication.entity;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.member.entity.Member;
 import com.erp.global.common.BaseEntity;
+import com.erp.global.exception.BusinessException;
+import com.erp.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -87,9 +89,7 @@ public class KindergartenApplication extends BaseEntity {
      * 지원서 승인
      */
     public void approve(Member principal) {
-        if (!status.isProcessable()) {
-            throw new IllegalStateException("처리 가능한 상태가 아닙니다: " + status);
-        }
+        ensureProcessable("처리 가능한 상태가 아닙니다: " + status);
         this.status = ApplicationStatus.APPROVED;
         this.processedAt = LocalDateTime.now();
         this.processedBy = principal;
@@ -99,9 +99,7 @@ public class KindergartenApplication extends BaseEntity {
      * 지원서 거절
      */
     public void reject(String reason, Member principal) {
-        if (!status.isProcessable()) {
-            throw new IllegalStateException("처리 가능한 상태가 아닙니다: " + status);
-        }
+        ensureProcessable("처리 가능한 상태가 아닙니다: " + status);
         this.status = ApplicationStatus.REJECTED;
         this.rejectionReason = reason;
         this.processedAt = LocalDateTime.now();
@@ -112,9 +110,7 @@ public class KindergartenApplication extends BaseEntity {
      * 지원서 취소
      */
     public void cancel() {
-        if (!status.isProcessable()) {
-            throw new IllegalStateException("취소 가능한 상태가 아닙니다: " + status);
-        }
+        ensureProcessable("취소 가능한 상태가 아닙니다: " + status);
         this.status = ApplicationStatus.CANCELLED;
         this.processedAt = LocalDateTime.now();
     }
@@ -124,7 +120,7 @@ public class KindergartenApplication extends BaseEntity {
      */
     public void reapply(String message) {
         if (!(status.isCancelled() || status.isRejected())) {
-            throw new IllegalStateException("재신청 가능한 상태가 아닙니다: " + status);
+            throw new BusinessException(ErrorCode.APPLICATION_INVALID_STATE, "재신청 가능한 상태가 아닙니다: " + status);
         }
 
         this.status = ApplicationStatus.PENDING;
@@ -178,5 +174,11 @@ public class KindergartenApplication extends BaseEntity {
                 .kindergarten(kindergarten)
                 .message(message)
                 .build();
+    }
+
+    private void ensureProcessable(String message) {
+        if (!status.isProcessable()) {
+            throw new BusinessException(ErrorCode.APPLICATION_INVALID_STATE, message);
+        }
     }
 }

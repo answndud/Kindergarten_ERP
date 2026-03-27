@@ -41,7 +41,7 @@
 - 즉 “돌아가는 테스트”가 아니라 **운영 스택을 닮은 테스트**를 만들었습니다.
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
 - readiness는 `criticalDependencies`로 DB/Redis를 직접 반영하고, failure-mode 테스트로 `readiness DOWN / liveness UP`도 검증했습니다.
-- local/demo에서는 Swagger와 Prometheus를 바로 열고, prod에서는 Swagger를 비활성화하고 management port를 분리해 운영 노출면을 줄였습니다.
+- local/demo처럼 노출을 의도한 환경에서만 Swagger와 Prometheus를 열고, prod에서는 Swagger를 비활성화하고 management port를 분리해 운영 노출면을 줄였습니다.
 - 로그인/refresh/social link/unlink는 인증 감사 로그로 남기고, 입학/출결/공지 상태 변경은 별도 업무 감사 로그로 분리했습니다.
 - 반복 로그인 실패는 원장 시스템 알림으로 연결했고, 이후 `notification_outbox`로 외부 전달을 분리해 retry/dead-letter와 incident webhook까지 붙였습니다.
 - Prometheus metric은 Grafana 대시보드까지 바로 보이게 구성했고, 이로써 **계약 문서 -> 이벤트 저장 -> 운영 조회 -> 외부 incident 전파 -> 메트릭 관측 -> 사후 분석** 흐름을 설명할 수 있게 됐습니다.
@@ -64,7 +64,7 @@
 
 ## 4. 아키텍처 키워드
 
-- Java 17 / Spring Boot 3.5.9
+- Java 21 / Spring Boot 3.5.9
 - JPA + QueryDSL
 - Spring Security + JWT + OAuth2
 - MySQL 8 / Redis
