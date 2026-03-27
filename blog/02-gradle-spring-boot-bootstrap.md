@@ -576,9 +576,10 @@ flowchart TD
 
 ### CI 검증
 
-이 프로젝트는 현재 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) 기준으로 아래 3개 job을 분리해서 실행합니다.
+이 프로젝트는 현재 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) 기준으로 아래 4개 job을 분리해서 실행합니다.
 
 - `Fast Checks`
+- `Package Smoke`
 - `Integration Suite`
 - `Performance Smoke`
 

@@ -29,8 +29,9 @@
 ## 인프라
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d
-docker compose -f docker/docker-compose.yml down
+cp docker/.env.example docker/.env
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml down
 ```
 
 ## 빌드/실행
@@ -50,8 +51,12 @@ docker compose -f docker/docker-compose.yml down
 ./gradlew fastTest
 ./gradlew integrationTest
 ./gradlew performanceSmokeTest
+./gradlew bootJar
 ./gradlew test
 ```
+
+- 로컬 compose 포트는 기본적으로 `127.0.0.1`에만 바인딩됩니다.
+- 배포 단위 확인이 필요하면 `bootJar`를 만들고, CI의 `package-smoke`와 같은 기준으로 JAR 산출물을 점검하세요.
 
 ---
 

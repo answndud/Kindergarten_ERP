@@ -358,7 +358,9 @@ sequenceDiagram
 ## 13. 실행 / 검증 명령
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+cp docker/.env.example docker/.env
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
 ./gradlew compileJava compileTestJava
 ./gradlew --no-daemon integrationTest
 ./gradlew bootRun --args='--spring.profiles.active=demo'
@@ -381,8 +383,7 @@ docker compose -f docker/docker-compose.yml up -d
 Ctrl+C
 
 # Docker 정리
-docker compose -f docker/docker-compose.yml down
-docker compose -f docker/docker-compose.monitoring.yml down
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down
 ```
 
 ## 14. 산출물 체크리스트
@@ -411,6 +412,7 @@ docker compose -f docker/docker-compose.monitoring.yml down
 - demo profile과 seed data로 시연 재현성을 확보했다
 - 아키텍처 문서와 hiring pack이 읽기 시작점을 제공한다
 - interview one pager와 Q&A script가 꼬리 질문 대응 자료로 이어진다
+- CI에서는 `fast-checks`, `package-smoke`, `integration-tests`, `performance-smoke`를 보여 줄 수 있다
 - “무엇을 만들었는가”뿐 아니라 “어떤 순서로 보여줄 것인가”까지 설계했다고 설명할 수 있다
 
 ## 16. 자주 막히는 지점

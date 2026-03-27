@@ -36,6 +36,10 @@ Kindergarten ERP는 이 문제를 아래 네 묶음으로 풀었습니다.
 DB/Redis가 죽었다고 해서 JVM 프로세스가 죽은 것은 아닙니다.
 그래서 둘을 분리해야 합니다.
 
+이 프로젝트에서는 특히 Redis가 단순 캐시가 아니라
+refresh token, rate limit, auth anomaly cooldown에 걸려 있기 때문에
+readiness에서 빼면 안 되는 **인증 핵심 의존성**입니다.
+
 ### 2-3. 관리면(management surface)은 “열 것”과 “닫을 것”을 정해야 한다
 
 OpenAPI, health, Prometheus는 유용하지만
@@ -185,6 +189,9 @@ Micrometer Prometheus registry를 등록합니다.
 
 즉 “Prometheus 의존성을 넣었다”가 아니라
 **조건부로 안전하게 노출하는 경로**까지 설계한 것입니다.
+
+추가로 로컬 monitoring overlay는 Docker compose 기본값으로 `127.0.0.1`에만 포트를 바인딩해,
+개발 편의와 기본 노출 통제를 같이 가져갑니다.
 
 ### 5-6. `CorrelationIdFilter`와 `RequestLoggingFilter`
 

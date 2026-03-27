@@ -107,6 +107,7 @@ flowchart TD
 2. 저장은 실패를 최대한 흡수하되, 이벤트 자체는 남기려고 시도한다
 3. 조회는 principal만 가능하고, 자기 유치원 범위로 제한한다
 4. API와 화면은 분리하되 같은 query service를 재사용한다
+5. auth audit은 저장/조회 baseline이고, incident webhook 전달은 `notification_outbox`가 맡도록 경계를 나눈다
 
 ## 5. 코드 설명
 
@@ -257,6 +258,16 @@ sequenceDiagram
 
 이 테스트가 중요한 이유는 “로그가 저장된다”보다
 **정말 운영자가 자기 범위 데이터만 본다**를 검증하기 때문입니다.
+
+여기서 한 가지 경계를 분명히 해야 합니다.
+
+- `auth_audit_log`
+  - 인증 사건의 저장과 조회
+- `notification_outbox`
+  - incident webhook 같은 외부 전달
+
+즉 감사 로그 글은 “저장/조회 콘솔”까지를 다루고,
+외부 incident fan-out과 retry/dead-letter는 다음 outbox 글에서 책임을 이어받습니다.
 
 ## 8. 회고
 

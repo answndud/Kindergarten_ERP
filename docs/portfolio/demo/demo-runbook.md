@@ -7,6 +7,7 @@
 - 앱은 `SPRING_PROFILES_ACTIVE=demo`로 실행합니다.
 - `demo`는 seed data를 켜고 Swagger/OpenAPI와 app-port Prometheus를 시연용으로 의도적으로 공개합니다.
 - 운영 환경에서는 이 경로들이 기본 공개가 아니라는 점을 함께 설명합니다.
+- monitoring overlay가 필요하면 `docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d`로 띄우고, 포트는 기본적으로 `127.0.0.1`에만 바인딩된다는 점을 설명합니다.
 
 ## 0. 기본 계정
 
@@ -43,6 +44,7 @@
 ### 운영/테스트
 
 - `readiness는 DB/Redis 상태를 반영하고, CI는 fast/integration/performance smoke를 분리해 회귀를 잡습니다.`
+- `CI에는 bootJar와 compose config를 확인하는 package-smoke도 있어 배포 단위가 실제로 만들어지는지 같이 검증합니다.`
 - `문서와 메트릭도 기본 공개가 아니라 환경별로 열고 닫습니다.`
 
 ## 3. 추천 클릭 순서
