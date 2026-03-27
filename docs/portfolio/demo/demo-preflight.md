@@ -4,18 +4,20 @@
 
 ## 1. 실행 상태
 
-- Docker: `docker compose -f docker/docker-compose.yml up -d`
+- Docker:
+  - `cp docker/.env.example docker/.env`
+  - `docker compose -f docker/docker-compose.yml up -d`
 - 앱: `./gradlew bootRun --args='--spring.profiles.active=demo'`
 - monitoring overlay가 필요하면:
-  - `docker compose -f docker/docker-compose.monitoring.yml up -d`
+  - `docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d`
 
 ## 2. 접속 주소
 
 - App: `http://localhost:8080`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Swagger UI: `http://localhost:8080/swagger-ui.html` (`demo`에서만 의도적으로 공개)
 - Health: `http://localhost:8080/actuator/health`
 - Readiness: `http://localhost:8080/actuator/health/readiness`
-- Prometheus: `http://localhost:8080/actuator/prometheus`
+- Prometheus: `http://localhost:8080/actuator/prometheus` (`demo`에서만 app port 공개)
 - Grafana: `http://localhost:3000`
 
 ## 3. 데모 계정
@@ -27,6 +29,7 @@
 ## 4. 반드시 확인할 데이터와 시연 중 생성할 대상
 
 - DataLoader가 넣어 주는 기본 데이터
+  - `demo` 프로파일이 `app.seed.enabled=true`를 켠 상태에서만 생성됨
   - principal / teacher / parent 계정
   - 출석, 알림장, 공지, auth audit 로그
 - 시연 중 직접 만들거나 확인할 대상
@@ -54,4 +57,4 @@
 - 앱은 실행 중인 터미널에서 `Ctrl+C`
 - Docker 정리:
   - `docker compose -f docker/docker-compose.yml down`
-  - `docker compose -f docker/docker-compose.monitoring.yml down`
+  - `docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml down`

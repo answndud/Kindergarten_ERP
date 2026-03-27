@@ -537,7 +537,7 @@ sequenceDiagram
     participant Infra as Redis/Cache
     participant App as 서비스 계층
 
-    Dev->>Boot: ./gradlew bootRun
+    Dev->>Boot: SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
     Boot->>Flyway: V1 ~ V13 마이그레이션 적용
     Flyway-->>Boot: 스키마 준비 완료
     Boot->>JPA: 엔티티-스키마 validate

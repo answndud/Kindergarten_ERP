@@ -71,7 +71,23 @@ spring:
             user-name-attribute: id
 
 jwt:
+  secret: ${JWT_SECRET:local-dev-only-jwt-secret-key-at-least-32-bytes}
   cookie-secure: false
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+app:
+  seed:
+    enabled: ${APP_SEED_ENABLED:false}
+    log-credentials: ${APP_SEED_LOG_CREDENTIALS:false}
+  security:
+    management-surface:
+      public-api-docs: true
+      expose-prometheus-on-app-port: true
 
 # 로깅 설정 (개발용 - 상세)
 #logging:

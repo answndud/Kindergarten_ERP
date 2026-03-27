@@ -76,7 +76,7 @@ overlay compose는 “기본 스택 위에 추가 기능만 덧붙이는 compose
 ```text
 - docker/docker-compose.yml
 - docker/docker-compose.monitoring.yml
-- docker/.env
+- docker/.env.example
 - docker/monitoring/prometheus/prometheus.yml
 - src/main/resources/application.yml
 - src/main/resources/application-local.yml
@@ -190,16 +190,15 @@ mysql:
 
 도 모두 이 기준을 공유하게 됩니다.
 
-#### 왜 환경변수를 `.env`에서 읽는가
+#### 왜 환경변수를 `.env.example -> .env` 흐름으로 관리하는가
 
-파일 [docker/.env](../docker/.env)에 아래 값이 있습니다.
+처음에는 예제 파일을 복사합니다.
 
-```env
-MYSQL_ROOT_PASSWORD=root1234
-MYSQL_DATABASE=erp_db
-MYSQL_USER=erp_user
-MYSQL_PASSWORD=erp1234
+```bash
+cp docker/.env.example docker/.env
 ```
+
+그리고 local 인프라용 값은 `docker/.env`에서 읽습니다.
 
 이 방식의 장점은 두 가지입니다.
 
@@ -454,7 +453,7 @@ spring:
 flowchart LR
     A["docker compose up"] --> B["MySQL container :3306"]
     A --> C["Redis container :6379"]
-    D["./gradlew bootRun"] --> E["Spring Boot app :8080"]
+    D["SPRING_PROFILES_ACTIVE=local ./gradlew bootRun"] --> E["Spring Boot app :8080"]
     E --> B
     E --> C
     F["optional monitoring overlay"] --> G["Prometheus :9090"]
@@ -467,19 +466,26 @@ flowchart LR
 ### 기본 개발 스택
 
 ```bash
+cp docker/.env.example docker/.env
 docker compose -f docker/docker-compose.yml up -d
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
+여기서 중요한 점은 두 가지입니다.
+
+- `local`은 명시적으로 선택한 개발 모드입니다.
+- 시드 데이터는 기본으로 올라오지 않으며, 필요하면 `APP_SEED_ENABLED=true`로 따로 켭니다.
+
 ### monitoring까지 보고 싶을 때
 
 ```bash
+cp docker/.env.example docker/.env
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
 ./gradlew bootRun --args='--spring.profiles.active=demo'
 ```
 
 여기서 `demo` 프로파일은 `local` 설정을 포함합니다.
-즉, 개발 기본값 위에 시연용 seed를 같이 올리는 방식입니다.
+즉, 개발 기본값 위에 시연용 seed와 공개 management surface를 같이 올리는 방식입니다.
 
 이 흐름은 [demo-preflight.md](../docs/portfolio/demo/demo-preflight.md) 에도 그대로 정리돼 있습니다.
 
@@ -561,7 +567,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 - 새 파일:
   - docker/docker-compose.yml
   - docker/docker-compose.monitoring.yml
-  - docker/.env
+  - docker/.env.example
   - docker/monitoring/prometheus/prometheus.yml
 - 참고 연결 파일:
   - src/main/resources/application.yml
@@ -571,7 +577,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 ## 12. 구현 체크리스트
 
 1. MySQL과 Redis가 들어 있는 `docker/docker-compose.yml`을 작성합니다.
-2. 민감 값은 `docker/.env`로 분리합니다.
+2. local 인프라 값은 `docker/.env.example -> docker/.env` 흐름으로 분리합니다.
 3. Prometheus와 Grafana는 `docker/docker-compose.monitoring.yml`로 분리합니다.
 4. `docker compose -f docker/docker-compose.yml up -d`로 기본 스택을 실행합니다.
 5. 필요하면 monitoring overlay를 추가로 띄웁니다.
@@ -579,10 +585,11 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 ## 13. 실행 / 검증 명령
 
 ```bash
+cp docker/.env.example docker/.env
 docker compose -f docker/docker-compose.yml up -d
 docker compose -f docker/docker-compose.yml ps
-docker compose -f docker/docker-compose.monitoring.yml up -d
-docker compose -f docker/docker-compose.monitoring.yml ps
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml ps
 ```
 
 성공하면 확인할 것:

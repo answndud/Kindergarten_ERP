@@ -29,6 +29,7 @@ import com.erp.domain.notepad.repository.NotepadRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -57,6 +58,7 @@ import java.util.Random;
 @Slf4j
 @Component
 @Profile("local")
+@ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class DataLoader implements CommandLineRunner {
 
@@ -73,6 +75,7 @@ public class DataLoader implements CommandLineRunner {
     private final NotepadRepository notepadRepository;
     private final AnnouncementRepository announcementRepository;
     private final AuthAuditLogRepository authAuditLogRepository;
+    private final SeedProperties seedProperties;
     private final Random random = new Random();
 
     // 테스트용 고정 비밀번호
@@ -85,7 +88,9 @@ public class DataLoader implements CommandLineRunner {
         if (memberRepository.existsByEmail(SEED_PRINCIPAL_A_EMAIL)
                 || memberRepository.existsByEmail(SEED_PRINCIPAL_B_EMAIL)) {
             log.info("Seed principals already exist. Skipping data loading.");
-            log.info("Test password: {}", TEST_PASSWORD);
+            if (seedProperties.isLogCredentials()) {
+                log.info("Seed credentials are enabled for logging in this environment.");
+            }
             return;
         }
 
@@ -194,21 +199,16 @@ public class DataLoader implements CommandLineRunner {
         log.info("=================================================");
         log.info("DUMMY DATA LOADED SUCCESSFULLY!");
         log.info("=================================================");
-        log.info("TEST PASSWORD: {}", TEST_PASSWORD);
-        log.info("---------------------------------------------------");
-        log.info("유치원 A (해바라기 유치원):");
-        log.info("  원장:   principal@test.com / {}", TEST_PASSWORD);
-        log.info("  선생님: teacher1@test.com, teacher2@test.com");
-        log.info("  학부모: parent1@test.com (준우,시우아빠)");
-        log.info("          parent2@test.com (서윤,하은엄마)");
-        log.info("          parent3@test.com (도윤,지호할아빠)");
-        log.info("---------------------------------------------------");
-        log.info("유치원 B (꿈나무 유치원):");
-        log.info("  원장:   principal2@test.com / {}", TEST_PASSWORD);
-        log.info("  선생님: teacher3@test.com, teacher4@test.com");
-        log.info("  학부모: parent4@test.com (주원,다은엄마)");
-        log.info("          parent5@test.com (수빈,예준아빠)");
-        log.info("          parent6@test.com (지원,연우할머니)");
+        if (seedProperties.isLogCredentials()) {
+            log.info("Seed credentials logging enabled for local troubleshooting only.");
+            log.info("TEST PASSWORD: {}", TEST_PASSWORD);
+            log.info("유치원 A principal: principal@test.com");
+            log.info("유치원 B principal: principal2@test.com");
+            log.info("교사 예시: teacher1@test.com, teacher2@test.com, teacher3@test.com, teacher4@test.com");
+            log.info("학부모 예시: parent1@test.com ~ parent6@test.com");
+        } else {
+            log.info("Seed credentials logging is disabled. Refer to demo/runbook documentation for sample accounts.");
+        }
         log.info("=================================================");
         log.info("총 생성: 2 유치원, 2 원장, 4 선생님, 6 학부모, 4 반, 12 원아");
         log.info("=================================================");

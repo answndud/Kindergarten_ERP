@@ -65,6 +65,7 @@ out/
 
 ### Docker ###
 docker/.env
+!docker/.env.example
 *.env
 .env.*
 .env

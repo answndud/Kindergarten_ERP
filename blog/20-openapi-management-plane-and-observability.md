@@ -41,7 +41,7 @@ DB/Redis가 죽었다고 해서 JVM 프로세스가 죽은 것은 아닙니다.
 OpenAPI, health, Prometheus는 유용하지만
 무조건 다 공개하면 정보 노출이 됩니다.
 
-그래서 이 프로젝트는 설정값으로 노출 범위를 조절하게 만들었습니다.
+그래서 이 프로젝트는 **기본은 닫고, local/demo에서만 명시적으로 연다**는 원칙으로 노출 범위를 조절하게 만들었습니다.
 
 ### 2-4. 엔드포인트별 기대 노출 정책을 먼저 표로 보자
 
@@ -49,10 +49,10 @@ OpenAPI, health, Prometheus는 유용하지만
 
 | 경로 | 누가 쓰는가 | 기대 정책 | 이유 |
 |---|---|---|---|
-| `/swagger-ui.html`, `/v3/api-docs` | 개발자 / 면접관 | dev/demo에서는 열 수 있고 prod에서는 통제 가능해야 함 | API 계약 확인용 |
+| `/swagger-ui.html`, `/v3/api-docs` | 개발자 / 면접관 | 기본 비활성화, local/demo에서만 명시적 공개 | API 계약 확인용 |
 | `/actuator/health` | 로드밸런서 / 운영자 | 제한적으로 공개 가능 | 프로세스 생존 확인용 |
 | `/actuator/health/readiness` | 오케스트레이터 / 운영자 | 의존성 상태 반영 | 트래픽 수신 가능 여부 판단용 |
-| `/actuator/prometheus` | Prometheus | 설정에 따라 노출 | 수집 시스템 전용 |
+| `/actuator/prometheus` | Prometheus | 기본 비활성화, local/demo 또는 내부 management plane에서만 노출 | 수집 시스템 전용 |
 | 일반 업무 페이지/API | 사용자 | 인증/권한 필요 | 운영 면과 업무 면은 분리해야 하기 때문 |
 
 ## 3. 이번 글에서 다룰 파일
@@ -130,7 +130,7 @@ flowchart TD
 - `exposePrometheusOnAppPort`
 
 즉 OpenAPI와 Prometheus를 무조건 공개하지 않고,
-프로퍼티로 노출 정책을 제어합니다.
+프로퍼티로 노출 정책을 제어합니다. 중요한 점은 **기본값이 false**라는 것입니다.
 
 ### 5-3. `RoleRedirectInterceptor`: Security 설정만 열어서는 끝나지 않는다
 
@@ -241,8 +241,8 @@ sequenceDiagram
 - `/actuator/health/readiness` 활성화
 - critical dependency가 죽었을 때 readiness는 `DOWN`
 - 같은 상황에서도 liveness는 `UP`
-- `/actuator/prometheus`에서 `erp_auth_events_total` 노출
-- Swagger UI / OpenAPI JSON 접근 가능
+- 기본 설정에서는 Swagger/OpenAPI와 app-port Prometheus가 닫혀 있음
+- 명시적 opt-in property를 켠 별도 테스트에서 Swagger/OpenAPI와 Prometheus가 열림
 - `X-Correlation-Id` echo
 
 즉 이 영역은 “설정 파일만 추가한 기능”이 아니라

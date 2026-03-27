@@ -1,12 +1,71 @@
 # BLOG_PLAN.md
 
 ## 작업명
-- Kindergarten ERP 취업용 개발 블로그 시리즈 설계 2차
+- Kindergarten ERP 취업용 개발 블로그 시리즈 설계 3차 (보안/운영 개선 배치와 본문 싱크 포함)
 
 ## 문서 역할
 - 이 문서는 `blog/` 아래 실제 글을 쓰기 전에 기준이 되는 **블로그 집필 SSOT**다.
 - 기존 [PLAN.md](./PLAN.md), [PROGRESS.md](./PROGRESS.md)는 애플리케이션 개발용 SSOT이고, 이 문서는 오직 **블로그 시리즈 설계와 집필 운영**만 다룬다.
 - 목표는 단순 회고가 아니라, **Java / Spring Boot 입문자도 이 저장소를 따라가며 “이런 순서로 설계하고 구현하면 되는구나”를 이해할 수 있는 수준의 시리즈**를 만드는 것이다.
+
+## 0-1) 현재 후속 싱크 목표 (2026-03-27)
+- 코드 리뷰 결과, 블로그는 전반적으로 강하지만 `보안 기본값`, `management surface`, `신청서 권한`, `outbox 동시성`, `배포/CI 계약`이 실제 코드 기준으로 더 정교하게 설명되어야 한다.
+- 따라서 다음 코드 개선 배치는 블로그 리라이트와 분리하지 않고, **한 배치 = 코드 수정 + 테스트 + 결정 로그 + 블로그 본문 수정**으로 진행한다.
+- 블로그는 “좋아 보이는 설명”보다 “실제 코드와 정확히 일치하는 설명”을 우선한다.
+
+### 현재 싱크 원칙
+1. 보안/운영 관련 코드가 바뀌면 같은 배치에서 관련 블로그 글도 바로 수정한다.
+2. 블로그에는 반드시 아래 네 가지를 함께 적는다.
+   - 바꾸기 전 무엇이 위험했는가
+   - 왜 이 방식으로 고쳤는가
+   - 현재 구현의 한계는 무엇인가
+   - 면접에서 어떻게 설명할 것인가
+3. “초보자용 설명”과 “운영/면접 관점 설명”을 같은 글 안에서 분리한다.
+4. README, demo runbook, developer guide, blog 본문이 서로 다른 검증 명령이나 자격증명을 말하지 않게 유지한다.
+
+### 현재 싱크 배치
+1. Batch A: safe-by-default 설정 + management surface
+   - 대상 글
+     - `blog/03-docker-mysql-redis-dev-environment.md`
+     - `blog/04-application-yml-and-profile-strategy.md`
+     - `blog/11-securityconfig-signup-login-basics.md`
+     - `blog/12-jwt-cookie-auth-flow.md`
+     - `blog/17-rate-limit-and-client-ip-trust-model.md`
+     - `blog/20-openapi-management-plane-and-observability.md`
+   - 추가할 메시지
+     - “로컬 편의 설정을 운영 기본값으로 두면 왜 위험한가”
+     - “fail-open에서 fail-closed로 바꾸는 기준”
+     - “환경변수/시크릿을 문서로만 맡기지 말고 부팅 단계에서 강제하는 이유”
+
+2. Batch B: 서비스/API 권한 경계 + 상태 전이/동시성
+   - 대상 글
+     - `blog/10-calendar-dashboard-and-application-workflows.md`
+     - `blog/22-classroom-capacity-and-waitlist-workflow.md`
+     - `blog/23-attendance-change-request-and-domain-audit.md`
+     - `blog/24-audit-logs-as-operations-tools.md`
+   - 추가할 메시지
+     - “같은 유치원 소속이라고 해서 모든 상세 정보가 보여서는 안 되는 이유”
+     - “중복 요청과 동시성은 서비스 코드의 if문만으로 막을 수 없는 이유”
+     - “캐시 성능과 숫자 신뢰도를 함께 관리하는 법”
+
+3. Batch C: outbox/배포/CI/운영 계약
+   - 대상 글
+     - `blog/14-why-testcontainers-over-h2.md`
+     - `blog/15-github-actions-and-tagged-test-suites.md`
+     - `blog/19-auth-audit-log-and-operations-console.md`
+     - `blog/20-openapi-management-plane-and-observability.md`
+     - `blog/21-notification-outbox-and-incident-channel.md`
+     - `blog/26-demo-architecture-and-interview-pack.md`
+   - 추가할 메시지
+     - “비동기 worker는 멀티 인스턴스에서 무엇이 먼저 깨지는가”
+     - “배포 문서와 CI가 실제 코드와 한 줄이라도 어긋나면 왜 신뢰가 무너지는가”
+     - “포트폴리오 문서는 멋진 요약보다 운영 계약이 더 중요하다”
+
+### 싱크 Definition of Done
+- 관련 코드와 블로그 본문이 같은 배치에서 함께 수정된다.
+- 관련 글에는 `현재 구현의 한계`와 `면접에서 받을 꼬리 질문`이 최신 코드 기준으로 갱신된다.
+- README, `docs/guides/developer-guide.md`, `docs/portfolio/demo/*`, 관련 블로그 글의 실행/검증 명령이 서로 일치한다.
+- 보안/운영 관련 기본값은 블로그에서 “현재 구현은 이렇게 안전하게 막아 둔다”는 식으로 과장하지 않는다.
 
 ## 0) 코드베이스 스냅샷
 - 도메인 패키지 수: `17`

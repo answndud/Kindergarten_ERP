@@ -133,7 +133,7 @@ CSRF를 다시 켜는 편이 안전합니다.
 - `/api/v1/auth/refresh`
 - `/actuator/health`
 
-그리고 설정값에 따라 Swagger/OpenAPI, Prometheus 경로도 열 수 있습니다.
+그리고 설정값에 따라 local/demo에서만 Swagger/OpenAPI, Prometheus 경로를 명시적으로 열 수 있습니다.
 
 이렇게 리스트를 한 곳에서 만들면
 
@@ -290,6 +290,8 @@ sequenceDiagram
 ./gradlew --no-daemon integrationTest
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
+
+기본값은 닫혀 있으므로 `SPRING_PROFILES_ACTIVE`를 명시하지 않으면 앱이 부팅되지 않습니다.
 
 빠르게 확인하고 싶다면 아래처럼 관련 테스트만 좁혀 볼 수도 있습니다.
 

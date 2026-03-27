@@ -269,6 +269,7 @@ erp/
 - Java 17+
 - Docker & Docker Compose
 - Gradle 8.x
+- 실행 전 [환경 변수 계약](./docs/guides/env-contract.md)을 먼저 확인하세요.
 
 ### 1. 저장소 클론
 
@@ -280,6 +281,9 @@ cd kindergarten-erp
 ### 2. Docker 환경 실행
 
 ```bash
+# 최초 1회: local infra 예제 파일 준비
+cp docker/.env.example docker/.env
+
 # MySQL + Redis 컨테이너 시작
 docker compose -f docker/docker-compose.yml up -d
 
@@ -290,18 +294,23 @@ docker ps
 ### 3. 애플리케이션 실행
 
 ```bash
-# 빌드 및 실행
+# local 개발 실행
+export SPRING_PROFILES_ACTIVE=local
 ./gradlew bootRun
+```
 
-# 또는 빌드 후 실행
-./gradlew build -x test
-java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
+- `local`은 Swagger/OpenAPI와 app-port Prometheus를 개발 편의용으로 명시적으로 엽니다.
+- 시드 데이터는 기본으로 올라오지 않습니다. 필요하면 아래처럼 켭니다.
+
+```bash
+SPRING_PROFILES_ACTIVE=local APP_SEED_ENABLED=true ./gradlew bootRun
 ```
 
 ### 3-1. 데모 프로파일 실행
 
 ```bash
-./gradlew bootRun --args='--spring.profiles.active=demo'
+export SPRING_PROFILES_ACTIVE=demo
+./gradlew bootRun
 ```
 
 - `demo` 프로파일은 `local` 설정을 포함하고, 시연용 seed data를 함께 올립니다.
@@ -310,22 +319,24 @@ java -jar build/libs/erp-0.0.1-SNAPSHOT.jar
   - 교사: `teacher1@test.com / test1234!`
   - 학부모: `parent1@test.com / test1234!`
 - 시연 직후 바로 확인할 경로
+  - 이 경로들은 `local`/`demo`처럼 명시적으로 노출한 환경에서만 보입니다.
   - Swagger UI: `http://localhost:8080/swagger-ui.html`
   - 출결 요청 화면: `http://localhost:8080/attendance-requests`
   - 인증 감사 로그 화면: `http://localhost:8080/audit-logs`
   - 업무 감사 로그 화면: `http://localhost:8080/domain-audit-logs`
   - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
 
-### 3-1-1. 운영 profile management plane
+### 3-2. 운영 profile management plane
 
 - `prod`에서는 Swagger/OpenAPI를 비활성화하고, management endpoint를 별도 포트로 분리합니다.
+- `prod` 실행 전에는 [환경 변수 계약](./docs/guides/env-contract.md)의 필수 항목을 모두 채워야 합니다.
 - 기본값
   - 앱 포트: `8080`
   - management 포트: `9091`
   - management bind address: `127.0.0.1`
 - 필요하면 `MANAGEMENT_SERVER_PORT`, `MANAGEMENT_SERVER_ADDRESS` 환경변수로 조정할 수 있습니다.
 
-### 3-2. Monitoring Overlay 실행
+### 3-3. Monitoring Overlay 실행
 
 ```bash
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml up -d
@@ -333,11 +344,11 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000`
-- Grafana 기본 계정: `admin / admin1234!`
+- Grafana 계정은 `docker/.env`의 `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`를 사용합니다.
 - Grafana는 provisioning으로 `Kindergarten ERP Observability` 대시보드를 자동 로드합니다.
-- 애플리케이션은 host에서 `http://localhost:8080`으로 실행 중이라고 가정합니다.
+- 애플리케이션은 host에서 `local` 또는 `demo` 프로파일로 `http://localhost:8080`에서 실행 중이라고 가정합니다.
 
-### 3-3. 테스트 실행
+### 3-4. 테스트 실행
 
 ```bash
 # 전체 테스트 실행
@@ -361,7 +372,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 ### 4. 접속
 
 - 애플리케이션: http://localhost:8080
-- MySQL: localhost:3306 (erp_db / erp_user / erp1234)
+- MySQL: localhost:3306 (`docker/.env` 기준)
 - Redis: localhost:6379
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000
@@ -384,6 +395,7 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 ## 📡 API 문서
 
 실행 중인 애플리케이션에서는 아래 live contract를 바로 확인할 수 있습니다.
+단, 이 경로는 `local`/`demo`처럼 명시적으로 연 환경에서만 사용할 수 있습니다.
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`

@@ -13,8 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(
         prefix = "app.security.management-surface",
         name = "expose-prometheus-on-app-port",
-        havingValue = "true",
-        matchIfMissing = true
+        havingValue = "true"
 )
 @ConditionalOnMissingBean(type = "org.springframework.boot.actuate.metrics.export.prometheus.PrometheusScrapeEndpoint")
 public class PrometheusScrapeController {

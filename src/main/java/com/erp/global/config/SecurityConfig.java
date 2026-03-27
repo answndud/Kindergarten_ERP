@@ -139,29 +139,33 @@ public class SecurityConfig {
                 )
 
                 // URL별 접근 권한 설정
-                .authorizeHttpRequests(auth -> auth
-                        // 공개 경로
-                        .requestMatchers(publicEndpoints).permitAll()
+                .authorizeHttpRequests(auth -> {
+                    auth
+                            // 공개 경로
+                            .requestMatchers(publicEndpoints).permitAll();
 
-                        .requestMatchers(
+                    if (!managementSurfaceProperties.isPublicApiDocs()) {
+                        auth.requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
-                        ).hasRole("PRINCIPAL")
+                        ).hasRole("PRINCIPAL");
+                    }
 
-                        // 관리자 전용
-                        .requestMatchers("/main/admin").hasAnyRole(
-                                "PRINCIPAL",
-                                "TEACHER"
-                        )
+                    auth
+                            // 관리자 전용
+                            .requestMatchers("/main/admin").hasAnyRole(
+                                    "PRINCIPAL",
+                                    "TEACHER"
+                            )
 
-                        // 사용자 전용
-                        .requestMatchers("/main/user").hasRole("PARENT")
+                            // 사용자 전용
+                            .requestMatchers("/main/user").hasRole("PARENT")
 
-                        // 그 외 요청은 인증 필요
-                        .anyRequest().authenticated()
-                )
+                            // 그 외 요청은 인증 필요
+                            .anyRequest().authenticated();
+                })
 
                 // 인증 예외 처리 (로그인 페이지로 리다이렉트)
                 .exceptionHandling(exception -> exception

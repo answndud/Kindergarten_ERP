@@ -255,6 +255,9 @@ sequenceDiagram
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
+주의할 점은 이제 `application.yml`에 공용 fallback secret을 두지 않는다는 것입니다.
+local/demo만 개발용 fallback secret을 허용하고, 그 외 환경은 `JWT_SECRET`이 없으면 부팅 단계에서 막습니다.
+
 빠르게 관련 테스트만 보고 싶다면 아래 명령을 추가로 사용할 수 있습니다.
 
 ```bash

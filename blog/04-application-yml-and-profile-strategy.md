@@ -32,6 +32,7 @@ Kindergarten ERP 프로젝트도 똑같은 문제를 겪었습니다.
 
 - 왜 `application.yml` 하나로 끝내면 안 되는가?
 - 왜 `demo`는 `local`의 복사본이 아니라 `profile group`으로 설계했는가?
+- 왜 `application.yml`은 편의 기본값이 아니라 fail-closed 기준선이어야 하는가?
 - 왜 `prod`에서는 Swagger, Prometheus, management port 정책이 달라지는가?
 - 왜 `DataLoader`, `OpenApiConfig`, `SecurityConfig`까지 같이 봐야 프로파일 전략이 완성되는가?
 
@@ -89,13 +90,12 @@ spring:
 ```java
 @ConditionalOnProperty(
         name = "springdoc.api-docs.enabled",
-        havingValue = "true",
-        matchIfMissing = true
+        havingValue = "true"
 )
 ```
 
-즉, `application-prod.yml`에서 `springdoc.api-docs.enabled=false`로 두면
-Swagger 관련 빈 자체가 올라오지 않습니다.
+즉, `application.yml`에서 기본 비활성화하고 필요한 환경에서만 `true`로 열면
+Swagger 관련 빈도 그 환경에서만 올라옵니다.
 
 이런 식으로 **설정 파일과 자바 조건부 로딩을 같이 설계**해야 진짜 프로파일 전략이 됩니다.
 
@@ -127,17 +127,17 @@ Swagger 관련 빈 자체가 올라오지 않습니다.
 1. 공통값은 한 곳에 모은다.
 2. 환경별 파일에는 차이만 둔다.
 3. demo는 local을 복사하지 않고 재사용한다.
-4. 운영에서 위험한 노출면은 prod에서 닫는다.
+4. 공통 설정은 닫아 두고 local/demo에서만 필요한 노출면을 연다.
 
 이 기준을 그림으로 표현하면 아래와 같습니다.
 
 ```mermaid
 flowchart TD
-    A["application.yml<br/>공통 기본값"] --> B["local<br/>개발용 차이"]
+    A["application.yml<br/>공통 fail-closed 기준선"] --> B["local<br/>개발용 차이"]
     A --> C["demo<br/>시연용 차이"]
     A --> D["prod<br/>운영용 차이"]
     C --> B
-    B --> E["DataLoader(@Profile local)"]
+    B --> E["DataLoader(@Profile local + app.seed.enabled=true)"]
     A --> F["SecurityConfig.buildPublicEndpoints()"]
     D --> G["Swagger 비활성화<br/>management port 분리"]
 ```
@@ -204,7 +204,6 @@ local에서만 필요한 대표 차이는 아래입니다.
 ```yaml
 spring:
   profiles:
-    active: local
     group:
       demo:
         - local
@@ -223,17 +222,32 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info
+
+app:
+  seed:
+    enabled: false
+  security:
+    management-surface:
+      public-api-docs: false
+      expose-prometheus-on-app-port: false
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 ```
 
-### 왜 `spring.profiles.active: local`을 기본값으로 두는가
+### 왜 기본 활성 프로파일을 두지 않기로 했는가
 
-개발자가 아무 옵션 없이 `./gradlew bootRun`만 쳐도 바로 뜨게 하기 위해서입니다.
+초반에는 편리하지만, 배포에서 profile 주입이 한 번만 어긋나도 local 편의 설정으로 올라갈 수 있기 때문입니다.
 
-이건 입문자에게 꽤 중요한 포인트입니다.
-실행 진입점이 복잡하면 프로젝트가 금방 귀찮아집니다.
+그래서 지금은 반대로 설계합니다.
 
-대신 운영에서는 보통 `--spring.profiles.active=prod`나 환경변수로 명시합니다.
+- `application.yml`은 닫힌 기준선
+- `local`, `demo`, `prod`는 명시적으로 선택
+- profile을 명시하지 않으면 부팅 단계에서 실패
 
 ### 왜 `open-in-view=false`를 공통값으로 두는가
 
@@ -307,9 +321,10 @@ jwt:
 
 화면 템플릿을 수정했을 때 바로 반영되는 편이 개발 속도에 유리하기 때문입니다.
 
-### 왜 OAuth2 client 값에 dummy 기본값을 넣는가
+### 왜 OAuth2 client 값에 dummy 기본값을 local에만 두는가
 
 로컬에서 구글/카카오 실제 키가 없어도 최소한 애플리케이션이 부팅은 돼야 하기 때문입니다.
+중요한 점은 이 편의가 `application.yml`이 아니라 `application-local.yml`에만 있다는 것입니다.
 
 즉, “실제 소셜 로그인은 안 되더라도 프로젝트는 뜬다”는 상태를 보장한 것입니다.
 
@@ -367,16 +382,17 @@ Spring은 사실상 `demo + local`을 함께 활성화합니다.
 - `jwt.cookie-secure=false`
 - `@Profile("local")` 빈
 
-### demo에서 시드 데이터가 자동으로 들어가는 이유
+### demo에서 시드 데이터가 들어가는 이유
 
 [DataLoader.java](../src/main/java/com/erp/global/config/DataLoader.java)를 보면 클래스 위에 아래가 붙어 있습니다.
 
 ```java
 @Profile("local")
+@ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 public class DataLoader implements CommandLineRunner
 ```
 
-즉, `local` 프로파일일 때만 빈으로 등록됩니다.
+즉, `local` 프로파일이면서 `app.seed.enabled=true`일 때만 빈으로 등록됩니다.
 
 그리고 핵심 메서드는 `run(String... args)`입니다.
 
@@ -389,7 +405,7 @@ public class DataLoader implements CommandLineRunner
 
 까지 시드합니다.
 
-demo가 `local`을 포함하므로, 면접 시연에서 이 더미 데이터도 자동으로 살아납니다.
+demo는 `application-demo.yml`에서 `app.seed.enabled=true`를 명시하므로, 면접 시연에서만 이 더미 데이터가 자동으로 살아납니다.
 
 이 설계는 [phase36_api_contract_observability_demo.md](../docs/decisions/phase36_api_contract_observability_demo.md)에서 “demo를 local 위의 시연 진입점으로 고정”한 이유와 연결됩니다.
 
@@ -469,8 +485,7 @@ local에서는 개발 편의를 위해 Flyway clean을 열 수 있지만, 운영
 ```java
 @ConditionalOnProperty(
         name = "springdoc.api-docs.enabled",
-        havingValue = "true",
-        matchIfMissing = true
+        havingValue = "true"
 )
 ```
 
@@ -508,8 +523,8 @@ YAML 문자열을 여기저기 직접 읽지 않고, 설정 객체로 모은 이
 
 즉,
 
-- local/demo에서는 `public-api-docs=true`, `expose-prometheus-on-app-port=true`
-- prod에서는 둘 다 false
+- `application.yml`에서는 둘 다 false
+- local/demo에서만 `public-api-docs=true`, `expose-prometheus-on-app-port=true`
 
 가 되어 같은 코드라도 공개 경로 구성이 달라집니다.
 
@@ -544,10 +559,10 @@ sequenceDiagram
     participant Yml as application*.yml
     participant Code as 조건부 빈/보안 설정
 
-    Dev->>Boot: ./gradlew bootRun
+    Dev->>Boot: SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
     Boot->>Yml: application.yml + application-local.yml 로드
     Yml->>Code: local 설정 전달
-    Code->>Code: DataLoader 등록, Swagger 공개, cookie-secure=false
+    Code->>Code: Swagger 공개, cookie-secure=false, seed는 기본 비활성화
 
     Dev->>Boot: ./gradlew bootRun --args='--spring.profiles.active=demo'
     Boot->>Yml: application.yml + application-local.yml + application-demo.yml 로드
@@ -608,7 +623,7 @@ sequenceDiagram
 가장 기본 검증은 실제로 프로파일을 켜 보는 것입니다.
 
 ```bash
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=local'
 ./gradlew bootRun --args='--spring.profiles.active=demo'
 ./gradlew bootRun --args='--spring.profiles.active=prod'
 ```

@@ -82,6 +82,7 @@ flowchart TD
 2. refresh는 IP 기준으로 제한한다
 3. 성공 로그인은 이메일 실패 카운터를 지운다
 4. forwarded header는 trusted proxy일 때만 믿는다
+5. trusted proxy 목록이 비어 있으면 forwarded header를 전혀 신뢰하지 않는다
 
 ## 5. 코드 설명
 
@@ -190,6 +191,7 @@ sequenceDiagram
 이 글의 rate limit은 **설명 가능성과 단순성**을 위해 fixed window를 택했습니다.
 그래서 경계 시점에서는 sliding window나 token bucket보다 약간 거칠게 동작할 수 있습니다.
 또 trusted proxy 모델도 결국 운영 프록시 구성이 바뀌면 설정을 같이 갱신해야 하므로, 인프라 토폴로지와 분리된 완전한 해법은 아닙니다.
+대신 기본값은 fail-closed라서 trusted proxy 목록이 비어 있으면 `X-Forwarded-For`를 아예 사용하지 않는 쪽을 택했습니다.
 
 ## 9. 취업 포인트
 

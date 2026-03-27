@@ -34,8 +34,8 @@ docker compose -f docker/docker-compose.yml down
 ./gradlew build -x test
 
 # Run
-./gradlew bootRun
 ./gradlew bootRun --args='--spring.profiles.active=local'
+./gradlew bootRun --args='--spring.profiles.active=demo'
 
 # Compile/Check
 ./gradlew compileJava compileTestJava
@@ -123,6 +123,7 @@ docker compose -f docker/docker-compose.yml down
 - JWT는 HTTP-only cookie 기반 stateless.
 - Refresh token은 Redis TTL 저장.
 - 새 endpoint 추가 시 URL 권한(`SecurityConfig`) + 메서드 권한(`@PreAuthorize`) 동시 점검.
+- 기본 설정은 fail-closed를 유지하고, `local/demo`만 명시적으로 편의 기능(Swagger/OpenAPI, seed, app-port Prometheus)을 연다.
 
 ## 6) API / Frontend Conventions
 
