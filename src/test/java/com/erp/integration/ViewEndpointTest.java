@@ -295,7 +295,7 @@ class ViewEndpointTest extends TestcontainersSupport {
         mockMvc.perform(get("/audit-logs").with(user(new CustomUserDetails(principal))))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("인증 감사 로그")))
-                .andExpect(content().string(containsString("API 계약 보기")))
+                .andExpect(content().string(containsString("운영 환경에서는 API 계약 문서를 비공개로 유지합니다")))
                 .andExpect(content().string(containsString("로그인, refresh, 소셜 연결/해제 이벤트")));
     }
 

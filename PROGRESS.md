@@ -1,12 +1,16 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 22차 (보안 기본값 하드닝 + 도메인 신뢰성 보강 + 배포/문서/블로그 싱크)
+- 후속 고도화 23차 (도메인 신뢰성 보강 + Java 21 업그레이드 + 문서/블로그 싱크)
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-27 17:22 | DONE | Batch B 서비스/API 신뢰성 보강 반영. `KidApplication`, `KindergartenApplication` 상세 조회 권한을 신청자/승인권자 중심으로 좁혔고, `KindergartenApplication` 상태 전이를 `BusinessException` 기반으로 정리했다. `AttendanceChangeRequest`에는 DB 유니크 가드용 `V14` 마이그레이션을 추가했고, 입학 승인/offer 수락/교사 승인 경로에서 대시보드 캐시를 함께 비우도록 확장했다 | Java 21 기준선 검증과 문서/블로그 동기화 마감 |
+| 2026-03-27 17:34 | DONE | Java 21 기준선 업그레이드 반영. `build.gradle`을 Java 21 release 기준으로 올리고, `.github/workflows/ci.yml`의 setup-java 버전을 21로 정리했으며 중복 `performance-smoke` job key를 제거했다. `README`, `AGENTS`, active docs, blog 본문도 Java 21 기준으로 다시 맞췄다 | 전체 회귀와 포맷 검증 실행 |
+| 2026-03-27 17:46 | DONE | 검증 완료. `JAVA_HOME=$(/usr/libexec/java_home -v 21)` 기준 `./gradlew compileJava compileTestJava`, 대상 API/서비스 테스트, `./gradlew --no-daemon test --tests \"com.erp.integration.ObservabilityIntegrationTest\" --tests \"com.erp.integration.ViewEndpointTest\"`, `./gradlew --no-daemon fastTest integrationTest`, `ruby -e \"require 'yaml'; YAML.load_file('.github/workflows/ci.yml')\"`, `git diff --check`를 모두 통과했다. 실행 환경 기본 JDK가 25라서 Java 21을 명시적으로 주입해 검증했다 | add/commit/push 및 원격 반영 |
+| 2026-03-27 17:08 | IN_PROGRESS | Batch B + Java 21 업그레이드 착수. `KidApplication`, `KindergartenApplication`, `AttendanceChangeRequest`, `DashboardService`, `build.gradle`, `.github/workflows/ci.yml`, active 문서/블로그를 다시 읽고 권한 경계/동시성/캐시 무효화/Java 기준선 전환 범위를 고정했다 | 서비스/API 코드 수정과 Java 21 toolchain/CI/doc 업데이트를 함께 반영 |
 | 2026-03-27 16:35 | DONE | Batch A 코드/설정 하드닝 반영. `application*.yml`, `SecurityConfig`, `OpenApiConfig`, `PrometheusScrapeController`, `ManagementSurfaceProperties`, `DataLoader`, `LocalAuthLoginBootstrapService`를 수정해 기본 프로파일 제거, fail-closed management surface, seed explicit opt-in, startup fail-fast validator, env contract 문서 경로를 반영했다 | 관련 테스트/문서/블로그 싱크와 정적 검증 마감 |
 | 2026-03-27 16:46 | DONE | Batch A 문서/블로그 싱크 반영. `README`, `docs/README`, `developer-guide`, `demo-preflight`, `demo-runbook`, `backend-hiring-pack`, `CURRENT_FEATURES`, `AGENTS`, `blog/02`, `03`, `04`, `11`, `12`, `17`, `20`, `phase45`를 현재 코드 기준으로 갱신했다 | 컴파일/테스트와 포맷 검증 결과 기록 |
 | 2026-03-27 16:52 | DONE | 정적 검증 완료. `git diff --check` 통과, 활성 문서 기준 stale 서술 검색을 재실행했다. 단, 이 실행 환경에는 Java 17 toolchain이 없어 `./gradlew compileJava compileTestJava` 및 대상 테스트 실행은 환경 문제로 실패했다 | 사용자에게 구현 결과와 환경 제약을 함께 공유 |
@@ -198,6 +202,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: Batch A 구현 완료, 로컬 Java 17 toolchain이 준비된 환경에서 compile/test 검증 필요
-- 블로커: 현재 Codex 실행 환경에 Java 17 toolchain 부재
+- 현재 단계: `DONE`
+- 활성 작업: 후속 고도화 23차 Batch B + Batch B-2 마감
+- 블로커: 없음

@@ -7,7 +7,7 @@
 ## 1) 실행 방법
 
 ### 사전 요구사항
-- Java 17
+- Java 21
 - Docker Desktop
 
 ### 인프라 실행

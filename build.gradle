@@ -9,9 +9,8 @@ version = '0.0.1-SNAPSHOT'
 description = 'erp'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 configurations {
@@ -73,6 +72,7 @@ dependencies {
 }
 
 tasks.withType(JavaCompile).configureEach {
+    options.release = 21
     options.compilerArgs += ['-parameters']
 }
 

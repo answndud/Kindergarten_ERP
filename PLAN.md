@@ -1,12 +1,15 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 22차 (보안 기본값 하드닝 + 도메인 신뢰성 보강 + 배포/문서/블로그 싱크)
+- 후속 고도화 23차 (도메인 신뢰성 보강 + Java 21 업그레이드 + 문서/블로그 싱크)
 
 ## 현재 배치 상태
 - 완료: 이전 Batch A~D (`management plane`, `활성 세션`, `outbox`, `waitlist/domain audit`, `tagged CI`, `hiring-pack`) 구현 및 문서화
 - 완료: 블로그 시리즈 초보자 친화성/면접 대응력 리라이트
-- 신규 착수: 서브에이전트 병렬 리뷰를 바탕으로 `보안/운영 기본값`, `서비스/API 권한/동시성`, `배포/CI/운영 문서`, `블로그 싱크`를 한 배치 계획으로 재정리
+- 완료: Batch A (`safe-by-default 설정 + management surface + env 계약`) 구현 및 문서/블로그 동기화
+- 완료: Batch B(`서비스/API 권한/동시성`) 구현 및 문서/블로그 동기화
+- 완료: Batch B-2(`Java 21 기준선 업그레이드`) 구현 및 문서/블로그 동기화
+- 다음 대기: Batch C(`outbox atomic claim + 배포/CI/monitoring 신뢰성`) 착수 가능
 
 ## 1) 목표 / 범위
 - 프로젝트를 “기능 많은 포트폴리오”에서 “기본값까지 안전한 운영형 포트폴리오”로 끌어올린다.
@@ -50,7 +53,20 @@
      - `blog/23-attendance-change-request-and-domain-audit.md`
      - `blog/24-audit-logs-as-operations-tools.md`
 
-3. Batch C: 비동기 전달/배포/CI 신뢰성 보강
+3. Batch B-2: Java 21 기준선 업그레이드
+   - `build.gradle` toolchain을 Java 21로 상향
+   - `.github/workflows/ci.yml`의 Java setup와 중복 job key를 정리
+   - active 문서/블로그/가이드의 Java 17 서술을 Java 21 기준으로 교체
+   - archive 문서는 그대로 두고 active SSOT만 동기화
+   - 동기화 문서/블로그
+     - `README.md`
+     - `AGENTS.md`
+     - `docs/guides/developer-guide.md`
+     - `docs/portfolio/interview/interview_one_pager.md`
+     - `docs/decisions/phase16_github_actions_ci.md`
+     - `blog/02-gradle-spring-boot-bootstrap.md`
+
+4. Batch C: 비동기 전달/배포/CI 신뢰성 보강
    - `NotificationDispatchService`/`NotificationOutboxRepository`의 claim을 원자적으로 변경
    - outbox 동시 claim 회귀 테스트 추가
    - `.github/workflows/ci.yml`의 duplicate job key 제거
@@ -70,7 +86,7 @@
      - `blog/21-notification-outbox-and-incident-channel.md`
      - `blog/26-demo-architecture-and-interview-pack.md`
 
-4. Batch D: 블로그/문서 최종 싱크 마감
+5. Batch D: 블로그/문서 최종 싱크 마감
    - 위 3개 배치의 코드 변경을 기준으로 블로그 글의 상황표, 구현 한계, 검증 명령, 산출물 체크리스트 재동기화
    - “현재 구현의 한계” 박스를 실제 코드 기준으로 업데이트
    - 면접 답변 문서와 블로그 메시지가 충돌하지 않게 정리
@@ -94,6 +110,10 @@
   - race/concurrency 재현 테스트 또는 최소 회귀 테스트
   - 대시보드 캐시 invalidation 검증
   - `./gradlew --no-daemon integrationTest`
+- Batch B-2
+  - `./gradlew compileJava compileTestJava`
+  - `.github/workflows/ci.yml` YAML 구조 확인
+  - active 문서/블로그 내 Java 17 언급 제거 검색
 - Batch C
   - outbox 동시 claim 테스트
   - `./gradlew --no-daemon fastTest`

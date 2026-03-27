@@ -2,7 +2,7 @@
 
 > 유치원 통합 관리 시스템 - 원장, 교사, 학부모를 위한 효율적인 유치원 운영 솔루션
 
-[![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://openjdk.org/)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
 [![Redis](https://img.shields.io/badge/Redis-7.x-red.svg)](https://redis.io/)
@@ -176,7 +176,7 @@
 ### Backend
 | 기술 | 버전 | 용도 |
 |------|------|------|
-| Java | 17 LTS | 메인 언어 |
+| Java | 21 LTS | 메인 언어 |
 | Spring Boot | 3.5.9 | 프레임워크 |
 | Spring Data JPA | - | ORM |
 | QueryDSL | 5.0.0 | 동적 쿼리 |
@@ -266,7 +266,7 @@ erp/
 
 ### 사전 요구사항
 
-- Java 17+
+- Java 21+
 - Docker & Docker Compose
 - Gradle 8.x
 - 실행 전 [환경 변수 계약](./docs/guides/env-contract.md)을 먼저 확인하세요.
@@ -663,6 +663,8 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.monitoring.
 | 학부모 출결 변경 요청/승인 워크플로우 | `docs/decisions/phase42_attendance_change_request_workflow.md` |
 | 업무 감사 로그(domain audit log) | `docs/decisions/phase43_domain_audit_log.md` |
 | tagged CI/readiness failure mode/hiring pack | `docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md` |
+| fail-closed 기본 설정/management surface | `docs/decisions/phase45_fail_closed_runtime_defaults.md` |
+| 신청서 권한 경계/출결 요청 DB 가드/Java 21 기준선 | `docs/decisions/phase46_service_boundaries_java21_baseline.md` |
 
 ---
 

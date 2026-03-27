@@ -21,6 +21,7 @@ import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +71,7 @@ public class AttendanceChangeRequestService {
                 request.pickUpTime(),
                 request.note()
         );
-        var saved = attendanceChangeRequestRepository.save(changeRequest);
+        var saved = savePendingRequest(changeRequest);
 
         notifyStaffAboutSubmission(kid, requester, request.date(), request.status());
         domainAuditLogService.record(
@@ -88,6 +89,16 @@ public class AttendanceChangeRequestService {
         );
 
         return saved.getId();
+    }
+
+    private com.erp.domain.attendance.entity.AttendanceChangeRequest savePendingRequest(
+            com.erp.domain.attendance.entity.AttendanceChangeRequest changeRequest
+    ) {
+        try {
+            return attendanceChangeRequestRepository.saveAndFlush(changeRequest);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.ATTENDANCE_CHANGE_REQUEST_ALREADY_PENDING);
+        }
     }
 
     public List<AttendanceChangeRequestResponse> getMyRequests(Long requesterId) {

@@ -1,7 +1,7 @@
 # BLOG_PLAN.md
 
 ## 작업명
-- Kindergarten ERP 취업용 개발 블로그 시리즈 설계 3차 (보안/운영 개선 배치와 본문 싱크 포함)
+- Kindergarten ERP 취업용 개발 블로그 시리즈 설계 4차 (보안/운영/Java 21 기준선 싱크 포함)
 
 ## 문서 역할
 - 이 문서는 `blog/` 아래 실제 글을 쓰기 전에 기준이 되는 **블로그 집필 SSOT**다.
@@ -10,6 +10,7 @@
 
 ## 0-1) 현재 후속 싱크 목표 (2026-03-27)
 - 코드 리뷰 결과, 블로그는 전반적으로 강하지만 `보안 기본값`, `management surface`, `신청서 권한`, `outbox 동시성`, `배포/CI 계약`이 실제 코드 기준으로 더 정교하게 설명되어야 한다.
+- 이번 후속 배치에서는 `신청서 상세 권한`, `출결 요청 중복 가드`, `대시보드 캐시 무효화`, `Java 21 기준선`까지 현재 코드와 블로그를 함께 올린다.
 - 따라서 다음 코드 개선 배치는 블로그 리라이트와 분리하지 않고, **한 배치 = 코드 수정 + 테스트 + 결정 로그 + 블로그 본문 수정**으로 진행한다.
 - 블로그는 “좋아 보이는 설명”보다 “실제 코드와 정확히 일치하는 설명”을 우선한다.
 
@@ -48,6 +49,13 @@
      - “중복 요청과 동시성은 서비스 코드의 if문만으로 막을 수 없는 이유”
      - “캐시 성능과 숫자 신뢰도를 함께 관리하는 법”
 
+3. Batch B-2: Java 21 기준선 업그레이드
+   - 대상 글
+     - `blog/02-gradle-spring-boot-bootstrap.md`
+   - 추가할 메시지
+     - “현재 저장소는 Java 21 기준선으로 컴파일하고, CI도 Temurin 21로 맞춘다”
+     - “로컬은 Java 21 이상 JDK에서 `--release 21`로 맞춰 빌드할 수 있다”
+
 3. Batch C: outbox/배포/CI/운영 계약
    - 대상 글
      - `blog/14-why-testcontainers-over-h2.md`
@@ -69,7 +77,7 @@
 
 ## 0) 코드베이스 스냅샷
 - 도메인 패키지 수: `17`
-- Flyway 마이그레이션 수: `13`
+- Flyway 마이그레이션 수: `14`
 - 테스트 클래스 수: `33`
 - HTML 템플릿 수: `39`
 - 핵심 축
@@ -178,6 +186,7 @@
 - `src/main/resources/db/migration/V11__denormalize_auth_audit_log_and_add_retention_archive.sql`
 - `src/main/resources/db/migration/V12__add_notification_outbox.sql`
 - `src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql`
+- `src/main/resources/db/migration/V14__guard_pending_attendance_change_requests.sql`
 
 ### 3-3. 공통 백엔드 토대
 - `src/main/java/com/erp/global/common/*`

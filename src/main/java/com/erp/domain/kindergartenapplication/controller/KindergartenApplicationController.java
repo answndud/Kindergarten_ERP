@@ -61,6 +61,7 @@ public class KindergartenApplicationController {
      * 지원서 상세 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
     public ResponseEntity<ApiResponse<KindergartenApplicationResponse>> getApplication(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {

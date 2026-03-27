@@ -6,6 +6,8 @@ import com.erp.domain.attendance.entity.AttendanceChangeRequest;
 import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kid.repository.KidRepository;
+import com.erp.domain.kidapplication.entity.KidApplication;
+import com.erp.domain.kindergartenapplication.entity.KindergartenApplication;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.repository.MemberRepository;
@@ -212,6 +214,44 @@ public class AccessPolicyService {
             throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
         }
         validateStaffSameKindergarten(requester, requireKindergartenId(receiver));
+    }
+
+    public void validateKidApplicationReadAccess(Member requester, KidApplication application) {
+        if (application == null) {
+            throw new BusinessException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
+
+        if (requester != null
+                && requester.getRole() == MemberRole.PARENT
+                && application.getParent().getId().equals(requester.getId())) {
+            return;
+        }
+
+        if (isStaff(requester) && belongsToKindergarten(requester, application.getKindergarten().getId())) {
+            return;
+        }
+
+        throw new BusinessException(ErrorCode.APPLICATION_ACCESS_DENIED);
+    }
+
+    public void validateKindergartenApplicationReadAccess(Member requester, KindergartenApplication application) {
+        if (application == null) {
+            throw new BusinessException(ErrorCode.APPLICATION_NOT_FOUND);
+        }
+
+        if (requester != null
+                && requester.getRole() == MemberRole.TEACHER
+                && application.getTeacher().getId().equals(requester.getId())) {
+            return;
+        }
+
+        if (requester != null
+                && requester.getRole() == MemberRole.PRINCIPAL
+                && belongsToKindergarten(requester, application.getKindergarten().getId())) {
+            return;
+        }
+
+        throw new BusinessException(ErrorCode.APPLICATION_ACCESS_DENIED);
     }
 
     private boolean belongsToKindergarten(Member requester, Long targetKindergartenId) {

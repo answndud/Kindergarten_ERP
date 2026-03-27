@@ -28,8 +28,10 @@ import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.repository.MemberRepository;
 import com.erp.domain.notification.entity.NotificationType;
 import com.erp.domain.notification.service.NotificationService;
+import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -63,9 +65,11 @@ public class KidApplicationService {
     private final KidRepository kidRepository;
     private final ParentKidRepository parentKidRepository;
     private final NotificationService notificationService;
+    private final DashboardService dashboardService;
     private final ClassroomCapacityService classroomCapacityService;
     private final KidApplicationWorkflowProperties workflowProperties;
     private final DomainAuditLogService domainAuditLogService;
+    private final AccessPolicyService accessPolicyService;
 
     @Transactional
     public Long apply(KidApplicationRequest request, Long parentId) {
@@ -156,6 +160,7 @@ public class KidApplicationService {
                         "kidId", savedKid.getId()
                 )
         );
+        dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
     }
 
     @Transactional
@@ -237,6 +242,7 @@ public class KidApplicationService {
                         "kidId", savedKid.getId()
                 )
         );
+        dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
     }
 
     @Transactional
@@ -313,15 +319,8 @@ public class KidApplicationService {
         KidApplication application = applicationRepository.findByIdAndDeletedAtIsNull(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        boolean hasAccess = application.getParent().getId().equals(memberId) ||
-                (member.getKindergarten() != null && member.getKindergarten().getId().equals(application.getKindergarten().getId()));
-
-        if (!hasAccess) {
-            throw new BusinessException(ErrorCode.APPLICATION_ACCESS_DENIED);
-        }
+        Member member = accessPolicyService.getRequester(memberId);
+        accessPolicyService.validateKidApplicationReadAccess(member, application);
 
         return KidApplicationResponse.from(application);
     }
