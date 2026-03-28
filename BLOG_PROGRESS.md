@@ -7,6 +7,9 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-28 10:07 | IN_PROGRESS | Batch D 최종 싱크 착수. active 운영 문서와 블로그/면접 문서를 분리해 다시 읽기 시작했고, 서브에이전트로 `README/가이드/demo`와 `블로그/면접 문서`의 메시지 드리프트를 병렬 점검하게 했다 | 드리프트 지점을 실제 코드 기준으로 수정하고 검증 명령/한계 박스를 최종 정리 |
+| 2026-03-28 10:41 | DONE | `blog/00_rebuild_guide`, `blog/11`, `12`, `20`, `22`, `23`과 interview/performance 문서를 현재 코드 기준으로 다시 맞췄다. 삭제된 checkpoint script 전제를 없애고, safe-by-default 설명, JWT secret fail-fast, management plane 기본 폐쇄, outbox atomic claim, 출결 요청 DB 가드, Redis 세션 fail-closed 서술을 최신 코드와 일치시켰다 | 포맷/드리프트 검증 후 반영 완료 기록 |
+| 2026-03-28 10:44 | DONE | `git diff --check`를 통과했고, active docs/blog에서 stale 표현 검색을 다시 돌려 현재 코드와 충돌하는 설명이 남지 않음을 확인했다. 이번 배치는 문서-only 싱크라 Gradle 재실행 대신 active 문서 전체 검색으로 마감했다 | add/commit/push 및 상태 마감 |
 | 2026-03-27 18:24 | DONE | Batch C와 맞춰 블로그/문서 싱크를 마감했다. `blog/03`은 `--env-file docker/.env`와 localhost bind compose 기준으로, `blog/14`와 `15`는 Testcontainers/CI/package-smoke 역할 분리 기준으로, `blog/19`, `20`, `21`, `26`은 auth incident, Redis critical dependency, outbox atomic claim, demo/CI/runbook 메시지를 현재 코드 기준으로 다시 맞췄다 | 다음 코드 배치 착수 전까지 유지 |
 | 2026-03-27 17:34 | DONE | Batch B + Java 21 기준선에 맞춘 블로그/문서 싱크를 검증까지 마감했다. `blog/02`, `10`, `22`, `23`, `24`와 active 인터뷰/가이드 문서가 현재 코드와 같은 메시지를 말하는지 다시 확인했고, Java 21 기준 실행/설명으로 정리했다 | 다음 코드 배치 착수 전까지 유지 |
 | 2026-03-27 16:52 | DONE | Batch B와 Java 21 기준선에 맞춰 블로그/문서 싱크를 반영했다. `blog/02`는 Java 21 빌드 기준선으로, `blog/10`, `22`, `23`, `24`는 신청서 상세 권한, 출결 요청 DB 가드, 대시보드 캐시 무효화, 감사 로그 조회 범위를 현재 코드 기준으로 다시 맞췄다 | 테스트/포맷 검증 결과를 PROGRESS와 함께 마감 |
@@ -66,5 +69,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 현재 배치 기준 블로그 싱크 완료
+- 활성 작업: Batch D 기준 블로그/면접/성능 문서 최종 싱크 완료
 - 블로커: 없음

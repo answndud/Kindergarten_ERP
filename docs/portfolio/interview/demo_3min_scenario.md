@@ -94,7 +94,7 @@
 
 말할 포인트:
 - "H2가 아니라 MySQL/Redis Testcontainers로 운영 환경과 최대한 비슷하게 검증합니다."
-- "CI는 fast/integration/performance smoke를 suite 기반으로 분리해서 개발 속도와 운영 회귀 검증을 같이 가져갑니다."
+- "CI는 `@Tag` 기반 Gradle test task를 fast/integration/performance smoke로 나눠 개발 속도와 운영 회귀 검증을 같이 가져갑니다."
 
 ## 마무리 한 문장
 

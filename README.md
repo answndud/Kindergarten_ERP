@@ -33,7 +33,7 @@
 - Redis 기반 JWT refresh session 분리와 rotation
 - Redis 세션 레지스트리 기반 활성 세션 조회/강제 종료
 - MySQL/Redis Testcontainers 기반 통합 테스트
-- JUnit Suite 기반 `fast / integration / performance smoke` CI 분리
+- JUnit `@Tag` 기반 Gradle test task와 `fast / integration / performance smoke` CI 분리
 - Swagger/OpenAPI 기반 API 계약 문서
 - Actuator health/readiness, `criticalDependencies`, Prometheus, correlation id, request structured logging
 - DB 기반 인증 감사 로그, `kindergarten_id` 비정규화 tenant 필터, 원장 전용 조회/export API, 감사 로그 운영 화면

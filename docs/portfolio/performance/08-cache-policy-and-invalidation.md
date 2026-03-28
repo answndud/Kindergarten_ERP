@@ -14,9 +14,9 @@
 
 ### Refresh Token (Redis)
 
-- 키: `refresh:{email}`
+- 키: `refresh:session:{memberId}:{sessionId}`, `refresh:sessions:{memberId}`
 - TTL: Refresh 만료시간과 동일
-- 전략: 단일 키 O(1) 조회/삭제, 패턴 검색 금지
+- 전략: 세션 단위 조회/회수, 패턴 검색 금지
 
 ## 무효화 정책
 
@@ -27,8 +27,8 @@
 
 ### Refresh Token
 
-- 로그아웃 시 즉시 삭제
-- 재로그인/재발급 시 기존 키 덮어쓰기 + TTL 재설정
+- 로그아웃 시 해당 세션 키와 세션 집합 참조를 즉시 삭제
+- 재발급 시 세션별 refresh token과 metadata TTL을 같이 갱신
 
 ## 금지 규칙
 

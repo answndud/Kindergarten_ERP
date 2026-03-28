@@ -7,6 +7,9 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-28 10:06 | IN_PROGRESS | Batch D 착수. `PLAN.md`, `BLOG_PLAN.md`, `BLOG_PROGRESS.md`를 다시 읽고 범위를 `README/가이드/demo/interview/blog 최종 싱크`로 고정했다. 서브에이전트 2개를 병렬로 띄워 `active 문서/운영 가이드`와 `블로그/면접 문서`의 메시지 드리프트를 각각 점검하게 했다 | 드리프트 결과를 반영해 active 문서와 블로그를 현재 코드 기준으로 정리하고 포맷 검증 |
+| 2026-03-28 10:41 | DONE | Batch D 문서/블로그 최종 싱크 반영. `blog/00_rebuild_guide`, `blog/11`, `12`, `20`, `22`, `23`, `docs/portfolio/interview/*`, `docs/portfolio/performance/*`를 수정해 삭제된 checkpoint script 전제, Redis 세션 fail-open 설명, outbox 멀티 인스턴스 한계, management plane 한계, 출결 요청 DB 가드, dashboard cache eviction 설명을 현재 코드 기준으로 맞췄다 | 포맷/드리프트 검증 결과 기록 후 add/commit/push |
+| 2026-03-28 10:44 | DONE | 문서 검증 완료. `rg -n "refresh:\\{email\\}|single-session|재로그인 유도|fail-open|checkpoint script|blog/scripts/checkpoint|멀티 인스턴스 lock 전략" blog docs README.md CURRENT_FEATURES.md BLOG_PLAN.md docs/guides --glob '!docs/archive/**'` 결과 active 문서 기준 남은 충돌 표현이 없음을 확인했고, `git diff --check`를 통과했다. 이번 배치는 문서-only이므로 Gradle 테스트는 추가 실행하지 않았다 | add/commit/push 및 원격 반영 |
 | 2026-03-27 18:18 | DONE | Batch C 핵심 코드 반영. `NotificationOutboxRepository`에 MySQL 8 `FOR UPDATE SKIP LOCKED` 기반 claim query를 추가하고 `NotificationDispatchService.claimReadyDeliveries(...)`를 원자적 claim 방식으로 전환했다. 동시에 `docker/docker-compose*.yml`은 localhost bind 기본값과 required env 계약으로 정리했고, `.github/workflows/ci.yml`에는 `package-smoke` job을 추가해 `bootJar`와 compose config 검증을 넣었다 | 전체 회귀/packaging/compose 검증과 문서 동기화 마감 |
 | 2026-03-27 18:24 | DONE | Batch C 테스트/문서 동기화 반영. `NotificationOutboxClaimConcurrencyIntegrationTest`를 추가해 동시 worker claim 회귀를 검증했고, `README`, `env-contract`, `developer-guide`, demo runbook/preflight, interview/case-study 문서와 `blog/03`, `14`, `15`, `19`, `20`, `21`, `26`, `phase47`을 현재 코드 기준으로 맞췄다 | Java 21 기준 전체 검증과 포맷 검사 실행 |
 | 2026-03-27 18:31 | DONE | 검증 완료. `JAVA_HOME=$(/usr/libexec/java_home -v 21)` 기준 `./gradlew compileJava compileTestJava`, `./gradlew --no-daemon bootJar`, `./gradlew --no-daemon test --tests \"com.erp.integration.NotificationOutboxIntegrationTest\" --tests \"com.erp.integration.NotificationOutboxRetryIntegrationTest\" --tests \"com.erp.integration.NotificationOutboxClaimConcurrencyIntegrationTest\"`, `./gradlew --no-daemon fastTest integrationTest`, `ruby -e \"require 'yaml'; YAML.load_file('.github/workflows/ci.yml')\"`, `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config`, `docker compose --env-file docker/.env.example -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml config`, `git diff --check`를 모두 통과했다 | add/commit/push 및 원격 반영 |
@@ -207,5 +210,5 @@
 
 ## 현재 상태 요약
 - 현재 단계: `DONE`
-- 활성 작업: 후속 고도화 23차 Batch C 마감
+- 활성 작업: 후속 고도화 23차 Batch D 문서/블로그 최종 싱크 마감
 - 블로커: 없음

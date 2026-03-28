@@ -134,6 +134,7 @@ CSRF를 다시 켜는 편이 안전합니다.
 - `/actuator/health`
 
 그리고 설정값에 따라 local/demo에서만 Swagger/OpenAPI, Prometheus 경로를 명시적으로 열 수 있습니다.
+또 현재 저장소는 `StartupSafetyValidator`로 런타임 프로파일과 공개 management surface 기본값까지 함께 확인합니다.
 
 이렇게 리스트를 한 곳에서 만들면
 
@@ -266,6 +267,8 @@ sequenceDiagram
 - 핵심 설정 / 필터:
   - src/main/java/com/erp/global/config/SecurityConfig.java
   - src/main/java/com/erp/global/config/CsrfCookieFilter.java
+  - src/main/java/com/erp/global/config/StartupSafetyValidator.java
+  - src/main/resources/application.yml
 - 인증 API / 서비스:
   - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
   - src/main/java/com/erp/domain/auth/service/AuthService.java
@@ -281,7 +284,8 @@ sequenceDiagram
 2. `CsrfCookieFilter`를 추가해 초기 요청에서도 CSRF 쿠키가 발급되게 합니다.
 3. `AuthApiController`에 회원가입 / 로그인 / 로그아웃 / refresh API 진입점을 둡니다.
 4. `AuthService`에서 회원 생성과 로그인 검증 흐름을 분리합니다.
-5. 통합 테스트로 공개 경로, 인증 실패, 페이지 접근 제어를 검증합니다.
+5. 기본값은 닫힌 상태로 두고, 프로파일과 management surface 공개 설정을 명시적으로 열도록 정리합니다.
+6. 통합 테스트로 공개 경로, 인증 실패, 페이지 접근 제어를 검증합니다.
 
 ## 13. 실행 / 검증 명령
 
@@ -315,6 +319,7 @@ sequenceDiagram
 - `CsrfCookieFilter`가 보안 필터 체인 뒤에서 CSRF 쿠키를 내려준다
 - `AuthApiController`에 회원가입 / 로그인 / 로그아웃 / refresh 진입점이 있다
 - `AuthService`가 회원 생성과 로그인 검증을 담당한다
+- `StartupSafetyValidator`가 프로파일 미지정이나 공개 기본값 실수를 부팅 단계에서 막는다
 - `AuthApiIntegrationTest`, `PageAccessIntegrationTest`가 보안 진입점을 검증한다
 
 ## 15. 글 종료 체크포인트

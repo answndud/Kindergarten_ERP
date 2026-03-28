@@ -34,7 +34,7 @@
 ### Part E. 테스트와 CI
 
 14. [H2가 아니라 Testcontainers를 붙인 이유](./14-why-testcontainers-over-h2.md)
-15. [GitHub Actions와 태그 기반 테스트 스위트 분리](./15-github-actions-and-tagged-test-suites.md)
+15. [GitHub Actions와 태그 기반 테스트 태스크/CI 분리](./15-github-actions-and-tagged-test-suites.md)
 
 ### Part F. 인증을 운영형으로 발전시키기
 

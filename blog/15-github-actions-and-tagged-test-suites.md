@@ -1,4 +1,4 @@
-# [Spring Boot 포트폴리오] 15. GitHub Actions와 태그 기반 테스트 스위트를 어떻게 나눴는가
+# [Spring Boot 포트폴리오] 15. GitHub Actions와 태그 기반 테스트 태스크/CI를 어떻게 나눴는가
 
 ## 1. 이번 글에서 풀 문제
 

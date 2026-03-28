@@ -333,6 +333,8 @@ sequenceDiagram
   - src/main/java/com/erp/domain/kidapplication/entity/KidApplication.java
   - src/main/java/com/erp/domain/kidapplication/controller/KidApplicationController.java
   - src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java
+- 대시보드 연계:
+  - src/main/java/com/erp/domain/dashboard/service/DashboardService.java
 - 스키마:
   - src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql
 - 검증:
@@ -350,7 +352,8 @@ sequenceDiagram
 3. `KidApplicationService.offer(...)`에서 제안 만료 시각과 좌석 재검증을 같이 처리합니다.
 4. `acceptOffer(...)`에서만 실제 `Kid`를 생성해 입학을 확정합니다.
 5. `expireOffers()` 스케줄러로 시간 기반 만료를 처리합니다.
-6. 통합 테스트로 waitlist, offer, accept, expire와 정원 규칙을 검증합니다.
+6. 승인/offer 수락처럼 대시보드 숫자를 바꾸는 경로에서는 dashboard cache도 함께 비웁니다.
+7. 통합 테스트로 waitlist, offer, accept, expire와 정원 규칙을 검증합니다.
 
 ## 13. 실행 / 검증 명령
 
@@ -381,6 +384,7 @@ sequenceDiagram
   - `KidApplicationApiIntegrationTest`
   - `ClassroomApiIntegrationTest`
   - `KidApiIntegrationTest`
+- 입학 승인/offer 수락 경로가 `DashboardService.evictDashboardStatisticsCache(...)`까지 호출한다
 
 ## 15. 글 종료 체크포인트
 

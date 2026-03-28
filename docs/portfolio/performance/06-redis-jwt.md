@@ -7,7 +7,7 @@
 ## 개선
 - JWT를 HTTP-only 쿠키로 저장해 서버 세션 의존도를 낮춤.
 - Refresh token은 Redis에 저장하고 TTL로 만료를 관리.
-- Refresh token 키를 `refresh:{email}` 단일 키로 관리해 조회/삭제를 O(1) 경로로 단순화.
+- 현재 저장소는 `refresh:session:{memberId}:{sessionId}`와 `refresh:sessions:{memberId}` 조합으로 세션 단위 조회/회수를 관리합니다.
 - 토큰 갱신 시 Redis 저장 토큰과 요청 토큰의 일치 여부를 검증해 재발급 안전성을 강화.
 
 ## 효과(정성)
@@ -27,8 +27,8 @@
 3) Q: JWT 쿠키가 안전한가요?
    A: HTTP-only 쿠키로 XSS 노출을 줄이고, 서버에서 서명 검증을 수행합니다.
 4) Q: Redis 장애 시 어떻게 되나요?
-   A: 재로그인이 필요한 상황으로 제한되며, 운영 환경에서 복제/모니터링으로 보완합니다.
+   A: 현재는 Redis를 인증의 critical dependency로 보고 fail-closed로 처리합니다. 그래서 readiness도 함께 내려가고, 운영자는 Redis 복구를 우선합니다.
 5) Q: 토큰 만료 정책은?
    A: Access 토큰은 짧게, Refresh는 TTL로 관리하여 보안을 강화했습니다.
-6) Q: 왜 `refresh:{email}` 단일 키로 바꿨나요?
-   A: 키 탐색 비용을 줄이고 갱신/로그아웃 경로를 예측 가능한 O(1) 조회/삭제로 만들기 위해서입니다.
+6) Q: 왜 세션 단위 Redis 키로 바꿨나요?
+   A: 멀티 디바이스 세션 목록, 개별 세션 revoke, refresh rotation을 같이 지원해야 했기 때문입니다.
