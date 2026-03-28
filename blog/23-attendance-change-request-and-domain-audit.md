@@ -286,6 +286,8 @@ sequenceDiagram
 
 현재 구조는 **단일 승인 흐름**에 집중합니다.
 즉 다단계 결재나 교사 승인 후 원장 재승인 같은 복합 승인 체계는 아직 없습니다.
+또 중복 요청 방지는 현재 `kid_id + date + PENDING` 유니크 가드에 집중돼 있으므로,
+더 복잡한 중복 정의가 필요해지면 별도 정책이나 멱등 키 전략이 추가로 필요합니다.
 하지만 요청 aggregate와 감사 로그를 이미 분리해 두었기 때문에, 나중에 승인 단계 수를 늘리기는 더 쉬운 상태입니다.
 
 ## 9. 취업 포인트
@@ -331,6 +333,7 @@ sequenceDiagram
   - src/main/resources/templates/domainaudit/audit-logs.html
 - 스키마:
   - src/main/resources/db/migration/V13__add_admission_workflow_attendance_requests_and_domain_audit.sql
+  - src/main/resources/db/migration/V14__guard_pending_attendance_change_requests.sql
 - 검증:
   - src/test/java/com/erp/api/AttendanceChangeRequestApiIntegrationTest.java
   - src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java
@@ -344,9 +347,10 @@ sequenceDiagram
 1. `AttendanceChangeRequest`를 승인 전 요청 aggregate로 분리합니다.
 2. 학부모는 요청만 만들고, 교사/원장이 승인할 때만 실제 `Attendance`를 갱신하게 만듭니다.
 3. 승인, 거절, 취소 상태 전이를 `AttendanceChangeRequest` 엔티티에 둡니다.
-4. `DomainAuditLogService`로 사용자 행위와 시스템 행위를 공통 포맷으로 기록합니다.
-5. 원장 전용 조회/API/CSV export를 domain audit 쪽에도 제공합니다.
-6. 통합 테스트로 권한, 승인 흐름, 감사 로그 조회를 검증합니다.
+4. `V14` 유니크 가드로 같은 원생/날짜의 중복 `PENDING` 요청을 DB 레벨에서 차단합니다.
+5. `DomainAuditLogService`로 사용자 행위와 시스템 행위를 공통 포맷으로 기록합니다.
+6. 원장 전용 조회/API/CSV export를 domain audit 쪽에도 제공합니다.
+7. 통합 테스트로 권한, 승인 흐름, 감사 로그 조회를 검증합니다.
 
 ## 13. 실행 / 검증 명령
 
@@ -367,6 +371,7 @@ sequenceDiagram
 
 - 새로 생긴 migration:
   - `V13__add_admission_workflow_attendance_requests_and_domain_audit.sql`
+  - `V14__guard_pending_attendance_change_requests.sql`
 - 새로 생긴 주요 클래스:
   - `AttendanceChangeRequest`
   - `AttendanceChangeRequestService`
@@ -379,6 +384,7 @@ sequenceDiagram
 - 대표 검증 대상:
   - `AttendanceChangeRequestApiIntegrationTest`
   - `DomainAuditApiIntegrationTest`
+- 같은 원생/날짜에 대해 동시에 두 개의 `PENDING` 요청이 생기지 않도록 DB 가드가 있다
 
 ## 15. 글 종료 체크포인트
 

@@ -1,6 +1,6 @@
 # 현재 테스트 가능 기능
 
-> 로컬 실행 기준(2026-02-20)으로 실제 동작하는 기능만 정리한 문서입니다.
+> 로컬 실행 기준(2026-03-28)으로 실제 동작하는 기능만 정리한 문서입니다.
 
 ---
 
@@ -41,7 +41,9 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 - 로그인 화면 버튼으로 진입
   - Google: `/oauth2/authorization/google`
   - Kakao: `/oauth2/authorization/kakao`
-- 성공 시 내부 회원으로 매핑/생성 후 메인으로 리다이렉트
+- 같은 이메일 기존 계정이 있으면 자동 연결하지 않고 충돌 안내 후 기존 로그인 방식을 유도
+- 설정 화면에서 명시적으로 소셜 계정을 연결/해제
+- 동일 provider의 다른 계정으로 교체는 허용하지 않음
 
 ### 역할
 - `PRINCIPAL`, `TEACHER`, `PARENT`
@@ -60,6 +62,8 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 - 출석 upsert, 일괄 반영 (`/api/v1/attendance/upsert`, `/api/v1/attendance/bulk`)
 - 일별/월별 조회, 반별 월간 리포트
 - 등원/하원/결석/지각/조퇴/병결 처리
+- 학부모 출결 변경 요청 생성/취소 (`/api/v1/attendance-requests`)
+- 교사/원장 출결 변경 요청 승인/거절 및 상세 조회
 
 ### 알림장
 - 반/원생/전체 알림장 작성/수정/삭제 (`/api/v1/notepads`)
@@ -72,7 +76,8 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ### 지원/승인
 - 교사 유치원 지원 (`/api/v1/kindergarten-applications`)
 - 학부모 원생 입학 신청 (`/api/v1/kid-applications`)
-- 승인/거절/취소 워크플로우
+- 교사 지원 승인/거절/취소 워크플로우
+- 입학 waitlist / offer / offer 수락 / offer 만료 워크플로우
 
 ### 알림
 - 알림 목록/상세/미읽음 개수/읽음/삭제 (`/api/v1/notifications`)
@@ -83,6 +88,7 @@ SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ### 대시보드
 - 통계 API: `/api/v1/dashboard/statistics`
 - 대시보드 화면: `/dashboard`
+- 입소일/주말을 반영한 출석률, 고유 열람 기준 공지 열람률
 
 ---
 
@@ -119,10 +125,14 @@ curl -X GET http://localhost:8080/api/v1/auth/me -b cookies.txt
 
 ### 주요 테이블
 - 기본: `member`, `kindergarten`, `classroom`, `kid`, `attendance`, `notepad`, `announcement`
-- 워크플로우: `kindergarten_application`, `kid_application`, `notification`, `calendar_event`
+- 워크플로우: `kindergarten_application`, `kid_application`, `attendance_change_request`, `notification`, `notification_outbox`, `calendar_event`
+- 운영/감사: `auth_audit_log`, `auth_audit_log_archive`, `domain_audit_log`, `member_social_account`
 
 ### Redis
-- refresh token key prefix: `refresh:`
+- refresh token key: `refresh:session:{memberId}:{sessionId}`
+- 세션 목록 set: `refresh:sessions:{memberId}`
+- 세션 메타데이터: `refresh:session:meta:{memberId}:{sessionId}`
+- 인증 rate limit / anomaly / 세션 검증도 Redis를 사용
 
 ---
 

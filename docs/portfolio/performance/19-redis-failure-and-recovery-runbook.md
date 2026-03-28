@@ -9,8 +9,8 @@ Redis 장애 시 인증/캐시 경로의 동작을 표준화하고,
 
 ### 인증
 
-- 영향: Refresh token 재발급 실패 가능
-- 기대 동작: 재로그인 유도 (Access 만료 후)
+- 영향: 세션 레지스트리 조회 실패 시 access/refresh 인증 모두 실패 가능
+- 기대 동작: fail-closed, readiness DOWN, Redis 복구 우선
 
 ### 대시보드 캐시
 
@@ -34,7 +34,7 @@ Redis 장애 시 인증/캐시 경로의 동작을 표준화하고,
 
 ## 운영 체크리스트
 
-- [ ] `refresh:{email}` 단일 키 규칙 준수
+- [ ] `refresh:session:{memberId}:{sessionId}` / `refresh:sessions:{memberId}` / `refresh:session:meta:{memberId}:{sessionId}` 규칙 준수
 - [ ] 모든 토큰 저장 경로에서 TTL 보장
 - [ ] 직렬화 포맷 통일(String)
 - [ ] `KEYS` 명령 사용 금지

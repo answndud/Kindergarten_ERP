@@ -76,4 +76,4 @@
 - 멀티테넌시 권한 경계는 `서비스 계층 requester 검증`이라고 설명할 것
 - `AttendanceChangeRequest`와 `Attendance`를 분리한 이유를 말할 것
 - `notification_outbox`와 감사 로그 분리 이유를 말할 것
-- Testcontainers와 suite-based CI를 실제 운영 스택 검증 관점에서 설명할 것
+- Testcontainers와 `@Tag` 기반 Gradle test task/CI 분리를 실제 운영 스택 검증 관점에서 설명할 것

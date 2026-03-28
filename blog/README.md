@@ -97,7 +97,7 @@
 ### Part E. 테스트와 CI
 
 14. [왜 H2가 아니라 Testcontainers였는가](./14-why-testcontainers-over-h2.md)
-15. [GitHub Actions와 태그 기반 테스트 스위트 분리](./15-github-actions-and-tagged-test-suites.md)
+15. [GitHub Actions와 태그 기반 테스트 태스크/CI 분리](./15-github-actions-and-tagged-test-suites.md)
 
 ### Part F. 인증을 운영형으로 발전시키기
 
@@ -135,4 +135,4 @@
 1. `BLOG_PLAN.md`로 현재 연재 구조와 리라이트 우선순위를 확인합니다.
 2. `BLOG_PROGRESS.md`로 최근 수정 이력과 남은 작업을 확인합니다.
 3. `00_rebuild_guide.md`와 `00_quality_checklist.md`를 기준으로 글 구조와 품질 기준을 맞춥니다.
-4. 단계별 체크포인트 스크립트는 선택 요소로 보고, 실제 파일이 있을 때만 문서에 노출합니다.
+4. 단계별 체크포인트는 산출물 체크리스트와 안정 검증 명령을 기준으로 관리하고, 별도 스크립트는 실제 파일이 있을 때만 문서에 노출합니다.

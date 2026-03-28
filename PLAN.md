@@ -10,7 +10,7 @@
 - 완료: Batch B(`서비스/API 권한/동시성`) 구현 및 문서/블로그 동기화
 - 완료: Batch B-2(`Java 21 기준선 업그레이드`) 구현 및 문서/블로그 동기화
 - 완료: Batch C(`outbox atomic claim + 배포/CI/monitoring 신뢰성`) 구현 및 문서/블로그 동기화
-- 다음 대기: Batch D(`블로그/문서 최종 싱크 마감`) 착수 가능
+- 완료: Batch D(`블로그/문서 최종 싱크 마감`)
 
 ## 1) 목표 / 범위
 - 프로젝트를 “기능 많은 포트폴리오”에서 “기본값까지 안전한 운영형 포트폴리오”로 끌어올린다.
@@ -91,6 +91,10 @@
    - 위 3개 배치의 코드 변경을 기준으로 블로그 글의 상황표, 구현 한계, 검증 명령, 산출물 체크리스트 재동기화
    - “현재 구현의 한계” 박스를 실제 코드 기준으로 업데이트
    - 면접 답변 문서와 블로그 메시지가 충돌하지 않게 정리
+   - active 문서와 블로그의 실행/검증 명령을 `Java 21 + fastTest/integrationTest + package-smoke` 기준으로 통일
+   - demo/runbook, hiring-pack, interview 문서가 `fail-closed 기본값`, `seed opt-in`, `localhost bind compose`, `outbox atomic claim`을 같은 표현으로 설명하게 정리
+   - 삭제된 checkpoint script 전제를 제거하고 `산출물 체크리스트 + 안정 검증 경로`를 블로그 SSOT로 재정리
+   - `docs/portfolio/performance/*`에 남아 있던 예전 Redis 세션 설계(`refresh:{email}`, single-session, 재로그인 폴백)를 현재 코드 기준으로 교체
    - 후보 문서
      - `BLOG_PLAN.md`, `BLOG_PROGRESS.md`
      - `blog/README.md`
@@ -124,6 +128,7 @@
 - Batch D
   - 링크/경로 검토
   - `git diff --check`
+  - active docs/blog stale 표현 검색(`rg`)
   - README, demo runbook, blog 검증 명령의 상호 정합성 수동 점검
 
 ## 4) 리스크 및 대응

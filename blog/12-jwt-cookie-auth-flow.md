@@ -234,6 +234,8 @@ sequenceDiagram
   - src/main/java/com/erp/domain/auth/service/AuthService.java
   - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
   - src/main/java/com/erp/global/config/SecurityConfig.java
+  - src/main/java/com/erp/global/config/StartupSafetyValidator.java
+  - src/main/resources/application.yml
 - 검증 파일:
   - src/test/java/com/erp/api/AuthApiIntegrationTest.java
   - docs/decisions/phase17_jwt_refresh_session_rotation.md
@@ -245,7 +247,8 @@ sequenceDiagram
 2. 토큰 claims에 `memberId`, `role`, `sessionId`, `tokenType`, `jti`를 넣습니다.
 3. `AuthService.login()`에서 로그인 성공 후 쿠키 발급 흐름을 만듭니다.
 4. `JwtFilter`가 요청마다 access token 쿠키를 읽고 `SecurityContext`를 복원하게 합니다.
-5. `AuthApiIntegrationTest`로 로그인/인증/refresh 회귀를 검증합니다.
+5. JWT secret은 공용 fallback 없이 profile별로만 허용하고, 그 외 환경은 부팅 단계에서 막습니다.
+6. `AuthApiIntegrationTest`로 로그인/인증/refresh 회귀를 검증합니다.
 
 ## 13. 실행 / 검증 명령
 
@@ -278,6 +281,7 @@ local/demo만 개발용 fallback secret을 허용하고, 그 외 환경은 `JWT_
 - `JwtFilter`가 access token 쿠키를 읽고 인증을 복원한다
 - `AuthService.login(...)`이 로그인 성공 후 쿠키 발급 흐름을 수행한다
 - `SecurityConfig`가 JWT 필터를 보안 체인에 연결한다
+- `StartupSafetyValidator`와 설정 파일이 `JWT_SECRET` 누락을 운영 환경에서 fail-fast로 막는다
 - `AuthApiIntegrationTest`가 로그인/인증/refresh 회귀를 검증한다
 
 ## 15. 글 종료 체크포인트

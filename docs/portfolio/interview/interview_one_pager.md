@@ -37,7 +37,7 @@
 ### 5) 실환경형 테스트와 운영 관측성/감사 추적
 
 - H2/Mock Redis를 버리고 **MySQL/Redis Testcontainers + Flyway** 기반으로 통합 테스트를 전환했습니다.
-- GitHub Actions에서 `fast / integration / performance smoke` job을 JUnit suite 기반으로 분리했고, Node24 네이티브 action으로 runner 경고도 제거했습니다.
+- GitHub Actions에서 `fastTest / integrationTest / performanceSmokeTest`를 `@Tag` 기반 Gradle task와 job으로 분리했고, Node24 네이티브 action으로 runner 경고도 제거했습니다.
 - 즉 “돌아가는 테스트”가 아니라 **운영 스택을 닮은 테스트**를 만들었습니다.
 - Swagger/OpenAPI live contract, Actuator health/info/prometheus, liveness/readiness probe, correlation id, structured request logging을 추가했습니다.
 - readiness는 `criticalDependencies`로 DB/Redis를 직접 반영하고, failure-mode 테스트로 `readiness DOWN / liveness UP`도 검증했습니다.
@@ -87,7 +87,7 @@
   - 이유: known email 실패는 `kindergarten_id`로 귀속하지만, 완전히 익명인 로그인 실패는 여전히 tenant를 특정할 수 없기 때문입니다.
 
 - notification outbox worker는 MySQL 8 `FOR UPDATE SKIP LOCKED` 기준으로 같은 row를 한 번만 claim하도록 맞췄지만, downstream 정확히 한 번(exactly-once) 보장은 별도 고려 대상입니다.
-  - 이유: 이번 단계에서는 전달 신뢰성(retry/dead-letter) 확보를 먼저 닫고, 멀티 인스턴스 lock 전략은 다음 단계 확장 포인트로 남겼기 때문입니다.
+  - 이유: 이번 단계에서는 멀티 인스턴스 claim 안정성은 먼저 닫고, downstream idempotency key나 브로커 도입 전의 exactly-once 보장은 다음 단계 확장 포인트로 남겼기 때문입니다.
 
 - 소셜 계정은 “교체”를 허용하지 않았습니다.
   - 이유: 소셜 `providerId`를 비밀번호가 아니라 로그인 식별자로 봤기 때문입니다.

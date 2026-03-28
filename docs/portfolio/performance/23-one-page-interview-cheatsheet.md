@@ -11,7 +11,7 @@
 1. N+1 제거 (읽음 수 건별 조회 -> IN + GROUP BY 일괄 집계)
 2. 집계 쿼리 전환 (목록 로딩 후 Java 계산 -> DB 집계)
 3. 인덱스 튜닝 (EXPLAIN 기준 `ALL/filesort` -> `ref/range`)
-4. Redis 인증 경로 정리 (단일 키 O(1), TTL/직렬화 표준화)
+4. Redis 인증 경로 정리 (세션 단위 키, TTL/직렬화/메타데이터 표준화)
 
 ## 3) 실패/시행착오 2개
 
@@ -70,7 +70,7 @@ queries 13에서 10, elapsed 14ms에서 2ms로 개선했습니다.
 복합 인덱스를 where/order/join 패턴 기준으로 설계하고,
 MySQL EXPLAIN에서 ALL/filesort가 ref/range로 바뀐 것을 확인했습니다.
 
-또 Redis 인증 경로에서는 `refresh:{email}` 단일 키, set+TTL 표준화로
+또 Redis 인증 경로에서는 세션 단위 Redis 키와 세션 메타데이터 구조, set+TTL 표준화로
 재발급 평균 32ms에서 9ms, p95 78ms에서 21ms를 확인했습니다.
 
 제가 강조하는 포인트는 세 가지입니다.

@@ -12,7 +12,7 @@
 | Notepad N+1 제거 | `NotepadService`, `NotepadRepository` 집계 조회 전환 | `NotepadApiIntegrationTest.MarkAsReadTest#getClassroomNotepads_ReadCountReflected` | `03-notepad-readcount-nplusone.md` |
 | Dashboard 집계 전환 | Dashboard 통계 집계 쿼리/캐시 경로 | `DashboardPerformanceStoryTest` 및 테스트 결과 XML | `04-dashboard-stats.md` |
 | 인덱스 튜닝 | Flyway migration `V5__add_performance_indexes_for_dashboard_and_notepad.sql` | MySQL EXPLAIN 전/후 비교 | `05-index-tuning-dashboard-notepad.md`, `02-mysql-validation-report.md` |
-| Redis refresh 최적화 | `refresh:{email}` 단일 키, set+TTL 규칙 | 재발급 성공/실패 시나리오, TTL 검증 케이스 | `06-redis-jwt.md`, `07-redis-adoption-story-script.md` |
+| Redis refresh 최적화 | 세션 단위 Redis 키, session set/meta, `set+TTL` 규칙 | 재발급 성공/실패 시나리오, TTL/세션 회수 검증 케이스 | `06-redis-jwt.md`, `07-redis-adoption-story-script.md`, `docs/decisions/phase17_jwt_refresh_session_rotation.md` |
 
 ## 로그/리포트 파일
 

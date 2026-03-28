@@ -49,4 +49,4 @@ sequenceDiagram
 - `로그만 남긴 것이 아니라, 저장 -> 알림 -> 외부 incident -> 메트릭 -> export 흐름을 닫았습니다.`
 - `실패 경로는 outbox retry/dead-letter와 atomic claim으로 분리했고, 로그인 자체는 가능한 한 빨리 끝나도록 했습니다.`
 - `Redis는 단순 캐시가 아니라 auth 경로의 critical dependency라서 readiness에도 반영했습니다.`
-- `readiness/liveness 분리와 suite-based CI까지 포함해 운영 관점으로 설명할 수 있습니다.`
+- `readiness/liveness 분리와 태그 기반 Gradle test task + CI job 분리까지 포함해 운영 관점으로 설명할 수 있습니다.`

@@ -32,7 +32,7 @@
 ### D. 실행 / 검증 명령
 - 복붙 가능한 명령
 - 가능하면 아래 두 층으로 나눈다
-  - 단계 체크포인트: 필요한 글에 한해 `blog/scripts/checkpoint-XX.sh`
+  - 단계 체크포인트: 글 본문 하단의 산출물 체크리스트와 관련 테스트/실행 명령
   - 현재 저장소 기준 안정 검증: `compileJava compileTestJava`, `integrationTest`, `performanceSmokeTest`
 - 성공 시 무엇이 보여야 하는지까지 포함
 
@@ -66,15 +66,15 @@
 그래서 블로그 검증은 아래 두 층으로 나눕니다.
 
 1. 단계 체크포인트 검증
-   - 필요한 글에만 `blog/scripts/checkpoint-XX.sh`
-   - 스크립트가 없다면 `산출물 체크리스트 + 실행 / 검증 명령` 조합으로 대체
+   - 기본값은 `산출물 체크리스트 + 실행 / 검증 명령` 조합
+   - 필요하면 저장소에 실제로 존재하는 경량 검증 스크립트나 좁힌 테스트를 보조 수단으로 사용
    - 파일/메서드/문서/마이그레이션이 해당 단계 산출물대로 있는지 확인
 2. 현재 저장소 기준 안정 검증
    - `./gradlew compileJava compileTestJava`
    - `./gradlew --no-daemon integrationTest`
    - `./gradlew --no-daemon performanceSmokeTest`
 
-좁힌 `--tests` 실행은 일부 환경에서 Gradle XML result writer 충돌이 날 수 있으므로, 블로그 SSOT는 `checkpoint script + 안정 스위트` 조합으로 둡니다.
+좁힌 `--tests` 실행은 일부 환경에서 Gradle XML result writer 충돌이 날 수 있으므로, 블로그 SSOT는 `산출물 체크리스트 + 안정 스위트` 조합으로 둡니다.
 
 ## 5. 권장 읽기 순서
 
@@ -84,7 +84,7 @@
 4. `00_series_plan.md`
 5. 각 글 본문
 6. 글 끝의 산출물 체크리스트와 검증 명령
-7. 필요한 글만 `blog/scripts/checkpoint-XX.sh`
+7. 필요하면 관련 테스트를 좁혀 보되, 최종 판단은 안정 검증 스위트 기준으로 한다
 
 ## 6. 우선 보강 대상
 

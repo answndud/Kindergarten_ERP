@@ -270,9 +270,10 @@ sequenceDiagram
 
 ### 현재 구현의 한계
 
-이 글의 관리면은 **설정값으로 노출 범위를 조절하는 방식**입니다.
-즉 프로덕션에서 더 강한 격리가 필요하다면 management 전용 포트 분리나 별도 네트워크 레벨 보호까지 갈 수 있습니다.
-이 글은 그 전 단계로, 한 애플리케이션 안에서 공개/보호 정책과 readiness 개념을 먼저 정리하는 데 초점을 둡니다.
+현재 저장소는 이미 `prod`에서 management port를 분리하고 app-port Swagger/Prometheus를 기본 차단합니다.
+다만 여전히 **같은 애플리케이션 프로세스 안에서 운영 plane과 비즈니스 plane을 함께 운용하는 구조**이므로,
+더 강한 격리가 필요하다면 별도 네트워크 ACL, 전용 ingress, management 전용 배포 단위까지 갈 수 있습니다.
+즉 이 글은 “기본 공개”를 없애고 readiness/관측성/추적을 코드와 테스트로 닫는 단계에 초점을 둡니다.
 
 ## 9. 취업 포인트
 
@@ -325,6 +326,7 @@ sequenceDiagram
   - docs/decisions/phase34_operability_observability_baseline.md
   - docs/decisions/phase36_api_contract_observability_demo.md
   - docs/decisions/phase39_management_plane_and_active_session_control.md
+  - docs/decisions/phase45_fail_closed_runtime_defaults.md
   - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
 ```
 
@@ -334,8 +336,9 @@ sequenceDiagram
 2. `SecurityConfig`와 `RoleRedirectInterceptor`에서 공개 경로와 인프라 경로 정책을 같이 정리합니다.
 3. `CriticalDependenciesHealthIndicator`로 DB/Redis 상태를 readiness에 연결합니다.
 4. `PrometheusRegistryConfig`, `PrometheusScrapeController`로 메트릭 수집 경로를 노출합니다.
-5. `CorrelationIdFilter`, `RequestLoggingFilter`로 요청 추적 정보를 구조적으로 남깁니다.
-6. `ObservabilityIntegrationTest`로 health, readiness, metrics, correlation id를 검증합니다.
+5. 기본값은 닫힌 상태로 두고, local/demo만 Swagger/OpenAPI와 app-port Prometheus를 명시적으로 엽니다.
+6. `CorrelationIdFilter`, `RequestLoggingFilter`로 요청 추적 정보를 구조적으로 남깁니다.
+7. `ObservabilityIntegrationTest`로 health, readiness, metrics, correlation id를 검증합니다.
 
 ## 13. 실행 / 검증 명령
 
