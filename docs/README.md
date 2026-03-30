@@ -7,17 +7,20 @@
 처음 보는 사람은 아래 순서로 읽으면 됩니다.
 
 1. `README.md`
-2. `docs/guides/env-contract.md`
-3. `docs/portfolio/hiring-pack/backend-hiring-pack.md`
-4. `docs/portfolio/architecture/system-architecture.md`
-5. `docs/portfolio/demo/demo-preflight.md`
-6. `docs/portfolio/demo/demo-runbook.md`
-7. `docs/portfolio/case-studies/auth-incident-response.md`
+2. `docs/guides/deployment-guide.md`
+3. `docs/guides/env-contract.md`
+4. `docs/portfolio/hiring-pack/backend-hiring-pack.md`
+5. `docs/portfolio/architecture/system-architecture.md`
+6. `docs/portfolio/demo/demo-preflight.md`
+7. `docs/portfolio/demo/demo-runbook.md`
+8. `docs/portfolio/case-studies/auth-incident-response.md`
 
 ## Active Docs
 
 ### Guides
 
+- `docs/guides/deployment-guide.md`
+  - 초보자용 계정 생성, AWS 배포, HTTPS, OAuth, 운영/롤백, 비용 비교 가이드
 - `docs/guides/developer-guide.md`
   - 개발/구조/테스트/문서화 규칙
 - `docs/guides/env-contract.md`
