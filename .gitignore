@@ -62,6 +62,8 @@ out/
 .env.local
 .env.*.local
 *.env
+.env.prod
+.env.production
 
 ### Docker ###
 docker/.env
@@ -69,11 +71,20 @@ docker/.env
 *.env
 .env.*
 .env
+deploy/.env.prod
+deploy/.env.production
+deploy/*.secrets
+!deploy/.env.prod.example
 
 ### 시크릿 설정 ###
 **/application-secret.yml
 **/application-secret.properties
 **/secrets/
+*.pem
+*.key
+*.p12
+*.crt
+*.csr
 
 # ===========================================
 # 운영체제 및 에디터
