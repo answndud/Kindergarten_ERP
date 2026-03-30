@@ -1,12 +1,21 @@
 # PROGRESS.md
 
 ## 작업명
-- 후속 고도화 23차 (도메인 신뢰성 보강 + Java 21 업그레이드 + 문서/블로그 싱크)
+- 초보자용 배포 전략/가이드 문서화 + 배포 자산 추가 + 원격 반영
 
 ## 진행 로그
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-30 13:01 | DONE | PR #1 CI 실패 원인 확인. `gh pr checks 1`과 Actions 로그를 확인한 결과 `Backend CI -> Package Smoke -> Resolve compose configs` 단계가 `docker/.env.example` 파일 부재로 실패했다. 원인은 `.gitignore`에서 `!docker/.env.example` 예외가 뒤의 `.env.*` 패턴에 다시 덮인 것이었다 | `.gitignore` 수정과 `docker/.env.example` 추적으로 fix commit/push |
+| 2026-03-30 13:04 | DONE | `.gitignore`를 수정해 `docker/.env.example`를 다시 unignore 처리했고, 예제 파일을 git 추적 대상으로 추가했다. `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config`, monitoring overlay compose config 검증을 통과해 CI 실패 경로를 로컬에서 재현/해결했다 | commit/push 후 PR 체크 재확인 |
+| 2026-03-30 12:34 | IN_PROGRESS | 사용자 요청에 따라 문서-only 범위를 실제 배포 자산 추가와 commit/push까지 확장했다. `github:yeet` 절차에 맞춰 `gh` 인증 상태를 확인하고 `main`에서 `codex/add-deployment-assets` 브랜치를 생성했다 | 운영용 파일(`Dockerfile`, `deploy/*`, `cd.yml`)과 시크릿 제외 규칙 추가 |
+| 2026-03-30 12:40 | DONE | 실제 배포 자산 반영. 루트 `Dockerfile`, `.dockerignore`, `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.prod.example`, `.github/workflows/cd.yml`을 추가했고, `.gitignore`에는 `deploy/.env.prod`, `*.pem`, 인증서/키 파일 패턴을 추가했다. 동시에 `deployment-guide.md`는 “예시”가 아니라 실제 저장소 파일 기준으로 설명을 보정했다 | `bootJar`, compose config, YAML 파싱, 포맷 검증 실행 |
+| 2026-03-30 12:42 | DONE | 배포 자산 검증 완료. `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon bootJar`, `cp deploy/.env.prod.example deploy/.env.prod && docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml config`, `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/cd.yml')"`, `git diff --check`를 통과했다. 임시 `deploy/.env.prod`는 즉시 삭제했고, 현재 남은 단계는 stage/commit/push 뿐이다 | 변경 범위 최종 점검 후 commit/push |
+| 2026-03-30 12:29 | DONE | `docs/guides/deployment-guide.md` 작성 완료. 추천 아키텍처, 계정 생성, AWS 리소스 생성, 도메인/HTTPS, OAuth, 수동 배포, GitHub Actions CD, 운영/백업/롤백, 비용 시나리오, 배포용 파일 템플릿까지 한 문서에 정리했다. 동시에 `docs/README.md`에 신규 가이드를 인덱싱했다 | 포맷/링크 검증 후 작업 로그 마감 |
+| 2026-03-30 12:30 | DONE | 문서 검증 완료. `git diff --check` 통과, `rg -n "deployment-guide" docs README.md PLAN.md PROGRESS.md`로 링크/SSOT 반영을 확인했다. 이번 작업은 문서-only이므로 Gradle 테스트는 실행하지 않았다 | 결과 공유 |
+| 2026-03-30 12:24 | IN_PROGRESS | 사용자 요청으로 배포 전략 문서 작업 시작. `PLAN.md`, `PROGRESS.md`, `docs/README.md`, `developer-guide`, `env-contract`, `application-prod.yml`, `docker-compose`, `ci.yml`를 다시 읽고 현재 저장소가 `prod profile + Flyway + monitoring + CI`까지 준비돼 있고, 실제 배포용 `Dockerfile/CD`는 아직 없다는 점을 확인했다 | 이번 범위를 `초보자도 따라할 수 있는 배포 가이드 문서 + 비용 시나리오`로 고정하고 SSOT/문서 인덱스를 갱신 |
+| 2026-03-30 12:24 | IN_PROGRESS | AWS Lightsail, EC2/RDS/ElastiCache, Railway, Fly.io 공식 문서를 다시 확인해 비용 기준을 정리했다. 서울 리전 기준 추천안은 `EC2 t4g.small + RDS db.t4g.micro + Redis self-host`로 고정했고, 비용은 대략 월 36달러 수준으로 계산했다 | `docs/guides/deployment-guide.md` 작성 및 docs 인덱스 연결 |
 | 2026-03-28 10:06 | IN_PROGRESS | Batch D 착수. `PLAN.md`, `BLOG_PLAN.md`, `BLOG_PROGRESS.md`를 다시 읽고 범위를 `README/가이드/demo/interview/blog 최종 싱크`로 고정했다. 서브에이전트 2개를 병렬로 띄워 `active 문서/운영 가이드`와 `블로그/면접 문서`의 메시지 드리프트를 각각 점검하게 했다 | 드리프트 결과를 반영해 active 문서와 블로그를 현재 코드 기준으로 정리하고 포맷 검증 |
 | 2026-03-28 10:41 | DONE | Batch D 문서/블로그 최종 싱크 반영. `blog/00_rebuild_guide`, `blog/11`, `12`, `20`, `22`, `23`, `docs/portfolio/interview/*`, `docs/portfolio/performance/*`를 수정해 삭제된 checkpoint script 전제, Redis 세션 fail-open 설명, outbox 멀티 인스턴스 한계, management plane 한계, 출결 요청 DB 가드, dashboard cache eviction 설명을 현재 코드 기준으로 맞췄다 | 포맷/드리프트 검증 결과 기록 후 add/commit/push |
 | 2026-03-28 10:44 | DONE | 문서 검증 완료. `rg -n "refresh:\\{email\\}|single-session|재로그인 유도|fail-open|checkpoint script|blog/scripts/checkpoint|멀티 인스턴스 lock 전략" blog docs README.md CURRENT_FEATURES.md BLOG_PLAN.md docs/guides --glob '!docs/archive/**'` 결과 active 문서 기준 남은 충돌 표현이 없음을 확인했고, `git diff --check`를 통과했다. 이번 배치는 문서-only이므로 Gradle 테스트는 추가 실행하지 않았다 | add/commit/push 및 원격 반영 |
@@ -209,6 +218,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `DONE`
-- 활성 작업: 후속 고도화 23차 Batch D 문서/블로그 최종 싱크 마감
+- 현재 단계: `IN_PROGRESS`
+- 활성 작업: 초보자용 배포 전략/가이드 문서화 + 배포 자산 추가 완료, commit/push 대기
 - 블로커: 없음
