@@ -1,149 +1,67 @@
 # PLAN.md
 
 ## 작업명
-- 후속 고도화 23차 (도메인 신뢰성 보강 + Java 21 업그레이드 + 문서/블로그 싱크)
-
-## 현재 배치 상태
-- 완료: 이전 Batch A~D (`management plane`, `활성 세션`, `outbox`, `waitlist/domain audit`, `tagged CI`, `hiring-pack`) 구현 및 문서화
-- 완료: 블로그 시리즈 초보자 친화성/면접 대응력 리라이트
-- 완료: Batch A (`safe-by-default 설정 + management surface + env 계약`) 구현 및 문서/블로그 동기화
-- 완료: Batch B(`서비스/API 권한/동시성`) 구현 및 문서/블로그 동기화
-- 완료: Batch B-2(`Java 21 기준선 업그레이드`) 구현 및 문서/블로그 동기화
-- 완료: Batch C(`outbox atomic claim + 배포/CI/monitoring 신뢰성`) 구현 및 문서/블로그 동기화
-- 완료: Batch D(`블로그/문서 최종 싱크 마감`)
+- 초보자용 배포 전략/가이드 문서화 + 배포 자산 추가 + 원격 반영
 
 ## 1) 목표 / 범위
-- 프로젝트를 “기능 많은 포트폴리오”에서 “기본값까지 안전한 운영형 포트폴리오”로 끌어올린다.
-- 코드 수정은 반드시 `테스트 + 결정 로그 + README/가이드 + 블로그 본문`까지 한 세트로 닫는다.
-- 이번 배치의 핵심 범위는 아래 4가지다.
-  1. `safe-by-default` 설정과 관리면(Management Surface) 하드닝
-  2. 신청서 상세 권한, 출결 요청, outbox 등 서비스/API 신뢰성 보강
-  3. CI/배포/운영 계약 정리
-  4. 위 변경 사항을 초보자용 블로그와 면접/운영 문서에 정확히 동기화
+- 현재 Kindergarten ERP를 스프링부트 백엔드 취업 포트폴리오 관점에서 가장 유리한 배포 방식으로 정리한다.
+- 초보자도 이 문서 하나만 보고 `계정 생성 -> 인프라 준비 -> 환경변수 세팅 -> 첫 배포 -> 검증 -> 운영/롤백`까지 따라갈 수 있게 만든다.
+- 비용은 2026-03-30 기준 공식 가격/공식 문서 기반 추정으로 시나리오별 비교 표를 제공한다.
+- 문서에서 멈추지 않고 실제 배포용 자산(`Dockerfile`, `deploy/*`, `.github/workflows/cd.yml`)까지 저장소에 추가한다.
+- 시크릿이 들어갈 수 있는 파일 패턴은 `.gitignore`에 명시적으로 반영한다.
+- 최종적으로 작업 브랜치에서 commit/push까지 마친다.
 
 ## 2) 세부 작업 단계
-1. Batch A: 안전한 기본값으로 뒤집기
-   - `application.yml`, `application-local.yml`, `application-prod.yml`, `ManagementSurfaceProperties`, `SecurityConfig`, `PrometheusScrapeController`, `DataLoader` 점검
-   - 기본 활성 프로파일 제거
-   - JWT/OAuth fallback secret 제거 또는 prod fail-fast 검증 추가
-   - Swagger/OpenAPI, Prometheus app-port 노출 기본값을 fail-closed로 전환
-   - local/demo 전용 seed와 자격증명은 이중 게이트(`profile + enabled flag`)로 제한
-   - 운영 필수 env matrix와 `.env.example` 또는 동등 문서 추가
-   - 동기화 문서/블로그
-     - `README.md`
-     - `docs/guides/developer-guide.md`
-     - `docs/portfolio/demo/demo-preflight.md`
-     - `blog/03-docker-mysql-redis-dev-environment.md`
-     - `blog/04-application-yml-and-profile-strategy.md`
-     - `blog/11-securityconfig-signup-login-basics.md`
-     - `blog/12-jwt-cookie-auth-flow.md`
-     - `blog/17-rate-limit-and-client-ip-trust-model.md`
-     - `blog/20-openapi-management-plane-and-observability.md`
-
-2. Batch B: 서비스/API 권한 경계와 상태 전이 보강
-   - `KidApplication`, `KindergartenApplication` 상세 조회 권한을 본인/승인권자/원장 중심으로 재정의
-   - `AttendanceChangeRequest` 생성 race 방지용 유니크 제약 또는 원자적 생성 전략 추가
-   - `KindergartenApplication` 상태 전이/예외를 `BusinessException` 중심으로 정리하고 필요시 lock 전략 보강
-   - `DashboardService` 캐시 eviction을 입학 승인/offer 수락/교사 승인 경로까지 확장
-   - `Notepad`의 감사/삭제 모델을 현재 운영 기준과 얼마나 맞출지 결정하고, 최소한 문서에서 한계를 명시
-   - 동기화 문서/블로그
-     - `README.md`
-     - `docs/decisions/*` 신규 결정 로그
-     - `blog/10-calendar-dashboard-and-application-workflows.md`
-     - `blog/22-classroom-capacity-and-waitlist-workflow.md`
-     - `blog/23-attendance-change-request-and-domain-audit.md`
-     - `blog/24-audit-logs-as-operations-tools.md`
-
-3. Batch B-2: Java 21 기준선 업그레이드
-   - `build.gradle` toolchain을 Java 21로 상향
-   - `.github/workflows/ci.yml`의 Java setup와 중복 job key를 정리
-   - active 문서/블로그/가이드의 Java 17 서술을 Java 21 기준으로 교체
-   - archive 문서는 그대로 두고 active SSOT만 동기화
-   - 동기화 문서/블로그
-     - `README.md`
-     - `AGENTS.md`
-     - `docs/guides/developer-guide.md`
-     - `docs/portfolio/interview/interview_one_pager.md`
-     - `docs/decisions/phase16_github_actions_ci.md`
-     - `blog/02-gradle-spring-boot-bootstrap.md`
-
-4. Batch C: 비동기 전달/배포/CI 신뢰성 보강
-   - `NotificationDispatchService`/`NotificationOutboxRepository`의 claim을 원자적으로 변경
-   - outbox 동시 claim 회귀 테스트 추가
-   - `.github/workflows/ci.yml`의 duplicate job key 제거
-   - CI에 packaging artifact 검증 추가
-   - `docker-compose.yml`, `docker-compose.monitoring.yml` 포트 바인딩/기본 자격증명/로컬 전용 경계 정리
-   - monitoring/demo runbook을 실제 compose 경로와 일치시키기
-   - Redis를 auth critical dependency로 문서/알림/runbook에 명시
-   - 동기화 문서/블로그
-     - `README.md`
-     - `docs/guides/developer-guide.md`
-     - `docs/portfolio/demo/demo-runbook.md`
-     - `docs/portfolio/case-studies/auth-incident-response.md`
-     - `blog/14-why-testcontainers-over-h2.md`
-     - `blog/15-github-actions-and-tagged-test-suites.md`
-     - `blog/19-auth-audit-log-and-operations-console.md`
-     - `blog/20-openapi-management-plane-and-observability.md`
-     - `blog/21-notification-outbox-and-incident-channel.md`
-     - `blog/26-demo-architecture-and-interview-pack.md`
-
-5. Batch D: 블로그/문서 최종 싱크 마감
-   - 위 3개 배치의 코드 변경을 기준으로 블로그 글의 상황표, 구현 한계, 검증 명령, 산출물 체크리스트 재동기화
-   - “현재 구현의 한계” 박스를 실제 코드 기준으로 업데이트
-   - 면접 답변 문서와 블로그 메시지가 충돌하지 않게 정리
-   - active 문서와 블로그의 실행/검증 명령을 `Java 21 + fastTest/integrationTest + package-smoke` 기준으로 통일
-   - demo/runbook, hiring-pack, interview 문서가 `fail-closed 기본값`, `seed opt-in`, `localhost bind compose`, `outbox atomic claim`을 같은 표현으로 설명하게 정리
-   - 삭제된 checkpoint script 전제를 제거하고 `산출물 체크리스트 + 안정 검증 경로`를 블로그 SSOT로 재정리
-   - `docs/portfolio/performance/*`에 남아 있던 예전 Redis 세션 설계(`refresh:{email}`, single-session, 재로그인 폴백)를 현재 코드 기준으로 교체
-   - 후보 문서
-     - `BLOG_PLAN.md`, `BLOG_PROGRESS.md`
-     - `blog/README.md`
-     - `blog/00_rebuild_guide.md`
-     - `blog/00_quality_checklist.md`
-     - `blog/01-why-kindergarten-erp-domain.md`
-     - `blog/11`, `12`, `17`, `20`, `21`, `22`, `23`, `24`, `26`
-     - `docs/portfolio/interview/*`
+1. 현재 문서 구조와 배포 관련 기존 내용을 확인한다.
+   - `docs/README.md`
+   - `docs/guides/developer-guide.md`
+   - `docs/guides/env-contract.md`
+   - `README.md`
+   - `application*.yml`, `docker/docker-compose*.yml`, `.github/workflows/ci.yml`
+2. 배포 가이드의 대상 구조를 고정한다.
+   - 추천안: `EC2 + RDS MySQL + Redis on EC2 + Caddy + GitHub Actions CD`
+   - 대안: Lightsail 저비용안, ElastiCache 추가안, PaaS 빠른 배포안
+3. 새 문서를 작성한다.
+   - 배포 전략 선택 이유
+   - 아키텍처 다이어그램
+   - 계정 생성 가이드(AWS/GitHub/OAuth)
+   - 인프라 생성 순서
+   - 환경변수 작성 가이드
+   - 첫 배포 절차
+   - 운영/백업/롤백/장애 대응
+   - 비용 시나리오 비교
+4. 실제 배포 자산을 추가한다.
+   - `Dockerfile`
+   - `.dockerignore`
+   - `deploy/docker-compose.prod.yml`
+   - `deploy/Caddyfile`
+   - `deploy/.env.prod.example`
+   - `.github/workflows/cd.yml`
+   - `.gitignore` 보강
+5. 문서 인덱스를 갱신한다.
+   - `docs/README.md`에 신규 가이드 링크 추가
+6. 문서/설정 정합성을 검증한다.
+   - `git diff --check`
+   - 새 문서 링크/경로 검토
+   - `bootJar`
+   - prod compose config
+   - CD workflow YAML 파싱
+7. 명시된 작업 브랜치에서 stage/commit/push를 수행한다.
 
 ## 3) 검증 계획
-- Batch A
-  - `./gradlew compileJava compileTestJava`
-  - security/config 관련 테스트 또는 신규 통합 테스트
-  - 공개 경로/관리 경로 권한 수동 검증
-  - `git diff --check`
-- Batch B
-  - 권한 성공/실패 통합 테스트
-  - race/concurrency 재현 테스트 또는 최소 회귀 테스트
-  - 대시보드 캐시 invalidation 검증
-  - `./gradlew --no-daemon integrationTest`
-- Batch B-2
-  - `./gradlew compileJava compileTestJava`
-  - `.github/workflows/ci.yml` YAML 구조 확인
-  - active 문서/블로그 내 Java 17 언급 제거 검색
-- Batch C
-  - outbox 동시 claim 테스트
-  - `./gradlew --no-daemon fastTest`
-  - `./gradlew --no-daemon integrationTest`
-  - CI YAML 파싱
-  - 필요시 GitHub Actions run 확인
-- Batch D
-  - 링크/경로 검토
-  - `git diff --check`
-  - active docs/blog stale 표현 검색(`rg`)
-  - README, demo runbook, blog 검증 명령의 상호 정합성 수동 점검
+- `git diff --check`
+- `rg -n "deployment-guide" docs README.md`
+- 경로/명령/환경변수 이름이 현재 코드와 맞는지 수동 점검
+- `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon bootJar`
+- `docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml config`
+- `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/cd.yml')"`
 
 ## 4) 리스크 및 대응
-- `safe-by-default`로 바꾸면 local/demo 편의가 떨어질 수 있음
-  - 대응: 편의 설정은 유지하되 profile/flag를 이중 게이트로 묶고, 문서에 명시적으로 분리
-- outbox/출결 요청 동시성은 설계보다 테스트가 더 어려울 수 있음
-  - 대응: 원자적 DB 제약/claim 전략을 먼저 고정하고, 테스트는 최소 재현 경로부터 추가
-- 권한 경계 수정은 기존 화면/API 기대와 충돌할 수 있음
-  - 대응: 컨트롤러 계약을 깨지 않는 선에서 서비스 접근 정책을 우선 수정하고 실패 응답 테스트를 추가
-- 블로그가 코드보다 더 낙관적으로 설명돼 있는 부분이 있음
-  - 대응: 각 배치마다 “무엇이 위험했고 어떻게 바꿨는지”를 블로그 본문과 결정 로그에 함께 반영
-
-## 5) 서브에이전트 기반 작업 원칙
-- `Faraday`: 보안/시크릿/management surface 검토 및 검증 포인트
-- `Banach`: 서비스/API 권한 경계, 상태 전이, 동시성 검토 및 회귀 범위
-- `Turing`: 구성/배포/CI/monitoring 문서와 실행 경로 정합성 검토
-- `Lagrange`: 블로그/포트폴리오 문서의 메시지, 초보자 설명, 면접 답변 싱크 검토
-- 각 배치 시작 전 관련 서브에이전트에게 다시 범위를 쪼개서 확인시키고, 코드/문서 변경 후에는 동일한 축으로 재검토한다.
+- 가격 정보는 시간이 지나면 변할 수 있다.
+  - 대응: 문서에 기준일과 공식 출처를 명시하고, 비용은 추정치로 표기한다.
+- CD workflow를 잘못 트리거하면 작업 브랜치 push만으로도 운영 배포가 실행될 수 있다.
+  - 대응: `cd.yml`은 `main` push와 수동 실행만 허용한다.
+- `.env.prod`, PEM 키, 인증서 파일이 실수로 커밋될 수 있다.
+  - 대응: `.gitignore`에 운영 비밀 파일 패턴을 추가하고 예제 파일만 커밋한다.
+- OAuth 공급자 콘솔 UI는 바뀔 수 있다.
+  - 대응: 버튼 명칭보다 반드시 넣어야 하는 redirect URI와 필수 값 중심으로 설명하고 공식 문서 링크를 함께 남긴다.
