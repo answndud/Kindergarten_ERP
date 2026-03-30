@@ -7,6 +7,8 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-03-30 13:01 | DONE | PR #1 CI 실패 원인 확인. `gh pr checks 1`과 Actions 로그를 확인한 결과 `Backend CI -> Package Smoke -> Resolve compose configs` 단계가 `docker/.env.example` 파일 부재로 실패했다. 원인은 `.gitignore`에서 `!docker/.env.example` 예외가 뒤의 `.env.*` 패턴에 다시 덮인 것이었다 | `.gitignore` 수정과 `docker/.env.example` 추적으로 fix commit/push |
+| 2026-03-30 13:04 | DONE | `.gitignore`를 수정해 `docker/.env.example`를 다시 unignore 처리했고, 예제 파일을 git 추적 대상으로 추가했다. `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config`, monitoring overlay compose config 검증을 통과해 CI 실패 경로를 로컬에서 재현/해결했다 | commit/push 후 PR 체크 재확인 |
 | 2026-03-30 12:34 | IN_PROGRESS | 사용자 요청에 따라 문서-only 범위를 실제 배포 자산 추가와 commit/push까지 확장했다. `github:yeet` 절차에 맞춰 `gh` 인증 상태를 확인하고 `main`에서 `codex/add-deployment-assets` 브랜치를 생성했다 | 운영용 파일(`Dockerfile`, `deploy/*`, `cd.yml`)과 시크릿 제외 규칙 추가 |
 | 2026-03-30 12:40 | DONE | 실제 배포 자산 반영. 루트 `Dockerfile`, `.dockerignore`, `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.prod.example`, `.github/workflows/cd.yml`을 추가했고, `.gitignore`에는 `deploy/.env.prod`, `*.pem`, 인증서/키 파일 패턴을 추가했다. 동시에 `deployment-guide.md`는 “예시”가 아니라 실제 저장소 파일 기준으로 설명을 보정했다 | `bootJar`, compose config, YAML 파싱, 포맷 검증 실행 |
 | 2026-03-30 12:42 | DONE | 배포 자산 검증 완료. `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon bootJar`, `cp deploy/.env.prod.example deploy/.env.prod && docker compose --env-file deploy/.env.prod -f deploy/docker-compose.prod.yml config`, `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/cd.yml')"`, `git diff --check`를 통과했다. 임시 `deploy/.env.prod`는 즉시 삭제했고, 현재 남은 단계는 stage/commit/push 뿐이다 | 변경 범위 최종 점검 후 commit/push |
