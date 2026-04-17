@@ -7,6 +7,7 @@
 
 | 시간 (KST) | 상태 | 수행 내용 | 다음 액션 |
 |---|---|---|---|
+| 2026-04-18 01:32 | DONE | 현재 git 상태를 재확인한 결과 배포 배치의 최신 커밋 `965770d`와 직전 커밋 `bbd7f60`이 모두 `origin/codex/add-deployment-assets`에 반영돼 있었고, 작업 트리도 clean 상태였다. 이에 따라 `PLAN.md`, `PROGRESS.md`를 최신 상태 기준으로 정리해 더 이상 `commit/push 대기`로 보이지 않도록 갱신했다 | 후속 작업 요청 전까지 대기 |
 | 2026-03-30 13:01 | DONE | PR #1 CI 실패 원인 확인. `gh pr checks 1`과 Actions 로그를 확인한 결과 `Backend CI -> Package Smoke -> Resolve compose configs` 단계가 `docker/.env.example` 파일 부재로 실패했다. 원인은 `.gitignore`에서 `!docker/.env.example` 예외가 뒤의 `.env.*` 패턴에 다시 덮인 것이었다 | `.gitignore` 수정과 `docker/.env.example` 추적으로 fix commit/push |
 | 2026-03-30 13:04 | DONE | `.gitignore`를 수정해 `docker/.env.example`를 다시 unignore 처리했고, 예제 파일을 git 추적 대상으로 추가했다. `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config`, monitoring overlay compose config 검증을 통과해 CI 실패 경로를 로컬에서 재현/해결했다 | commit/push 후 PR 체크 재확인 |
 | 2026-03-30 12:34 | IN_PROGRESS | 사용자 요청에 따라 문서-only 범위를 실제 배포 자산 추가와 commit/push까지 확장했다. `github:yeet` 절차에 맞춰 `gh` 인증 상태를 확인하고 `main`에서 `codex/add-deployment-assets` 브랜치를 생성했다 | 운영용 파일(`Dockerfile`, `deploy/*`, `cd.yml`)과 시크릿 제외 규칙 추가 |
@@ -218,6 +219,6 @@
 | 2026-02-20 22:31 | DONE | `CURRENT_FEATURES.md`를 실행/권한/도메인/검증 중심으로 전면 업데이트, 구식 Phase/예정 기능 제거 | 최종 교차 검토 및 작업 종료 |
 
 ## 현재 상태 요약
-- 현재 단계: `IN_PROGRESS`
-- 활성 작업: 초보자용 배포 전략/가이드 문서화 + 배포 자산 추가 완료, commit/push 대기
+- 현재 단계: `DONE`
+- 활성 작업: 없음 (`codex/add-deployment-assets` 브랜치가 `origin/codex/add-deployment-assets`와 동기화돼 있고 워킹 트리도 clean)
 - 블로커: 없음
