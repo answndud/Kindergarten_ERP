@@ -3,6 +3,7 @@
 이 문서는 이 저장소에서 기능을 추가/수정하는 개발자를 위한 실무 가이드입니다.
 유저 관점 설명은 `docs/guides/user-guide.md`를 참고하세요.
 실행 환경별 필수 변수와 기본 노출 정책은 `docs/guides/env-contract.md`를 SSOT로 봅니다.
+active 작업 계획/상태는 `docs/PLAN.md`, `docs/PROGRESS.md`, 완료 이력은 `docs/COMPLETED.md`를 기준으로 관리합니다.
 
 ---
 
@@ -194,9 +195,9 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 기능/정책 변경 시 반드시 문서를 같이 갱신하세요.
 
-- 기능 결정/변경: `docs/decisions/`
-- 트러블슈팅/회고: `docs/archive/retrospectives/`
-- 성능 개선: `docs/portfolio/performance/`
+- active 계획/상태: `docs/PLAN.md`, `docs/PROGRESS.md`
+- 완료 archive: `docs/COMPLETED.md`
+- 개발/실행/환경/배포 가이드: `docs/guides/*`
 
 특히 성능 작업은 아래 순서를 지켜 기록합니다.
 
@@ -204,7 +205,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 2. 개선 전 측정
 3. 개선 적용
 4. 개선 후 측정
-5. 트레이드오프 문서화
+5. 트레이드오프 문서화 및 완료 archive 반영
 
 ---
 
@@ -216,7 +217,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 4. API 응답 `ApiResponse<T>` 유지
 5. 필요 시 Flyway migration 추가
 6. 통합 테스트 추가/수정
-7. `docs/decisions/` 변경 로그 작성
+7. `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/COMPLETED.md` 상태 반영
 8. 성능 영향이 있으면 전/후 수치 기록
 
 ---
@@ -236,5 +237,6 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 - 사용자 가이드: `docs/guides/user-guide.md`
 - 프로젝트 개요: `README.md`
-- 단계별 결정 로그: `docs/decisions/*.md`
-- 성능 개선 스토리: `docs/portfolio/performance/README.md`
+- 문서 인덱스: `docs/README.md`
+- active 계획/진행: `docs/PLAN.md`, `docs/PROGRESS.md`
+- 완료 archive: `docs/COMPLETED.md`

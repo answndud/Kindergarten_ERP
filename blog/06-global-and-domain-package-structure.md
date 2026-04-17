@@ -79,9 +79,7 @@ Kindergarten ERP는 초반부터 이 문제를 피하려고 구조를 두 갈래
 - src/main/java/com/erp/domain/member/*
 - src/main/java/com/erp/domain/attendance/*
 - src/main/java/com/erp/domain/notepad/*
-- docs/archive/legacy/project-idea.md
-- docs/archive/legacy/project-plan.md
-- docs/decisions/phase00_setup.md
+- docs/COMPLETED.md#archive-001
 ```
 
 ## 4. 설계 구상
@@ -254,7 +252,7 @@ sequenceDiagram
 
 즉, 공통 구조가 테스트의 기대값까지 단순하게 만들어 줍니다.
 
-또한 [docs/decisions/phase00_setup.md](../docs/decisions/phase00_setup.md)에서도
+또한 [docs/COMPLETED.md#archive-001](../docs/COMPLETED.md#archive-001)에서도
 
 - `ApiResponse<T>`
 - `GlobalExceptionHandler`
@@ -309,7 +307,7 @@ sequenceDiagram
   - src/main/java/com/erp/domain/member/service/MemberService.java
   - src/main/java/com/erp/domain/member/repository/MemberRepository.java
 - 결정 로그:
-  - docs/decisions/phase00_setup.md
+  - docs/COMPLETED.md#archive-001
 - 검증:
   - src/test/java/com/erp/ErpApplicationTests.java
   - src/test/java/com/erp/api/MemberApiIntegrationTest.java

@@ -76,11 +76,7 @@ Kindergarten ERP는 이 문제를 꽤 깊게 다뤘습니다.
 - src/main/resources/db/migration/V9__preserve_social_account_history.sql
 - src/test/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandlerTest.java
 - src/test/java/com/erp/api/MemberApiIntegrationTest.java
-- docs/decisions/phase27_oauth2_account_conflict_policy.md
-- docs/decisions/phase28_explicit_social_account_linking.md
-- docs/decisions/phase30_social_account_unlink_policy.md
-- docs/decisions/phase31_member_social_account_normalization.md
-- docs/decisions/phase32_social_provider_identity_immutability.md
+- docs/COMPLETED.md#archive-002
 ```
 
 ## 4. 설계 구상
@@ -286,11 +282,7 @@ sequenceDiagram
   - src/test/java/com/erp/global/security/oauth2/OAuth2AuthenticationSuccessHandlerTest.java
   - src/test/java/com/erp/api/MemberApiIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase27_oauth2_account_conflict_policy.md
-  - docs/decisions/phase28_explicit_social_account_linking.md
-  - docs/decisions/phase30_social_account_unlink_policy.md
-  - docs/decisions/phase31_member_social_account_normalization.md
-  - docs/decisions/phase32_social_provider_identity_immutability.md
+  - docs/COMPLETED.md#archive-002
 ```
 
 ## 12. 구현 체크리스트
