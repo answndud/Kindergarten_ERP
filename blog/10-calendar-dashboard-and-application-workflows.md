@@ -66,9 +66,8 @@ Kindergarten ERP에서는 이 확장을 아래 도메인으로 풀었습니다.
 - src/test/java/com/erp/api/DashboardApiIntegrationTest.java
 - src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java
 - src/test/java/com/erp/api/KindergartenApplicationApiIntegrationTest.java
-- docs/decisions/phase07_application.md
-- docs/decisions/phase10_calendar.md
-- docs/decisions/phase18_dashboard_metric_redefinition.md
+- docs/COMPLETED.md#archive-001
+- docs/COMPLETED.md#archive-002
 ```
 
 ## 4. 설계 구상
@@ -211,9 +210,9 @@ sequenceDiagram
 
 그리고 설계 변천은 아래 결정 로그와 연결됩니다.
 
-- [phase07_application.md](../docs/decisions/phase07_application.md)
-- [phase10_calendar.md](../docs/decisions/phase10_calendar.md)
-- [phase18_dashboard_metric_redefinition.md](../docs/decisions/phase18_dashboard_metric_redefinition.md)
+- [phase07_application.md](../docs/COMPLETED.md#archive-001)
+- [phase10_calendar.md](../docs/COMPLETED.md#archive-001)
+- [phase18_dashboard_metric_redefinition.md](../docs/COMPLETED.md#archive-002)
 
 즉, 이 단계는 “기능을 더 붙였다”가 아니라
 프로젝트가 진짜 운영 흐름을 다루기 시작한 단계입니다.
@@ -275,9 +274,8 @@ sequenceDiagram
   - src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java
   - src/test/java/com/erp/api/KindergartenApplicationApiIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase07_application.md
-  - docs/decisions/phase10_calendar.md
-  - docs/decisions/phase18_dashboard_metric_redefinition.md
+  - docs/COMPLETED.md#archive-001
+  - docs/COMPLETED.md#archive-002
 ```
 
 ## 12. 구현 체크리스트

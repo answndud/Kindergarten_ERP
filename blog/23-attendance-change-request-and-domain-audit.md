@@ -71,8 +71,7 @@ Kindergarten ERP는 이 문제를
 - src/main/resources/templates/domainaudit/audit-logs.html
 - src/test/java/com/erp/api/AttendanceChangeRequestApiIntegrationTest.java
 - src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java
-- docs/decisions/phase42_attendance_change_request_workflow.md
-- docs/decisions/phase43_domain_audit_log.md
+- docs/COMPLETED.md#archive-003
 ```
 
 ## 4. 설계 구상
@@ -338,8 +337,7 @@ sequenceDiagram
   - src/test/java/com/erp/api/AttendanceChangeRequestApiIntegrationTest.java
   - src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase42_attendance_change_request_workflow.md
-  - docs/decisions/phase43_domain_audit_log.md
+  - docs/COMPLETED.md#archive-003
 ```
 
 ## 12. 구현 체크리스트

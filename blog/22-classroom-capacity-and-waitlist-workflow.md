@@ -91,7 +91,7 @@ Kindergarten ERP는 이 문제를
 - src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java
 - src/test/java/com/erp/api/ClassroomApiIntegrationTest.java
 - src/test/java/com/erp/api/KidApiIntegrationTest.java
-- docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+- docs/COMPLETED.md#archive-003
 ```
 
 ## 4. 설계 구상
@@ -342,7 +342,7 @@ sequenceDiagram
   - src/test/java/com/erp/api/ClassroomApiIntegrationTest.java
   - src/test/java/com/erp/api/KidApiIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+  - docs/COMPLETED.md#archive-003
 ```
 
 ## 12. 구현 체크리스트

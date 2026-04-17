@@ -115,8 +115,8 @@ Cache는 자주 읽는 결과를 잠깐 저장해 두었다가 같은 계산을 
 - src/main/java/com/erp/domain/auth/service/AuthSessionRegistryService.java
 - src/test/java/com/erp/common/TestcontainersSupport.java
 - src/test/java/com/erp/ErpApplicationTests.java
-- docs/decisions/phase00_setup.md
-- docs/decisions/phase15_testcontainers_integration_test_stack.md
+- docs/COMPLETED.md#archive-001
+- docs/COMPLETED.md#archive-002
 ```
 
 이번 글은 “설정과 공통 인프라”가 주제이므로, 개별 비즈니스 기능보다 **기초 뼈대 파일**에 집중합니다.
@@ -612,7 +612,7 @@ sequenceDiagram
 
 ### 7-3. 왜 H2 대신 이 방식을 택했는가
 
-[phase15_testcontainers_integration_test_stack.md](../docs/decisions/phase15_testcontainers_integration_test_stack.md)에 정리된 이유가 명확합니다.
+[phase15_testcontainers_integration_test_stack.md](../docs/COMPLETED.md#archive-002)에 정리된 이유가 명확합니다.
 
 - H2는 MySQL과 SQL/DDL 차이가 있다
 - `create-drop`은 편하지만 운영 스키마 기준 검증이 아니다

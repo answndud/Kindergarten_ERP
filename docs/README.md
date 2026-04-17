@@ -1,71 +1,41 @@
 # Docs Index
 
-이 폴더는 "현재 바로 써야 하는 문서"와 "기록으로 남겨야 하는 문서"를 분리한 문서 인덱스입니다.
+이 폴더는 현재 로컬 기준의 문서 운영 SSOT입니다.
+active 문서와 완료 archive를 분리해, 다음 세션에서도 바로 이어서 작업할 수 있게 유지합니다.
 
 ## Start Here
 
-처음 보는 사람은 아래 순서로 읽으면 됩니다.
+새 세션에서 먼저 읽는 순서는 아래와 같습니다.
 
-1. `README.md`
-2. `docs/guides/deployment-guide.md`
-3. `docs/guides/env-contract.md`
-4. `docs/portfolio/hiring-pack/backend-hiring-pack.md`
-5. `docs/portfolio/architecture/system-architecture.md`
-6. `docs/portfolio/demo/demo-preflight.md`
-7. `docs/portfolio/demo/demo-runbook.md`
-8. `docs/portfolio/case-studies/auth-incident-response.md`
+1. `docs/PLAN.md`
+2. `docs/PROGRESS.md`
+3. `docs/guides/developer-guide.md`
+4. `docs/guides/env-contract.md`
+5. `docs/COMPLETED.md` (과거 맥락이 필요할 때만)
 
 ## Active Docs
 
-### Guides
+- `docs/PLAN.md`
+  - 현재 active 계획과 우선순위
+- `docs/PROGRESS.md`
+  - 현재 상태, blocker, 최근 검증, 다음 액션
+- `docs/COMPLETED.md`
+  - 완료된 작업의 상세 archive
 
-- `docs/guides/deployment-guide.md`
-  - 초보자용 계정 생성, AWS 배포, HTTPS, OAuth, 운영/롤백, 비용 비교 가이드
+## Guides
+
 - `docs/guides/developer-guide.md`
-  - 개발/구조/테스트/문서화 규칙
+  - 개발/구조/검증/문서화 기준
 - `docs/guides/env-contract.md`
   - local/demo/prod 실행 환경 변수와 안전한 기본값 계약
 - `docs/guides/user-guide.md`
   - 역할별 사용 흐름
-
-### Portfolio
-
-- `docs/portfolio/hiring-pack/`
-  - 채용 담당자/면접관용 진입 문서
-- `docs/portfolio/architecture/`
-  - 현재 구조를 설명하는 아키텍처 SSOT
-- `docs/portfolio/demo/`
-  - 시연 전 체크리스트와 실제 데모 runbook
-- `docs/portfolio/case-studies/`
-  - auth incident response 같은 대표 사례
-- `docs/portfolio/interview/`
-  - 인터뷰 1장 요약, 데모 스크립트, Q&A 스피킹 노트
-- `docs/portfolio/performance/`
-  - 성능 개선 스토리, 측정 리포트, 면접용 성능 자료
-
-### Decisions
-
-- `docs/decisions/`
-  - 기능/보안/테스트/운영 관련 결정 로그
-  - 최신 개선 흐름은 `phase14` 이후 문서를 우선 보면 됩니다.
-  - 최근 배치는 `phase47_outbox_atomic_claim_and_ops_contract.md`까지 이어집니다.
-  - 인증 이상 징후/모니터링/외부 incident 전달 흐름은 `phase37 -> phase40 -> phase47` 순서로 읽는 것을 권장합니다.
-  - 운영형 워크플로우 확장은 `phase39 -> phase40 -> phase41 -> phase42 -> phase43 -> phase44` 순서로 읽는 것을 권장합니다.
-
-## Archive
-
-현재 운영 SSOT는 아니지만 보존 가치가 있는 문서는 archive로 이동했습니다.
-
-- `docs/archive/legacy/`
-  - 초기 설계서, 개발 일지, 과거 계획서, 튜토리얼
-- `docs/archive/requirements/`
-  - 초기 TODO/요구사항 메모
-- `docs/archive/retrospectives/`
-  - 트러블슈팅, 회고, 디버깅 기록
+- `docs/guides/deployment-guide.md`
+  - 초보자용 배포 절차와 운영 자산 설명
 
 ## Rules
 
-- 새 기능/정책 결정 로그: `docs/decisions/`
-- 성능 최적화 스토리: `docs/portfolio/performance/`
-- 인터뷰 자료: `docs/portfolio/interview/`
-- 더 이상 SSOT가 아닌 참고 기록: `docs/archive/`
+- active 작업은 `docs/PLAN.md`, `docs/PROGRESS.md`에만 남깁니다.
+- 완료된 작업은 active 문서에 남기지 않고 `docs/COMPLETED.md`로 옮깁니다.
+- 현재 로컬에 존재하지 않는 legacy 문서 트리는 SSOT로 취급하지 않습니다.
+- 블로그 작업 SSOT는 별도로 루트의 `BLOG_PLAN.md`, `BLOG_PROGRESS.md`를 사용합니다.
