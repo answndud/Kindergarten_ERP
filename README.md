@@ -13,6 +13,7 @@
 ## 📋 목차
 
 - [프로젝트 소개](#-프로젝트-소개)
+- [화면 캡처](#-화면-캡처)
 - [주요 기능](#-주요-기능)
 - [기술 스택](#-기술-스택)
 - [프로젝트 구조](#-프로젝트-구조)
@@ -61,6 +62,24 @@
 | 👔 원장 | 유치원 총괄 관리자 | 전체 관리, 통계, 승인 |
 | 👩‍🏫 교사 | 반 담당 교사 | 출석, 알림장, 일정 |
 | 👨‍👩‍👧 학부모 | 원생의 보호자 | 알림장 확인, 출결 확인 |
+
+---
+
+## 🖼 화면 캡처
+
+2026-04-23 기준 Impeccable workflow로 개선한 최신 desktop-first 화면입니다.
+
+| 원장 대시보드 | 출석 관리 |
+|---|---|
+| ![원장 대시보드](./docs/assets/readme/dashboard-desktop.png) | ![출석 관리](./docs/assets/readme/attendance-desktop.png) |
+
+| 신청 처리 큐 | 알림장 |
+|---|---|
+| ![신청 처리 큐](./docs/assets/readme/applications-pending-desktop.png) | ![알림장](./docs/assets/readme/notepad-desktop.png) |
+
+| 인증 감사 로그 | 업무 감사 로그 |
+|---|---|
+| ![인증 감사 로그](./docs/assets/readme/audit-desktop.png) | ![업무 감사 로그](./docs/assets/readme/domain-audit-desktop.png) |
 
 ---
 
