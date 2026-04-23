@@ -30,17 +30,7 @@
         }
     </script>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
-        body {
-            font-family: 'Pretendard', sans-serif;
-        }
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%);
-        }
         .role-radio:checked + label {
             border-color: #56B88C;
             background-color: #F3FBF7;
@@ -108,16 +98,18 @@
         <!-- Logo -->
         <div class="text-center mb-6">
             <div class="inline-flex items-center gap-3 mb-3">
-                <div class="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+                <div class="w-12 h-12 rounded-lg border border-gray-200 bg-white flex items-center justify-center">
                     <img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="KinderCare" class="w-full h-full object-contain" />
                 </div>
                 <span class="sr-only">KinderCare</span>
             </div>
-            <p class="text-gray-600 mt-1">유치원 ERP에 오신 것을 환영합니다</p>
+            <p class="text-sm font-semibold text-primary-700">KinderCare ERP</p>
+            <h1 class="mt-2 text-3xl font-bold text-gray-900">회원가입</h1>
+            <p class="mt-3 text-gray-600">역할을 선택하고 기본 정보를 입력하세요.</p>
         </div>
 
         <!-- Signup Card -->
-        <div class="auth-card bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-10">
+        <div class="auth-card bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
             <!-- Error Alert -->
             <div x-show="error" x-cloak
                  class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -133,50 +125,50 @@
                 <!-- Role Selection -->
                 <div class="mb-5">
                     <label class="block mb-2 text-sm font-medium text-gray-700">회원 유형</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <input type="radio" name="role" value="PARENT" x-model="role" id="role-parent" class="role-radio peer sr-only">
-                            <label for="role-parent" class="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-all">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div class="relative">
+                            <input type="radio" name="role" value="PARENT" x-model="role" id="role-parent" class="role-radio peer absolute h-0 w-0 opacity-0">
+                            <label for="role-parent" class="flex min-h-20 flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 transition-all peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2">
                                 <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center mb-1.5">
                                     <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
                                 </div>
-                                <span class="text-xs font-medium text-gray-700">학부모</span>
+                                <span class="text-sm font-medium text-gray-700">학부모</span>
                             </label>
                         </div>
-                        <div>
-                            <input type="radio" name="role" value="TEACHER" x-model="role" id="role-teacher" class="role-radio peer sr-only">
-                            <label for="role-teacher" class="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-all">
+                        <div class="relative">
+                            <input type="radio" name="role" value="TEACHER" x-model="role" id="role-teacher" class="role-radio peer absolute h-0 w-0 opacity-0">
+                            <label for="role-teacher" class="flex min-h-20 flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 transition-all peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2">
                                 <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center mb-1.5">
                                     <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                                     </svg>
                                 </div>
-                                <span class="text-xs font-medium text-gray-700">교사</span>
+                                <span class="text-sm font-medium text-gray-700">교사</span>
                             </label>
                         </div>
-                        <div>
-                            <input type="radio" name="role" value="PRINCIPAL" x-model="role" id="role-principal" class="role-radio peer sr-only">
-                            <label for="role-principal" class="flex flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-all">
+                        <div class="relative">
+                            <input type="radio" name="role" value="PRINCIPAL" x-model="role" id="role-principal" class="role-radio peer absolute h-0 w-0 opacity-0">
+                            <label for="role-principal" class="flex min-h-20 flex-col items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 transition-all peer-focus:ring-2 peer-focus:ring-primary-500 peer-focus:ring-offset-2">
                                 <div class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center mb-1.5">
                                     <svg class="w-5 h-5 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
                                 </div>
-                                <span class="text-xs font-medium text-gray-700">원장</span>
+                                <span class="text-sm font-medium text-gray-700">원장</span>
                             </label>
                         </div>
                     </div>
                 </div>
 
                 <!-- Name, Email, Phone -->
-                <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-3">
                     <div>
                         <label for="name" class="block mb-1.5 text-sm font-medium text-gray-700">이름</label>
                         <input type="text" id="name" name="name" required
                                x-model="name"
-                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               class="h-11 px-3 block w-full border border-gray-200 rounded-lg text-sm focus:border-primary-500 focus:ring-primary-500"
                                placeholder="홍길동">
                         <p x-show="errors.name" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.name"></p>
                     </div>
@@ -184,7 +176,7 @@
                         <label for="email" class="block mb-1.5 text-sm font-medium text-gray-700">이메일</label>
                         <input type="email" id="email" name="email" required
                                x-model="email"
-                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               class="h-11 px-3 block w-full border border-gray-200 rounded-lg text-sm focus:border-primary-500 focus:ring-primary-500"
                                placeholder="example@email.com">
                         <p x-show="errors.email" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.email"></p>
                     </div>
@@ -192,19 +184,19 @@
                         <label for="phone" class="block mb-1.5 text-sm font-medium text-gray-700">전화번호</label>
                         <input type="tel" id="phone" name="phone"
                                x-model="phone"
-                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               class="h-11 px-3 block w-full border border-gray-200 rounded-lg text-sm focus:border-primary-500 focus:ring-primary-500"
                                placeholder="01012345678">
                         <p x-show="errors.phone" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.phone"></p>
                     </div>
                 </div>
 
                 <!-- Password -->
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2">
                     <div>
                         <label for="password" class="block mb-1.5 text-sm font-medium text-gray-700">비밀번호</label>
                         <input type="password" id="password" name="password" required
                                x-model="password"
-                               class="py-2.5 px-3 block w-full border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-primary-500"
+                               class="h-11 px-3 block w-full border border-gray-200 rounded-lg text-sm focus:border-primary-500 focus:ring-primary-500"
                                placeholder="8자 이상">
                         <p x-show="errors.password" x-cloak class="mt-1 text-xs text-red-600" x-text="errors.password"></p>
                     </div>
@@ -213,7 +205,7 @@
                         <div class="relative">
                             <input type="password" id="passwordConfirm" name="passwordConfirm" required
                                    x-model="passwordConfirm"
-                                   class="py-2.5 px-3 pr-8 block w-full border rounded-xl text-sm focus:ring-primary-500"
+                                   class="h-11 px-3 pr-8 block w-full border rounded-lg text-sm focus:ring-primary-500"
                                    :class="passwordsMatch() ? 'border-green-400 focus:border-green-500' : (passwordConfirm ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-primary-500')"
                                    placeholder="다시 입력">
                             <div x-show="passwordConfirm" x-cloak class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -229,19 +221,18 @@
                 </div>
 
                 <!-- Terms -->
-                <div class="mb-5 p-3 bg-gray-50 rounded-xl">
-                    <label class="flex items-start gap-2 cursor-pointer">
-                        <input type="checkbox" required class="w-4 h-4 mt-0.5 border-gray-300 rounded text-primary-600 focus:ring-primary-500">
-                        <span class="text-xs text-gray-600">
-                            <a href="#" class="text-primary-600 hover:underline font-medium">이용약관</a>과
-                            <a href="#" class="text-primary-600 hover:underline font-medium">개인정보처리방침</a>에 동의합니다.
+                <div class="mb-5 rounded-lg bg-gray-50 px-3 py-2">
+                    <label class="flex min-h-12 items-center gap-3 cursor-pointer">
+                        <input type="checkbox" required class="h-8 w-8 flex-shrink-0 border-gray-300 rounded text-primary-600 focus:ring-primary-500">
+                        <span class="text-sm text-gray-600">
+                            서비스 이용 및 개인정보 처리 기준에 동의합니다.
                         </span>
                     </label>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit" :disabled="isLoading || !passwordsMatch() || !email || !name"
-                        class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-xl border border-transparent bg-gradient-primary text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                        class="w-full min-h-11 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                     <span x-show="!isLoading">회원가입</span>
                     <span x-show="isLoading" x-cloak class="flex items-center gap-2">
                         <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -259,8 +250,8 @@
                 <div class="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <a href="/oauth2/authorization/google" class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <a href="/oauth2/authorization/google" class="min-h-11 px-4 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -269,7 +260,7 @@
                     </svg>
                     Google로 가입
                 </a>
-                <a href="/oauth2/authorization/kakao" class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
+                <a href="/oauth2/authorization/kakao" class="min-h-11 px-4 inline-flex justify-center items-center gap-2 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all text-sm font-medium">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#F5E049" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
                     </svg>
@@ -280,13 +271,13 @@
             <!-- Login Link -->
             <div class="mt-6 text-center text-sm text-gray-600">
                 이미 계정이 있으신가요?
-                <a href="/login" class="font-medium text-primary-600 hover:text-primary-700">로그인</a>
+                <a href="/login" class="inline-flex min-h-8 items-center font-medium text-primary-700 hover:text-primary-800">로그인</a>
             </div>
         </div>
 
         <!-- Footer -->
         <p class="mt-6 text-center text-sm text-gray-500">
-            © 2024 유치원 ERP. All rights reserved.
+            © 2026 유치원 ERP. All rights reserved.
         </p>
     </div>
 

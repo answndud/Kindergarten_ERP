@@ -36,22 +36,22 @@
     
     <style>
         body { font-family: 'Pretendard', sans-serif; }
-        .bg-gradient-primary { background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%); }
     </style>
     <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
 <body class="bg-gray-50">
 <header th:replace="~{fragments/header :: header}"></header>
 
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <!-- Page Header -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">알림장</h1>
-                <p class="text-gray-600">선생님이 보낸 알림장을 확인하고 답장을 보내세요</p>
+                <p class="mb-2 text-sm font-semibold text-primary-700">Daily Notes</p>
+                <h1 class="text-3xl font-bold text-gray-900">알림장</h1>
+                <p class="mt-3 text-gray-600">반과 원아별 알림장을 확인하고 필요한 내용을 작성하세요.</p>
             </div>
             <!-- Create Button (Principal/Teacher only) -->
-            <a id="createNotepadBtn" href="/notepad/write" class="hidden px-4 py-2 bg-gradient-primary text-white font-medium rounded-xl hover:shadow-lg transition-all flex items-center gap-2">
+            <a id="createNotepadBtn" href="/notepad/write" class="hidden min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -61,12 +61,12 @@
 
 
         <!-- Filter -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4">
             <div class="flex flex-col sm:flex-row gap-4">
-                <select id="filterClassroom" name="classroomId" class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select id="filterClassroom" name="classroomId" class="h-11 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <option value="">전체 반</option>
                 </select>
-                <select id="filterKid" name="kidId" disabled class="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select id="filterKid" name="kidId" disabled class="h-11 rounded-lg border border-gray-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <option value="">전체 원생</option>
                 </select>
             </div>
@@ -261,23 +261,23 @@
                             <form id="${formId}" class="text-left space-y-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">반 선택 *</label>
-                                    <select id="swal-classroom" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
+                                    <select id="swal-classroom" class="w-full h-11 px-3 border border-gray-200 rounded-lg">
                                         ${Object.entries(classroomOptions).map(([id, label]) => `<option value="${id}">${label}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">대상 원생 (선택)</label>
-                                    <select id="swal-kid" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
+                                    <select id="swal-kid" class="w-full h-11 px-3 border border-gray-200 rounded-lg">
                                         <option value="">전체</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">제목 *</label>
-                                    <input id="swal-title" class="w-full px-3 py-2 border border-gray-200 rounded-lg" placeholder="예) 오늘의 활동 안내" />
+                                    <input id="swal-title" class="w-full h-11 px-3 border border-gray-200 rounded-lg" placeholder="예) 오늘의 활동 안내" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">내용 *</label>
-                                    <textarea id="swal-content" rows="6" class="w-full px-3 py-2 border border-gray-200 rounded-lg" placeholder="오늘 아이들이 어떤 활동을 했는지 적어 주세요."></textarea>
+                                    <textarea id="swal-content" rows="6" class="w-full px-3 py-3 border border-gray-200 rounded-lg" placeholder="오늘 아이들이 어떤 활동을 했는지 적어 주세요."></textarea>
                                 </div>
                             </form>
                         `,
@@ -286,9 +286,9 @@
                         confirmButtonText: '작성',
                         cancelButtonText: '취소',
                         customClass: {
-                            popup: 'rounded-2xl',
-                            confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-medium',
-                            cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                            popup: 'rounded-xl',
+                            confirmButton: 'min-h-11 px-4 rounded-lg bg-primary-600 text-white font-semibold',
+                            cancelButton: 'min-h-11 px-4 rounded-lg bg-gray-100 text-gray-700 font-semibold',
                         },
                         buttonsStyling: false,
                         didOpen: async () => {

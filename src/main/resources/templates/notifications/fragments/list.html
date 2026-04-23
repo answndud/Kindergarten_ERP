@@ -7,14 +7,14 @@
          hx-trigger="notifications-changed from:body"
          hx-swap="outerHTML"
          th:classappend="${showFilters} ? 'w-full' : 'w-80'"
-         class="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+         class="bg-white border border-gray-200 rounded-xl overflow-hidden">
 
-        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="font-semibold text-gray-900">알림</div>
+        <div class="px-4 py-3 border-b border-gray-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="font-semibold text-gray-900" th:classappend="${showFilters} ? ' text-2xl' : ' text-base'">알림</div>
                 <button type="button"
                         th:classappend="${!unreadOnly} ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-primary-600'"
-                        class="text-[11px] px-2 py-0.5 rounded-full border border-transparent"
+                        class="min-h-8 rounded-full border border-transparent px-3 text-xs font-semibold"
                         th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=false, type=${type}, showFilters=${showFilters})}"
                         hx-target="#notification-list"
                         hx-swap="outerHTML">
@@ -22,7 +22,7 @@
                 </button>
                 <button type="button"
                         th:classappend="${unreadOnly} ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-primary-600'"
-                        class="text-[11px] px-2 py-0.5 rounded-full border border-transparent"
+                        class="min-h-8 rounded-full border border-transparent px-3 text-xs font-semibold"
                         th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=true, type=${type}, showFilters=${showFilters})}"
                         hx-target="#notification-list"
                         hx-swap="outerHTML">
@@ -30,20 +30,20 @@
                 </button>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-[11px] text-gray-400" th:text="${'미읽음 ' + unreadCount}">미읽음 0</span>
+                <span class="text-xs text-gray-500" th:text="${'미읽음 ' + unreadCount}">미읽음 0</span>
                 <button type="button"
-                        class="text-xs text-gray-600 hover:text-primary-600"
+                        class="min-h-8 rounded-lg px-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 hover:text-primary-600"
                         onclick="Notifications.markAllRead().catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
                     모두 읽음
                 </button>
             </div>
         </div>
 
-        <div th:if="${showFilters}" class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-            <div class="text-[11px] text-gray-500 mb-2">알림 유형 필터</div>
+        <div th:if="${showFilters}" class="px-4 py-3 border-b border-gray-100 bg-white">
+            <div class="text-sm font-semibold text-gray-700 mb-2">알림 유형</div>
             <div class="flex flex-wrap gap-2">
                 <button type="button"
-                        class="text-[11px] px-2 py-1 rounded-full border"
+                        class="min-h-9 rounded-full border px-3 text-xs font-semibold"
                         th:classappend="${type == null} ? 'bg-primary-50 text-primary-700 border-primary-100' : 'bg-white text-gray-600 border-gray-200 hover:text-primary-600'"
                         th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=${unreadOnly}, showFilters=true)}"
                         hx-target="#notification-list"
@@ -52,7 +52,7 @@
                 </button>
                 <button type="button"
                         th:each="t : ${notificationTypes}"
-                        class="text-[11px] px-2 py-1 rounded-full border"
+                        class="min-h-9 rounded-full border px-3 text-xs font-semibold"
                         th:classappend="${type != null and type.name() == t.name()} ? 'bg-primary-50 text-primary-700 border-primary-100' : 'bg-white text-gray-600 border-gray-200 hover:text-primary-600'"
                         th:text="${t.description}"
                         th:attr="hx-get=@{/notifications/fragments/list(limit=${showFilters} ? 50 : 10, unreadOnly=${unreadOnly}, type=${t}, showFilters=true)}"
@@ -63,18 +63,19 @@
             </div>
         </div>
 
-        <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="p-4 text-sm text-gray-500">
-            새로운 알림이 없습니다.
+        <div th:if="${notifications == null or #lists.isEmpty(notifications)}" class="p-8 text-center">
+            <p class="text-2xl font-bold text-gray-900">새로운 알림이 없습니다</p>
+            <p class="mt-2 text-sm text-gray-600">읽지 않은 요청이나 공지가 생기면 이곳에 표시됩니다.</p>
         </div>
 
-        <div th:if="${notifications != null and !#lists.isEmpty(notifications) and unreadOnly}" class="px-4 py-2 text-[11px] text-gray-500 bg-gray-50">
+        <div th:if="${notifications != null and !#lists.isEmpty(notifications) and unreadOnly}" class="px-4 py-2 text-xs font-medium text-gray-600 bg-gray-50">
             미읽음만 표시 중입니다.
         </div>
 
         <div th:if="${notifications != null and !#lists.isEmpty(notifications)}" th:classappend="${showFilters} ? '' : 'max-h-96 overflow-y-auto'">
             <button type="button"
                     th:each="n : ${notifications}"
-                    class="w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50"
+                    class="w-full text-left px-4 py-4 border-b border-gray-100 hover:bg-gray-50"
                     th:classappend="${n.isRead()} ? 'opacity-70' : 'bg-white'"
                     th:attr="data-id=${n.id()},data-link=${n.linkUrl()}"
                     onclick="Notifications.open(this.dataset.id, this.dataset.link).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
@@ -83,22 +84,22 @@
                           th:classappend="${n.isRead()} ? 'bg-gray-300' : 'bg-red-500'"></span>
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-primary-50 text-primary-700"
+                            <span class="rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700"
                                   th:text="${n.typeDescription() != null ? n.typeDescription() : n.type()}">유형</span>
                             <div class="text-sm font-medium text-gray-900" th:text="${n.title()}">제목</div>
                         </div>
-                        <div class="mt-1 text-xs text-gray-600 line-clamp-2" th:text="${n.content()}">내용</div>
-                        <div class="mt-2 text-[11px] text-gray-400" th:text="${#temporals.format(n.createdAt(), 'yyyy-MM-dd HH:mm')}">시간</div>
+                        <div class="mt-1 text-sm text-gray-600 line-clamp-2" th:text="${n.content()}">내용</div>
+                        <div class="mt-2 text-xs text-gray-500" th:text="${#temporals.format(n.createdAt(), 'yyyy-MM-dd HH:mm')}">시간</div>
                     </div>
-                    <div class="flex flex-col items-end gap-2 text-[11px] text-gray-500">
+                    <div class="flex flex-col items-end gap-2 text-xs text-gray-500">
                         <button type="button"
                                 th:if="${!n.isRead()}"
-                                class="hover:text-primary-600"
+                                class="min-h-8 rounded-lg px-2 font-semibold hover:bg-primary-50 hover:text-primary-700"
                                 onclick="event.stopPropagation(); Notifications.markRead(this.closest('button').dataset.id).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
                             읽음
                         </button>
                         <button type="button"
-                                class="hover:text-red-500"
+                                class="min-h-8 rounded-lg px-2 font-semibold hover:bg-red-50 hover:text-red-600"
                                 onclick="event.stopPropagation(); Notifications.remove(this.closest('button').dataset.id).catch(e => UI.error(e.message || '요청 처리 중 오류가 발생했습니다.'))">
                             삭제
                         </button>
