@@ -82,6 +82,18 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 - `src/main/resources/templates/*`: 역할 기반 SSR 화면
 - `src/main/resources/static/js/app.js`: 공통 UI/SweetAlert2/알림 유틸
 - HTMX로 fragment 단위 갱신, Alpine.js로 최소 상태 관리
+- 디자인/프론트엔드 개선 컨텍스트는 루트 `.impeccable.md`를 기준으로 합니다.
+- Impeccable skill은 repo-local `.agents/skills/*`에만 둡니다. 전역 `~/.codex`, `~/.claude`, global npm install, 사용자 홈 설정은 변경하지 않습니다.
+- detector는 전역 설치 없이 npm script로 실행합니다.
+
+```bash
+npm run impeccable:detect
+npm run impeccable:detect -- --fast
+npm run impeccable:detect:json -- --fast
+```
+
+- 이 detector script는 `impeccable@2.1.7`을 `npm exec --package`로 실행하고, repo-local `.npmrc`와 스크립트 환경변수로 npm cache/log를 저장소 내부 `.cache/npm`에 둡니다.
+- UI 개선 작업 흐름은 audit/critique로 문제 정리, 구현, polish, detector 및 Gradle 검증 순서를 권장합니다.
 
 ## DB
 

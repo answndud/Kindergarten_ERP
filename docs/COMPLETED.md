@@ -217,3 +217,44 @@
   - `git status --short`
 - 결과:
   - 로컬 기준 삭제된 docs 트리를 참조하는 블로그 역사 링크가 모두 정리됐고, 문서 구조와 저장소 상태를 한 번에 clean하게 마감할 수 있는 상태가 됐다.
+
+<a id="archive-008"></a>
+## `008` Impeccable repo-local 디자인 개선 준비
+
+- 완료일: `2026-04-23`
+- 배경:
+  - 향후 디자인/프론트엔드 개선을 Impeccable 기준으로 체계화하되, 전역 Codex/Claude 설정, global npm install, 사용자 홈 설정은 건드리지 않는 repo-local 적용이 필요했다.
+  - 기존 프론트엔드는 Thymeleaf + HTMX + Alpine.js + Tailwind CDN 구조이고, 화면별 Tailwind config와 card-heavy 운영 화면이 섞여 있어 먼저 컨텍스트와 detector 실행 경로를 잡는 것이 적절했다.
+- 공식 문서 확인:
+  - Impeccable README: Codex/skills/commands 및 `impeccable detect` CLI 사용 방식 확인
+  - Impeccable getting started: `.impeccable.md` 기반 프로젝트 디자인 컨텍스트 흐름 확인
+  - Impeccable HARNESSES: Codex의 repo-local `.agents/skills` 경로 확인
+- 변경 내용:
+  - 공식 Impeccable repo-local skill bundle을 `.agents/skills/*`에 추가했다.
+  - 루트 `.impeccable.md`에 Kindergarten ERP의 사용자, 제품 톤, 화면 원칙, 피해야 할 패턴, 현재 design debt를 정리했다.
+  - 전역 npm 설치 없이 detector를 실행하도록 `package.json`, `.npmrc`, `scripts/impeccable-detect.mjs`를 추가했다.
+  - `.npmrc`와 스크립트 환경변수로 npm cache/log를 repo 내부 `.cache/npm`에 고정했다.
+  - `AGENTS.md`, `docs/guides/developer-guide.md`에 repo-local Impeccable 사용 규칙과 금지 사항을 기록했다.
+- 코드/문서:
+  - `.agents/skills/*`
+  - `.impeccable.md`
+  - `.npmrc`
+  - `package.json`
+  - `scripts/impeccable-detect.mjs`
+  - `AGENTS.md`
+  - `docs/guides/developer-guide.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `node .agents/skills/impeccable/scripts/cleanup-deprecated.mjs`
+    - 결과: deprecated Impeccable skill 없음
+  - `npm run impeccable:detect -- --fast`
+    - 결과: detector 실행 성공, 기존 화면에서 35개 anti-pattern 발견으로 exit 2
+    - 주요 발견: Pretendard 단일 폰트 사용, 일부 flat type hierarchy, `text-gray-700` on `bg-yellow-100`
+  - `./gradlew compileJava compileTestJava`
+    - 결과: BUILD SUCCESSFUL
+    - 참고: 기존 테스트 코드의 `@MockBean` removal warning 5건 발생
+- 결과:
+  - 전역 설정을 바꾸지 않고 Impeccable 기반 디자인 컨텍스트, skill bundle, detector 실행 경로가 repo 안에 준비됐다.
+  - detector가 포착한 기존 UI 이슈는 다음 디자인 개선 작업의 출발점으로 사용할 수 있다.
