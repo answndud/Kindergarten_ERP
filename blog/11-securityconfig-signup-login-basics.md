@@ -69,7 +69,7 @@ CSRF를 다시 켜는 편이 안전합니다.
 - src/main/java/com/erp/domain/member/service/MemberService.java
 - src/test/java/com/erp/api/AuthApiIntegrationTest.java
 - src/test/java/com/erp/integration/PageAccessIntegrationTest.java
-- docs/decisions/phase13_security_hardening.md
+- docs/COMPLETED.md#archive-002
 ```
 
 ## 4. 설계 구상

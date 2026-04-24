@@ -59,11 +59,9 @@ CI 실패 시에도 test report를 artifact로 올려 두면
 - src/test/java/com/erp/ErpApplicationTests.java
 - src/test/java/com/erp/api/AuthApiIntegrationTest.java
 - src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java
-- docs/decisions/phase16_github_actions_ci.md
-- docs/decisions/phase19_ci_fast_integration_split.md
-- docs/decisions/phase22_github_actions_node24_native_actions.md
-- docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
-- docs/decisions/phase47_outbox_atomic_claim_and_ops_contract.md
+- docs/COMPLETED.md#archive-002
+- docs/COMPLETED.md#archive-003
+- docs/COMPLETED.md#archive-005
 ```
 
 ## 4. 설계 구상
@@ -227,9 +225,8 @@ CI 자체는 GitHub Actions run에서 검증되고, 로컬에서도 아래처럼
 - CI:
   - .github/workflows/ci.yml
 - 결정 로그:
-  - docs/decisions/phase16_github_actions_ci.md
-  - docs/decisions/phase19_ci_fast_integration_split.md
-  - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+  - docs/COMPLETED.md#archive-002
+  - docs/COMPLETED.md#archive-003
 ```
 
 ## 12. 구현 체크리스트

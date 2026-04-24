@@ -58,7 +58,7 @@ Testcontainers는 테스트 실행 중 Docker 컨테이너를 띄워
 - src/test/java/com/erp/common/TestcontainersSupport.java
 - src/test/java/com/erp/common/BaseIntegrationTest.java
 - src/test/java/com/erp/ErpApplicationTests.java
-- docs/decisions/phase15_testcontainers_integration_test_stack.md
+- docs/COMPLETED.md#archive-002
 ```
 
 ## 4. 설계 구상
@@ -154,7 +154,7 @@ sequenceDiagram
 - `BaseIntegrationTest`
   - 모든 API 통합 테스트의 기반
 
-그리고 결정 로그인 [phase15_testcontainers_integration_test_stack.md](../docs/decisions/phase15_testcontainers_integration_test_stack.md)에
+그리고 결정 로그인 [phase15_testcontainers_integration_test_stack.md](../docs/COMPLETED.md#archive-002)에
 왜 H2를 버리고 이 구조로 갔는지 정리돼 있습니다.
 
 ## 8. 회고
@@ -212,7 +212,7 @@ Testcontainers는 신뢰도를 크게 올리지만 **속도 비용과 Docker 의
   - src/test/java/com/erp/common/BaseIntegrationTest.java
   - src/test/java/com/erp/ErpApplicationTests.java
 - 결정 로그:
-  - docs/decisions/phase15_testcontainers_integration_test_stack.md
+  - docs/COMPLETED.md#archive-002
 ```
 
 ## 12. 구현 체크리스트

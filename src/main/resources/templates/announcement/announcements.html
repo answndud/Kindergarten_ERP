@@ -36,24 +36,24 @@
     
     <style>
         body { font-family: 'Pretendard', sans-serif; }
-        .bg-gradient-primary { background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%); }
     </style>
     <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
 <body class="bg-gray-50">
 <header th:replace="~{fragments/header :: header}"></header>
 
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <!-- Page Header -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">공지사항</h1>
-                <p class="text-gray-600">유치원 소식과 중요 공지사항을 확인하세요</p>
+                <p class="mb-2 text-sm font-semibold text-primary-700">Notice Board</p>
+                <h1 class="text-3xl font-bold text-gray-900">공지사항</h1>
+                <p class="mt-3 text-gray-600">유치원 소식과 중요 공지를 빠르게 확인하세요.</p>
             </div>
             <!-- Create Button (Principal/Teacher only) -->
             <a th:if="${currentMember != null}"
                href="/announcement/write"
-               class="px-4 py-2 bg-gradient-primary text-white font-medium rounded-xl hover:shadow-lg transition-all flex items-center gap-2">
+               class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -62,15 +62,15 @@
         </div>
 
         <!-- Filter -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div class="mb-6 rounded-xl border border-gray-200 bg-white p-3">
             <div class="flex gap-2">
-                <button id="allBtn" class="px-4 py-2 bg-primary-100 text-primary-700 font-medium rounded-lg transition-colors"
+                <button id="allBtn" class="min-h-11 rounded-lg bg-primary-100 px-4 py-2 font-semibold text-primary-700 transition-colors"
                         hx-get="/announcements/list?importantOnly=false"
                         hx-target="#announcement-list"
                         hx-swap="outerHTML">
                     전체
                 </button>
-                <button id="importantBtn" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-yellow-100 hover:text-yellow-700 transition-colors"
+                <button id="importantBtn" class="min-h-11 rounded-lg bg-yellow-50 px-4 py-2 font-semibold text-yellow-800 transition-colors hover:bg-yellow-100"
                         hx-get="/announcements/list?importantOnly=true"
                         hx-target="#announcement-list"
                         hx-swap="outerHTML">
@@ -110,9 +110,9 @@
                 allBtn.classList.remove('bg-primary-100', 'text-primary-700');
                 allBtn.classList.add('bg-gray-100', 'text-gray-700');
                 importantBtn.classList.remove('bg-gray-100', 'text-gray-700');
-                importantBtn.classList.add('bg-yellow-100', 'text-yellow-700');
+                importantBtn.classList.add('bg-yellow-100', 'text-yellow-800');
             } else {
-                importantBtn.classList.remove('bg-yellow-100', 'text-yellow-700');
+                importantBtn.classList.remove('bg-yellow-100', 'text-yellow-800');
                 importantBtn.classList.add('bg-gray-100', 'text-gray-700');
                 allBtn.classList.remove('bg-gray-100', 'text-gray-700');
                 allBtn.classList.add('bg-primary-100', 'text-primary-700');

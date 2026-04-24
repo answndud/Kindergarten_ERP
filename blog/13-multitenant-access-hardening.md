@@ -54,7 +54,7 @@
 - src/test/java/com/erp/api/NotepadApiIntegrationTest.java
 - src/test/java/com/erp/api/AnnouncementApiIntegrationTest.java
 - src/test/java/com/erp/api/NotificationApiIntegrationTest.java
-- docs/decisions/phase14_multitenant_access_hardening.md
+- docs/COMPLETED.md#archive-002
 ```
 
 ## 4. 설계 구상

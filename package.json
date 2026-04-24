@@ -1,0 +1,12 @@
+{
+  "name": "kindergarten-erp-design-tools",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "impeccable:detect": "node scripts/impeccable-detect.mjs",
+    "impeccable:detect:json": "node scripts/impeccable-detect.mjs --json"
+  }
+}

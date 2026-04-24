@@ -203,19 +203,7 @@ window.UI = window.UI || {
     async confirm(options) {
         if (this.hasSwal()) {
             const result = await window.Swal.fire(options);
-
-            console.log('[DEBUG] SweetAlert version:', window.Swal.version);
-            console.log('[DEBUG] Confirm result:', result);
-
-            // SweetAlert2 v10 이하에서 result.isConfirmed 사용
-            // SweetAlert2 v11 이상에서 result.value.isConfirmed 사용
-            const isConfirmed = window.Swal.version && window.Swal.version.startsWith('11')
-                ? result.value?.isConfirmed !== false
-                : result.isConfirmed !== false;
-
-            console.log('[DEBUG] Confirm isConfirmed:', isConfirmed);
-
-            return isConfirmed;
+            return result.isConfirmed === true;
         }
 
         return window.confirm(options.text || options);

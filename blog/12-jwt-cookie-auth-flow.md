@@ -60,7 +60,7 @@ Spring Security는 단순 토큰 문자열이 아니라
 - src/main/java/com/erp/domain/auth/service/AuthService.java
 - src/main/java/com/erp/domain/auth/controller/AuthApiController.java
 - src/test/java/com/erp/api/AuthApiIntegrationTest.java
-- docs/decisions/phase17_jwt_refresh_session_rotation.md
+- docs/COMPLETED.md#archive-002
 ```
 
 ## 4. 설계 구상
@@ -180,7 +180,7 @@ sequenceDiagram
 - 인증되지 않은 요청은 `401` 공통 포맷
 - refresh 흐름 회귀 검증
 
-또한 [phase17_jwt_refresh_session_rotation.md](../docs/decisions/phase17_jwt_refresh_session_rotation.md)에서
+또한 [phase17_jwt_refresh_session_rotation.md](../docs/COMPLETED.md#archive-002)에서
 이 JWT 구조가 이후 세션 레지스트리와 어떻게 연결되는지도 설명합니다.
 
 ## 8. 회고
@@ -238,7 +238,7 @@ sequenceDiagram
   - src/main/resources/application.yml
 - 검증 파일:
   - src/test/java/com/erp/api/AuthApiIntegrationTest.java
-  - docs/decisions/phase17_jwt_refresh_session_rotation.md
+  - docs/COMPLETED.md#archive-002
 ```
 
 ## 12. 구현 체크리스트
