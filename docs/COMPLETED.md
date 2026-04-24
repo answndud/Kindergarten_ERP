@@ -656,3 +656,27 @@
   - README line review로 현재 저장소 구조/문서 경로/실행 경로 정합성 확인
 - 결과:
   - ERP README는 기능 나열형 요약에서 한 단계 나아가, 면접관이 상단에서 `읽을 이유`, `서비스 loop`, `현재 상태`, `검증 근거`를 더 빠르게 파악할 수 있는 포트폴리오 피치 문서에 가까워졌다.
+
+<a id="archive-016"></a>
+## `016` CD workflow 수동 실행 전환
+
+- 완료일: `2026-04-24`
+- 배경:
+  - 클라우드 배포를 아직 하지 않는 상태인데도 `main` push마다 `Backend CD`가 실행되어 GitHub Actions에 실패 상태가 표시됐다.
+  - 확인한 실패 run은 `Backend CD / Build And Deploy`의 `Validate deployment secrets` 단계에서 발생했으며, 원인은 `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, `GHCR_USERNAME`, `GHCR_READ_TOKEN` 같은 배포 secret이 설정되지 않은 상태였다.
+- 변경 내용:
+  - `.github/workflows/cd.yml`에서 `push` trigger를 제거하고 `workflow_dispatch` 수동 실행만 남겼다.
+  - 배포 가이드의 `main push 자동 배포` 설명을 현재 저장소 상태에 맞게 `수동 CD` 기준으로 정리했다.
+  - 클라우드 서버와 repository secret을 준비하기 전에는 `main` push 때 CD가 실패로 표시되지 않는 것이 정상이라고 문서화했다.
+- 코드/문서:
+  - `.github/workflows/cd.yml`
+  - `docs/guides/deployment-guide.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `gh run view 24868095291 --repo answndud/Kindergarten_ERP`
+  - `ruby -e "require 'yaml'; YAML.load_file('.github/workflows/cd.yml'); puts 'ok'"`
+  - `git diff --check`
+- 결과:
+  - 이후 `main` push는 `Backend CI`만 자동 실행하고, `Backend CD`는 배포 준비가 끝난 뒤 GitHub Actions에서 수동으로 실행하는 구조가 됐다.
