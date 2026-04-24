@@ -71,8 +71,8 @@
 - src/main/java/com/erp/domain/classroom/service/ClassroomService.java
 - src/test/java/com/erp/api/ClassroomApiIntegrationTest.java
 - src/test/java/com/erp/api/MemberApiIntegrationTest.java
-- docs/decisions/phase00_setup.md
-- docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+- docs/COMPLETED.md#archive-001
+- docs/COMPLETED.md#archive-003
 ```
 
 ## 4. 설계 구상
@@ -220,7 +220,7 @@ sequenceDiagram
 
 즉, 도메인 모델이 실제 API 계약으로 바로 이어집니다.
 
-또한 최근에는 [phase41_admission_capacity_waitlist_workflow.md](../docs/decisions/phase41_admission_capacity_waitlist_workflow.md)에서
+또한 최근에는 [phase41_admission_capacity_waitlist_workflow.md](../docs/COMPLETED.md#archive-003)에서
 `Classroom.capacity`가 waitlist/offer 워크플로우와도 연결됐습니다.
 
 ## 8. 회고
@@ -290,10 +290,8 @@ sequenceDiagram
   - src/test/java/com/erp/api/KindergartenApiIntegrationTest.java
   - src/test/java/com/erp/api/ClassroomApiIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase01_kindergarten.md
-  - docs/decisions/phase02_member.md
-  - docs/decisions/phase03_classroom.md
-  - docs/decisions/phase41_admission_capacity_waitlist_workflow.md
+  - docs/COMPLETED.md#archive-001
+  - docs/COMPLETED.md#archive-003
 ```
 
 ## 12. 구현 체크리스트

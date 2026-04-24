@@ -13,6 +13,7 @@
 ## 📋 목차
 
 - [프로젝트 소개](#-프로젝트-소개)
+- [화면 캡처](#-화면-캡처)
 - [주요 기능](#-주요-기능)
 - [기술 스택](#-기술-스택)
 - [프로젝트 구조](#-프로젝트-구조)
@@ -61,6 +62,24 @@
 | 👔 원장 | 유치원 총괄 관리자 | 전체 관리, 통계, 승인 |
 | 👩‍🏫 교사 | 반 담당 교사 | 출석, 알림장, 일정 |
 | 👨‍👩‍👧 학부모 | 원생의 보호자 | 알림장 확인, 출결 확인 |
+
+---
+
+## 🖼 화면 캡처
+
+2026-04-23 기준 Impeccable workflow로 개선한 최신 desktop-first 화면입니다.
+
+| 원장 대시보드 | 출석 관리 |
+|---|---|
+| ![원장 대시보드](./docs/assets/readme/dashboard-desktop.png) | ![출석 관리](./docs/assets/readme/attendance-desktop.png) |
+
+| 신청 처리 큐 | 알림장 |
+|---|---|
+| ![신청 처리 큐](./docs/assets/readme/applications-pending-desktop.png) | ![알림장](./docs/assets/readme/notepad-desktop.png) |
+
+| 인증 감사 로그 | 업무 감사 로그 |
+|---|---|
+| ![인증 감사 로그](./docs/assets/readme/audit-desktop.png) | ![업무 감사 로그](./docs/assets/readme/domain-audit-desktop.png) |
 
 ---
 
@@ -598,7 +617,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/doc
 
 ### 상세 문서
 
-- 성능 최적화 문서는 저장소의 `docs/portfolio/performance` 폴더에서 번호 순서(`00`부터)로 확인하세요.
+- 성능/운영 개선의 상세 배치와 검증 이력은 `docs/COMPLETED.md`의 완료 archive를 기준으로 확인하세요.
 
 ---
 
@@ -618,59 +637,18 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/doc
 
 ## 📚 문서
 
-### 인터뷰 바로 보기
-
 | 문서 | 설명 |
 |------|------|
 | 문서 인덱스 | `docs/README.md` |
-| Hiring Pack | `docs/portfolio/hiring-pack/backend-hiring-pack.md` |
-| 시스템 아키텍처 | `docs/portfolio/architecture/system-architecture.md` |
-| 데모 Preflight | `docs/portfolio/demo/demo-preflight.md` |
-| 데모 Runbook | `docs/portfolio/demo/demo-runbook.md` |
-| Auth Incident Response Case Study | `docs/portfolio/case-studies/auth-incident-response.md` |
-| 인터뷰 1장 요약 | `docs/portfolio/interview/interview_one_pager.md` |
-| 면접 예상 질문/답변 스크립트 | `docs/portfolio/interview/interview_qa_script.md` |
+| Active Plan | `docs/PLAN.md` |
+| Active Progress | `docs/PROGRESS.md` |
+| Completed Archive | `docs/COMPLETED.md` |
+| 개발자 가이드 | `docs/guides/developer-guide.md` |
+| 환경 변수 계약 | `docs/guides/env-contract.md` |
+| 유저 가이드 | `docs/guides/user-guide.md` |
+| 배포 가이드 | `docs/guides/deployment-guide.md` |
 
-### 상세 결정 로그
-
-| 문서 | 설명 |
-|------|------|
-| 프로젝트 문서 인덱스 | `docs/README.md` |
-| 성능 최적화 문서 | `docs/portfolio/performance/` 폴더 참고 (번호 순서) |
-| 권한 경계 하드닝 | `docs/decisions/phase14_multitenant_access_hardening.md` |
-| Testcontainers 테스트 전환 | `docs/decisions/phase15_testcontainers_integration_test_stack.md` |
-| GitHub Actions CI 자동화 | `docs/decisions/phase16_github_actions_ci.md` |
-| JWT 세션 회전 설계 | `docs/decisions/phase17_jwt_refresh_session_rotation.md` |
-| 대시보드 지표 보정 | `docs/decisions/phase18_dashboard_metric_redefinition.md` |
-| CI 복구 및 job 분리 | `docs/decisions/phase19_ci_fast_integration_split.md` |
-| GitHub Actions Node24 호환 | `docs/decisions/phase20_github_actions_node24_compatibility.md` |
-| 인증 Rate Limit 하드닝 | `docs/decisions/phase21_auth_rate_limit.md` |
-| GitHub Actions Node24 네이티브 전환 | `docs/decisions/phase22_github_actions_node24_native_actions.md` |
-| 캘린더 반복 일정/권한 정합성 보강 | `docs/decisions/phase23_calendar_recurrence_access_alignment.md` |
-| 인증 Client IP 신뢰 모델 하드닝 | `docs/decisions/phase24_auth_client_ip_trust_model.md` |
-| 로그인 Rate Limit 정책 정교화 | `docs/decisions/phase25_login_rate_limit_policy_refinement.md` |
-| OAuth2 Principal 런타임 안전성 보강 | `docs/decisions/phase26_oauth2_principal_runtime_safety.md` |
-| OAuth2 계정 충돌 정책/UX 정합화 | `docs/decisions/phase27_oauth2_account_conflict_policy.md` |
-| 명시적 소셜 계정 연결 플로우 | `docs/decisions/phase28_explicit_social_account_linking.md` |
-| 소셜 전용 계정 로컬 비밀번호 설정 | `docs/decisions/phase29_social_password_bootstrap.md` |
-| 소셜 계정 연결 해제 정책 | `docs/decisions/phase30_social_account_unlink_policy.md` |
-| 소셜 계정 다중 연결 구조 정규화 | `docs/decisions/phase31_member_social_account_normalization.md` |
-| 소셜 provider 식별자 불변 정책 | `docs/decisions/phase32_social_provider_identity_immutability.md` |
-| 인증/소셜 감사 로그 도입 | `docs/decisions/phase33_auth_social_audit_log.md` |
-| 운영 관측성 baseline | `docs/decisions/phase34_operability_observability_baseline.md` |
-| 인증 감사 로그 조회 API | `docs/decisions/phase35_auth_audit_query_api.md` |
-| API 계약/운영 콘솔/Prometheus/demo 진입점 | `docs/decisions/phase36_api_contract_observability_demo.md` |
-| 감사 로그 export/인증 이상 징후 알림/Grafana 대시보드 | `docs/decisions/phase37_auth_audit_export_alerting_dashboard.md` |
-| 감사 로그 tenant 비정규화/retention/archive | `docs/decisions/phase38_auth_audit_retention_and_denormalization.md` |
-| management plane 하드닝/활성 세션 제어 | `docs/decisions/phase39_management_plane_and_active_session_control.md` |
-| notification outbox/retry/incident webhook | `docs/decisions/phase40_notification_outbox_and_incident_channel.md` |
-| 반 정원/waitlist/offer 입학 워크플로우 | `docs/decisions/phase41_admission_capacity_waitlist_workflow.md` |
-| 학부모 출결 변경 요청/승인 워크플로우 | `docs/decisions/phase42_attendance_change_request_workflow.md` |
-| 업무 감사 로그(domain audit log) | `docs/decisions/phase43_domain_audit_log.md` |
-| tagged CI/readiness failure mode/hiring pack | `docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md` |
-| fail-closed 기본 설정/management surface | `docs/decisions/phase45_fail_closed_runtime_defaults.md` |
-| 신청서 권한 경계/출결 요청 DB 가드/Java 21 기준선 | `docs/decisions/phase46_service_boundaries_java21_baseline.md` |
-| outbox atomic claim/compose localhost binding/package smoke | `docs/decisions/phase47_outbox_atomic_claim_and_ops_contract.md` |
+현재 로컬 문서 구조 기준 SSOT는 위 경로들만 유지합니다.
 
 ---
 

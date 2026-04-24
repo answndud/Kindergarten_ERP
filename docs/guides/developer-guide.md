@@ -3,6 +3,7 @@
 이 문서는 이 저장소에서 기능을 추가/수정하는 개발자를 위한 실무 가이드입니다.
 유저 관점 설명은 `docs/guides/user-guide.md`를 참고하세요.
 실행 환경별 필수 변수와 기본 노출 정책은 `docs/guides/env-contract.md`를 SSOT로 봅니다.
+active 작업 계획/상태는 `docs/PLAN.md`, `docs/PROGRESS.md`, 완료 이력은 `docs/COMPLETED.md`를 기준으로 관리합니다.
 
 ---
 
@@ -81,6 +82,18 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 - `src/main/resources/templates/*`: 역할 기반 SSR 화면
 - `src/main/resources/static/js/app.js`: 공통 UI/SweetAlert2/알림 유틸
 - HTMX로 fragment 단위 갱신, Alpine.js로 최소 상태 관리
+- 디자인/프론트엔드 개선 컨텍스트는 루트 `.impeccable.md`를 기준으로 합니다.
+- Impeccable skill은 repo-local `.agents/skills/*`에만 둡니다. 전역 `~/.codex`, `~/.claude`, global npm install, 사용자 홈 설정은 변경하지 않습니다.
+- detector는 전역 설치 없이 npm script로 실행합니다.
+
+```bash
+npm run impeccable:detect
+npm run impeccable:detect -- --fast
+npm run impeccable:detect:json -- --fast
+```
+
+- 이 detector script는 `impeccable@2.1.7`을 `npm exec --package`로 실행하고, repo-local `.npmrc`와 스크립트 환경변수로 npm cache/log를 저장소 내부 `.cache/npm`에 둡니다.
+- UI 개선 작업 흐름은 audit/critique로 문제 정리, 구현, polish, detector 및 Gradle 검증 순서를 권장합니다.
 
 ## DB
 
@@ -194,9 +207,9 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 기능/정책 변경 시 반드시 문서를 같이 갱신하세요.
 
-- 기능 결정/변경: `docs/decisions/`
-- 트러블슈팅/회고: `docs/archive/retrospectives/`
-- 성능 개선: `docs/portfolio/performance/`
+- active 계획/상태: `docs/PLAN.md`, `docs/PROGRESS.md`
+- 완료 archive: `docs/COMPLETED.md`
+- 개발/실행/환경/배포 가이드: `docs/guides/*`
 
 특히 성능 작업은 아래 순서를 지켜 기록합니다.
 
@@ -204,7 +217,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 2. 개선 전 측정
 3. 개선 적용
 4. 개선 후 측정
-5. 트레이드오프 문서화
+5. 트레이드오프 문서화 및 완료 archive 반영
 
 ---
 
@@ -216,7 +229,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 4. API 응답 `ApiResponse<T>` 유지
 5. 필요 시 Flyway migration 추가
 6. 통합 테스트 추가/수정
-7. `docs/decisions/` 변경 로그 작성
+7. `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/COMPLETED.md` 상태 반영
 8. 성능 영향이 있으면 전/후 수치 기록
 
 ---
@@ -236,5 +249,6 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 - 사용자 가이드: `docs/guides/user-guide.md`
 - 프로젝트 개요: `README.md`
-- 단계별 결정 로그: `docs/decisions/*.md`
-- 성능 개선 스토리: `docs/portfolio/performance/README.md`
+- 문서 인덱스: `docs/README.md`
+- active 계획/진행: `docs/PLAN.md`, `docs/PROGRESS.md`
+- 완료 archive: `docs/COMPLETED.md`

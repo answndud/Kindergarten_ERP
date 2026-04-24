@@ -1,7 +1,7 @@
 # AGENTS.md
 
 이 문서는 이 저장소에서 작업하는 코딩 에이전트용 SSOT입니다.
-긴 배경은 `docs/README.md`부터 시작해 필요한 하위 문서에 유지하고, 에이전트 작업 규칙은 이 파일을 우선합니다.
+긴 배경과 active/archive 문서 운영 규칙은 `docs/README.md`, `docs/PLAN.md`, `docs/PROGRESS.md`부터 시작해 필요한 하위 문서에 유지하고, 에이전트 작업 규칙은 이 파일을 우선합니다.
 
 ## 1) Project Snapshot
 
@@ -132,6 +132,13 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 - 기존 API 계약은 **Extension over Modification** 우선.
 - 템플릿에서 ID/데이터 하드코딩 금지, API 동적 로딩 우선.
 - HTMX는 전체 페이지 리로드보다 부분 갱신을 우선 적용.
+- 디자인/프론트엔드 개선은 repo-local Impeccable 컨텍스트를 우선 확인한다.
+  - 디자인 컨텍스트: `.impeccable.md`
+  - repo-local skills: `.agents/skills/*`
+  - detector: `npm run impeccable:detect`
+- Impeccable 적용 시 `~/.codex`, `~/.claude`, global npm install, 사용자 홈 설정을 변경하지 않는다.
+- 새 UI 개선은 `$audit`/`$critique` 성격의 문제 정리 → 구현 → `$polish` 성격의 마무리 → detector/Gradle 검증 순서로 진행한다.
+- 운영형 ERP 화면은 정보 스캔, 명확한 상태/권한/액션 위계, 모바일 핵심 액션 유지가 우선이다. 장식성 gradient/orb/glow, nested cards, 과한 라운드/그림자, 색상만으로 전달되는 상태 표시는 피한다.
 
 ## 7) DB / Migration Rules
 
@@ -149,9 +156,10 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 ## 9) Docs Rules (Mandatory)
 
-- 주요 기능 추가/변경 시 `docs/decisions/`에 결정 로그 작성.
-- 트러블슈팅/회고는 `docs/archive/retrospectives/`에 기록.
-- 성능 최적화는 `docs/portfolio/performance/`에 전/후 비교를 기록.
+- active 계획/상태는 `docs/PLAN.md`, `docs/PROGRESS.md`를 SSOT로 유지한다.
+- 완료된 작업은 active 문서에 남기지 말고 `docs/COMPLETED.md`로 archive한다.
+- 개발/실행/환경/배포 가이드는 `docs/guides/*`에 유지한다.
+- 현재 로컬에 없는 legacy 문서 트리는 복구 전제 없이 참조하지 않는다.
 
 ## 10) Git Workflow (Mandatory)
 
@@ -170,20 +178,22 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
   3) 개선 적용
   4) 개선 후 동일 시나리오 재측정
   5) 결과/트레이드오프 문서화
-- 문서에는 정량(숫자) + 정성(왜 이 선택을 했는지) 둘 다 포함한다.
+- 문서에는 정량(숫자) + 정성(왜 이 선택을 했는지) 둘 다 포함하고, 완료 시 `docs/COMPLETED.md`에 남긴다.
 
 ## 12) Execution Planning & Progress Tracking Rule (Mandatory)
 
-- 모든 개발 작업은 시작 전에 루트의 `PLAN.md`, `PROGRESS.md`를 먼저 확인한다.
-- 새 세션/다른 에이전트가 이어받을 때도 동일하게 `PLAN.md`, `PROGRESS.md`를 SSOT로 사용한다.
-- 작업 시작 시 `PLAN.md`에 아래 내용을 먼저 작성/갱신한다.
+- 모든 개발 작업은 시작 전에 `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/guides/developer-guide.md`, `docs/guides/env-contract.md`를 먼저 확인한다.
+- `docs/COMPLETED.md`는 archive 문서다. 과거 맥락이 필요할 때만 읽고, 세션 시작 필수 읽기 대상으로 취급하지 않는다.
+- 새 세션/다른 에이전트가 이어받을 때도 동일하게 `docs/PLAN.md`, `docs/PROGRESS.md`를 active SSOT로 사용한다.
+- 작업 시작 시 `docs/PLAN.md`에 아래 내용을 먼저 작성/갱신한다.
   1) 목표/범위
   2) 세부 작업 단계
   3) 검증 계획(테스트/수동 시나리오)
   4) 리스크 및 대응
-- 작업 진행 중에는 `PROGRESS.md`를 실시간으로 갱신한다.
-  - 상태: `TODO` / `IN_PROGRESS` / `DONE` / `BLOCKED`
-  - 각 항목에 시간, 수행 내용, 다음 액션을 남긴다.
-- 계획이 변경되면 `PLAN.md`를 먼저 업데이트하고, 변경 사유를 `PROGRESS.md`에 기록한다.
-- 기능 구현 완료 시 `PROGRESS.md`에 최종 검증 결과(실행 명령, 통과/실패, 후속 과제)를 남긴다.
+- 작업 진행 중에는 `docs/PROGRESS.md`를 실시간으로 갱신한다.
+  - 상태, blocker, 최근 검증, 다음 액션만 남긴다.
+  - 완료된 작업을 active 문서에 계속 남기지 않는다.
+- 계획이 변경되면 `docs/PLAN.md`를 먼저 업데이트하고, 변경 사유를 `docs/PROGRESS.md`에 기록한다.
+- 기능 구현 완료 시 최종 상태, 검증 결과(실행 명령, 통과/실패, 후속 과제)를 `docs/COMPLETED.md`로 옮기고, active 문서는 다시 비운다.
+- active 작업이 없으면 `docs/PLAN.md`, `docs/PROGRESS.md`는 `현재 active 작업 없음`만 유지한다.
 - 본 규칙은 OAuth2 작업 포함, 이후 모든 개발 프로세스에 기본 적용한다.

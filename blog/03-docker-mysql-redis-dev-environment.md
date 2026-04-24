@@ -80,7 +80,7 @@ overlay compose는 “기본 스택 위에 추가 기능만 덧붙이는 compose
 - docker/monitoring/prometheus/prometheus.yml
 - src/main/resources/application.yml
 - src/main/resources/application-local.yml
-- docs/portfolio/demo/demo-preflight.md
+- docs/COMPLETED.md
 - README.md
 ```
 
@@ -487,7 +487,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/doc
 여기서 `demo` 프로파일은 `local` 설정을 포함합니다.
 즉, 개발 기본값 위에 시연용 seed와 공개 management surface를 같이 올리는 방식입니다.
 
-이 흐름은 [demo-preflight.md](../docs/portfolio/demo/demo-preflight.md) 에도 그대로 정리돼 있습니다.
+이 흐름은 [demo-preflight.md](../docs/COMPLETED.md) 에도 그대로 정리돼 있습니다.
 
 ## 7. 테스트로 검증하기
 
@@ -499,7 +499,7 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/doc
 - [AGENTS.md](../AGENTS.md)
 - [README.md](../README.md)
 - [docs/guides/developer-guide.md](../docs/guides/developer-guide.md)
-- [docs/portfolio/demo/demo-preflight.md](../docs/portfolio/demo/demo-preflight.md)
+- [docs/COMPLETED.md](../docs/COMPLETED.md)
 
 ### 운영 연결 근거
 

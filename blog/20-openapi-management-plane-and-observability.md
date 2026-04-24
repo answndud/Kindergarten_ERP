@@ -72,10 +72,7 @@ OpenAPI, health, Prometheus는 유용하지만
 - src/main/java/com/erp/global/logging/CorrelationIdFilter.java
 - src/main/java/com/erp/global/logging/RequestLoggingFilter.java
 - src/test/java/com/erp/integration/ObservabilityIntegrationTest.java
-- docs/decisions/phase34_operability_observability_baseline.md
-- docs/decisions/phase36_api_contract_observability_demo.md
-- docs/decisions/phase39_management_plane_and_active_session_control.md
-- docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+- docs/COMPLETED.md#archive-003
 ```
 
 ## 4. 설계 구상
@@ -323,11 +320,9 @@ sequenceDiagram
 - 검증:
   - src/test/java/com/erp/integration/ObservabilityIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase34_operability_observability_baseline.md
-  - docs/decisions/phase36_api_contract_observability_demo.md
-  - docs/decisions/phase39_management_plane_and_active_session_control.md
-  - docs/decisions/phase45_fail_closed_runtime_defaults.md
-  - docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+  - docs/COMPLETED.md#archive-003
+  - docs/COMPLETED.md#archive-005
+  - docs/COMPLETED.md#archive-003
 ```
 
 ## 12. 구현 체크리스트

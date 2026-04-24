@@ -23,11 +23,11 @@
 - [blog/00_quality_checklist.md](./00_quality_checklist.md)
   - 초보자 이해도 / 재현성 / 면접 대응력 기준의 편집 체크리스트
 
-기존 [PLAN.md](../PLAN.md), [PROGRESS.md](../PROGRESS.md)는 **애플리케이션 개발 작업용 SSOT**로 유지합니다.
+기존 [docs/PLAN.md](../docs/PLAN.md), [docs/PROGRESS.md](../docs/PROGRESS.md)는 **애플리케이션 개발 작업용 SSOT**로 유지합니다.
 
 ## 링크 정책
 
-- `blog/`와 이 시리즈가 직접 참조하는 `docs/portfolio/*` 문서는 **repo-relative 링크**로 정리돼 있습니다.
+- `blog/`와 이 시리즈가 직접 참조하는 저장소 문서는 **repo-relative 링크**로 정리돼 있습니다.
 - 따라서 GitHub 저장소 안에서는 바로 읽을 수 있습니다.
 - 다만 Velog, Notion 같은 외부 플랫폼으로 옮길 때는 GitHub permalink처럼 절대 URL 체계로 한 번 더 변환해야 합니다.
 

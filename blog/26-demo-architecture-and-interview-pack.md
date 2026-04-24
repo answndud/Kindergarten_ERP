@@ -64,15 +64,8 @@ Kindergarten ERP는 마지막 단계에서 이 문제를
 ```text
 - src/main/resources/application-demo.yml
 - src/main/java/com/erp/global/config/DataLoader.java
-- docs/portfolio/demo/demo-preflight.md
-- docs/portfolio/demo/demo-runbook.md
-- docs/portfolio/architecture/system-architecture.md
-- docs/portfolio/hiring-pack/backend-hiring-pack.md
-- docs/portfolio/interview/interview_one_pager.md
-- docs/portfolio/interview/interview_qa_script.md
-- docs/portfolio/case-studies/auth-incident-response.md
-- docs/decisions/phase36_api_contract_observability_demo.md
-- docs/decisions/phase44_tagged_ci_readiness_and_hiring_pack.md
+- docs/COMPLETED.md
+- docs/COMPLETED.md#archive-003
 ```
 
 ## 4. 설계 구상
@@ -152,7 +145,7 @@ flowchart TD
 
 ### 5-3. `demo-preflight.md`: 시연 직전 체크리스트
 
-[demo-preflight.md](../docs/portfolio/demo/demo-preflight.md)는
+[demo-preflight.md](../docs/COMPLETED.md)는
 시연 직전에 확인해야 할 것을 정리합니다.
 
 - Docker 실행 여부
@@ -167,7 +160,7 @@ flowchart TD
 
 ### 5-4. `demo-runbook.md`: 실제 5분 시연 순서를 고정한다
 
-[demo-runbook.md](../docs/portfolio/demo/demo-runbook.md)는
+[demo-runbook.md](../docs/COMPLETED.md)는
 아래 순서를 제안합니다.
 
 1. Swagger/OpenAPI
@@ -182,7 +175,7 @@ flowchart TD
 
 ### 5-5. `system-architecture.md`: 현재 프로젝트를 한 장으로 설명하는 SSOT
 
-[system-architecture.md](../docs/portfolio/architecture/system-architecture.md)는
+[system-architecture.md](../docs/COMPLETED.md)는
 이 프로젝트의 현재 아키텍처를 압축한 문서입니다.
 
 여기서 특히 좋은 점은
@@ -200,7 +193,7 @@ flowchart TD
 
 ### 5-6. `backend-hiring-pack.md`: 채용 담당자를 위한 시작 문서
 
-[backend-hiring-pack.md](../docs/portfolio/hiring-pack/backend-hiring-pack.md)는
+[backend-hiring-pack.md](../docs/COMPLETED.md)는
 “이 프로젝트를 왜 봐야 하는가”부터 시작합니다.
 
 그리고 아래 문서 순서를 안내합니다.
@@ -216,10 +209,10 @@ flowchart TD
 
 ### 5-7. `interview_one_pager`와 `interview_qa_script`
 
-[interview_one_pager.md](../docs/portfolio/interview/interview_one_pager.md)는
+[interview_one_pager.md](../docs/COMPLETED.md)는
 핵심 역량을 한 장으로 압축합니다.
 
-[interview_qa_script.md](../docs/portfolio/interview/interview_qa_script.md)는
+[interview_qa_script.md](../docs/COMPLETED.md)는
 예상 질문에 대한 짧은 답변과 꼬리 질문 포인트를 정리합니다.
 
 즉,
@@ -231,7 +224,7 @@ flowchart TD
 
 ### 5-8. `auth-incident-response.md`: 대표 사례 하나를 깊게 설명한다
 
-[auth-incident-response.md](../docs/portfolio/case-studies/auth-incident-response.md)는
+[auth-incident-response.md](../docs/COMPLETED.md)는
 보안 사건 하나를 케이스 스터디로 묶습니다.
 
 이 문서가 좋은 이유는
@@ -334,13 +327,7 @@ sequenceDiagram
   - src/main/resources/application-demo.yml
   - src/main/java/com/erp/global/config/DataLoader.java
 - 인터뷰 / 아키텍처 문서:
-  - docs/portfolio/architecture/system-architecture.md
-  - docs/portfolio/hiring-pack/backend-hiring-pack.md
-  - docs/portfolio/demo/demo-preflight.md
-  - docs/portfolio/demo/demo-runbook.md
-  - docs/portfolio/interview/interview_one_pager.md
-  - docs/portfolio/interview/interview_qa_script.md
-  - docs/portfolio/case-studies/auth-incident-response.md
+  - docs/COMPLETED.md
 - 관련 코드 근거:
   - src/main/java/com/erp/global/config/OpenApiConfig.java
   - src/main/java/com/erp/global/monitoring/CriticalDependenciesHealthIndicator.java

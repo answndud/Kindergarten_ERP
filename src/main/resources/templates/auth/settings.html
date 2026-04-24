@@ -29,27 +29,21 @@
         }
     </script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body { font-family: 'Pretendard', sans-serif; }
-        .bg-gradient-primary { background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%); }
-    </style>
     <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
 <body class="bg-gray-50">
 
 <header th:replace="~{fragments/header :: header}"></header>
 
-<main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">설정</h1>
-        <p class="text-gray-600">계정 설정 및 비밀번호를 관리하세요</p>
+        <p class="text-sm font-semibold text-primary-700">Account Settings</p>
+        <h1 class="mt-2 text-3xl font-bold text-gray-900">설정</h1>
+        <p class="mt-3 text-gray-600">로그인 수단, 세션, 알림 설정을 한 곳에서 관리하세요.</p>
     </div>
 
     <div th:if="${socialLinkAlertMessage}"
-         class="mb-6 rounded-2xl border p-4"
+         class="mb-6 rounded-xl border p-4"
          th:classappend="${
              socialLinkAlertTone == 'success' ? ' bg-emerald-50 border-emerald-200' :
              (socialLinkAlertTone == 'info' ? ' bg-sky-50 border-sky-200' : ' bg-amber-50 border-amber-200')
@@ -68,14 +62,14 @@
            th:text="${socialLinkAlertMessage}">소셜 계정 연결 상태를 확인하세요.</p>
     </div>
 
-    <div class="space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">계정 정보</h2>
                     <p class="text-sm text-gray-600">기본 계정 정보를 확인하세요</p>
                 </div>
-                <button onclick="location.href='/profile'" class="text-primary-600 hover:text-primary-700 font-medium text-sm">
+                <button onclick="location.href='/profile'" class="inline-flex min-h-9 items-center rounded-lg px-2 text-primary-700 hover:bg-primary-50 hover:text-primary-800 font-medium text-sm">
                     프로필 보기 &rarr;
                 </button>
             </div>
@@ -103,26 +97,26 @@
             </div>
         </div>
 
-        <div th:if="${currentMember?.role?.name() == 'PRINCIPAL'}" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div th:if="${currentMember?.role?.name() == 'PRINCIPAL'}" class="bg-white rounded-xl border border-gray-200 p-5">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">운영 도구</h2>
                     <p class="text-sm text-gray-600">인증 사건과 업무 상태 변경 이력을 각각 분리된 감사 로그 화면에서 확인할 수 있습니다.</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="/audit-logs"
-                       class="inline-flex items-center rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700">
+                   <a href="/audit-logs"
+                       class="inline-flex min-h-11 items-center rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white hover:bg-primary-700">
                         인증 감사 로그 열기
                     </a>
                     <a href="/domain-audit-logs"
-                       class="inline-flex items-center rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-100">
+                       class="inline-flex min-h-11 items-center rounded-lg border border-primary-200 bg-primary-50 px-4 text-sm font-semibold text-primary-700 hover:bg-primary-100">
                         업무 감사 로그 열기
                     </a>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-5 xl:col-span-2">
             <div class="flex items-center justify-between gap-4 mb-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">소셜 로그인 연결</h2>
@@ -133,7 +127,7 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-4">
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p class="text-sm font-semibold text-gray-900">Google</p>
@@ -142,7 +136,7 @@
                         </div>
                         <a th:if="${!googleLinked}"
                            href="/auth/social/link/google"
-                           class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                           class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                             <span th:text="${googleReconnectOnly ? 'Google 재연결' : 'Google 연결'}">Google 연결</span>
                         </a>
                         <span th:if="${googleLinked}"
@@ -153,7 +147,7 @@
                     <p th:if="${googleReconnectOnly}" class="mt-3 text-xs text-amber-700">
                         같은 제공자의 소셜 계정은 교체할 수 없습니다. 처음 연결했던 동일한 Google 계정만 다시 연결할 수 있습니다.
                     </p>
-                    <div th:if="${googleLinked}" class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
+                    <div th:if="${googleLinked}" class="mt-4 rounded-lg border border-gray-100 bg-gray-50 px-4 py-4">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">Google 계정이 연결되어 있습니다</p>
@@ -166,7 +160,7 @@
                             </div>
                             <button th:if="${googleUnlinkAllowed}"
                                     type="button"
-                                    class="js-unlink-social-button px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-white hover:bg-red-50 transition-colors text-sm font-medium"
+                                    class="js-unlink-social-button inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
                                     data-provider="google"
                                     data-provider-label="Google">
                                 연결 해제
@@ -175,7 +169,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4">
+                <div class="rounded-xl border border-gray-200 bg-white px-4 py-4">
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p class="text-sm font-semibold text-gray-900">Kakao</p>
@@ -184,7 +178,7 @@
                         </div>
                         <a th:if="${!kakaoLinked}"
                            href="/auth/social/link/kakao"
-                           class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                           class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                             <span th:text="${kakaoReconnectOnly ? 'Kakao 재연결' : 'Kakao 연결'}">Kakao 연결</span>
                         </a>
                         <span th:if="${kakaoLinked}"
@@ -195,7 +189,7 @@
                     <p th:if="${kakaoReconnectOnly}" class="mt-3 text-xs text-amber-700">
                         같은 제공자의 소셜 계정은 교체할 수 없습니다. 처음 연결했던 동일한 Kakao 계정만 다시 연결할 수 있습니다.
                     </p>
-                    <div th:if="${kakaoLinked}" class="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-4">
+                    <div th:if="${kakaoLinked}" class="mt-4 rounded-lg border border-gray-100 bg-gray-50 px-4 py-4">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">Kakao 계정이 연결되어 있습니다</p>
@@ -208,7 +202,7 @@
                             </div>
                             <button th:if="${kakaoUnlinkAllowed}"
                                     type="button"
-                                    class="js-unlink-social-button px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-white hover:bg-red-50 transition-colors text-sm font-medium"
+                                    class="js-unlink-social-button inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
                                     data-provider="kakao"
                                     data-provider-label="Kakao">
                                 연결 해제
@@ -219,7 +213,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-2" th:text="${passwordChangeAvailable ? '비밀번호 변경' : '로컬 비밀번호 설정'}">비밀번호 변경</h2>
             <p th:if="${passwordChangeAvailable}" class="text-sm text-gray-600 mb-4">보안을 위해 정기적으로 비밀번호를 변경하세요</p>
             <p th:if="${!passwordChangeAvailable}" class="text-sm text-gray-600 mb-4">현재 계정은 소셜 로그인 전용입니다. 여기서 로컬 비밀번호를 설정하면 이메일/비밀번호 로그인도 함께 사용할 수 있습니다.</p>
@@ -227,18 +221,18 @@
             <form th:if="${passwordChangeAvailable}" id="passwordForm" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">현재 비밀번호</label>
-                    <input type="password" id="currentPassword" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <input type="password" id="currentPassword" required class="h-11 w-full px-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">새 비밀번호</label>
-                    <input type="password" id="newPassword" required minlength="8" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <input type="password" id="newPassword" required minlength="8" class="h-11 w-full px-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <p class="text-xs text-gray-500 mt-1">최소 8자 이상 입력하세요</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">새 비밀번호 확인</label>
-                    <input type="password" id="confirmPassword" required minlength="8" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <input type="password" id="confirmPassword" required minlength="8" class="h-11 w-full px-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                 </div>
-                <button type="submit" class="w-full px-4 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                <button type="submit" class="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                     비밀번호 변경
                 </button>
             </form>
@@ -246,20 +240,20 @@
             <form th:if="${!passwordChangeAvailable}" id="bootstrapPasswordForm" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">새 비밀번호</label>
-                    <input type="password" id="bootstrapNewPassword" required minlength="8" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <input type="password" id="bootstrapNewPassword" required minlength="8" class="h-11 w-full px-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <p class="text-xs text-gray-500 mt-1">최소 8자 이상 입력하세요</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">새 비밀번호 확인</label>
-                    <input type="password" id="bootstrapConfirmPassword" required minlength="8" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <input type="password" id="bootstrapConfirmPassword" required minlength="8" class="h-11 w-full px-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                 </div>
-                <button type="submit" class="w-full px-4 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                <button type="submit" class="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                     로컬 비밀번호 설정
                 </button>
             </form>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-5 xl:col-span-2">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">활성 세션 관리</h2>
@@ -267,55 +261,58 @@
                 </div>
                 <button id="revokeOtherSessionsButton"
                         type="button"
-                        class="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 transition-colors disabled:cursor-not-allowed"
+                        class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-4 text-sm font-medium text-gray-400 transition-colors disabled:cursor-not-allowed"
                         disabled>
                     다른 기기 로그아웃
                 </button>
             </div>
 
-            <div id="sessionInfoBanner" class="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+            <div id="sessionInfoBanner" class="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
                 세션 종료는 refresh token과 access token을 함께 무효화합니다. 종료된 기기는 즉시 다시 로그인해야 합니다.
             </div>
 
-            <div id="sessionErrorBanner" class="hidden mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+            <div id="sessionErrorBanner" class="hidden mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
 
-            <div id="sessionList" class="space-y-3">
-                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+            <div id="sessionList" class="max-h-[34rem] overflow-y-auto rounded-xl border border-gray-200 bg-white">
+                <div class="border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
                     활성 세션을 불러오는 중입니다.
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-2">알림 설정</h2>
-            <p class="text-sm text-gray-600 mb-4">수신할 알림을 선택하세요</p>
+            <p class="text-sm text-gray-600 mb-4">현재 계정은 기본 알림 정책을 사용합니다.</p>
 
             <div class="space-y-3">
-                <label class="flex items-center justify-between py-2 cursor-pointer">
+                <label class="flex min-h-12 items-center justify-between gap-4 py-2">
                     <div>
                         <p class="font-medium text-gray-900">알림장 알림</p>
                         <p class="text-xs text-gray-500">새 알림장이 도착하면 알림을 받습니다</p>
                     </div>
-                    <input type="checkbox" checked class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500">
+                    <input type="checkbox" checked disabled aria-label="알림장 알림 기본 수신"
+                           class="h-8 w-8 flex-shrink-0 text-primary-600 rounded focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60">
                 </label>
-                <label class="flex items-center justify-between py-2 cursor-pointer">
+                <label class="flex min-h-12 items-center justify-between gap-4 py-2">
                     <div>
                         <p class="font-medium text-gray-900">공지사항 알림</p>
                         <p class="text-xs text-gray-500">중요 공지사항을 알려드립니다</p>
                     </div>
-                    <input type="checkbox" checked class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500">
+                    <input type="checkbox" checked disabled aria-label="공지사항 알림 기본 수신"
+                           class="h-8 w-8 flex-shrink-0 text-primary-600 rounded focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60">
                 </label>
-                <label class="flex items-center justify-between py-2 cursor-pointer">
+                <label class="flex min-h-12 items-center justify-between gap-4 py-2">
                     <div>
                         <p class="font-medium text-gray-900">출석 확인 알림</p>
                         <p class="text-xs text-gray-500">자녀의 등/하원 시 알림을 받습니다</p>
                     </div>
-                    <input type="checkbox" class="w-5 h-5 text-primary-600 rounded focus:ring-primary-500">
+                    <input type="checkbox" disabled aria-label="출석 확인 알림 기본 미수신"
+                           class="h-8 w-8 flex-shrink-0 text-primary-600 rounded focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60">
                 </label>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">앱 정보</h2>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between py-2">
@@ -494,7 +491,7 @@
 
         const renderEmptySessions = (message = '현재 계정에 연결된 활성 세션이 없습니다. 다시 로그인하면 이 영역에 기기별 세션 정보가 표시됩니다.') => {
             sessionListElement.innerHTML = `
-                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                <div class="bg-gray-50 px-4 py-5 text-sm text-gray-500">
                     ${escapeHtml(message)}
                 </div>
             `;
@@ -503,7 +500,7 @@
         const loadSessions = async () => {
             setSessionError();
             sessionListElement.innerHTML = `
-                <div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500">
+                <div class="bg-gray-50 px-4 py-5 text-sm text-gray-500">
                     활성 세션을 불러오는 중입니다.
                 </div>
             `;
@@ -542,9 +539,9 @@
                         confirmButtonText: isCurrent ? '이 기기 로그아웃' : '세션 종료',
                         cancelButtonText: '취소',
                         customClass: {
-                            popup: 'rounded-2xl',
-                            confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-medium',
-                            cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                            popup: 'rounded-xl',
+                            confirmButton: 'min-h-10 px-4 rounded-lg bg-red-600 text-white font-medium',
+                            cancelButton: 'min-h-10 px-4 rounded-lg bg-gray-100 text-gray-700 font-medium',
                         },
                         buttonsStyling: false,
                     });
@@ -595,14 +592,14 @@
                     : '<span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">다른 기기</span>';
 
                 return `
-                    <div class="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div class="min-w-0 space-y-3">
+                    <div class="border-t border-gray-100 bg-white px-4 py-4 first:border-t-0">
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="min-w-0 space-y-2">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h3 class="text-base font-semibold text-gray-900">${escapeHtml(deviceLabel)}</h3>
                                     ${badge}
                                 </div>
-                                <div class="grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-2">
+                                <div class="grid grid-cols-1 gap-x-5 gap-y-1 text-sm text-gray-600 md:grid-cols-3">
                                     <p><span class="font-medium text-gray-700">IP</span> ${escapeHtml(session.clientIp || 'unknown')}</p>
                                     <p><span class="font-medium text-gray-700">세션 ID</span> ${escapeHtml((session.sessionId || '').slice(0, 8))}...</p>
                                     <p><span class="font-medium text-gray-700">최초 로그인</span> ${escapeHtml(formatDateTime(session.createdAt))}</p>
@@ -614,7 +611,7 @@
                             </div>
                             <div class="flex shrink-0 items-center">
                                 <button type="button"
-                                        class="js-revoke-session-button inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+                                        class="js-revoke-session-button inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
                                         data-session-id="${escapeHtml(session.sessionId)}"
                                         data-current="${session.current ? 'true' : 'false'}"
                                         data-device-label="${escapeHtml(deviceLabel)}">
@@ -642,9 +639,9 @@
                 confirmButtonText: '다른 기기 로그아웃',
                 cancelButtonText: '취소',
                 customClass: {
-                    popup: 'rounded-2xl',
-                    confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-medium',
-                    cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                    popup: 'rounded-xl',
+                    confirmButton: 'min-h-10 px-4 rounded-lg bg-red-600 text-white font-medium',
+                    cancelButton: 'min-h-10 px-4 rounded-lg bg-gray-100 text-gray-700 font-medium',
                 },
                 buttonsStyling: false,
             });
@@ -683,9 +680,9 @@
                     confirmButtonText: '연결 해제',
                     cancelButtonText: '취소',
                     customClass: {
-                        popup: 'rounded-2xl',
-                        confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-medium',
-                        cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium',
+                        popup: 'rounded-xl',
+                        confirmButton: 'min-h-10 px-4 rounded-lg bg-red-600 text-white font-medium',
+                        cancelButton: 'min-h-10 px-4 rounded-lg bg-gray-100 text-gray-700 font-medium',
                     },
                     buttonsStyling: false,
                 });

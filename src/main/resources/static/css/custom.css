@@ -4,8 +4,8 @@
 
 :root {
     --font-brand: "Space Grotesk", "Noto Sans KR", "Pretendard", sans-serif;
-    --bg-base: #eef3ef;
-    --bg-soft: #f7faf8;
+    --bg-base: #ffffff;
+    --bg-soft: #ffffff;
     --surface: #ffffff;
     --surface-tint: #f7fbf9;
     --text-main: #152117;
@@ -41,23 +41,17 @@ html {
 body {
     font-family: var(--font-brand);
     color: var(--text-main);
-    background:
-        radial-gradient(1200px 500px at -8% -14%, rgba(126, 192, 154, 0.30) 0%, transparent 58%),
-        radial-gradient(900px 420px at 108% -18%, rgba(242, 180, 65, 0.24) 0%, transparent 56%),
-        linear-gradient(180deg, #f6fbf8 0%, var(--bg-base) 100%);
+    background: var(--bg-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 body.bg-gray-50 {
-    background:
-        radial-gradient(1100px 460px at 6% -6%, rgba(126, 192, 154, 0.24) 0%, transparent 52%),
-        radial-gradient(880px 360px at 100% -12%, rgba(242, 180, 65, 0.16) 0%, transparent 55%),
-        linear-gradient(180deg, #f7fbf8 0%, var(--bg-base) 100%) !important;
+    background: var(--bg-base) !important;
 }
 
 .bg-white {
-    background-color: rgba(255, 255, 255, 0.92) !important;
+    background-color: #ffffff !important;
 }
 
 .bg-gray-50 {
@@ -137,7 +131,7 @@ body.bg-gray-50 {
 input,
 select,
 textarea {
-    background: rgba(255, 255, 255, 0.94);
+    background: #ffffff;
     border-color: var(--line-soft) !important;
     color: var(--text-main);
 }
@@ -168,7 +162,7 @@ a:focus-visible {
 /* App shell */
 .app-header {
     backdrop-filter: blur(14px);
-    background: rgba(250, 253, 251, 0.80);
+    background: rgba(255, 255, 255, 0.92);
     border-bottom: 1px solid rgba(182, 205, 189, 0.46);
 }
 
@@ -178,7 +172,7 @@ a:focus-visible {
 }
 
 .app-surface {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.90) 0%, rgba(249, 252, 250, 0.92) 100%);
+    background: #ffffff;
     border: 1px solid rgba(183, 207, 192, 0.52);
     box-shadow: var(--shadow-soft);
     border-radius: 1.5rem;
@@ -246,19 +240,16 @@ a:focus-visible {
 
 /* auth pages */
 .auth-screen {
-    background:
-        radial-gradient(circle at 8% 8%, rgba(126, 192, 154, .32) 0, rgba(221, 243, 232, 0) 32%),
-        radial-gradient(circle at 95% 0, rgba(242, 180, 65, .23) 0, rgba(234, 247, 241, 0) 36%),
-        linear-gradient(180deg, #f7fbf8 0%, #eef5f0 100%);
+    background: #ffffff;
 }
 
 .auth-card {
     border-color: var(--line-soft) !important;
-    box-shadow: var(--shadow-soft);
+    box-shadow: none;
 }
 
 .auth-card:hover {
-    box-shadow: var(--shadow-float);
+    box-shadow: none;
 }
 
 /* utilities */

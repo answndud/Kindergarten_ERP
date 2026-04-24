@@ -36,7 +36,6 @@
 
     <style>
         body { font-family: 'Pretendard', sans-serif; }
-        .bg-gradient-primary { background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%); }
     </style>
     <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
@@ -44,21 +43,23 @@
 
 <header th:replace="~{fragments/header :: header}"></header>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">지원/승인</h1>
-        <p class="text-gray-600">지원 현황과 승인 대기 목록을 확인하세요</p>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="mb-6">
+        <p class="text-sm font-semibold text-primary-700">Application Queue</p>
+        <h1 class="mt-2 text-2xl font-bold text-gray-900">지원/승인</h1>
+        <p class="mt-2 max-w-2xl text-gray-600">소속 신청과 입학 신청의 현재 상태, 다음 처리 액션을 확인하세요.</p>
     </div>
 
     <div id="pending-content"
          hx-get="/applications/pending/content"
          hx-trigger="load"
          hx-swap="outerHTML">
-        <div class="flex justify-center items-center py-12">
-            <svg class="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+        <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-5 py-6 text-sm text-gray-600">
+            <svg class="h-5 w-5 animate-spin text-primary-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
+            신청 상태를 불러오는 중입니다.
         </div>
     </div>
 </main>
@@ -110,7 +111,10 @@
             const response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) return [];
             const payload = await response.json().catch(() => ({}));
-            return payload.data || [];
+            if (Array.isArray(payload.data)) {
+                return payload.data;
+            }
+            return payload.data?.content || [];
         };
 
         const setOptions = (selectEl, placeholderText, items, labelFn) => {
@@ -157,6 +161,32 @@
                 refreshApplications();
                 notifyRefresh();
                 if (window.htmx) htmx.trigger(document.body, 'dashboard-stats-changed');
+            },
+
+            async loadKindergartens(selectEl) {
+                const kindergartens = await fetchList('/api/v1/kindergartens');
+                setOptions(selectEl, '유치원을 선택하세요', kindergartens, (item) => `${item.name} · ${item.address || '주소 미등록'}`);
+            },
+
+            async loadClassroomsByKindergarten(selectEl, kindergartenId) {
+                if (!kindergartenId) {
+                    setOptions(selectEl, '유치원을 먼저 선택하세요', [], null);
+                    return;
+                }
+
+                const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${kindergartenId}`);
+                setOptions(selectEl, '희망 반을 선택하세요', classrooms, (item) => item.name);
+            },
+
+            async loadCurrentClassroomOptions() {
+                if (!currentKindergartenId) {
+                    return {};
+                }
+                const classrooms = await fetchList(`/api/v1/classrooms?kindergartenId=${currentKindergartenId}`);
+                return classrooms.reduce((options, classroom) => {
+                    options[classroom.id] = classroom.name;
+                    return options;
+                }, {});
             },
 
             async initPendingForms() {
@@ -232,6 +262,162 @@
                             await UI.error(err.message);
                         }
                     });
+                }
+            },
+
+            async uiApproveTeacher(applicationId, teacherName) {
+                const ok = await UI.confirm({
+                    title: '교사 지원 승인',
+                    text: `${teacherName} 선생님의 지원을 승인할까요? 승인 후 소속 교사로 전환됩니다.`,
+                    confirmText: '승인',
+                    cancelText: '취소',
+                    icon: 'question',
+                    showCancelButton: true,
+                    customClass: {
+                        popup: 'rounded-xl',
+                        confirmButton: 'px-4 py-2 rounded-lg bg-primary-600 text-white font-semibold',
+                        cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold'
+                    },
+                    buttonsStyling: false
+                });
+                if (!ok) return;
+
+                try {
+                    await requestJson(`/api/v1/kindergarten-applications/${applicationId}/approve`, 'PUT');
+                    await UI.success('교사 지원을 승인했습니다.');
+                    refreshApplications();
+                    notifyRefresh();
+                    if (window.htmx) htmx.trigger(document.body, 'dashboard-stats-changed');
+                } catch (err) {
+                    await UI.error(err.message);
+                }
+            },
+
+            async uiRejectTeacher(applicationId, teacherName) {
+                const reason = await UI.promptTextarea({
+                    title: '교사 지원 거절',
+                    label: `${teacherName} 선생님에게 남길 거절 사유`,
+                    placeholder: '예) 이번 학기 정원이 마감되었습니다.',
+                    confirmText: '거절',
+                    required: true
+                });
+                if (!reason?.isConfirmed) return;
+
+                try {
+                    await requestJson(`/api/v1/kindergarten-applications/${applicationId}/reject`, 'PUT', {
+                        reason: reason.value.trim()
+                    });
+                    await UI.success('교사 지원을 거절했습니다.');
+                    refreshApplications();
+                    notifyRefresh();
+                } catch (err) {
+                    await UI.error(err.message);
+                }
+            },
+
+            async uiCancelTeacher(applicationId, kindergartenName) {
+                const ok = await UI.confirm({
+                    title: '지원 신청 취소',
+                    text: `${kindergartenName} 지원 신청을 취소할까요?`,
+                    confirmText: '신청 취소',
+                    cancelText: '유지',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    customClass: {
+                        popup: 'rounded-xl',
+                        confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-semibold',
+                        cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold'
+                    },
+                    buttonsStyling: false
+                });
+                if (!ok) return;
+
+                try {
+                    await requestJson(`/api/v1/kindergarten-applications/${applicationId}/cancel`, 'PUT');
+                    await UI.success('지원 신청을 취소했습니다.');
+                    refreshApplications();
+                    notifyRefresh();
+                } catch (err) {
+                    await UI.error(err.message);
+                }
+            },
+
+            async uiApproveKid(applicationId, kidName) {
+                const classroomOptions = await this.loadCurrentClassroomOptions();
+                if (Object.keys(classroomOptions).length === 0) {
+                    await UI.error('배정 가능한 반을 먼저 등록해 주세요.');
+                    return;
+                }
+
+                const result = await UI.promptSelect({
+                    title: '입학 신청 승인',
+                    label: `${kidName} 원아를 배정할 반`,
+                    options: classroomOptions,
+                    placeholder: '반을 선택하세요',
+                    confirmText: '승인',
+                    required: true
+                });
+                if (!result?.isConfirmed) return;
+
+                try {
+                    await requestJson(`/api/v1/kid-applications/${applicationId}/approve`, 'PUT', {
+                        classroomId: Number(result.value)
+                    });
+                    await UI.success('입학 신청을 승인했습니다.');
+                    refreshApplications();
+                    notifyRefresh();
+                    if (window.htmx) htmx.trigger(document.body, 'dashboard-stats-changed');
+                } catch (err) {
+                    await UI.error(err.message);
+                }
+            },
+
+            async uiRejectKid(applicationId, kidName) {
+                const reason = await UI.promptTextarea({
+                    title: '입학 신청 거절',
+                    label: `${kidName} 원아 신청의 거절 사유`,
+                    placeholder: '예) 현재 희망 반 정원이 마감되었습니다.',
+                    confirmText: '거절',
+                    required: true
+                });
+                if (!reason?.isConfirmed) return;
+
+                try {
+                    await requestJson(`/api/v1/kid-applications/${applicationId}/reject`, 'PUT', {
+                        reason: reason.value.trim()
+                    });
+                    await UI.success('입학 신청을 거절했습니다.');
+                    refreshApplications();
+                    notifyRefresh();
+                } catch (err) {
+                    await UI.error(err.message);
+                }
+            },
+
+            async uiCancelKid(applicationId, kidName) {
+                const ok = await UI.confirm({
+                    title: '입학 신청 취소',
+                    text: `${kidName} 원아의 입학 신청을 취소할까요?`,
+                    confirmText: '신청 취소',
+                    cancelText: '유지',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    customClass: {
+                        popup: 'rounded-xl',
+                        confirmButton: 'px-4 py-2 rounded-lg bg-red-600 text-white font-semibold',
+                        cancelButton: 'px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-semibold'
+                    },
+                    buttonsStyling: false
+                });
+                if (!ok) return;
+
+                try {
+                    await requestJson(`/api/v1/kid-applications/${applicationId}/cancel`, 'PUT');
+                    await UI.success('입학 신청을 취소했습니다.');
+                    refreshApplications();
+                    notifyRefresh();
+                } catch (err) {
+                    await UI.error(err.message);
                 }
             }
         };

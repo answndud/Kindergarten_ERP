@@ -82,9 +82,7 @@ Kindergarten ERP는 이 문제를 `auth_audit_log`라는 별도 도메인으로 
 - src/main/resources/templates/authaudit/audit-logs.html
 - src/test/java/com/erp/api/AuthAuditApiIntegrationTest.java
 - src/test/java/com/erp/api/AuthApiIntegrationTest.java
-- docs/decisions/phase33_auth_social_audit_log.md
-- docs/decisions/phase35_auth_audit_query_api.md
-- docs/decisions/phase37_auth_audit_export_alerting_dashboard.md
+- docs/COMPLETED.md#archive-003
 ```
 
 ## 4. 설계 구상
@@ -337,9 +335,7 @@ sequenceDiagram
   - src/test/java/com/erp/api/AuthApiIntegrationTest.java
   - src/test/java/com/erp/api/AuthAuditApiIntegrationTest.java
 - 결정 로그:
-  - docs/decisions/phase33_auth_social_audit_log.md
-  - docs/decisions/phase35_auth_audit_query_api.md
-  - docs/decisions/phase38_auth_audit_retention_and_denormalization.md
+  - docs/COMPLETED.md#archive-003
 ```
 
 ## 12. 구현 체크리스트

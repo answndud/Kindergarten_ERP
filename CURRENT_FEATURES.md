@@ -139,6 +139,10 @@ curl -X GET http://localhost:8080/api/v1/auth/me -b cookies.txt
 ## 6) 참고 문서
 
 - 전체 개요: `README.md`
+- 문서 인덱스: `docs/README.md`
+- active 계획: `docs/PLAN.md`
+- active 진행 상태: `docs/PROGRESS.md`
+- 완료 archive: `docs/COMPLETED.md`
+- 개발자 가이드: `docs/guides/developer-guide.md`
 - 환경 변수 계약: `docs/guides/env-contract.md`
-- 단계별 개발 기록: `docs/decisions/`
-- 성능 최적화 기록: `docs/portfolio/performance/`
+- 배포 가이드: `docs/guides/deployment-guide.md`

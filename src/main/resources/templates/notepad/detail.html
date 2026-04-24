@@ -34,7 +34,6 @@
 
     <style>
         body { font-family: 'Pretendard', sans-serif; }
-        .bg-gradient-primary { background: linear-gradient(135deg, #56B88C 0%, #3F9C73 100%); }
     </style>
     <link rel="stylesheet" th:href="@{/css/custom.css}" href="/css/custom.css">
 </head>
@@ -42,7 +41,7 @@
 
 <header th:replace="~{fragments/header :: header}"></header>
 
-<main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
     <div class="flex items-center justify-between mb-6">
         <a href="/notepad" class="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900">
             <span class="text-lg">←</span>
@@ -55,10 +54,10 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6" th:if="${notepad != null}">
+    <div class="bg-white rounded-xl border border-gray-200 p-6" th:if="${notepad != null}">
         <div class="flex items-start justify-between gap-4 mb-4">
             <div class="min-w-0">
-                <h1 class="text-2xl font-bold text-gray-900 break-words" th:text="${notepad.title()}">제목</h1>
+                <h1 class="text-3xl font-bold text-gray-900 break-words" th:text="${notepad.title()}">제목</h1>
                 <div class="mt-2 text-sm text-gray-600 flex flex-wrap items-center gap-3">
                     <span class="inline-flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,12 +100,12 @@
              sec:authorize="hasAnyRole('PRINCIPAL', 'TEACHER')">
             <div class="flex gap-2">
                 <form th:action="@{/notepad/{id}/edit(id=${notepad.id()})}" method="get">
-                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                    <button type="submit" class="min-h-11 px-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
                         수정
                     </button>
                 </form>
                 <form th:action="@{/notepad/{id}/delete(id=${notepad.id()})}" method="post" data-ui-confirm="정말 삭제하시겠습니까?">
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    <button type="submit" class="min-h-11 px-4 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">
                         삭제
                     </button>
                 </form>
@@ -114,10 +113,10 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 text-center" th:if="${notepad == null}">
-        <h1 class="text-lg font-semibold text-gray-900">알림장을 찾을 수 없습니다</h1>
+    <div class="bg-white rounded-xl border border-gray-200 p-6 text-center" th:if="${notepad == null}">
+        <h1 class="text-xl font-bold text-gray-900">알림장을 찾을 수 없습니다</h1>
         <p class="mt-2 text-gray-600">목록으로 돌아가 다시 시도해주세요.</p>
-        <a href="/notepad" class="mt-4 inline-flex px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">목록으로</a>
+        <a href="/notepad" class="mt-4 inline-flex min-h-11 items-center px-4 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700">목록으로</a>
     </div>
 </main>
 
