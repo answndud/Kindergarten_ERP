@@ -19,12 +19,19 @@
 | 실행 프로필 | `local`, `demo`, `prod` |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 
-## 이 프로젝트로 보여주고 싶은 것
+## 바로 확인할 것
+
+- [5분 실행 / 검증](#5분-실행--검증): `demo` 프로파일과 시연 계정으로 빠르게 재현할 수 있습니다.
+- [수치로 검증한 개선](#수치로-검증한-개선): 쿼리 수와 응답 시간 기준 개선 결과를 먼저 볼 수 있습니다.
+- [화면](#화면): 대시보드, 신청 처리 큐, 인증 감사 로그, 업무 감사 로그 화면을 바로 확인할 수 있습니다.
+- [docs/COMPLETED.md](./docs/COMPLETED.md): 배치별 구현, 검증, 후속 리스크를 archive 형태로 추적할 수 있습니다.
+
+## 왜 이 저장소를 열어볼 만한가
 
 - 단순 CRUD가 아니라 tenant 권한 경계, 세션 수명주기, 승인 워크플로우, 감사 로그 같은 운영형 백엔드 문제를 다뤘습니다.
 - 기능을 추가하는 데서 멈추지 않고 Testcontainers, CI 분리, Prometheus/Grafana, structured logging까지 연결했습니다.
 - 성능 작업은 "느린 지점을 찾고, 수치로 검증하고, 개선 후 다시 측정"하는 방식으로 정리했습니다.
-- 상단에서 핵심 문제와 결과를 먼저 확인할 수 있도록 README를 구성했습니다.
+- 학부모, 교사, 원장이 실제로 상호작용하는 서비스 흐름과 운영 도구가 한 저장소 안에서 닫히는 구조입니다.
 
 ## 핵심 문제와 해결
 
@@ -65,6 +72,13 @@
 | 인증 감사 로그 | 업무 감사 로그 |
 |---|---|
 | ![인증 감사 로그](./docs/assets/readme/audit-desktop.png) | ![업무 감사 로그](./docs/assets/readme/domain-audit-desktop.png) |
+
+## 서비스가 실제로 어떻게 닫히는가
+
+1. 학부모는 입학 신청이나 출결 변경 요청을 만들고, 시스템은 이를 tenant 경계 안에서 저장합니다.
+2. 교사와 원장은 반 정원, 승인 대기 큐, 출석, 알림장, 공지, 일정 같은 운영 업무를 처리합니다.
+3. 인증 이벤트는 `auth audit log`, 업무 상태 전이는 `domain audit log`에 기록되고 export API로 이어집니다.
+4. 원장은 대시보드, 시스템 알림, 활성 세션 제어, Prometheus/Grafana를 통해 운영 상태를 확인합니다.
 
 ## 대표 기능
 
@@ -174,6 +188,17 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 
 - 통합 테스트는 MySQL/Redis Testcontainers 기반입니다.
 - 실행 전 필수 환경 변수는 [`docs/guides/env-contract.md`](./docs/guides/env-contract.md)를 확인하면 됩니다.
+
+## 현재 상태
+
+| 항목 | 상태 |
+|------|------|
+| Core backend MVP | 인증, 출석, 알림장, 공지, 지원/승인, 감사 로그, 대시보드까지 완료 |
+| Demo | `demo` 프로파일과 seed 계정으로 로컬 시연 가능 |
+| Verification | `test`, `fastTest`, `integrationTest`, `performanceSmokeTest`, GitHub Actions 구성 완료 |
+| Operations | auth/domain audit, management plane, Prometheus/Grafana overlay, active session control 포함 |
+| Deployment package | `Dockerfile`, `deploy/*`, [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) 기준 배포 자산 정리 |
+| Active work | 현재 없음. [`docs/PLAN.md`](./docs/PLAN.md), [`docs/PROGRESS.md`](./docs/PROGRESS.md)는 비운 상태로 유지 |
 
 ## API / 운영 문서
 
