@@ -41,7 +41,7 @@
 - DB: `Amazon RDS MySQL db.t4g.micro`
 - Redis: `EC2 내부 Docker 컨테이너`
 - 리버스 프록시/HTTPS: `Caddy`
-- 자동 배포: `GitHub Actions -> GHCR -> EC2 SSH 배포`
+- 수동 CD: `GitHub Actions workflow_dispatch -> GHCR -> EC2 SSH 배포`
 
 이 구성을 추천하는 이유는 단순합니다.
 
@@ -233,7 +233,7 @@ flowchart LR
 확인할 것:
 
 - `main` 브랜치 기준 CI가 깨지지 않아야 합니다.
-- 배포는 `main` push 기준으로 거는 것이 가장 단순합니다.
+- 클라우드 배포 secret을 넣기 전까지 CD workflow는 수동 실행 기준으로 둡니다.
 
 ### 7.2 AWS
 
@@ -494,7 +494,7 @@ mkdir -p deploy
 | `deploy/docker-compose.prod.yml` | 앱/Redis/Caddy 실행 |
 | `deploy/Caddyfile` | HTTPS와 reverse proxy |
 | `deploy/.env.prod` | 운영 환경 변수 |
-| `.github/workflows/cd.yml` | 자동 배포 |
+| `.github/workflows/cd.yml` | 수동 CD |
 
 이 문서 맨 아래에 템플릿을 제공합니다.
 
@@ -731,11 +731,14 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=200 a
 
 ---
 
-## 19. GitHub Actions 자동 배포 붙이기
+## 19. GitHub Actions 수동 배포 붙이기
 
-자동 배포 구조는 아래와 같습니다.
+현재 저장소의 CD workflow는 `workflow_dispatch` 기준 수동 배포로 둡니다.
+클라우드 서버와 repository secret을 준비하기 전까지는 `main` push 때 CD가 실패로 표시되지 않는 것이 정상입니다.
 
-1. `main`에 push
+수동 배포 구조는 아래와 같습니다.
+
+1. GitHub Actions에서 `Backend CD` workflow를 수동 실행
 2. GitHub Actions가 Docker 이미지 빌드
 3. GHCR에 push
 4. SSH로 EC2 접속
@@ -1138,9 +1141,6 @@ NOTIFICATION_APP_WEBHOOK=
 name: Backend CD
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
