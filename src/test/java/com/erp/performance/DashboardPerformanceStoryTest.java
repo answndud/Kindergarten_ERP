@@ -93,7 +93,7 @@ class DashboardPerformanceStoryTest extends BaseIntegrationTest {
         clearDashboardCache();
 
         var before = dashboardService.getDashboardStatistics(kindergarten);
-        attendanceService.markAbsent(kid.getId(), LocalDate.now(), "캐시 무효화 테스트");
+        attendanceService.markAbsent(kid.getId(), LocalDate.now(), "캐시 무효화 테스트", teacherMember.getId());
         var after = dashboardService.getDashboardStatistics(kindergarten);
 
         assertTrue(after.todayAttendanceCount() > before.todayAttendanceCount(),

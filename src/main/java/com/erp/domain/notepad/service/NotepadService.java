@@ -189,10 +189,7 @@ public class NotepadService {
         }
     }
 
-    /**
-     * 알림장 조회
-     */
-    public Notepad getNotepad(Long id) {
+    private Notepad getNotepad(Long id) {
         return notepadRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTEPAD_NOT_FOUND));
     }
@@ -225,27 +222,10 @@ public class NotepadService {
         return NotepadDetailResponse.from(notepad, readConfirms, isRead);
     }
 
-    /**
-     * 유치원별 알림장 목록 조회 (페이지)
-     */
-    public Page<NotepadResponse> getNotepadsByKindergarten(Long kindergartenId, Pageable pageable) {
-        return mapWithReadCounts(notepadRepository.findByKindergartenId(kindergartenId, pageable));
-    }
-
     public Page<NotepadResponse> getNotepadsByKindergarten(Long kindergartenId, Pageable pageable, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
         return mapWithReadCounts(notepadRepository.findByKindergartenId(kindergartenId, pageable));
-    }
-
-    /**
-     * 반별 알림장 목록 조회 (페이지)
-     */
-    public Page<NotepadResponse> getClassroomNotepads(Long classroomId, Pageable pageable) {
-        // 반 존재 확인
-        classroomService.getClassroom(classroomId);
-
-        return mapWithReadCounts(notepadRepository.findClassroomNotepads(classroomId, pageable));
     }
 
     public Page<NotepadResponse> getClassroomNotepads(Long classroomId, Pageable pageable, Long requesterId) {
@@ -255,31 +235,11 @@ public class NotepadService {
         return mapWithReadCounts(notepadRepository.findClassroomNotepads(classroomId, pageable));
     }
 
-    /**
-     * 원생별 알림장 목록 조회 (페이지)
-     */
-    public Page<NotepadResponse> getKidNotepads(Long kidId, Pageable pageable) {
-        // 원생 존재 확인
-        kidService.getKid(kidId);
-
-        return mapWithReadCounts(notepadRepository.findKidNotepads(kidId, pageable));
-    }
-
     public Page<NotepadResponse> getKidNotepads(Long kidId, Pageable pageable, Long requesterId) {
         var kid = kidService.getKid(kidId);
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateKidReadAccess(requester, kid);
         return mapWithReadCounts(notepadRepository.findKidNotepads(kidId, pageable));
-    }
-
-    /**
-     * 학부모용 알림장 목록 (반 전체 + 내 원생)
-     */
-    public Page<NotepadResponse> getNotepadsForParent(Long classroomId, Long kidId, Pageable pageable) {
-        classroomService.getClassroom(classroomId);
-        kidService.getKid(kidId);
-
-        return mapWithReadCounts(notepadRepository.findNotepadsForParent(classroomId, kidId, pageable));
     }
 
     public Page<NotepadResponse> getNotepadsForParent(Long classroomId, Long kidId, Pageable pageable, Long parentId) {

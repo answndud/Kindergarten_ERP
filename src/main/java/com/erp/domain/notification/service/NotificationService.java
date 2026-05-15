@@ -32,46 +32,6 @@ public class NotificationService {
     private final NotificationDeliveryProperties deliveryProperties;
     private final AccessPolicyService accessPolicyService;
 
-    /**
-     * 알림 생성
-     */
-    @Transactional
-    public Long create(NotificationCreateRequest request) {
-        Member receiver = memberRepository.findById(request.receiverId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        Notification notification;
-        if (request.relatedEntityType() != null && request.relatedEntityId() != null) {
-            notification = Notification.createWithRelatedEntity(
-                    receiver,
-                    request.type(),
-                    request.title(),
-                    request.content(),
-                    request.relatedEntityType(),
-                    request.relatedEntityId()
-            );
-        } else if (request.linkUrl() != null) {
-            notification = Notification.createWithLink(
-                    receiver,
-                    request.type(),
-                    request.title(),
-                    request.content(),
-                    request.linkUrl()
-            );
-        } else {
-            notification = Notification.create(
-                    receiver,
-                    request.type(),
-                    request.title(),
-                    request.content()
-            );
-        }
-
-        Notification saved = notificationRepository.save(notification);
-        notificationDispatchService.dispatch(saved);
-        return saved.getId();
-    }
-
     @Transactional
     public Long create(NotificationCreateRequest request, Long senderId) {
         Member sender = accessPolicyService.getRequester(senderId);

@@ -47,6 +47,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KidApplicationService {
 
+    private static final String REVIEW_QUEUE_URL = "/applications/pending";
+    private static final String PARENT_APPLICATIONS_URL = "/applications/pending";
+
     private static final List<ApplicationStatus> ACTIVE_APPLICATION_STATUSES = List.of(
             ApplicationStatus.PENDING,
             ApplicationStatus.WAITLISTED,
@@ -148,17 +151,15 @@ public class KidApplicationService {
 
         activateParent(application.getParent(), application.getKindergarten());
         notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
-        domainAuditLogService.record(
+        recordApplicationAudit(
                 processor,
-                application.getKindergarten().getId(),
                 DomainAuditAction.KID_APPLICATION_APPROVED,
-                DomainAuditTargetType.KID_APPLICATION,
-                application.getId(),
                 processor.getName() + "이(가) " + application.getKidName() + "의 입학을 승인했습니다.",
                 java.util.Map.of(
                         "classroomId", classroom.getId(),
                         "kidId", savedKid.getId()
-                )
+                ),
+                application
         );
         dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
     }
@@ -171,14 +172,12 @@ public class KidApplicationService {
 
         application.placeOnWaitlist(classroom, processor, request.decisionNote());
         notifyParentAboutWaitlist(application.getParent(), application.getKidName(), classroom);
-        domainAuditLogService.record(
+        recordApplicationAudit(
                 processor,
-                application.getKindergarten().getId(),
                 DomainAuditAction.KID_APPLICATION_WAITLISTED,
-                DomainAuditTargetType.KID_APPLICATION,
-                application.getId(),
                 processor.getName() + "이(가) " + application.getKidName() + "을(를) 대기열에 등록했습니다.",
-                java.util.Map.of("classroomId", classroom.getId())
+                java.util.Map.of("classroomId", classroom.getId()),
+                application
         );
     }
 
@@ -193,17 +192,15 @@ public class KidApplicationService {
         LocalDateTime offerExpiresAt = LocalDateTime.now().plus(workflowProperties.getOfferValidity());
         application.offerSeat(classroom, processor, offerExpiresAt, request.decisionNote());
         notifyParentAboutOffer(application.getParent(), application.getKidName(), classroom, offerExpiresAt);
-        domainAuditLogService.record(
+        recordApplicationAudit(
                 processor,
-                application.getKindergarten().getId(),
                 DomainAuditAction.KID_APPLICATION_OFFERED,
-                DomainAuditTargetType.KID_APPLICATION,
-                application.getId(),
                 processor.getName() + "이(가) " + application.getKidName() + "에게 입학 제안을 발송했습니다.",
                 java.util.Map.of(
                         "classroomId", classroom.getId(),
                         "offerExpiresAt", offerExpiresAt.toString()
-                )
+                ),
+                application
         );
     }
 
@@ -230,17 +227,15 @@ public class KidApplicationService {
         activateParent(application.getParent(), application.getKindergarten());
         notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
         notifyStaffAboutOfferAccepted(classroom.getKindergarten(), application.getParent(), application.getKidName());
-        domainAuditLogService.record(
+        recordApplicationAudit(
                 application.getParent(),
-                application.getKindergarten().getId(),
                 DomainAuditAction.KID_APPLICATION_OFFER_ACCEPTED,
-                DomainAuditTargetType.KID_APPLICATION,
-                application.getId(),
                 application.getParent().getName() + " 학부모가 " + application.getKidName() + "의 입학 제안을 수락했습니다.",
                 java.util.Map.of(
                         "classroomId", classroom.getId(),
                         "kidId", savedKid.getId()
-                )
+                ),
+                application
         );
         dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
     }
@@ -252,14 +247,12 @@ public class KidApplicationService {
 
         application.reject(request.reason(), processor);
         notifyParentAboutRejection(application.getParent(), application.getKidName(), application.getKindergarten(), request.reason());
-        domainAuditLogService.record(
+        recordApplicationAudit(
                 processor,
-                application.getKindergarten().getId(),
                 DomainAuditAction.KID_APPLICATION_REJECTED,
-                DomainAuditTargetType.KID_APPLICATION,
-                application.getId(),
                 processor.getName() + "이(가) " + application.getKidName() + "의 입학을 거절했습니다.",
-                java.util.Map.of("reason", request.reason())
+                java.util.Map.of("reason", request.reason()),
+                application
         );
     }
 
@@ -276,14 +269,12 @@ public class KidApplicationService {
         Kindergarten kindergarten = application.getKindergarten();
         if (kindergarten != null) {
             notifyStaffAboutCancellation(kindergarten, application.getParent(), application.getKidName());
-            domainAuditLogService.record(
+            recordApplicationAudit(
                     application.getParent(),
-                    kindergarten.getId(),
                     DomainAuditAction.KID_APPLICATION_CANCELLED,
-                    DomainAuditTargetType.KID_APPLICATION,
-                    application.getId(),
                     application.getParent().getName() + " 학부모가 " + application.getKidName() + "의 입학 신청을 취소했습니다.",
-                    java.util.Map.of("status", application.getStatus().name())
+                    java.util.Map.of("status", application.getStatus().name()),
+                    application
             );
         }
     }
@@ -424,6 +415,22 @@ public class KidApplicationService {
         }
     }
 
+    private void recordApplicationAudit(Member actor,
+                                        DomainAuditAction action,
+                                        String summary,
+                                        java.util.Map<String, Object> metadata,
+                                        KidApplication application) {
+        domainAuditLogService.record(
+                actor,
+                application.getKindergarten().getId(),
+                action,
+                DomainAuditTargetType.KID_APPLICATION,
+                application.getId(),
+                summary,
+                metadata
+        );
+    }
+
     private void notifyStaffAboutApplication(Kindergarten kindergarten, Member parent, String kidName) {
         String content = parent.getName() + " 학부모님이 자녀(" + kidName + ")의 입학을 신청했습니다.";
 
@@ -433,7 +440,7 @@ public class KidApplicationService {
                         NotificationType.KID_APPLICATION_SUBMITTED,
                         "새로운 입학 신청",
                         content,
-                        "/applications/pending"
+                        REVIEW_QUEUE_URL
                 ));
 
         memberRepository.findAllByKindergartenIdAndRole(kindergarten.getId(), MemberRole.TEACHER)
@@ -442,7 +449,7 @@ public class KidApplicationService {
                         NotificationType.KID_APPLICATION_SUBMITTED,
                         "새로운 입학 신청",
                         content,
-                        "/applications/pending"
+                        REVIEW_QUEUE_URL
                 ));
     }
 
@@ -474,7 +481,7 @@ public class KidApplicationService {
                         NotificationType.KID_APPLICATION_OFFER_ACCEPTED,
                         "입학 제안 수락",
                         content,
-                        "/applications/pending"
+                        REVIEW_QUEUE_URL
                 ));
         memberRepository.findAllByKindergartenIdAndRole(kindergarten.getId(), MemberRole.TEACHER)
                 .forEach(teacher -> notificationService.notifyWithLink(
@@ -482,7 +489,7 @@ public class KidApplicationService {
                         NotificationType.KID_APPLICATION_OFFER_ACCEPTED,
                         "입학 제안 수락",
                         content,
-                        "/applications/pending"
+                        REVIEW_QUEUE_URL
                 ));
     }
 
@@ -492,7 +499,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_APPROVED,
                 "입학 승인",
                 kidName + "의 " + kindergarten.getName() + " 입학이 승인되었습니다.",
-                "/applications/pending"
+                PARENT_APPLICATIONS_URL
         );
     }
 
@@ -506,7 +513,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_REJECTED,
                 "입학 거절",
                 content,
-                "/applications/pending"
+                PARENT_APPLICATIONS_URL
         );
     }
 
@@ -516,7 +523,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_WAITLISTED,
                 "입학 대기열 등록",
                 kidName + "이(가) " + classroom.getName() + " 대기열에 등록되었습니다.",
-                "/applications/pending"
+                PARENT_APPLICATIONS_URL
         );
     }
 
@@ -528,7 +535,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_OFFERED,
                 "입학 제안 도착",
                 content,
-                "/applications/pending"
+                PARENT_APPLICATIONS_URL
         );
     }
 
@@ -538,7 +545,7 @@ public class KidApplicationService {
                 NotificationType.KID_APPLICATION_OFFER_EXPIRED,
                 "입학 제안 만료",
                 kidName + "의 입학 제안이 만료되었습니다.",
-                "/applications/pending"
+                PARENT_APPLICATIONS_URL
         );
     }
 }
