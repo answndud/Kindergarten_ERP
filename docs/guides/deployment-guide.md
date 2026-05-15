@@ -232,7 +232,8 @@ flowchart LR
 
 확인할 것:
 
-- `main` 브랜치 기준 CI가 깨지지 않아야 합니다.
+- `main` 브랜치 기준 `Backend CI` quick check가 깨지지 않아야 합니다.
+- 기능/보안/DB/운영 설정 변경 후에는 수동 `Backend Quality` workflow를 실행합니다.
 - 클라우드 배포 secret을 넣기 전까지 CD workflow는 수동 실행 기준으로 둡니다.
 
 ### 7.2 AWS
@@ -782,7 +783,7 @@ Repository Secrets에 아래 값을 넣습니다.
 
 ### 20.1 매일
 
-- GitHub Actions 배포 성공 여부 확인
+- GitHub Actions `Backend CI` 성공 여부 확인
 - `docker compose ps` 확인
 - 최근 에러 로그 확인
 
@@ -802,7 +803,8 @@ Repository Secrets에 아래 값을 넣습니다.
 
 ### 20.4 배포 전
 
-- CI green
+- `Backend CI` green
+- 수동 `Backend Quality` green
 - 수동 DB snapshot
 - 환경 변수 변경 여부 확인
 - Flyway migration 영향도 확인

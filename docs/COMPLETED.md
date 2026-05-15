@@ -736,3 +736,41 @@
   - `KidService`의 requester 없는 read/list method 일부는 다른 domain service 내부 조회용으로 남겼다. 외부 controller canonical path는 requester 기반이다.
 - 결과:
   - 계획된 Phase 0~8 리팩토링을 완료했고, active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-018"></a>
+## `018` CI/CD 최소화와 수동 Quality workflow 분리
+
+- 완료일: `2026-05-15`
+- 배경:
+  - `main` push run `25896405598`는 성공했지만 전체 wall-clock이 `5m 28s`였다.
+  - 혼자 운영하고 `main` 브랜치를 고정 사용하는 프로젝트에서는 매 push마다 `integrationTest`, `performanceSmokeTest`, artifact upload까지 자동 실행하는 비용이 과했다.
+  - 클라우드 배포는 아직 없으므로 CD는 계속 수동 실행 기준이 맞다.
+- 변경 내용:
+  - `.github/workflows/ci.yml`를 단일 `Quick Check` job으로 줄였다.
+  - 자동 `Backend CI`는 `fastTest`, `bootJar`, 기본 compose config 해석만 수행한다.
+  - 기존 자동 job이던 `integrationTest`, `performanceSmokeTest`, monitoring compose config 해석, quality report artifact upload는 `.github/workflows/backend-quality.yml` 수동 workflow로 분리했다.
+  - push CI의 report/artifact upload를 제거해 혼자 운영하는 저장소의 기본 feedback loop를 짧게 만들었다.
+  - README와 developer/deployment guide에 quick CI, 수동 quality, 수동 CD 운영 기준을 반영했다.
+  - 로컬 Java 21 경로 문제는 전역 shell 설정 변경 없이 명령 단위 `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` containment 방식으로 문서화했다.
+- 코드/문서:
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/backend-quality.yml`
+  - `README.md`
+  - `docs/guides/developer-guide.md`
+  - `docs/guides/deployment-guide.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `ruby -e "require 'yaml'; Dir['.github/workflows/*.yml'].sort.each { |f| YAML.load_file(f); puts f }"`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew fastTest bootJar`: 통과
+  - `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config`: 통과
+  - `docker compose --env-file docker/.env.example -f docker/docker-compose.yml -f docker/docker-compose.monitoring.yml config`: 통과
+  - `git diff --check`: 통과
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - 자동 CI에서 통합/성능 테스트를 제거한 것은 의도적 운영 trade-off다.
+  - 보완책으로 수동 `Backend Quality` workflow와 로컬 targeted test 실행 규칙을 문서화했다.
+- 결과:
+  - `main` push의 자동 검증은 빠른 실패 신호 중심으로 경량화됐다.
+  - 무거운 통합/성능/품질 검증은 필요할 때 수동 실행하는 구조로 분리됐다.
