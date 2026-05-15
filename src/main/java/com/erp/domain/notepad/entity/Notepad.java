@@ -60,12 +60,6 @@ public class Notepad extends BaseEntity {
     private String content;
 
     /**
-     * 읽음 여부 (deprecated: notepad_read_confirm 테이블 사용)
-     */
-    @Column(name = "is_read")
-    private Boolean isRead = false;
-
-    /**
      * 사진 URL (복수일 경우 콤마로 구분)
      */
     @Column(name = "photo_url", length = 500)
@@ -141,13 +135,6 @@ public class Notepad extends BaseEntity {
      */
     public void setPhotoUrls(String photoUrls) {
         this.photoUrl = photoUrls;
-    }
-
-    /**
-     * 읽음 처리 (deprecated: 개별 읽음 확인 사용)
-     */
-    public void markAsRead() {
-        this.isRead = true;
     }
 
     /**

@@ -36,30 +36,6 @@ public class KidService {
     private final MemberService memberService;
     private final AccessPolicyService accessPolicyService;
 
-    /**
-     * 원생 생성
-     */
-    @Transactional
-    public Long createKid(KidRequest request) {
-        // 반 조회
-        Classroom classroom = classroomCapacityService.lockClassroom(request.getClassroomId());
-        classroomCapacityService.validateSeatAvailable(classroom);
-
-        // 원생 생성
-        Kid kid = Kid.create(
-                classroom,
-                request.getName(),
-                request.getBirthDate(),
-                request.getGender(),
-                request.getAdmissionDate()
-        );
-
-        // 저장
-        Kid saved = kidRepository.save(kid);
-
-        return saved.getId();
-    }
-
     @Transactional
     public Long createKid(KidRequest request, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
@@ -111,16 +87,6 @@ public class KidService {
         return kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId);
     }
 
-    /**
-     * 반별 원생 목록 조회 (페이지)
-     */
-    @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Kid> getKidsByClassroom(Long classroomId,
-                                                                         org.springframework.data.domain.Pageable pageable) {
-        classroomService.getClassroom(classroomId);
-        return kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId, pageable);
-    }
-
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<Kid> getKidsByClassroom(Long classroomId,
                                                                          org.springframework.data.domain.Pageable pageable,
@@ -142,15 +108,6 @@ public class KidService {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
         return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId);
-    }
-
-    /**
-     * 유치원 원생 목록 조회 (페이지)
-     */
-    @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Kid> getKidsByKindergarten(Long kindergartenId,
-                                                                            org.springframework.data.domain.Pageable pageable) {
-        return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -179,17 +136,6 @@ public class KidService {
         return kidRepository.findByClassroomIdAndNameContaining(classroomId, name);
     }
 
-    /**
-     * 반별 원생 목록 조회 (이름 검색, 페이지)
-     */
-    @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Kid> searchKidsByName(Long classroomId,
-                                                                       String name,
-                                                                       org.springframework.data.domain.Pageable pageable) {
-        classroomService.getClassroom(classroomId);
-        return kidRepository.findByClassroomIdAndNameContaining(classroomId, name, pageable);
-    }
-
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<Kid> searchKidsByName(Long classroomId,
                                                                        String name,
@@ -212,16 +158,6 @@ public class KidService {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
         return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name);
-    }
-
-    /**
-     * 유치원 원생 목록 조회 (이름 검색, 페이지)
-     */
-    @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<Kid> searchKidsByKindergarten(Long kindergartenId,
-                                                                              String name,
-                                                                              org.springframework.data.domain.Pageable pageable) {
-        return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -271,34 +207,12 @@ public class KidService {
         return kidRepository.findByParentId(parentId);
     }
 
-    /**
-     * 원생 수정
-     */
-    @Transactional
-    public void updateKid(Long id, String name, java.time.LocalDate birthDate, Gender gender) {
-        Kid kid = getKid(id);
-        kid.update(name, birthDate, gender);
-    }
-
     @Transactional
     public void updateKid(Long id, String name, java.time.LocalDate birthDate, Gender gender, Long requesterId) {
         Kid kid = getKid(id);
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateKidManageAccess(requester, kid);
         kid.update(name, birthDate, gender);
-    }
-
-    /**
-     * 반 배정 변경
-     */
-    @Transactional
-    public void updateClassroom(Long id, UpdateClassroomRequest request) {
-        Kid kid = getKid(id);
-        Classroom classroom = classroomCapacityService.lockClassroom(request.getClassroomId());
-        if (!classroom.getId().equals(kid.getClassroom().getId())) {
-            classroomCapacityService.validateSeatAvailable(classroom);
-        }
-        kid.assignClassroom(classroom);
     }
 
     @Transactional
@@ -313,27 +227,6 @@ public class KidService {
             classroomCapacityService.validateSeatAvailable(classroom);
         }
         kid.assignClassroom(classroom);
-    }
-
-    /**
-     * 학부모 연결
-     */
-    @Transactional
-    public void assignParent(Long kidId, AssignParentRequest request) {
-        Kid kid = getKid(kidId);
-        Member parent = memberService.getMemberById(request.getParentId());
-
-        // 학부모 역할 확인
-        if (parent.getRole() != com.erp.domain.member.entity.MemberRole.PARENT) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
-
-        // 이미 연결되어 있는지 확인
-        if (kid.hasParent(parent)) {
-            throw new BusinessException(ErrorCode.PARENT_KID_RELATION_EXISTS);
-        }
-
-        kid.addParent(parent, request.getRelationship());
     }
 
     @Transactional
@@ -356,22 +249,6 @@ public class KidService {
         kid.addParent(parent, request.getRelationship());
     }
 
-    /**
-     * 학부모 연결 해제
-     */
-    @Transactional
-    public void removeParent(Long kidId, Long parentId) {
-        Kid kid = getKid(kidId);
-        Member parent = memberService.getMemberById(parentId);
-
-        // 연결 확인
-        if (!kid.hasParent(parent)) {
-            throw new BusinessException(ErrorCode.PARENT_KID_RELATION_NOT_FOUND);
-        }
-
-        kid.removeParent(parent);
-    }
-
     @Transactional
     public void removeParent(Long kidId, Long parentId, Long requesterId) {
         Kid kid = getKid(kidId);
@@ -386,32 +263,12 @@ public class KidService {
         kid.removeParent(parent);
     }
 
-    /**
-     * 원생 삭제 (Soft Delete)
-     */
-    @Transactional
-    public void deleteKid(Long id) {
-        Kid kid = getKid(id);
-        kid.softDelete();
-    }
-
     @Transactional
     public void deleteKid(Long id, Long requesterId) {
         Kid kid = getKid(id);
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateKidManageAccess(requester, kid);
         kid.softDelete();
-    }
-
-    /**
-     * 원생 상세 조회 (학부모 정보 포함)
-     */
-    @Transactional(readOnly = true)
-    public com.erp.domain.kid.dto.response.KidDetailResponse getKidDetail(Long id) {
-        Kid kid = getKid(id);
-        List<ParentKid> parentKids = kidRepository.findParentsByKidId(id);
-
-        return com.erp.domain.kid.dto.response.KidDetailResponse.from(kid, parentKids);
     }
 
     @Transactional(readOnly = true)

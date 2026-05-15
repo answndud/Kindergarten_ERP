@@ -46,10 +46,11 @@ class NotepadPerformanceStoryTest extends BaseIntegrationTest {
 
         // warm-up
         legacyLoad(classroom.getId(), pageable);
-        notepadService.getClassroomNotepads(classroom.getId(), pageable);
+        notepadService.getClassroomNotepads(classroom.getId(), pageable, teacherMember.getId());
 
         Measurement legacy = measure(statistics, () -> legacyLoad(classroom.getId(), pageable));
-        Measurement optimized = measure(statistics, () -> notepadService.getClassroomNotepads(classroom.getId(), pageable));
+        Measurement optimized = measure(statistics,
+                () -> notepadService.getClassroomNotepads(classroom.getId(), pageable, teacherMember.getId()));
 
         System.out.printf("[PERF] legacy  - queries=%d, elapsedMs=%d%n", legacy.queryCount, legacy.elapsedMs);
         System.out.printf("[PERF] optimized - queries=%d, elapsedMs=%d%n", optimized.queryCount, optimized.elapsedMs);
