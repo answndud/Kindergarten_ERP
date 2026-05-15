@@ -80,6 +80,7 @@ public class AttendanceController {
      * 출석 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AttendanceResponse>> getAttendance(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -93,6 +94,7 @@ public class AttendanceController {
      * 원생별 날짜 출석 조회
      */
     @GetMapping("/kid/{kidId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AttendanceResponse>> getAttendanceByKidAndDate(
             @PathVariable Long kidId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -108,6 +110,7 @@ public class AttendanceController {
      * 반별 일별 출석 현황
      */
     @GetMapping("/daily")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<DailyAttendanceResponse>>> getDailyAttendance(
             @RequestParam(required = false) Long classroomId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -129,6 +132,7 @@ public class AttendanceController {
      * 원생별 월간 출석 목록
      */
     @GetMapping("/kid/{kidId}/monthly")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<AttendanceResponse>>> getMonthlyAttendances(
             @PathVariable Long kidId,
             @RequestParam int year,
@@ -163,6 +167,7 @@ public class AttendanceController {
      * 월간 출석 통계
      */
     @GetMapping("/kid/{kidId}/statistics")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MonthlyStatisticsResponse>> getMonthlyStatistics(
             @PathVariable Long kidId,
             @RequestParam int year,

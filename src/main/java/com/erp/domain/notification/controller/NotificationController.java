@@ -38,6 +38,7 @@ public class NotificationController {
      * 알림 목록 조회
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications(
             @RequestParam(defaultValue = "20") int limit,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -49,6 +50,7 @@ public class NotificationController {
      * 알림 상세 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -60,6 +62,7 @@ public class NotificationController {
      * 안 읽은 알림 개수
      */
     @GetMapping("/unread-count")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UnreadCountResponse>> getUnreadCount(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         UnreadCountResponse response = notificationService.getUnreadCount(userDetails.getMemberId());
@@ -70,6 +73,7 @@ public class NotificationController {
      * 안 읽은 알림 목록
      */
     @GetMapping("/unread")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<NotificationResponse>>> getUnreadNotifications(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<NotificationResponse> notifications = notificationService.getUnreadNotifications(userDetails.getMemberId());
@@ -80,6 +84,7 @@ public class NotificationController {
      * 알림 읽음 표시
      */
     @PutMapping("/{id}/read")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> markAsRead(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -91,6 +96,7 @@ public class NotificationController {
      * 전체 읽음 표시
      */
     @PutMapping("/read-all")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> markAllAsRead(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         notificationService.markAllAsRead(userDetails.getMemberId());
@@ -101,6 +107,7 @@ public class NotificationController {
      * 알림 삭제 (Soft Delete)
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> deleteNotification(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {

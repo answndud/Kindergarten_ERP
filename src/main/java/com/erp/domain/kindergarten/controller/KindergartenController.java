@@ -48,6 +48,7 @@ public class KindergartenController {
      * 유치원 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<KindergartenResponse>> getKindergarten(@PathVariable Long id) {
         Kindergarten kindergarten = kindergartenService.getKindergarten(id);
 
@@ -59,6 +60,7 @@ public class KindergartenController {
      * 전체 유치원 목록 조회
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<KindergartenResponse>>> getAllKindergartens() {
         List<Kindergarten> kindergartens = kindergartenService.getAllKindergartens();
 

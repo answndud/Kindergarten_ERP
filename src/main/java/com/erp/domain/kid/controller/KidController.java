@@ -51,6 +51,7 @@ public class KidController {
      * 원생 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<KidDetailResponse>> getKid(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -64,6 +65,7 @@ public class KidController {
      * 반별 원생 목록 조회
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<KidResponse>>> getKids(
             @RequestParam(required = false) Long classroomId,
             @RequestParam(required = false) Long kindergartenId,
@@ -121,6 +123,7 @@ public class KidController {
      * 원생 목록 조회 (페이지)
      */
     @GetMapping("/page")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<KidResponse>>> getKidsPage(
             @RequestParam(required = false) Long classroomId,
             @RequestParam(required = false) Long kindergartenId,

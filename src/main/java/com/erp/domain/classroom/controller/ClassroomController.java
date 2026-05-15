@@ -53,6 +53,7 @@ public class ClassroomController {
      * 반 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<ClassroomResponse>> getClassroom(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -66,6 +67,7 @@ public class ClassroomController {
      * 유치원별 반 목록 조회
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<ClassroomResponse>>> getClassrooms(
             @RequestParam(required = false) Long kindergartenId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
