@@ -49,6 +49,7 @@ public class AnnouncementController {
      * 공지사항 조회 (조회수 증가)
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AnnouncementResponse>> getAnnouncement(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -62,6 +63,7 @@ public class AnnouncementController {
      * 유치원별 공지사항 목록 조회
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam(defaultValue = "0") int page,
@@ -81,6 +83,7 @@ public class AnnouncementController {
      * 중요 공지사항 목록 조회
      */
     @GetMapping("/important")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getImportantAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam(defaultValue = "0") int page,
@@ -100,6 +103,7 @@ public class AnnouncementController {
      * 공지사항 검색 (제목으로)
      */
     @GetMapping("/search")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> searchAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam String title,
@@ -120,6 +124,7 @@ public class AnnouncementController {
      * 인기 공지사항 (조회수 순)
      */
     @GetMapping("/popular")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getMostViewedAnnouncements(
             @RequestParam Long kindergartenId,
             @RequestParam(defaultValue = "0") int page,

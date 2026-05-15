@@ -6,11 +6,11 @@ import com.erp.domain.domainaudit.entity.DomainAuditLog;
 import com.erp.domain.domainaudit.entity.DomainAuditTargetType;
 import com.erp.domain.domainaudit.repository.DomainAuditLogRepository;
 import com.erp.domain.member.repository.MemberRepository;
+import com.erp.global.common.PageRequests;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +44,7 @@ public class DomainAuditLogQueryService {
                         normalize(actorName),
                         from != null ? from.atStartOfDay() : null,
                         to != null ? to.plusDays(1).atStartOfDay() : null,
-                        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"))
+                        PageRequests.pageRequest(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"))
                 )
                 .map(DomainAuditLogResponse::from);
     }

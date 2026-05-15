@@ -154,6 +154,35 @@ class AnnouncementApiIntegrationTest extends BaseIntegrationTest {
 
         @Test
         @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("공지사항 목록 조회 - page/size 비정상 값은 안전한 범위로 보정")
+        void getAnnouncements_NormalizesInvalidPageSize() throws Exception {
+            mockMvc.perform(get("/api/v1/announcements")
+                            .param("kindergartenId", "1")
+                            .param("page", "-1")
+                            .param("size", "0"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.number").value(0))
+                    .andExpect(jsonPath("$.data.size").value(10));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("공지사항 목록 조회 - 과도한 size는 최대 크기로 제한")
+        void getAnnouncements_ClampsOversizedPageSize() throws Exception {
+            mockMvc.perform(get("/api/v1/announcements")
+                            .param("kindergartenId", "1")
+                            .param("page", "0")
+                            .param("size", "1000"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.size").value(100));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
         @DisplayName("중요 공지사항 목록 조회 - 성공")
         void getImportantAnnouncements_Success() throws Exception {
             mockMvc.perform(get("/api/v1/announcements/important")

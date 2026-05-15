@@ -17,11 +17,11 @@ import com.erp.domain.notification.entity.NotificationType;
 import com.erp.domain.notification.service.NotificationService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
+import com.erp.global.common.PageRequests;
 import com.erp.global.security.access.AccessPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -94,21 +94,6 @@ public class AnnouncementService {
         return saved.getId();
     }
 
-    /**
-     * 공지사항 조회 (조회수 증가)
-     */
-    @Transactional
-    public Announcement getAnnouncement(Long id) {
-        Announcement announcement = announcementRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
-
-        // 조회수 증가
-        announcement.incrementViewCount();
-        evictDashboardStatistics(announcement);
-
-        return announcement;
-    }
-
     @Transactional
     public Announcement getAnnouncement(Long id, Long requesterId) {
         Announcement announcement = announcementRepository.findByIdAndDeletedAtIsNull(id)
@@ -121,29 +106,11 @@ public class AnnouncementService {
         return announcement;
     }
 
-    /**
-     * 공지사항 조회 (조회수 증가 없음)
-     */
-    public Announcement getAnnouncementWithoutIncrement(Long id) {
-        return announcementRepository.findByIdWithRelations(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
-    }
-
     public Announcement getAnnouncementWithoutIncrement(Long id, Long requesterId) {
-        Announcement announcement = announcementRepository.findByIdWithRelations(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
+        Announcement announcement = findAnnouncementWithRelations(id);
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateAnnouncementReadAccess(requester, announcement);
         return announcement;
-    }
-
-    /**
-     * 유치원별 공지사항 목록 조회 (뷰용 - 연관 엔티티 포함)
-     */
-    public java.util.List<Announcement> getAnnouncementsByKindergartenForView(Long kindergartenId) {
-        // 유치원 존재 확인
-        kindergartenService.getKindergarten(kindergartenId);
-        return announcementRepository.findByKindergartenIdWithRelations(kindergartenId);
     }
 
     public java.util.List<Announcement> getAnnouncementsByKindergartenForView(Long kindergartenId, Long requesterId) {
@@ -152,81 +119,32 @@ public class AnnouncementService {
         return announcementRepository.findByKindergartenIdWithRelations(kindergartenId);
     }
 
-    /**
-     * 유치원별 공지사항 목록 조회
-     */
-    public Page<Announcement> getAnnouncementsByKindergarten(Long kindergartenId, int page, int size) {
-        // 유치원 존재 확인
-        kindergartenService.getKindergarten(kindergartenId);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("isImportant").descending()
-                .and(Sort.by("createdAt").descending()));
-
-        return announcementRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId, pageable);
-    }
-
     public Page<Announcement> getAnnouncementsByKindergarten(Long kindergartenId, int page, int size, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
-        Pageable pageable = PageRequest.of(page, size, Sort.by("isImportant").descending()
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.by("isImportant").descending()
                 .and(Sort.by("createdAt").descending()));
         return announcementRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId, pageable);
-    }
-
-    /**
-     * 유치원별 중요 공지사항 목록 조회
-     */
-    public Page<Announcement> getImportantAnnouncements(Long kindergartenId, int page, int size) {
-        // 유치원 존재 확인
-        kindergartenService.getKindergarten(kindergartenId);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-        return announcementRepository.findImportantByKindergartenId(kindergartenId, pageable);
     }
 
     public Page<Announcement> getImportantAnnouncements(Long kindergartenId, int page, int size, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.by("createdAt").descending());
         return announcementRepository.findImportantByKindergartenId(kindergartenId, pageable);
-    }
-
-    /**
-     * 제목으로 검색
-     */
-    public Page<Announcement> searchByTitle(Long kindergartenId, String title, int page, int size) {
-        // 유치원 존재 확인
-        kindergartenService.getKindergarten(kindergartenId);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-        return announcementRepository.findByKindergartenIdAndTitleContaining(kindergartenId, title, pageable);
     }
 
     public Page<Announcement> searchByTitle(Long kindergartenId, String title, int page, int size, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.by("createdAt").descending());
         return announcementRepository.findByKindergartenIdAndTitleContaining(kindergartenId, title, pageable);
-    }
-
-    /**
-     * 인기 공지사항 (조회수 순)
-     */
-    public Page<Announcement> getMostViewedAnnouncements(Long kindergartenId, int page, int size) {
-        // 유치원 존재 확인
-        kindergartenService.getKindergarten(kindergartenId);
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        return announcementRepository.findMostViewedByKindergartenId(kindergartenId, pageable);
     }
 
     public Page<Announcement> getMostViewedAnnouncements(Long kindergartenId, int page, int size, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.unsorted());
         return announcementRepository.findMostViewedByKindergartenId(kindergartenId, pageable);
     }
 
@@ -235,7 +153,7 @@ public class AnnouncementService {
      */
     @Transactional
     public void updateAnnouncement(Long id, AnnouncementRequest request, Long requesterId) {
-        Announcement announcement = getAnnouncementWithoutIncrement(id);
+        Announcement announcement = findAnnouncementWithRelations(id);
 
         // 수정 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
@@ -265,7 +183,7 @@ public class AnnouncementService {
      */
     @Transactional
     public void deleteAnnouncement(Long id, Long requesterId) {
-        Announcement announcement = getAnnouncementWithoutIncrement(id);
+        Announcement announcement = findAnnouncementWithRelations(id);
 
         // 삭제 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
@@ -290,7 +208,7 @@ public class AnnouncementService {
      */
     @Transactional
     public void toggleImportant(Long id, Long requesterId) {
-        Announcement announcement = getAnnouncementWithoutIncrement(id);
+        Announcement announcement = findAnnouncementWithRelations(id);
 
         // 토글 권한 확인 (원장 또는 교사만 가능)
         Member requester = memberService.getMemberById(requesterId);
@@ -333,6 +251,11 @@ public class AnnouncementService {
 
     private void evictDashboardStatistics(Announcement announcement) {
         dashboardService.evictDashboardStatisticsCache(announcement.getKindergarten().getId());
+    }
+
+    private Announcement findAnnouncementWithRelations(Long id) {
+        return announcementRepository.findByIdWithRelations(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
     }
 
     private void recordView(Announcement announcement, Member requester) {

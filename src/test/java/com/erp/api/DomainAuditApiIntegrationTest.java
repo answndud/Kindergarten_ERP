@@ -114,4 +114,29 @@ class DomainAuditApiIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("A004"));
     }
+
+    @Test
+    @DisplayName("원장은 비정상 page/size로도 업무 감사 로그를 안전하게 조회할 수 있다")
+    void getDomainAuditLogs_NormalizesInvalidPageSize() throws Exception {
+        mockMvc.perform(get("/api/v1/domain-audit-logs")
+                        .with(authenticated(principalMember))
+                        .param("page", "-1")
+                        .param("size", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.number").value(0))
+                .andExpect(jsonPath("$.data.size").value(20));
+    }
+
+    @Test
+    @DisplayName("원장은 과도한 size 요청 시 최대 크기로 제한된 업무 감사 로그를 조회한다")
+    void getDomainAuditLogs_ClampsOversizedPageSize() throws Exception {
+        mockMvc.perform(get("/api/v1/domain-audit-logs")
+                        .with(authenticated(principalMember))
+                        .param("page", "0")
+                        .param("size", "1000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.size").value(100));
+    }
 }

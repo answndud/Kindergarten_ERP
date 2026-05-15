@@ -9,12 +9,12 @@ import com.erp.domain.notepad.dto.request.NotepadRequest;
 import com.erp.domain.notepad.dto.response.NotepadDetailResponse;
 import com.erp.domain.notepad.dto.response.NotepadResponse;
 import com.erp.domain.notepad.service.NotepadService;
+import com.erp.global.common.PageRequests;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.user.CustomUserDetails;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -70,7 +70,7 @@ public class NotepadViewController {
             @RequestParam(defaultValue = "20") int size,
             Model model) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 20, Sort.by("createdAt").descending());
         Page<NotepadResponse> notepads;
 
         if (userDetails.getRole() == MemberRole.PARENT) {
