@@ -195,7 +195,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 |------|------|
 | Core backend MVP | 인증, 출석, 알림장, 공지, 지원/승인, 감사 로그, 대시보드까지 완료 |
 | Demo | `demo` 프로파일과 seed 계정으로 로컬 시연 가능 |
-| Verification | `test`, `fastTest`, `integrationTest`, `performanceSmokeTest`, GitHub Actions 구성 완료 |
+| Verification | push quick CI + 수동 quality workflow + 로컬 `test`/`integrationTest`/`performanceSmokeTest` 구성 완료 |
 | Operations | auth/domain audit, management plane, Prometheus/Grafana overlay, active session control 포함 |
 | Deployment package | `Dockerfile`, `deploy/*`, [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) 기준 배포 자산 정리 |
 | Active work | 현재 없음. [`docs/PLAN.md`](./docs/PLAN.md), [`docs/PROGRESS.md`](./docs/PROGRESS.md)는 비운 상태로 유지 |
@@ -221,10 +221,12 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 
 - 로컬 기본 검증은 `./gradlew test`입니다.
 - 통합 테스트는 H2 대체가 아니라 MySQL/Redis Testcontainers를 사용합니다.
-- GitHub Actions는 `fastTest`, `package-smoke`, `integrationTest`, `performanceSmokeTest`를 분리해 실행합니다.
-- `package-smoke`는 `bootJar` 생성, JAR 구조 확인, compose config 해석까지 검증합니다.
+- 혼자 운영하는 `main` 고정 프로젝트라 push CI는 빠른 실패 신호만 남깁니다.
+- `Backend CI`: `fastTest`, `bootJar`, compose config 해석만 자동 실행합니다.
+- `Backend Quality`: `integrationTest`, `performanceSmokeTest`, `bootJar`, monitoring compose config 해석을 수동 실행합니다.
+- CD는 클라우드 배포 secret이 준비되기 전까지 `workflow_dispatch` 수동 실행만 유지합니다.
 - Swagger/OpenAPI 공개 경로와 Prometheus scrape도 회귀 검증합니다.
-- 실패 시 테스트 리포트를 artifact로 업로드하도록 구성했습니다.
+- 수동 quality workflow는 실패 분석을 위해 테스트 리포트를 artifact로 업로드합니다.
 
 ## 문서
 

@@ -45,6 +45,11 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 
 - 기본값은 fail-closed입니다. `SPRING_PROFILES_ACTIVE`를 명시하지 않으면 부팅을 허용하지 않습니다.
 - local 시드가 필요하면 `APP_SEED_ENABLED=true`를 함께 넘기세요.
+- 로컬 `JAVA_HOME`이 깨져 있다면 전역 shell 설정을 바로 바꾸지 말고 아래처럼 명령 단위로 containment합니다.
+
+```bash
+JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew fastTest
+```
 
 ## 테스트
 
@@ -57,7 +62,10 @@ docker compose --env-file docker/.env -f docker/docker-compose.yml down
 ```
 
 - 로컬 compose 포트는 기본적으로 `127.0.0.1`에만 바인딩됩니다.
-- 배포 단위 확인이 필요하면 `bootJar`를 만들고, CI의 `package-smoke`와 같은 기준으로 JAR 산출물을 점검하세요.
+- 배포 단위 확인이 필요하면 `bootJar`를 만들고 compose config를 함께 확인하세요.
+- `Backend CI`는 push마다 `fastTest`, `bootJar`, compose config만 자동 실행합니다.
+- `Backend Quality`는 수동 workflow이며 `integrationTest`, `performanceSmokeTest`, `bootJar`, compose config를 한 번에 확인합니다.
+- 기능/보안/DB/운영 설정을 바꾼 뒤에는 로컬에서 관련 targeted test를 먼저 실행하고, push 후 필요하면 수동 `Backend Quality`를 실행하세요.
 
 ---
 
