@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +54,7 @@ class NotificationOutboxIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private NotificationOutboxRepository notificationOutboxRepository;
 
-    @MockBean(name = "notificationRestTemplate")
+    @MockitoBean(name = "notificationRestTemplate")
     private RestTemplate notificationRestTemplate;
 
     @BeforeEach

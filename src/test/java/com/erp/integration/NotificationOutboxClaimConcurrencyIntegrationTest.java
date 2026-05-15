@@ -19,7 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
@@ -58,7 +58,7 @@ class NotificationOutboxClaimConcurrencyIntegrationTest extends BaseIntegrationT
     @Autowired
     private NotificationOutboxRepository notificationOutboxRepository;
 
-    @MockBean(name = "notificationRestTemplate")
+    @MockitoBean(name = "notificationRestTemplate")
     private RestTemplate notificationRestTemplate;
 
     @BeforeEach
@@ -69,12 +69,16 @@ class NotificationOutboxClaimConcurrencyIntegrationTest extends BaseIntegrationT
     @Test
     @DisplayName("동시에 두 worker가 배치를 처리해도 같은 outbox는 한 번만 claim된다")
     void concurrentWorkers_ClaimSameOutboxOnlyOnce() throws Exception {
+        CountDownLatch deliveryStartedLatch = new CountDownLatch(1);
+        CountDownLatch releaseDeliveryLatch = new CountDownLatch(1);
+
         given(notificationRestTemplate.postForEntity(
                 anyString(),
                 any(HttpEntity.class),
                 any()
         )).willAnswer(invocation -> {
-            Thread.sleep(300L);
+            deliveryStartedLatch.countDown();
+            assertThat(releaseDeliveryLatch.await(5, TimeUnit.SECONDS)).isTrue();
             return ResponseEntity.ok("ok");
         });
 
@@ -112,6 +116,8 @@ class NotificationOutboxClaimConcurrencyIntegrationTest extends BaseIntegrationT
 
             assertThat(readyLatch.await(5, TimeUnit.SECONDS)).isTrue();
             startLatch.countDown();
+            assertThat(deliveryStartedLatch.await(5, TimeUnit.SECONDS)).isTrue();
+            releaseDeliveryLatch.countDown();
 
             List<Integer> claimedCounts = List.of(
                     firstWorker.get(10, TimeUnit.SECONDS),
