@@ -680,3 +680,59 @@
   - `git diff --check`
 - 결과:
   - 이후 `main` push는 `Backend CI`만 자동 실행하고, `Backend CD`는 배포 준비가 끝난 뒤 GitHub Actions에서 수동으로 실행하는 구조가 됐다.
+
+<a id="archive-017"></a>
+## `017` Spring Boot Doctor 리팩토링 배치 완료
+
+- 완료일: `2026-05-15`
+- 배경:
+  - `simplify`와 `spring-boot-doctor` 조사에서 pagination guard 불균일, read endpoint method security 명시성 부족, requester 없는 service overload, 큰 service 책임 혼재, calendar 권한 matrix 테스트 부족, deprecated notepad read field, 테스트 안정성/최신화 이슈가 확인됐다.
+  - 목표는 broad rewrite 없이 작은 검증 단위로 Phase 0~8을 완료하고, 변경 surface 기준 Spring Boot Doctor 100점 수준으로 P0/P1/P2 신규 리스크를 남기지 않는 것이었다.
+- 변경 내용:
+  - Java 21 검증 환경을 Homebrew `openjdk@21` 명령 단위 `JAVA_HOME`으로 복구하고 `docker/.env` 로컬 config를 준비했다.
+  - `PageRequests` 공통 helper를 추가해 announcement/notepad/audit paging의 음수 page, 0 size, 과대 size 처리를 일관화했다.
+  - announcement, attendance, classroom, kid, kindergarten, notepad, notification, member, auth read/member-owned endpoint에 `@PreAuthorize("isAuthenticated()")`를 명시했다.
+  - requester 없는 service overload를 축소하고, announcement/notepad/notification/attendance/kid service의 canonical requester 기반 API를 더 명확히 했다.
+  - `AttendanceService`에서 월 범위, 출석 find-or-create, time fallback, 반-원생 검증 helper를 추출했다.
+  - `KidApplicationService`에서 audit 기록 helper와 application URL 상수를 정리했다.
+  - `CalendarApiIntegrationTest`에 kindergarten/classroom/personal scope별 principal/teacher/parent 권한 matrix 테스트를 추가했다.
+  - `Notepad` entity의 deprecated `isRead` field/method를 제거하고, DB `is_read` column은 compatibility를 위해 유지했다.
+  - outbox 동시성 테스트의 `Thread.sleep(300L)`를 latch 기반 동기화로 교체하고, `@MockBean`을 `@MockitoBean`으로 바꿔 Spring Boot 3.5 deprecation warning을 제거했다.
+- 코드/문서:
+  - `src/main/java/com/erp/global/common/PageRequests.java`
+  - `src/main/java/com/erp/domain/**/controller/*Controller.java`
+  - `src/main/java/com/erp/domain/announcement/service/AnnouncementService.java`
+  - `src/main/java/com/erp/domain/attendance/service/AttendanceService.java`
+  - `src/main/java/com/erp/domain/kid/service/KidService.java`
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java`
+  - `src/main/java/com/erp/domain/notepad/entity/Notepad.java`
+  - `src/main/java/com/erp/domain/notepad/service/NotepadService.java`
+  - `src/main/java/com/erp/domain/notification/service/NotificationService.java`
+  - `src/test/java/com/erp/api/*IntegrationTest.java`
+  - `src/test/java/com/erp/integration/*Outbox*Test.java`
+  - `src/test/java/com/erp/performance/*PerformanceStoryTest.java`
+  - `blog/27-spring-boot-refactoring-doctor-100.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home /opt/homebrew/opt/openjdk@21/bin/java -version`: 통과, OpenJDK 21.0.11
+  - `docker compose --env-file docker/.env -f docker/docker-compose.yml config`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew tasks --all`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew compileJava compileTestJava`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew fastTest`: 통과, `@MockBean` deprecation warning 없음
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew integrationTest`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew test`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew performanceSmokeTest`: 통과
+  - `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./gradlew bootJar`: 통과
+  - `git diff --check`: 통과
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1/P2 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: compile, full test, performance smoke, packaging, compose config, diff whitespace 검증을 모두 통과했고, 보안/권한/tenant boundary를 넓히는 변경 없이 명시성과 테스트 커버리지만 보강했다.
+- 남은 리스크:
+  - 로컬 기본 shell의 기존 `JAVA_HOME=/opt/homebrew/opt/openjdk/libexec/openjdk.jdk/Contents/Home`는 여전히 깨진 경로다. 저장소 변경 범위가 아니므로 전역 shell 설정은 건드리지 않았다.
+  - `notepad.is_read` DB column은 compatibility 때문에 유지했다. 실제 column drop은 별도 migration/rollback 계획이 필요한 작업으로 남긴다.
+  - `KidService`의 requester 없는 read/list method 일부는 다른 domain service 내부 조회용으로 남겼다. 외부 controller canonical path는 requester 기반이다.
+- 결과:
+  - 계획된 Phase 0~8 리팩토링을 완료했고, active plan/progress는 `현재 active 작업 없음`으로 비웠다.
