@@ -6,11 +6,11 @@ import com.erp.domain.notepad.dto.response.NotepadResponse;
 import com.erp.domain.notepad.entity.Notepad;
 import com.erp.domain.notepad.service.NotepadService;
 import com.erp.global.common.ApiResponse;
+import com.erp.global.common.PageRequests;
 import com.erp.global.security.user.CustomUserDetails;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +35,7 @@ public class NotepadController {
      * 알림장 목록 조회 (유치원별)
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getNotepads(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) Long classroomId,
@@ -42,7 +43,7 @@ public class NotepadController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 20, Sort.by("createdAt").descending());
         Page<NotepadResponse> responses;
 
         if (kidId != null) {
@@ -87,6 +88,7 @@ public class NotepadController {
      * 알림장 조회
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<NotepadDetailResponse>> getNotepad(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -103,13 +105,14 @@ public class NotepadController {
      * 반별 알림장 목록 (페이지)
      */
     @GetMapping("/classroom/{classroomId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getClassroomNotepads(
             @PathVariable Long classroomId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.by("createdAt").descending());
         Page<NotepadResponse> responses = notepadService.getClassroomNotepads(classroomId, pageable, userDetails.getMemberId());
 
         return ResponseEntity
@@ -120,13 +123,14 @@ public class NotepadController {
      * 원생별 알림장 목록 (페이지)
      */
     @GetMapping("/kid/{kidId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<NotepadResponse>>> getKidNotepads(
             @PathVariable Long kidId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.by("createdAt").descending());
         Page<NotepadResponse> responses = notepadService.getKidNotepads(kidId, pageable, userDetails.getMemberId());
 
         return ResponseEntity
@@ -145,7 +149,7 @@ public class NotepadController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequests.of(page, size, 10, Sort.by("createdAt").descending());
         Page<NotepadResponse> responses = notepadService.getNotepadsForParent(classroomId, kidId, pageable, userDetails.getMemberId());
 
         return ResponseEntity

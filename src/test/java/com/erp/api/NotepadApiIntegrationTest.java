@@ -153,6 +153,33 @@ class NotepadApiIntegrationTest extends BaseIntegrationTest {
 
         @Test
         @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("반별 알림장 목록 조회 - page/size 비정상 값은 안전한 범위로 보정")
+        void getClassroomNotepads_NormalizesInvalidPageSize() throws Exception {
+            mockMvc.perform(get("/api/v1/notepads/classroom/1")
+                            .param("page", "-1")
+                            .param("size", "0"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.number").value(0))
+                    .andExpect(jsonPath("$.data.size").value(10));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("반별 알림장 목록 조회 - 과도한 size는 최대 크기로 제한")
+        void getClassroomNotepads_ClampsOversizedPageSize() throws Exception {
+            mockMvc.perform(get("/api/v1/notepads/classroom/1")
+                            .param("page", "0")
+                            .param("size", "1000"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.size").value(100));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
         @DisplayName("원생별 알림장 목록 조회 - 성공")
         void getKidNotepads_Success() throws Exception {
             mockMvc.perform(get("/api/v1/notepads/kid/1")

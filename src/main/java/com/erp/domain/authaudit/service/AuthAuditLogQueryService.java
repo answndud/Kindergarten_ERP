@@ -9,6 +9,7 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.service.MemberService;
+import com.erp.global.common.PageRequests;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,6 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AuthAuditLogQueryService {
 
-    private static final int MAX_PAGE_SIZE = 100;
-
     private final AuthAuditLogRepository authAuditLogRepository;
     private final MemberService memberService;
 
@@ -44,9 +43,9 @@ public class AuthAuditLogQueryService {
         Member requester = memberService.getMemberByIdWithKindergarten(requesterId);
         validateRequester(requester);
 
-        PageRequest pageRequest = PageRequest.of(
-                Math.max(page, 0),
-                normalizeSize(size),
+        PageRequest pageRequest = PageRequests.pageRequest(
+                page,
+                size,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
         );
 
@@ -90,13 +89,6 @@ public class AuthAuditLogQueryService {
         if (requester.getRole() != MemberRole.PRINCIPAL || requester.getKindergarten() == null) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
-    }
-
-    private int normalizeSize(int size) {
-        if (size <= 0) {
-            return 20;
-        }
-        return Math.min(size, MAX_PAGE_SIZE);
     }
 
     private String normalizeEmailKeyword(String email) {
