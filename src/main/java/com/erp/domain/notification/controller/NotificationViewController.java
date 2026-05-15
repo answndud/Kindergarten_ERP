@@ -4,6 +4,7 @@ import com.erp.domain.notification.service.NotificationService;
 import com.erp.domain.notification.entity.NotificationType;
 import com.erp.global.security.user.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,13 +18,14 @@ public class NotificationViewController {
     private final NotificationService notificationService;
 
     @GetMapping("/notifications")
-    @org.springframework.security.access.prepost.PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     public String notificationsPage(Model model) {
         model.addAttribute("notificationTypes", NotificationType.values());
         return "notifications/index";
     }
 
     @GetMapping("/notifications/fragments/badge")
+    @PreAuthorize("isAuthenticated()")
     public String badge(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model) {
@@ -38,6 +40,7 @@ public class NotificationViewController {
     }
 
     @GetMapping("/notifications/fragments/list")
+    @PreAuthorize("isAuthenticated()")
     public String list(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(name = "limit", defaultValue = "10") int limit,

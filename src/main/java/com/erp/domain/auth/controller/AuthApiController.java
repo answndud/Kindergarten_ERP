@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -92,6 +93,7 @@ public class AuthApiController {
      * 로그아웃
      */
     @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
                                                      HttpServletResponse response) {
         authService.logout(getRefreshToken(request), response);
@@ -127,6 +129,7 @@ public class AuthApiController {
      * 현재 로그인한 회원 정보 조회
      */
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MemberResponse>> getCurrentMember(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         com.erp.domain.member.entity.Member member = memberService.getMemberByIdWithKindergarten(userDetails.getMemberId());
@@ -136,6 +139,7 @@ public class AuthApiController {
     }
 
     @GetMapping("/sessions")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<AuthSessionResponse>>> getActiveSessions(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletRequest request
@@ -147,6 +151,7 @@ public class AuthApiController {
     }
 
     @DeleteMapping("/sessions/others")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> revokeOtherSessions(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletRequest request
@@ -157,6 +162,7 @@ public class AuthApiController {
     }
 
     @DeleteMapping("/sessions/{sessionId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> revokeSession(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String sessionId,

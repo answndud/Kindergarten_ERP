@@ -42,6 +42,7 @@ public class MemberApiController {
      * 내 프로필 조회
      */
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MemberResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -79,6 +80,7 @@ public class MemberApiController {
      * 프로필 수정
      */
     @PatchMapping("/profile")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MemberResponse>> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request
@@ -92,6 +94,7 @@ public class MemberApiController {
      * 비밀번호 변경
      */
     @PatchMapping("/password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request
@@ -104,6 +107,7 @@ public class MemberApiController {
      * 소셜 전용 계정의 초기 로컬 비밀번호 설정
      */
     @PostMapping("/password/bootstrap")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> bootstrapPassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody BootstrapPasswordRequest request
@@ -113,6 +117,7 @@ public class MemberApiController {
     }
 
     @DeleteMapping("/social-link/{provider}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> unlinkSocialAccount(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String provider,
@@ -147,6 +152,7 @@ public class MemberApiController {
      * 회원 탈퇴
      */
     @DeleteMapping("/withdraw")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> withdraw(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletResponse response
