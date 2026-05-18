@@ -774,3 +774,39 @@
 - 결과:
   - `main` push의 자동 검증은 빠른 실패 신호 중심으로 경량화됐다.
   - 무거운 통합/성능/품질 검증은 필요할 때 수동 실행하는 구조로 분리됐다.
+
+<a id="archive-019"></a>
+## `019` README CI 지표 반영과 Java 21 로컬 기준선 고정
+
+- 완료일: `2026-05-18`
+- 배경:
+  - 직전 CI 경량화 결과로 `Backend CI` wall-clock이 `5m 28s`에서 `1m 14s`로 줄었지만 README 포트폴리오 지표에는 아직 반영되지 않았다.
+  - `Notepad` entity의 deprecated `isRead` field는 제거됐지만 DB에는 legacy `notepad.is_read` column이 남아 있어 데이터 모델 설명과 실제 schema 사이에 잔여 부채가 있었다.
+  - `KidService`에는 과거 requester 없는 목록/검색 공개 메서드가 남아 있어 controller의 requester 기반 접근 규칙과 service 표면이 완전히 맞지 않았다.
+  - 로컬 shell은 Homebrew `openjdk` 최신 포뮬러(Java 25)를 바라보고 있어 프로젝트 기준선인 Java 21과 어긋났다.
+- 변경 내용:
+  - README 상단 상태표, 성능 개선 표, CI 설명에 `Backend CI 5m 28s -> 1m 14s` 수치를 반영했다.
+  - `V15__drop_notepad_legacy_is_read.sql`을 추가해 legacy `notepad.is_read` column 제거를 Flyway migration으로 명시했다.
+  - `AttendanceService.bulkUpdateAttendance`의 반 전체 원생 조회를 requester 기반 `KidService.getKidsByClassroom(classroomId, requesterId)` 호출로 전환했다.
+  - `KidService`의 requester 없는 일반 목록/검색 공개 메서드를 제거하고, 반별 원생 수 집계 구현은 private helper로 내렸다.
+  - `~/.zshrc`, `~/.zprofile`의 `JAVA_HOME`을 `/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`로 고정했다.
+- 코드/문서:
+  - `README.md`
+  - `src/main/java/com/erp/domain/attendance/service/AttendanceService.java`
+  - `src/main/java/com/erp/domain/kid/service/KidService.java`
+  - `src/main/resources/db/migration/V15__drop_notepad_legacy_is_read.sql`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+  - `~/.zshrc`
+  - `~/.zprofile`
+- 검증:
+  - `zsh -lc 'java -version; ./gradlew -version'`: Java 21.0.11 / Gradle launcher JVM 21.0.11 확인
+  - `zsh -ic 'java -version'`: Java 21.0.11 확인
+  - `zsh -lc './gradlew compileJava compileTestJava'`: 통과
+  - `zsh -lc './gradlew test --tests "com.erp.api.NotepadApiIntegrationTest" --tests "com.erp.api.KidApiIntegrationTest" --tests "com.erp.api.AttendanceApiIntegrationTest" --tests "com.erp.api.KidApplicationApiIntegrationTest"'`: 통과
+  - `zsh -lc './gradlew fastTest'`: 통과
+  - `git diff --check`: 통과
+- 결과:
+  - README의 CI 성능 스토리, DB schema, service 접근 표면, 로컬 Java 기준선이 현재 운영 방식과 맞춰졌다.
+  - `getKid(Long)`와 `getKidsByParent(Long)`는 다른 domain service의 subject 기반 내부 조회가 필요해 유지했다.
