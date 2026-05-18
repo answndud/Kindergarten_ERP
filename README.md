@@ -17,6 +17,7 @@
 | 핵심 사용자 | `PRINCIPAL`, `TEACHER`, `PARENT` |
 | 핵심 기술 | Java 21, Spring Boot 3.5.9, MySQL 8, Redis, JPA, QueryDSL |
 | 실행 프로필 | `local`, `demo`, `prod` |
+| 최근 운영 개선 | `Backend CI` push 검증 시간 `5m 28s -> 1m 14s`로 단축, heavy 검증은 수동 `Backend Quality`로 분리 |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 
 ## 바로 확인할 것
@@ -50,6 +51,7 @@
 | Notepad 목록 조회 | queries 22, 15ms | queries 4, 4ms | 읽음 수 N+1 제거, 다건 집계 쿼리 전환 |
 | Dashboard 통계 | queries 13, 30ms | queries 5, 9ms | 정확도 보정 + 집계 쿼리 통합 |
 | Dashboard 반복 조회 | queries 5, 12ms | queries 0, 0ms | 60초 TTL 캐시 적용 (`dashboardStatistics`) |
+| Backend CI wall-clock | 5m 28s | 1m 14s | push CI는 quick check로 축소, heavy 검증은 수동 workflow로 분리 |
 
 - k6 부하 테스트 결과
   - Notepad list: avg 20.72ms, p95 45.32ms, error 0.00%
@@ -224,6 +226,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 - 혼자 운영하는 `main` 고정 프로젝트라 push CI는 빠른 실패 신호만 남깁니다.
 - `Backend CI`: `fastTest`, `bootJar`, compose config 해석만 자동 실행합니다.
 - `Backend Quality`: `integrationTest`, `performanceSmokeTest`, `bootJar`, monitoring compose config 해석을 수동 실행합니다.
+- 최근 측정 기준으로 자동 push CI는 `5m 28s`에서 `1m 14s`로 줄었습니다.
 - CD는 클라우드 배포 secret이 준비되기 전까지 `workflow_dispatch` 수동 실행만 유지합니다.
 - Swagger/OpenAPI 공개 경로와 Prometheus scrape도 회귀 검증합니다.
 - 수동 quality workflow는 실패 분석을 위해 테스트 리포트를 artifact로 업로드합니다.

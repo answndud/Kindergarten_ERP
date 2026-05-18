@@ -70,16 +70,6 @@ public class KidService {
         return kid;
     }
 
-    /**
-     * 반별 원생 목록 조회
-     */
-    public List<Kid> getKidsByClassroom(Long classroomId) {
-        // 반 존재 확인
-        classroomService.getClassroom(classroomId);
-
-        return kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId);
-    }
-
     public List<Kid> getKidsByClassroom(Long classroomId, Long requesterId) {
         Classroom classroom = classroomService.getClassroom(classroomId);
         Member requester = accessPolicyService.getRequester(requesterId);
@@ -97,13 +87,6 @@ public class KidService {
         return kidRepository.findByClassroomIdAndDeletedAtIsNull(classroomId, pageable);
     }
 
-    /**
-     * 유치원 원생 목록 조회
-     */
-    public List<Kid> getKidsByKindergarten(Long kindergartenId) {
-        return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId);
-    }
-
     public List<Kid> getKidsByKindergarten(Long kindergartenId, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
@@ -117,16 +100,6 @@ public class KidService {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
         return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergartenId, pageable);
-    }
-
-    /**
-     * 반별 원생 목록 조회 (이름 검색)
-     */
-    public List<Kid> searchKidsByName(Long classroomId, String name) {
-        // 반 존재 확인
-        classroomService.getClassroom(classroomId);
-
-        return kidRepository.findByClassroomIdAndNameContaining(classroomId, name);
     }
 
     public List<Kid> searchKidsByName(Long classroomId, String name, Long requesterId) {
@@ -147,13 +120,6 @@ public class KidService {
         return kidRepository.findByClassroomIdAndNameContaining(classroomId, name, pageable);
     }
 
-    /**
-     * 유치원 원생 목록 조회 (이름 검색)
-     */
-    public List<Kid> searchKidsByKindergarten(Long kindergartenId, String name) {
-        return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name);
-    }
-
     public List<Kid> searchKidsByKindergarten(Long kindergartenId, String name, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
@@ -170,26 +136,11 @@ public class KidService {
         return kidRepository.findByKindergartenIdAndNameContaining(kindergartenId, name, pageable);
     }
 
-    /**
-     * 유치원 반별 원생 수 집계
-     */
-    @Transactional(readOnly = true)
-    public java.util.Map<Long, Long> getClassroomCounts(Long kindergartenId) {
-        java.util.List<Object[]> rows = kidRepository.countByKindergartenGroupedByClassroom(kindergartenId);
-        java.util.Map<Long, Long> result = new java.util.HashMap<>();
-        for (Object[] row : rows) {
-            Long classroomId = (Long) row[0];
-            Long count = (Long) row[1];
-            result.put(classroomId, count);
-        }
-        return result;
-    }
-
     @Transactional(readOnly = true)
     public java.util.Map<Long, Long> getClassroomCounts(Long kindergartenId, Long requesterId) {
         Member requester = accessPolicyService.getRequester(requesterId);
         accessPolicyService.validateSameKindergarten(requester, kindergartenId);
-        return getClassroomCounts(kindergartenId);
+        return loadClassroomCounts(kindergartenId);
     }
 
     /**
@@ -278,5 +229,16 @@ public class KidService {
         accessPolicyService.validateKidReadAccess(requester, kid);
         List<ParentKid> parentKids = kidRepository.findParentsByKidId(id);
         return com.erp.domain.kid.dto.response.KidDetailResponse.from(kid, parentKids);
+    }
+
+    private java.util.Map<Long, Long> loadClassroomCounts(Long kindergartenId) {
+        java.util.List<Object[]> rows = kidRepository.countByKindergartenGroupedByClassroom(kindergartenId);
+        java.util.Map<Long, Long> result = new java.util.HashMap<>();
+        for (Object[] row : rows) {
+            Long classroomId = (Long) row[0];
+            Long count = (Long) row[1];
+            result.put(classroomId, count);
+        }
+        return result;
     }
 }

@@ -116,7 +116,7 @@ public class AttendanceService {
         Classroom classroom = getClassroomForManage(requesterId, request.getClassroomId());
         List<Long> kidIds;
         if (request.getKidIds() == null || request.getKidIds().isEmpty()) {
-            kidIds = kidService.getKidsByClassroom(request.getClassroomId()).stream()
+            kidIds = kidService.getKidsByClassroom(request.getClassroomId(), requesterId).stream()
                     .map(Kid::getId)
                     .toList();
         } else {
