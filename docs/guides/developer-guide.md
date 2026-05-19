@@ -144,6 +144,7 @@ npm run impeccable:detect:json -- --fast
 - `announcement`: 공지 및 중요 공지
 - `kindergartenapplication/kidapplication`: 지원/승인
 - `notification`: 배지/목록/읽음/삭제
+- `notification-outbox`: 원장 전용 dead-letter summary/list/retry 운영 API
 - `calendar`: 유치원/반/개인 일정
 - `dashboard`: 통계(원장)
 
@@ -192,6 +193,9 @@ npm run impeccable:detect:json -- --fast
 - `V3__kid_application_unique_parent_kindergarten.sql`: 중복 신청 제약
 - `V4__create_calendar_events.sql`: 캘린더
 - `V5__add_performance_indexes_for_dashboard_and_notepad.sql`: 성능 인덱스
+- `V15__drop_notepad_legacy_is_read.sql`: `notepad.is_read` 레거시 컬럼 제거
+
+마이그레이션이 컬럼 제거처럼 되돌리기 어려운 변경이면 배포 전 DB 백업과 forward-fix SQL을 준비하고, 변경 배경을 `docs/COMPLETED.md`에 남깁니다.
 
 ---
 

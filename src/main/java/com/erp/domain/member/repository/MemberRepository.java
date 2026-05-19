@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * 회원 리포지토리
  */
-public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
+public interface MemberRepository extends JpaRepository<Member, Long> {
 
     interface DashboardMemberCountsProjection {
         long getTotalTeachers();

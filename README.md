@@ -17,7 +17,7 @@
 | 핵심 사용자 | `PRINCIPAL`, `TEACHER`, `PARENT` |
 | 핵심 기술 | Java 21, Spring Boot 3.5.9, MySQL 8, Redis, JPA, QueryDSL |
 | 실행 프로필 | `local`, `demo`, `prod` |
-| 최근 운영 개선 | `Backend CI` push 검증 시간 `5m 28s -> 1m 14s`로 단축, heavy 검증은 수동 `Backend Quality`로 분리 |
+| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 운영 API, `Backend CI` `5m 28s -> 1m 14s` |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 
 ## 바로 확인할 것
@@ -26,6 +26,7 @@
 - [수치로 검증한 개선](#수치로-검증한-개선): 쿼리 수와 응답 시간 기준 개선 결과를 먼저 볼 수 있습니다.
 - [화면](#화면): 대시보드, 신청 처리 큐, 인증 감사 로그, 업무 감사 로그 화면을 바로 확인할 수 있습니다.
 - [docs/COMPLETED.md](./docs/COMPLETED.md): 배치별 구현, 검증, 후속 리스크를 archive 형태로 추적할 수 있습니다.
+- [docs/guides/interview-guide.md](./docs/guides/interview-guide.md): 면접관 관점에서 볼 핵심 개선 스토리와 질문 대응 포인트를 정리했습니다.
 
 ## 왜 이 저장소를 열어볼 만한가
 
@@ -43,6 +44,9 @@
 | 운영형 상태 전이 | waitlist/offer/offer expiry, 출결 변경 요청 승인/거절, 공지/알림 워크플로우 | 승인 상태 전이, scheduler, domain audit log |
 | 운영 가시성 부족 | auth audit log, domain audit log, management plane, Prometheus/Grafana, structured logging | 조회/export API, 운영 화면, readiness/metrics |
 | 테스트 신뢰성 부족 | MySQL/Redis Testcontainers 통합 테스트 + `fast/integration/performanceSmoke` CI 분리 | GitHub Actions 배지, 테스트 태스크, smoke 검증 |
+| 운영 실패 대응 부족 | Notification Outbox dead-letter summary/list/retry API 추가 | `/api/v1/notification-outbox/*`, principal-only 통합 테스트 |
+| 입력 오류 500 위험 | MVC parameter/type/date 예외를 400 `ApiResponse.error`로 정규화 | 출석 월 조회 invalid/missing/type 오류 테스트 |
+| 과도한 일정 조회 | 캘린더 조회 기간 366일 cap + `RecurrenceExpander` 분리 | fast unit test, calendar integration test |
 
 ## 수치로 검증한 개선
 
@@ -110,6 +114,7 @@
 - Google/Kakao OAuth2 로그인, 명시적 소셜 계정 연결, provider 충돌 정책
 - 로그인/refresh rate limit, trusted proxy 기반 client IP 해석
 - `notification_outbox` 기반 비동기 알림 전달과 retry/backoff/dead-letter 처리
+- 원장 전용 outbox 운영 API(summary, dead-letter list, retry)
 - auth audit/domain audit archive-purge scheduler
 
 ## 아키텍처 요약
@@ -217,6 +222,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | Attendance | `/api/v1/attendance`, `/api/v1/attendance-requests/*` | 출석 처리, 승인 워크플로우 |
 | Application | `/api/v1/kid-applications/*`, `/api/v1/kindergarten-applications/*` | 입학/교사 지원 워크플로우 |
 | Audit | `/api/v1/auth/audit-logs/export`, `/api/v1/domain-audit-logs` | 운영 감사/CSV export |
+| Notification Ops | `/api/v1/notification-outbox/summary`, `/api/v1/notification-outbox/dead-letters`, `/api/v1/notification-outbox/{id}/retry` | dead-letter 관측/재시도 |
 | Dashboard | `/api/v1/dashboard/statistics` | 캐시 기반 통계 조회 |
 
 ## 테스트 & CI
@@ -243,6 +249,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | [`docs/guides/env-contract.md`](./docs/guides/env-contract.md) | 환경 변수 계약 |
 | [`docs/guides/user-guide.md`](./docs/guides/user-guide.md) | 사용자 가이드 |
 | [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) | 배포 가이드 |
+| [`docs/guides/interview-guide.md`](./docs/guides/interview-guide.md) | 면접관 관점 포트폴리오 설명 가이드 |
 | [`blog/README.md`](./blog/README.md) | 구현 배경과 글 시리즈 인덱스 |
 
 ## 라이선스

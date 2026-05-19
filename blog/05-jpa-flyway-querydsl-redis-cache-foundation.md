@@ -415,12 +415,12 @@ CREATE INDEX idx_announcement_created ON announcement(created_at DESC);
 - `jpaQueryFactory()`
   - `EntityManager`를 받아 `JPAQueryFactory`를 생성
 
-그리고 [MemberRepositoryCustom.java](../src/main/java/com/erp/domain/member/repository/MemberRepositoryCustom.java), [MemberRepositoryImpl.java](../src/main/java/com/erp/domain/member/repository/MemberRepositoryImpl.java)에 커스텀 repository 확장 지점이 준비돼 있습니다.
+초기에는 회원 repository에도 QueryDSL 확장 스텁을 열어 두었습니다. 이후 실제 동적 쿼리가 없는 빈 스텁은 제거하고, 현재는 [MemberRepository.java](../src/main/java/com/erp/domain/member/repository/MemberRepository.java)의 명시적 JPQL과 Spring Data 메서드만 유지합니다.
 
 정직하게 말하면, 현재 코드베이스에서 QueryDSL 활용도는 아직 높지 않습니다.
 하지만 이건 오히려 입문자에게 중요한 교훈입니다.
 
-**모든 준비를 당장 100% 활용할 필요는 없지만, 확장 포인트를 미리 열어 두면 이후 리팩터링 비용이 줄어든다**는 점입니다.
+**확장 포인트도 실제 사용처가 없으면 코드 탐색 비용이 됩니다.** 그래서 이 프로젝트는 QueryDSL 빈은 유지하되, 구현 없는 repository custom 스텁은 제거하는 쪽으로 정리했습니다.
 
 ### 5-7. `RedisConfig`: 짧게 살아야 하는 상태를 관계형 DB에서 분리한다
 
