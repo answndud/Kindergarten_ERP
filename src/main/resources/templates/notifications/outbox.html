@@ -84,6 +84,7 @@
                     <li>재시도는 dead-letter 상태만 허용합니다.</li>
                     <li>재시도 버튼은 상태를 `PENDING`으로 되돌리고 worker가 다시 처리하게 합니다.</li>
                     <li>반복 실패하면 외부 webhook, 이메일 설정, 네트워크 타임아웃을 먼저 점검합니다.</li>
+                    <li>demo 화면이 비어 있으면 seed 계정/반/원생이 유지돼 있는지 먼저 확인합니다.</li>
                 </ul>
             </div>
         </aside>
@@ -233,7 +234,10 @@
         }
 
         function renderSummary(data) {
-            statusSummary.innerHTML = Object.entries(data.statusCounts || {})
+            const statusCounts = Object.entries(data.statusCounts || {});
+            statusSummary.innerHTML = statusCounts.length === 0
+                ? '<div class="col-span-2 rounded-lg bg-gray-50 p-4 text-sm text-gray-500">집계할 outbox 상태가 없습니다.</div>'
+                : statusCounts
                 .map(([status, count]) => `
                     <div class="rounded-lg border border-gray-200 bg-white p-4">
                         <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">${escapeHtml(status)}</p>
@@ -242,7 +246,10 @@
                 `)
                 .join('');
 
-            channelSummary.innerHTML = Object.entries(data.deadLetterCountsByChannel || {})
+            const channelCounts = Object.entries(data.deadLetterCountsByChannel || {});
+            channelSummary.innerHTML = channelCounts.length === 0
+                ? '<div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">현재 dead-letter 채널이 없습니다.</div>'
+                : channelCounts
                 .map(([channel, count]) => `
                     <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
                         <span class="text-sm font-semibold text-gray-700">${escapeHtml(channel)}</span>

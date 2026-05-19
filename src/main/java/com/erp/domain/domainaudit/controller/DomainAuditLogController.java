@@ -7,6 +7,8 @@ import com.erp.domain.domainaudit.service.DomainAuditLogQueryService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,7 +37,34 @@ public class DomainAuditLogController {
 
     @GetMapping
     @PreAuthorize("hasRole('PRINCIPAL')")
-    @Operation(summary = "업무 감사 로그 조회", description = "입학, 출결 요청, 공지 등 주요 업무 상태 변경 이력을 유치원 단위로 조회합니다.")
+    @Operation(
+            summary = "업무 감사 로그 조회",
+            description = "입학, 출결 요청, 공지 등 주요 업무 상태 변경 이력을 유치원 단위로 조회합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "업무 감사 로그 page 응답",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "content": [
+                                          {
+                                            "action": "KID_APPLICATION_OFFERED",
+                                            "targetType": "KID_APPLICATION",
+                                            "actorName": "김원장",
+                                            "summary": "입학 제안 발송 샘플: 서아"
+                                          }
+                                        ],
+                                        "totalElements": 1,
+                                        "number": 0
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<Page<DomainAuditLogResponse>>> getAuditLogs(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) DomainAuditAction action,

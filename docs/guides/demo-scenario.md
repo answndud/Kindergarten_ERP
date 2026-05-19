@@ -14,6 +14,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 
 - `demo` 프로파일은 `local` 설정을 포함합니다.
 - 시드 데이터는 자동 활성화됩니다.
+- 기존 demo DB에 seed 계정이 이미 있어도 최근 시연용 샘플은 누락분만 보강합니다.
 - Swagger/OpenAPI와 app-port Prometheus는 demo에서만 열립니다.
 
 ## 2. Demo 계정
@@ -56,7 +57,19 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 ## 6. 시연 실패 시 빠른 복구
 
 - 로그인 실패: `demo` 프로파일인지, seed가 켜졌는지 확인합니다.
-- 화면이 비어 있음: 기존 DB에 seed principal이 이미 있어 `DataLoader`가 skip됐을 수 있습니다. 로컬 DB를 새로 만들거나 seed 계정을 삭제한 뒤 다시 실행합니다.
-- Outbox가 비어 있음: `/notification-outbox`는 demo seed의 dead-letter 샘플이 필요합니다.
+- 화면이 비어 있음: `DataLoader`는 seed 계정이 있으면 기본 seed를 다시 만들지 않지만, 시연용 신청/outbox/calendar 샘플은 누락분을 보강합니다. 그래도 비어 있으면 기본 seed 계정/반/원생이 일부 삭제된 DB일 수 있으니 local/demo DB를 초기화합니다.
+- Outbox가 비어 있음: `/notification-outbox`는 `APP`, `PUSH`, `EMAIL` dead-letter 샘플을 보강합니다. 샘플이 없으면 principal 계정과 notification/outbox 테이블 상태를 먼저 확인합니다.
 - Swagger가 닫힘: `SPRING_PROFILES_ACTIVE=demo`인지 확인합니다.
 - Redis/MySQL 연결 실패: `docker compose --env-file docker/.env -f docker/docker-compose.yml ps`로 컨테이너 상태를 확인합니다.
+
+## 7. 최소 검증 루트
+
+시간을 아껴야 할 때는 아래만 확인합니다.
+
+```bash
+./gradlew compileJava compileTestJava
+git diff --check
+```
+
+- API/보안/DB migration을 바꾼 경우에만 관련 targeted test를 추가합니다.
+- 전체 `./gradlew test`는 릴리스 직전이나 큰 구조 변경 이후에 실행합니다.

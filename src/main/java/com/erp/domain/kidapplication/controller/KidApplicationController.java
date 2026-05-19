@@ -11,6 +11,8 @@ import com.erp.domain.kidapplication.dto.request.WaitlistKidApplicationRequest;
 import com.erp.domain.kidapplication.dto.response.KidApplicationResponse;
 import com.erp.domain.kidapplication.service.KidApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +36,37 @@ public class KidApplicationController {
      */
     @PostMapping
     @PreAuthorize("hasRole('PARENT')")
-    @Operation(summary = "원생 입학 신청", description = "학부모가 특정 유치원에 원생 입학 신청을 생성합니다.")
+    @Operation(
+            summary = "원생 입학 신청",
+            description = "학부모가 특정 유치원에 원생 입학 신청을 생성합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "kindergartenId": 1,
+                                      "kidName": "민준",
+                                      "birthDate": "2022-05-10",
+                                      "gender": "MALE",
+                                      "preferredClassroomId": 1,
+                                      "notes": "신규 입학 상담 후 서류 대기"
+                                    }
+                                    """)
+                    )
+            ),
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "생성된 신청 ID",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": 1001
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<Long>> apply(
             @Valid @RequestBody KidApplicationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -69,7 +101,37 @@ public class KidApplicationController {
 
     @GetMapping("/queue")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
-    @Operation(summary = "검토 큐 조회", description = "PENDING, WAITLISTED, OFFERED 상태를 함께 조회해 운영 검토 큐를 구성합니다.")
+    @Operation(
+            summary = "검토 큐 조회",
+            description = "PENDING, WAITLISTED, OFFERED 상태를 함께 조회해 운영 검토 큐를 구성합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "운영 검토 큐 응답",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": [
+                                        {
+                                          "id": 1001,
+                                          "kidName": "민준",
+                                          "status": "PENDING",
+                                          "kindergartenName": "해바라기 유치원",
+                                          "preferredClassroomName": "해바라기반"
+                                        },
+                                        {
+                                          "id": 1002,
+                                          "kidName": "유나",
+                                          "status": "WAITLISTED",
+                                          "assignedClassroomName": "해바라기반"
+                                        }
+                                      ]
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<List<KidApplicationResponse>>> getReviewQueueApplications(
             @RequestParam Long kindergartenId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {

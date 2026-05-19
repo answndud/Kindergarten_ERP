@@ -986,3 +986,51 @@
   - demo 실행 직후 운영 화면이 비어 보이는 문제를 줄였고, 면접관에게 보여줄 클릭 순서와 코드 근거가 문서화됐다.
   - Outbox 운영 화면은 실패/재시도 상태 피드백을 갖춘 시연 가능한 화면으로 정리됐다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-023"></a>
+## `023` 최소 검증 기준 demo 안정화: seed 보강, Swagger 예시, runbook, Outbox UX 문구
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 사용자는 검증 비용을 최소화하면서 다음 개선 작업을 모두 순서대로 진행하기를 원했다.
+  - 직전 archive의 남은 리스크였던 “기존 demo DB에서 seed principal이 있으면 신규 샘플이 안 보일 수 있음”을 먼저 줄일 필요가 있었다.
+  - Swagger는 `@Tag/@Operation` 설명은 있었지만 주요 응답 예시가 부족했고, README/runbook에는 최소 검증 루트가 명확하지 않았다.
+  - Outbox 화면은 동작 변경보다 운영자가 다음 행동을 이해하기 쉬운 문구 보강이 적합했다.
+- 변경 내용:
+  - `DataLoader`에서 seed principal이 이미 존재해도 즉시 종료하지 않고, 필요한 seed 계정/반/원생이 있으면 시연용 샘플만 누락분 보강하도록 변경했다.
+  - 보강 대상은 입학 신청 workflow 샘플, 업무 audit 샘플, outbox dead-letter/delivered 샘플, calendar 샘플이다.
+  - calendar 샘플 중복 방지를 위해 `CalendarEventRepository.existsByKindergartenIdAndTitleAndDeletedAtIsNull`를 추가했다.
+  - Notification Outbox, Kid Application, Auth Audit, Domain Audit 주요 API에 Swagger request/response example을 추가했다.
+  - README와 demo runbook에 최소 검증 기준을 `compileJava compileTestJava` + `git diff --check` 중심으로 명시했다.
+  - demo runbook의 seed 실패 복구 문구를 “기존 DB에서도 누락 샘플 보강” 기준으로 갱신했다.
+  - `/notification-outbox` 화면의 운영 기준과 empty summary/channel 문구를 보강했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/guides/demo-scenario.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+  - `src/main/java/com/erp/global/config/DataLoader.java`
+  - `src/main/java/com/erp/domain/calendar/repository/CalendarEventRepository.java`
+  - `src/main/java/com/erp/domain/notification/controller/NotificationOutboxOpsController.java`
+  - `src/main/java/com/erp/domain/kidapplication/controller/KidApplicationController.java`
+  - `src/main/java/com/erp/domain/authaudit/controller/AuthAuditLogController.java`
+  - `src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogController.java`
+  - `src/main/resources/templates/notifications/outbox.html`
+- 검증:
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `rg -n "existsByKindergartenIdAndTitle|Demo supplement|ExampleObject|최소 검증|dead-letter 채널이 없습니다|demo DB" README.md docs src/main/java src/main/resources/templates`: 관련 변경 연결 확인
+  - `git diff --check`: 통과
+  - 전체 `./gradlew test`와 브라우저 E2E는 사용자의 “검증 최소화” 기준에 맞춰 실행하지 않았다.
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: API 계약/DB migration/security 설정은 변경하지 않았고, seed 보강과 Swagger annotation은 compile 검증으로 타입/쿼리 메서드 해석을 확인했다.
+- 남은 리스크:
+  - 기존 DB에서 seed 계정/반/원생 일부가 삭제된 비정상 상태라면 보강 seed는 안전하게 skip한다. 이 경우 local/demo DB 초기화가 필요하다.
+  - 전체 테스트와 브라우저 수동 검증은 생략했으므로, 화면 클릭 수준의 회귀는 다음 큰 변경 전 한 번 별도로 확인하는 편이 안전하다.
+  - Swagger example은 주요 endpoint 중심이며 모든 API/DTO에 exhaustive example을 달지는 않았다.
+- 결과:
+  - 기존 demo DB에서도 최근 시연 샘플이 누락될 가능성을 줄였다.
+  - Swagger, README, demo runbook, Outbox 운영 문구가 최소 검증 운영 방식에 맞게 정리됐다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.

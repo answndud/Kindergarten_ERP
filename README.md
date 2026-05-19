@@ -19,6 +19,7 @@
 | 실행 프로필 | `local`, `demo`, `prod` |
 | 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 운영 API, `Backend CI` `5m 28s -> 1m 14s` |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
+| 최소 로컬 검증 | 빠른 수정은 `./gradlew compileJava compileTestJava` + `git diff --check`, 릴리스 전만 `./gradlew test` |
 
 ## 바로 확인할 것
 
@@ -236,6 +237,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 - `Backend Quality`: `integrationTest`, `performanceSmokeTest`, `bootJar`, monitoring compose config 해석을 수동 실행합니다.
 - 최근 측정 기준으로 자동 push CI는 `5m 28s`에서 `1m 14s`로 줄었습니다.
 - CD는 클라우드 배포 secret이 준비되기 전까지 `workflow_dispatch` 수동 실행만 유지합니다.
+- 혼자 운영하는 포트폴리오 프로젝트이므로 일상 개선 작업은 `compileJava compileTestJava`, 관련 targeted test, `git diff --check`를 우선하고 전체 테스트는 릴리스/큰 변경 직전에 실행합니다.
 - Swagger/OpenAPI 공개 경로와 Prometheus scrape도 회귀 검증합니다.
 - 수동 quality workflow는 실패 분석을 위해 테스트 리포트를 artifact로 업로드합니다.
 

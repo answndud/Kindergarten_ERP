@@ -8,6 +8,8 @@ import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +38,35 @@ public class AuthAuditLogController {
 
     @GetMapping
     @PreAuthorize("hasRole('PRINCIPAL')")
-    @Operation(summary = "인증 감사 로그 조회", description = "로그인, refresh, 소셜 연결/해제 이벤트를 같은 유치원 원장 기준으로 조회합니다.")
+    @Operation(
+            summary = "인증 감사 로그 조회",
+            description = "로그인, refresh, 소셜 연결/해제 이벤트를 같은 유치원 원장 기준으로 조회합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "인증 감사 로그 page 응답",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "content": [
+                                          {
+                                            "memberEmail": "principal@test.com",
+                                            "eventType": "LOGIN",
+                                            "result": "SUCCESS",
+                                            "provider": "LOCAL",
+                                            "clientIp": "198.51.100.10"
+                                          }
+                                        ],
+                                        "totalElements": 1,
+                                        "number": 0
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<Page<AuthAuditLogResponse>>> getAuditLogs(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) AuthAuditEventType eventType,
