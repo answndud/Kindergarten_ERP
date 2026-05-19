@@ -24,7 +24,7 @@
 | 핵심 사용자 | `PRINCIPAL`, `TEACHER`, `PARENT` |
 | 핵심 기술 | Java 21, Spring Boot 3.5.9, MySQL 8, Redis, JPA, QueryDSL |
 | 실행 프로필 | `local`, `demo`, `prod` |
-| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 운영 API, `Backend CI` `5m 28s -> 1분대` |
+| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 채널 필터/재시도, `Backend CI` `5m 28s -> 1분대` |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 | 최소 로컬 검증 | 빠른 수정은 `./gradlew compileJava compileTestJava` + `git diff --check`, 릴리스 전만 `./gradlew test` |
 
@@ -78,7 +78,7 @@
 | 운영형 상태 전이 | waitlist/offer/offer expiry, 출결 변경 요청 승인/거절, 공지/알림 워크플로우 | 승인 상태 전이, scheduler, domain audit log |
 | 운영 가시성 부족 | auth audit log, domain audit log, management plane, Prometheus/Grafana, structured logging | 조회/export API, 운영 화면, readiness/metrics |
 | 테스트 신뢰성 부족 | MySQL/Redis Testcontainers 통합 테스트 + `fast/integration/performanceSmoke` CI 분리 | GitHub Actions 배지, 테스트 태스크, smoke 검증 |
-| 운영 실패 대응 부족 | Notification Outbox dead-letter summary/list/retry API 추가 | `/api/v1/notification-outbox/*`, principal-only 통합 테스트 |
+| 운영 실패 대응 부족 | Notification Outbox dead-letter summary/channel filter/list/retry API 추가 | `/api/v1/notification-outbox/*`, principal-only 통합 테스트 |
 | 입력 오류 500 위험 | MVC parameter/type/date 예외를 400 `ApiResponse.error`로 정규화 | 출석 월 조회 invalid/missing/type 오류 테스트 |
 | 과도한 일정 조회 | 캘린더 조회 기간 366일 cap + `RecurrenceExpander` 분리 | fast unit test, calendar integration test |
 

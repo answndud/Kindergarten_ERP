@@ -30,14 +30,14 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 1. 원장으로 로그인합니다.
 2. `/dashboard`에서 출석/회원/운영 지표가 비어 있지 않음을 보여줍니다.
 3. `/applications/pending`에서 `PENDING`, `WAITLISTED`, `OFFERED` 상태가 함께 보이는 검토 큐를 설명합니다.
-4. `/notification-outbox`에서 dead-letter 채널 summary와 retry 버튼을 보여줍니다.
+4. `/notification-outbox`에서 dead-letter 채널 summary, 채널 필터, retry 버튼을 보여줍니다.
 5. `/audit-logs`, `/domain-audit-logs`에서 인증 이벤트와 업무 상태 변경 이력을 보여줍니다.
 
 ## 4. 10분 시연
 
 1. 원장 로그인: `principal@test.com / test1234!`
 2. 신청 처리 큐: 입학 신청, 대기열, offer 상태가 같은 큐에서 관리되는 구조를 설명합니다.
-3. 알림 Outbox 운영: dead-letter 목록을 확인하고 하나를 retry합니다.
+3. 알림 Outbox 운영: dead-letter 목록을 채널별로 좁혀 보고 하나를 retry합니다.
 4. 캘린더: 유치원 전체 일정, 반 반복 일정, 개인 운영 점검 일정이 함께 조회되는 구조를 설명합니다.
 5. 감사 로그: 인증 감사 로그와 업무 감사 로그가 분리된 이유를 설명합니다.
 6. README 성능 표: Notepad/Dashboard query count와 CI 시간 단축 수치를 설명합니다.
@@ -49,7 +49,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | --- | --- | --- |
 | `/dashboard` | 원생/교사/학부모 수, 오늘 출석 지표, 최근 운영 지표 | principal 계정의 kindergarten 연결, 기본 원생 seed |
 | `/applications/pending` | `PENDING`, `WAITLISTED`, `OFFERED` 입학 신청 샘플 | parent1~3 계정, 해바라기반/장미반, `kid_application` 테이블 |
-| `/notification-outbox` | `APP`, `PUSH`, `EMAIL` dead-letter와 retry 버튼 | principal 계정, `notification`, `notification_outbox` 테이블 |
+| `/notification-outbox` | `APP`, `PUSH`, `EMAIL` dead-letter, 채널 필터, retry 버튼 | principal 계정, `notification`, `notification_outbox` 테이블 |
 | `/calendar` | 유치원 전체 일정, 해바라기반 반복 일정, 개인 운영 점검 일정 | 해바라기 유치원/해바라기반, `calendar_events` 테이블 |
 | `/audit-logs` | 로그인/refresh/social link/unlink 인증 이벤트 | `auth_audit_logs` 테이블, principal tenant 필터 |
 | `/domain-audit-logs` | 입학 대기열/offer/승인 업무 변경 이력 | `domain_audit_logs` 테이블, 입학 신청 샘플 |
