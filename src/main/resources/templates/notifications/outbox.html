@@ -93,11 +93,21 @@
             <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div class="flex flex-col gap-3 border-b border-gray-200 px-6 py-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-900">Dead-letter 목록</h2>
-                        <p class="text-sm text-gray-500">최근 실패 건부터 정렬됩니다.</p>
+                        <h2 class="text-lg font-semibold text-gray-900">Outbox Timeline</h2>
+                        <p class="text-sm text-gray-500">전체 전송 이력을 최신순으로 보고 실패 건만 재시도합니다.</p>
                     </div>
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <p id="lastRefreshedAt" class="text-xs font-medium text-gray-500">아직 갱신 전</p>
+                        <div class="flex items-center gap-2">
+                            <label for="statusFilter" class="text-sm font-medium text-gray-600">상태</label>
+                            <select id="statusFilter" class="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                                <option value="">전체</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="PROCESSING">PROCESSING</option>
+                                <option value="DELIVERED">DELIVERED</option>
+                                <option value="DEAD_LETTER">DEAD_LETTER</option>
+                            </select>
+                        </div>
                         <div class="flex items-center gap-2">
                             <label for="channelFilter" class="text-sm font-medium text-gray-600">채널</label>
                             <select id="channelFilter" class="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
@@ -107,6 +117,11 @@
                                 <option value="EMAIL">EMAIL</option>
                                 <option value="INCIDENT_WEBHOOK">INCIDENT_WEBHOOK</option>
                             </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="keywordFilter" class="text-sm font-medium text-gray-600">검색</label>
+                            <input id="keywordFilter" type="search" placeholder="제목/수신자/오류"
+                                   class="h-10 w-40 rounded-lg border border-gray-200 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
                         </div>
                         <div class="flex items-center gap-2">
                             <label for="pageSize" class="text-sm font-medium text-gray-600">페이지 크기</label>
@@ -129,8 +144,9 @@
                             <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">채널</th>
                             <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">수신자</th>
                             <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">제목</th>
+                            <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">상태</th>
                             <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">시도</th>
-                            <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">실패 시각</th>
+                            <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">처리 시각</th>
                             <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">오류</th>
                             <th class="whitespace-nowrap px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">액션</th>
                         </tr>
@@ -167,7 +183,9 @@
         const channelSummary = document.getElementById('channelSummary');
         const tableBody = document.getElementById('deadLetterTableBody');
         const errorBanner = document.getElementById('errorBanner');
+        const statusFilter = document.getElementById('statusFilter');
         const channelFilter = document.getElementById('channelFilter');
+        const keywordFilter = document.getElementById('keywordFilter');
         const pageSize = document.getElementById('pageSize');
         const refreshButton = document.getElementById('refreshButton');
         const prevPageButton = document.getElementById('prevPageButton');
@@ -184,7 +202,11 @@
 
         function bindEvents() {
             refreshButton.addEventListener('click', () => refresh(currentPage));
+            statusFilter.addEventListener('change', () => refresh(0));
             channelFilter.addEventListener('change', () => refresh(0));
+            keywordFilter.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') refresh(0);
+            });
             pageSize.addEventListener('change', () => refresh(0));
             prevPageButton.addEventListener('click', () => {
                 if (currentPage > 0) refresh(currentPage - 1);
@@ -201,7 +223,7 @@
             refreshButton.textContent = '갱신 중...';
             hideError();
             try {
-                await Promise.all([loadSummary(), loadDeadLetters(page)]);
+                await Promise.all([loadSummary(), loadTimeline(page)]);
                 lastRefreshedAt.textContent = `마지막 갱신: ${new Date().toLocaleTimeString('ko-KR')}`;
             } finally {
                 refreshing = false;
@@ -220,26 +242,32 @@
             }
         }
 
-        async function loadDeadLetters(page) {
+        async function loadTimeline(page) {
             currentPage = page;
-            tableBody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-sm text-gray-500">dead-letter를 불러오는 중입니다.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">outbox timeline을 불러오는 중입니다.</td></tr>';
 
             const params = new URLSearchParams({
                 page: String(page),
                 size: pageSize.value
             });
+            if (statusFilter.value) {
+                params.set('status', statusFilter.value);
+            }
             if (channelFilter.value) {
                 params.set('channel', channelFilter.value);
             }
+            if (keywordFilter.value.trim()) {
+                params.set('q', keywordFilter.value.trim());
+            }
             try {
-                const payload = await fetchJson(`/api/v1/notification-outbox/dead-letters?${params.toString()}`);
+                const payload = await fetchJson(`/api/v1/notification-outbox?${params.toString()}`);
                 renderDeadLetters(payload.data);
             } catch (error) {
-                showError(error.message || 'dead-letter 목록을 불러오지 못했습니다.');
+                showError(error.message || 'outbox timeline을 불러오지 못했습니다.');
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="px-6 py-14 text-center">
-                            <p class="text-sm font-medium text-red-700">dead-letter 목록을 불러오지 못했습니다.</p>
+                        <td colspan="9" class="px-6 py-14 text-center">
+                            <p class="text-sm font-medium text-red-700">outbox timeline을 불러오지 못했습니다.</p>
                             <p class="mt-2 text-sm text-gray-500">권한, 세션, 네트워크 상태를 확인한 뒤 새로고침하세요.</p>
                         </td>
                     </tr>
@@ -280,15 +308,15 @@
             prevPageButton.disabled = pageData.first;
             nextPageButton.disabled = pageData.last || pageData.totalPages === 0;
             paginationSummary.textContent = pageData.totalElements === 0
-                ? '현재 dead-letter가 없습니다.'
+                ? '현재 조건에 맞는 outbox가 없습니다.'
                 : `${pageData.totalElements.toLocaleString()}개 중 ${pageData.number * pageData.size + 1}-${pageData.number * pageData.size + pageData.numberOfElements}번째`;
 
             if (!pageData.content || pageData.content.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="px-6 py-14 text-center">
-                            <p class="text-sm font-medium text-gray-700">처리할 dead-letter가 없습니다.</p>
-                            <p class="mt-2 text-sm text-gray-500">외부 채널 실패가 발생하면 이곳에 표시됩니다.</p>
+                        <td colspan="9" class="px-6 py-14 text-center">
+                            <p class="text-sm font-medium text-gray-700">조건에 맞는 outbox가 없습니다.</p>
+                            <p class="mt-2 text-sm text-gray-500">상태, 채널, 검색어를 바꿔 다시 확인하세요.</p>
                         </td>
                     </tr>
                 `;
@@ -301,15 +329,18 @@
                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">${escapeHtml(item.channel || '-')}</td>
                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">${escapeHtml(item.receiverEmail || `member:${item.receiverMemberId || '-'}`)}</td>
                     <td class="min-w-[220px] px-6 py-4 text-sm text-gray-900">${escapeHtml(item.title || '-')}</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-sm font-semibold ${statusClass(item.status)}">${escapeHtml(item.status || '-')}</td>
                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">${item.attemptCount} / ${item.maxAttempts}</td>
-                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">${formatDateTime(item.deadLetteredAt)}</td>
+                    <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-700">${formatDateTime(item.deadLetteredAt || item.lastAttemptAt || item.nextAttemptAt)}</td>
                     <td class="min-w-[240px] px-6 py-4 text-sm text-red-700">${escapeHtml(item.lastError || '-')}</td>
                     <td class="whitespace-nowrap px-6 py-4">
-                        <button type="button"
-                                class="retry-button min-h-9 rounded-lg bg-primary-600 px-3 text-sm font-semibold text-white hover:bg-primary-700"
-                                data-outbox-id="${item.id}">
-                            재시도
-                        </button>
+                        ${item.status === 'DEAD_LETTER' ? `
+                            <button type="button"
+                                    class="retry-button min-h-9 rounded-lg bg-primary-600 px-3 text-sm font-semibold text-white hover:bg-primary-700"
+                                    data-outbox-id="${item.id}">
+                                재시도
+                            </button>
+                        ` : '<span class="text-sm text-gray-400">-</span>'}
                     </td>
                 </tr>
             `).join('');
@@ -317,6 +348,13 @@
             tableBody.querySelectorAll('.retry-button').forEach((button) => {
                 button.addEventListener('click', () => retryOutbox(button.dataset.outboxId));
             });
+        }
+
+        function statusClass(status) {
+            if (status === 'DEAD_LETTER') return 'text-red-700';
+            if (status === 'DELIVERED') return 'text-primary-700';
+            if (status === 'PROCESSING') return 'text-amber-700';
+            return 'text-gray-700';
         }
 
         async function retryOutbox(outboxId) {

@@ -10,7 +10,7 @@
 
 ## 30초 요약
 
-- 단순 CRUD가 아니라 **원장/교사/학부모 권한 경계, 입학 승인 상태 전이, 출결 요청 승인, 감사 로그, outbox dead-letter 운영**까지 닫은 백엔드 프로젝트입니다.
+- 단순 CRUD가 아니라 **원장/교사/학부모 권한 경계, 입학 승인 상태 전이, 출결 요청 승인, 감사 로그, outbox timeline/dead-letter 운영**까지 닫은 백엔드 프로젝트입니다.
 - 성능 개선은 감으로 처리하지 않고 **쿼리 수/응답 시간/CI 시간**을 전후 비교했습니다. Notepad 목록은 `22 queries -> 4 queries`, Dashboard 반복 조회는 cache hit 기준 `5 queries -> 0 queries`로 줄였습니다.
 - 면접 시연은 `demo` 프로파일로 재현 가능합니다. 최신 main 기준 `Backend CI` 상태는 상단 배지와 [Actions](https://github.com/answndud/Kindergarten_ERP/actions/workflows/ci.yml)에서 확인합니다.
 - 실제 클라우드 배포는 비용 문제로 수행하지 않았고, 대신 Docker/배포 자산/runbook과 local/demo/prod 환경 계약을 분리해 설명 가능하게 준비했습니다.
@@ -24,7 +24,7 @@
 | 핵심 사용자 | `PRINCIPAL`, `TEACHER`, `PARENT` |
 | 핵심 기술 | Java 21, Spring Boot 3.5.9, MySQL 8, Redis, JPA, QueryDSL |
 | 실행 프로필 | `local`, `demo`, `prod` |
-| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 채널 필터/재시도, `Backend CI` `5m 28s -> 1분대` |
+| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox timeline/search/filter/retry, audit 세부 필터, `Backend CI` `5m 28s -> 1분대` |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 | 최소 로컬 검증 | 빠른 수정은 `./gradlew compileJava compileTestJava` + `git diff --check`, 릴리스 전만 `./gradlew test` |
 
@@ -76,9 +76,9 @@
 | 멀티테넌시 권한 경계 | 역할 기반 인가 + `kindergarten_id` 기준 접근 제어 + fail-closed 기본값 유지 | principal/teacher/parent 권한 차등, 감사 로그 tenant 필터 |
 | JWT 세션 수명주기 | HTTP-only cookie JWT + Redis refresh session rotation + 활성 세션 레지스트리 | 세션 조회, 개별 종료, 다른 기기 로그아웃, 즉시 revoke |
 | 운영형 상태 전이 | waitlist/offer/offer expiry, 출결 변경 요청 승인/거절, 공지/알림 워크플로우 | 승인 상태 전이, scheduler, domain audit log |
-| 운영 가시성 부족 | auth audit log, domain audit log, management plane, Prometheus/Grafana, structured logging | 조회/export API, 운영 화면, readiness/metrics |
+| 운영 가시성 부족 | auth audit log, domain audit log, management plane, Prometheus/Grafana, structured logging | reason/summary 필터, 조회/export API, 운영 화면, readiness/metrics |
 | 테스트 신뢰성 부족 | MySQL/Redis Testcontainers 통합 테스트 + `fast/integration/performanceSmoke` CI 분리 | GitHub Actions 배지, 테스트 태스크, smoke 검증 |
-| 운영 실패 대응 부족 | Notification Outbox dead-letter summary/channel filter/list/retry API 추가 | `/api/v1/notification-outbox/*`, principal-only 통합 테스트 |
+| 운영 실패 대응 부족 | Notification Outbox timeline, status/channel/search filter, dead-letter retry API 추가 | `/api/v1/notification-outbox/*`, principal-only 통합 테스트 |
 | 입력 오류 500 위험 | MVC parameter/type/date 예외를 400 `ApiResponse.error`로 정규화 | 출석 월 조회 invalid/missing/type 오류 테스트 |
 | 과도한 일정 조회 | 캘린더 조회 기간 366일 cap + `RecurrenceExpander` 분리 | fast unit test, calendar integration test |
 
@@ -152,7 +152,7 @@
 - Google/Kakao OAuth2 로그인, 명시적 소셜 계정 연결, provider 충돌 정책
 - 로그인/refresh rate limit, trusted proxy 기반 client IP 해석
 - `notification_outbox` 기반 비동기 알림 전달과 retry/backoff/dead-letter 처리
-- 원장 전용 outbox 운영 API(summary, dead-letter list, retry)
+- 원장 전용 outbox 운영 API(timeline, status/channel/search filter, dead-letter retry)
 - auth audit/domain audit archive-purge scheduler
 
 ## 아키텍처 요약
@@ -260,8 +260,8 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | Kid / Classroom | `/api/v1/kids`, `/api/v1/classrooms` | 원생/반 관리 |
 | Attendance | `/api/v1/attendance`, `/api/v1/attendance-requests/*` | 출석 처리, 승인 워크플로우 |
 | Application | `/api/v1/kid-applications/*`, `/api/v1/kindergarten-applications/*` | 입학/교사 지원 워크플로우 |
-| Audit | `/api/v1/auth/audit-logs/export`, `/api/v1/domain-audit-logs` | 운영 감사/CSV export |
-| Notification Ops | `/api/v1/notification-outbox/summary`, `/api/v1/notification-outbox/dead-letters?channel=EMAIL`, `/api/v1/notification-outbox/{id}/retry` | dead-letter 관측/채널 필터/재시도 |
+| Audit | `/api/v1/auth/audit-logs?reason=A001`, `/api/v1/domain-audit-logs?summary=입학`, export API | 운영 감사 필터/CSV export |
+| Notification Ops | `/api/v1/notification-outbox?status=DEAD_LETTER&channel=EMAIL&q=smtp`, `/api/v1/notification-outbox/summary`, `/api/v1/notification-outbox/{id}/retry` | timeline/search/filter/dead-letter 재시도 |
 | Dashboard | `/api/v1/dashboard/statistics` | 캐시 기반 통계 조회 |
 
 ## 테스트 & CI

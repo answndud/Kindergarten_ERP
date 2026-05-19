@@ -1452,3 +1452,57 @@
 - 결과:
   - 장기 roadmap은 archive로 닫혔고 active 문서는 재개 시 혼동이 없도록 비워졌다.
   - README, evidence, risk, interview, demo 문서는 현재 구현된 기능만 주장하도록 정리됐다.
+
+<a id="archive-035"></a>
+## `035` 운영 기능 선택 개선: outbox timeline, adapter 경계, audit 필터, 면접 패키지 보강
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 직전 제출 패키지 이후 남은 선택 개선 중, 면접에서 운영형 백엔드 완성도를 가장 잘 보여주는 항목 1~4번을 순서대로 진행했다.
+  - 목표는 새 도메인을 넓히는 것이 아니라 이미 있는 outbox/audit 운영 기능의 조사, 검색, 재처리 설명력을 높이는 것이었다.
+- 변경 내용:
+  - Outbox 운영 화면과 API를 dead-letter 목록 중심에서 전체 timeline 중심으로 확장했다.
+    - `GET /api/v1/notification-outbox?status=DEAD_LETTER&channel=EMAIL&q=smtp`
+    - 상태, 채널, 제목/본문/수신자/오류 검색
+    - dead-letter 행만 retry 버튼 노출
+  - notification provider 교체 경계를 `NotificationChannelSenderRegistry`로 분리했다.
+    - `NotificationDispatchService`가 sender 목록을 매번 map으로 재구성하지 않고 registry에서 channel adapter를 조회한다.
+    - 실제 provider 미연동 사실은 유지하되 adapter 교체 지점을 명확히 했다.
+  - 인증 감사 로그에 `reason` 필터를 추가했다.
+    - 조회와 CSV export가 같은 `reason` 조건을 사용한다.
+  - 업무 감사 로그에 `summary` 필터를 추가했다.
+    - 조회와 CSV export가 같은 `summary` 조건을 사용한다.
+  - README, evidence map, interview guide, demo scenario, risk response, developer guide를 최신 구현 기준으로 갱신했다.
+- 코드/문서:
+  - `src/main/java/com/erp/domain/notification/controller/NotificationOutboxOpsController.java`
+  - `src/main/java/com/erp/domain/notification/service/NotificationOutboxOpsService.java`
+  - `src/main/java/com/erp/domain/notification/repository/NotificationOutboxRepository.java`
+  - `src/main/java/com/erp/domain/notification/service/NotificationDispatchService.java`
+  - `src/main/java/com/erp/domain/notification/service/channel/NotificationChannelSenderRegistry.java`
+  - `src/main/java/com/erp/domain/authaudit/*`
+  - `src/main/java/com/erp/domain/domainaudit/*`
+  - `src/main/resources/templates/notifications/outbox.html`
+  - `src/main/resources/templates/authaudit/audit-logs.html`
+  - `src/main/resources/templates/domainaudit/audit-logs.html`
+  - `src/test/java/com/erp/api/NotificationOutboxOpsApiIntegrationTest.java`
+  - `src/test/java/com/erp/api/AuthAuditApiIntegrationTest.java`
+  - `src/test/java/com/erp/api/DomainAuditApiIntegrationTest.java`
+  - `src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java`
+  - `README.md`
+  - `docs/guides/*`
+- 검증:
+  - `./gradlew test --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest" --tests "com.erp.api.AuthAuditApiIntegrationTest" --tests "com.erp.api.DomainAuditApiIntegrationTest"`: 통과
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `git diff --check`: 통과
+- Spring Boot Doctor 판정:
+  - 변경 surface: `api`, `persistence`, `domain`, `security`, `view`, `docs`
+  - P0/P1 신규 이슈 없음
+  - 점수: `100/100`
+- P0/P1 남은 리스크:
+  - 이번 변경 surface 기준 없음.
+- P2/P3 후속:
+  - 실제 외부 provider sandbox smoke, webhook signature 검증, provider별 rate limit, Tailwind build pipeline, 실제 cloud smoke는 운영 전환/비용 확보 시점의 선택 확장으로 남긴다.
+- 결과:
+  - 운영자는 outbox 전체 이력을 상태/채널/검색어로 조사하고, dead-letter만 재시도할 수 있게 됐다.
+  - 감사 로그는 reason/summary 필터와 CSV export를 통해 운영 조사 흐름이 더 선명해졌다.
+  - 면접 패키지는 최신 구현과 검증 증거를 기준으로 다시 정렬됐다.

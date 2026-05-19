@@ -2,6 +2,7 @@ package com.erp.domain.notification.controller;
 
 import com.erp.domain.notification.dto.response.NotificationOutboxItemResponse;
 import com.erp.domain.notification.dto.response.NotificationOutboxSummaryResponse;
+import com.erp.domain.notification.entity.NotificationDeliveryStatus;
 import com.erp.domain.notification.service.NotificationOutboxOpsService;
 import com.erp.domain.notification.service.channel.NotificationChannel;
 import com.erp.global.common.ApiResponse;
@@ -52,6 +53,49 @@ public class NotificationOutboxOpsController {
     )
     public ResponseEntity<ApiResponse<NotificationOutboxSummaryResponse>> getSummary() {
         return ResponseEntity.ok(ApiResponse.success(notificationOutboxOpsService.getSummary()));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(
+            summary = "Outbox timeline 조회",
+            description = "전체 outbox를 최신순으로 조회하고 status, channel, q 파라미터로 운영 검색합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Outbox timeline page 응답",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "content": [
+                                          {
+                                            "id": 42,
+                                            "channel": "EMAIL",
+                                            "status": "DEAD_LETTER",
+                                            "title": "시연용 외부 알림 실패",
+                                            "lastError": "SMTP connection refused"
+                                          }
+                                        ],
+                                        "totalElements": 1,
+                                        "number": 0
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    )
+    public ResponseEntity<ApiResponse<Page<NotificationOutboxItemResponse>>> getTimeline(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) NotificationDeliveryStatus status,
+            @RequestParam(required = false) NotificationChannel channel,
+            @RequestParam(required = false, name = "q") String keyword
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                notificationOutboxOpsService.getTimeline(page, size, status, channel, keyword)
+        ));
     }
 
     @GetMapping("/dead-letters")

@@ -36,6 +36,7 @@ public class AuthAuditLogQueryService {
                                                                AuthAuditResult result,
                                                                MemberAuthProvider provider,
                                                                String email,
+                                                               String reason,
                                                                LocalDate from,
                                                                LocalDate to,
                                                                int page,
@@ -55,6 +56,7 @@ public class AuthAuditLogQueryService {
                 result,
                 provider,
                 normalizeEmailKeyword(email),
+                normalizeKeyword(reason),
                 atStartOfDay(from),
                 toExclusive(to),
                 pageRequest
@@ -66,6 +68,7 @@ public class AuthAuditLogQueryService {
                                                  AuthAuditResult result,
                                                  MemberAuthProvider provider,
                                                  String email,
+                                                 String reason,
                                                  LocalDate from,
                                                  LocalDate to) {
         Member requester = memberService.getMemberByIdWithKindergarten(requesterId);
@@ -77,6 +80,7 @@ public class AuthAuditLogQueryService {
                 result,
                 provider,
                 normalizeEmailKeyword(email),
+                normalizeKeyword(reason),
                 atStartOfDay(from),
                 toExclusive(to),
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
@@ -92,10 +96,14 @@ public class AuthAuditLogQueryService {
     }
 
     private String normalizeEmailKeyword(String email) {
-        if (email == null || email.isBlank()) {
+        return normalizeKeyword(email);
+    }
+
+    private String normalizeKeyword(String value) {
+        if (value == null || value.isBlank()) {
             return null;
         }
-        return email.trim().toLowerCase();
+        return value.trim().toLowerCase();
     }
 
     private LocalDateTime atStartOfDay(LocalDate date) {

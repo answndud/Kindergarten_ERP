@@ -144,7 +144,7 @@ npm run impeccable:detect:json -- --fast
 - `announcement`: 공지 및 중요 공지
 - `kindergartenapplication/kidapplication`: 지원/승인
 - `notification`: 배지/목록/읽음/삭제
-- `notification-outbox`: 원장 전용 dead-letter summary/list/retry 운영 API
+- `notification-outbox`: 원장 전용 timeline/status/channel/search/dead-letter retry 운영 API
 - `calendar`: 유치원/반/개인 일정
 - `dashboard`: 통계(원장)
 

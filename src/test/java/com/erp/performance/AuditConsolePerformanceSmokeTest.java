@@ -65,11 +65,13 @@ class AuditConsolePerformanceSmokeTest extends BaseIntegrationTest {
                 null,
                 null,
                 null,
+                null,
                 0,
                 20
         )));
         Measurement export = readCommitted(() -> measure(statistics, () -> authAuditLogQueryService.exportAuditLogsCsvForPrincipal(
                 fixture.principalId(),
+                null,
                 null,
                 null,
                 null,
@@ -101,11 +103,13 @@ class AuditConsolePerformanceSmokeTest extends BaseIntegrationTest {
                 null,
                 null,
                 null,
+                null,
                 0,
                 20
         )));
         Measurement export = readCommitted(() -> measure(statistics, () -> domainAuditLogQueryService.exportAuditLogsCsvForPrincipal(
                 fixture.principalId(),
+                null,
                 null,
                 null,
                 null,

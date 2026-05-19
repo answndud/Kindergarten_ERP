@@ -22,6 +22,7 @@ public interface DomainAuditLogRepository extends JpaRepository<DomainAuditLog, 
               AND (:action IS NULL OR log.action = :action)
               AND (:targetType IS NULL OR log.targetType = :targetType)
               AND (:actorNameKeyword IS NULL OR LOWER(log.actorName) LIKE LOWER(CONCAT('%', :actorNameKeyword, '%')))
+              AND (:summaryKeyword IS NULL OR LOWER(log.summary) LIKE LOWER(CONCAT('%', :summaryKeyword, '%')))
               AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
               AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
             """,
@@ -32,6 +33,7 @@ public interface DomainAuditLogRepository extends JpaRepository<DomainAuditLog, 
               AND (:action IS NULL OR log.action = :action)
               AND (:targetType IS NULL OR log.targetType = :targetType)
               AND (:actorNameKeyword IS NULL OR LOWER(log.actorName) LIKE LOWER(CONCAT('%', :actorNameKeyword, '%')))
+              AND (:summaryKeyword IS NULL OR LOWER(log.summary) LIKE LOWER(CONCAT('%', :summaryKeyword, '%')))
               AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
               AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
             """)
@@ -39,6 +41,7 @@ public interface DomainAuditLogRepository extends JpaRepository<DomainAuditLog, 
                                                 @Param("action") DomainAuditAction action,
                                                 @Param("targetType") DomainAuditTargetType targetType,
                                                 @Param("actorNameKeyword") String actorNameKeyword,
+                                                @Param("summaryKeyword") String summaryKeyword,
                                                 @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                                 @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
                                                 Pageable pageable);
@@ -50,6 +53,7 @@ public interface DomainAuditLogRepository extends JpaRepository<DomainAuditLog, 
               AND (:action IS NULL OR log.action = :action)
               AND (:targetType IS NULL OR log.targetType = :targetType)
               AND (:actorNameKeyword IS NULL OR LOWER(log.actorName) LIKE LOWER(CONCAT('%', :actorNameKeyword, '%')))
+              AND (:summaryKeyword IS NULL OR LOWER(log.summary) LIKE LOWER(CONCAT('%', :summaryKeyword, '%')))
               AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
               AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
             """)
@@ -57,6 +61,7 @@ public interface DomainAuditLogRepository extends JpaRepository<DomainAuditLog, 
                                                    @Param("action") DomainAuditAction action,
                                                    @Param("targetType") DomainAuditTargetType targetType,
                                                    @Param("actorNameKeyword") String actorNameKeyword,
+                                                   @Param("summaryKeyword") String summaryKeyword,
                                                    @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                                    @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
                                                    Sort sort);
