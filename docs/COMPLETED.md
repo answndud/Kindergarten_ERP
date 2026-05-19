@@ -1353,3 +1353,33 @@
   - reject/cancel/reapply 세부 실패 경계는 추가 테스트 후보지만, 이번 tranche의 직접 변경 surface는 offer 만료 guard였다.
 - 결과:
   - Phase 2에서 분리한 review workflow의 핵심 만료 방어 로직이 통합 테스트로 고정됐다.
+
+<a id="archive-032"></a>
+## `032` Phase 4 production-like 실행 증거 checklist 고정
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 실제 클라우드 배포 비용을 쓰지 않는 상태에서도, 운영 profile과 배포 자산을 반복 검증할 수 있는 증거가 필요했다.
+  - Phase 1에서 prod safety와 compose dry-run을 보강했으므로, 이를 면접/제출 전에 반복 가능한 checklist로 고정하는 것이 다음 단계였다.
+- 변경 내용:
+  - `docs/guides/production-like-checklist.md`를 추가했다.
+  - checklist에 prod safety tests, observability tests, management opt-in test, `bootJar`, local/prod compose config, `git diff --check` 명령과 기대 결과를 정리했다.
+  - README, docs index, evidence map에 production-like checklist를 연결했다.
+  - 실제 운영 전 남는 외부 의존성인 HTTPS 도메인, OAuth redirect URI, RDS/Redis 접속, backup/rollback을 checklist에 분리했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/README.md`
+  - `docs/guides/evidence-map.md`
+  - `docs/guides/production-like-checklist.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `./gradlew bootJar`: 통과
+  - `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config >/tmp/docker-compose.base.yml`: 통과
+  - `PROD_ENV_FILE=.env.prod.example docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config >/tmp/docker-compose.prod.yml`: 통과
+- P0/P1 남은 리스크:
+  - production-like checklist 기준 없음.
+- P2/P3 후속:
+  - 실제 cloud smoke는 비용/계정/도메인 외부 의존성 때문에 후속으로 남긴다.
+- 결과:
+  - 클라우드 미배포 상태에서도 운영 전환 전에 반복 가능한 dry-run 증거를 제시할 수 있게 됐다.

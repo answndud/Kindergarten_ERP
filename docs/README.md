@@ -38,6 +38,8 @@ active 문서와 완료 archive를 분리해, 다음 세션에서도 바로 이�
   - README/면접 답변의 주요 주장별 코드, 테스트, 문서 증거 지도
 - `docs/guides/risk-response.md`
   - 미배포, CDN, 모놀리식, demo/mock 범위 등 약점 질문과 운영 전 보완책
+- `docs/guides/production-like-checklist.md`
+  - 실제 클라우드 배포 없이 반복 가능한 prod safety, bootJar, compose config dry-run checklist
 - `docs/guides/demo-scenario.md`
   - demo 실행, 계정, 5분/10분 시연 순서와 실패 시 복구 절차
 
