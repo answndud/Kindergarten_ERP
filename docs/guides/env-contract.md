@@ -8,6 +8,7 @@
 - `SPRING_PROFILES_ACTIVE`를 명시하지 않으면 애플리케이션은 부팅되지 않습니다.
 - 로컬 인프라용 값과 앱 프로세스용 시크릿은 분리합니다.
 - Swagger/OpenAPI, app-port Prometheus, demo seed는 기본 공개가 아니라 명시적 opt-in입니다.
+- Credentialed CORS allowed origins는 `app.security.cors.allowed-origins` / `CORS_ALLOWED_ORIGINS`로 환경별 명시합니다.
 
 ## 1. local
 
@@ -46,6 +47,8 @@
     - 시드 계정 정보를 로그에 남겨야 할 때만 켭니다.
   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
   - `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`
+  - `CORS_ALLOWED_ORIGINS`
+    - 기본값은 `http://localhost:8080`
 
 ## 2. demo
 
@@ -79,6 +82,7 @@
 - `GOOGLE_CLIENT_SECRET`
 - `KAKAO_CLIENT_ID`
 - `KAKAO_CLIENT_SECRET`
+- `CORS_ALLOWED_ORIGINS`
 
 ### 선택
 
@@ -98,6 +102,7 @@
 - `app.security.management-surface.public-api-docs=false`
 - `app.security.management-surface.expose-prometheus-on-app-port=false`
 - `jwt.cookie-secure=true`
+- `CORS_ALLOWED_ORIGINS`에는 실제 HTTPS 서비스 origin만 둔다.
 
 ## 4. 테스트
 
@@ -113,6 +118,7 @@
 3. Swagger/OpenAPI가 prod에서 비활성화돼 있는가
 4. Prometheus가 app port가 아니라 management plane 또는 내부 경로로만 노출되는가
 5. `app.seed.enabled`가 prod에서 꺼져 있는가
+6. `CORS_ALLOWED_ORIGINS`가 운영 도메인의 HTTPS origin으로 제한돼 있는가
 
 ## 6. 로컬 compose 기본값
 

@@ -874,3 +874,65 @@
 - 결과:
   - 프로젝트는 잘못된 입력 처리, 반복 일정 성능 안전장치, 알림 실패 운영 대응, 코드 탐색성, 면접용 문서 스토리가 함께 강화됐다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-021"></a>
+## `021` 운영 화면, CORS 설정, 입학 workflow 리팩토링, 면접 시연 루트 강화
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 직전 작업에서 Notification Outbox 운영 API는 완성됐지만, 면접 시연에서는 원장이 실패 알림을 화면에서 확인하고 재시도하는 흐름까지 보여주는 편이 설득력이 높았다.
+  - CORS allowed origin이 `SecurityConfig`에 하드코딩되어 실제 운영 도메인 전환 시 코드 변경이 필요했다.
+  - `KidApplicationService`는 입학 상태 전이, 원생 등록, 학부모 활성화, 알림, audit 기록이 한 클래스에 섞여 있어 테스트 locality와 코드 탐색성이 떨어졌다.
+  - 면접용 문서는 개선 스토리는 있었지만 실제 10분 시연 순서와 질문 대응표가 부족했다.
+- 변경 내용:
+  - 원장 전용 `/notification-outbox` 화면을 추가했다.
+    - dead-letter summary/status count
+    - channel별 dead-letter count
+    - dead-letter 목록 page 조회
+    - 개별 retry 버튼
+  - header의 원장 메뉴와 모바일 메뉴에 `알림 Outbox 운영` 링크를 추가했다.
+  - `NotificationOutboxViewController`와 view endpoint 테스트를 추가해 원장 접근/교사 차단/비인증 redirect를 검증했다.
+  - `CorsProperties`를 추가하고 `SecurityConfig`의 allowed origins를 `app.security.cors.allowed-origins`로 분리했다.
+  - `CORS_ALLOWED_ORIGINS`를 `application.yml`, `application-prod.yml`, `docs/guides/env-contract.md`에 반영했다.
+  - `SecurityCorsConfigTest`를 추가해 property override가 `CorsConfigurationSource`에 반영되는지 검증했다.
+  - `KidApplicationAdmissionService`, `KidApplicationNotificationService`, `KidApplicationAuditService`를 추출했다.
+  - `KidApplicationService`는 신청/승인/대기/offer/수락/거절/취소/만료 orchestration에 집중하도록 정리했다.
+  - `docs/guides/interview-guide.md`에 10분 시연 루트와 면접 질문 대응표를 추가하고 README 시연 경로에 `/notification-outbox`를 연결했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/guides/env-contract.md`
+  - `docs/guides/interview-guide.md`
+  - `src/main/java/com/erp/global/security/CorsProperties.java`
+  - `src/main/java/com/erp/global/config/SecurityConfig.java`
+  - `src/main/resources/application.yml`
+  - `src/main/resources/application-prod.yml`
+  - `src/main/java/com/erp/domain/notification/controller/NotificationOutboxViewController.java`
+  - `src/main/resources/templates/notifications/outbox.html`
+  - `src/main/resources/templates/fragments/header.html`
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java`
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationAdmissionService.java`
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationNotificationService.java`
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationAuditService.java`
+  - `src/test/java/com/erp/integration/ViewEndpointTest.java`
+  - `src/test/java/com/erp/global/config/SecurityCorsConfigTest.java`
+- 검증:
+  - `./gradlew test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest"`: 통과
+  - `./gradlew test --tests "com.erp.global.config.SecurityCorsConfigTest"`: 통과
+  - `./gradlew compileJava compileTestJava test --tests "com.erp.api.KidApplicationApiIntegrationTest"`: 통과
+  - `./gradlew compileJava compileTestJava fastTest test --tests "com.erp.integration.ViewEndpointTest" --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest" --tests "com.erp.global.config.SecurityCorsConfigTest" --tests "com.erp.api.KidApplicationApiIntegrationTest"`: 통과
+  - `./gradlew bootJar`: 통과
+  - `./gradlew test`: 통과
+  - `rg -n "notification-outbox|CORS_ALLOWED_ORIGINS|KidApplicationAdmissionService|KidApplicationNotificationService|KidApplicationAuditService|interview-guide" README.md docs src/main/java src/test/java`: 관련 코드/문서 연결 확인
+  - `git diff --check`: 통과
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: view/API/security config/service refactor 변경을 targeted test, full test, packaging으로 검증했고, 신규 운영 화면과 API는 원장 전용 권한 경계를 유지한다.
+- 남은 리스크:
+  - `/notification-outbox` 화면은 dead-letter 운영에 집중한다. 전체 outbox timeline, channel별 상세 drill-down, 검색 필터는 후속 개선이다.
+  - `CORS_ALLOWED_ORIGINS`는 운영 도메인이 생기면 OAuth redirect URI, secure cookie, reverse proxy 설정과 함께 실제 브라우저에서 재검증해야 한다.
+  - `KidApplicationService`는 보조 책임을 분리했지만, 상태 전이 자체를 별도 state machine으로 분리하지는 않았다.
+- 결과:
+  - 직전 추천한 4개 후속 작업을 모두 완료했다.
+  - 운영 실패 대응은 API에서 화면까지 이어졌고, 배포 설정과 입학 workflow 구조, 면접 시연 문서가 함께 정리됐다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.

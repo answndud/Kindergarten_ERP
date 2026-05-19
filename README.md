@@ -182,6 +182,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 - 출결 요청 화면: `http://localhost:8080/attendance-requests`
 - 인증 감사 로그 화면: `http://localhost:8080/audit-logs`
 - 업무 감사 로그 화면: `http://localhost:8080/domain-audit-logs`
+- 알림 Outbox 운영 화면: `http://localhost:8080/notification-outbox`
 - Prometheus scrape: `http://localhost:8080/actuator/prometheus`
 
 ### 5. 테스트 실행

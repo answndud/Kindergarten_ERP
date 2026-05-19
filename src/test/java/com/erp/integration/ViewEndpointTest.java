@@ -130,6 +130,12 @@ class ViewEndpointTest extends TestcontainersSupport {
     }
 
     @Test
+    void testNotificationOutboxPageWithoutAuth() throws Exception {
+        mockMvc.perform(get("/notification-outbox"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
     void testSocialLinkStartRedirectsToOauthAuthorization() throws Exception {
         Kindergarten kindergarten = kindergartenRepository.save(
                 Kindergarten.create("연결 유치원", "서울시", "010-2222-3333", LocalTime.of(9, 0), LocalTime.of(18, 0))
@@ -340,6 +346,49 @@ class ViewEndpointTest extends TestcontainersSupport {
                 .andExpect(content().string(containsString("업무 감사 로그")))
                 .andExpect(content().string(containsString("비즈니스 상태 변경 이력")))
                 .andExpect(content().string(containsString("입학, 출결 요청, 공지 수정/삭제")));
+    }
+
+    @Test
+    void testNotificationOutboxPageForPrincipal() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("알림 운영 유치원", "서울시", "010-9898-1111", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member principal = Member.create(
+                "outbox-view-principal@test.com",
+                "encoded-password",
+                "알림운영원장",
+                "01011114444",
+                MemberRole.PRINCIPAL
+        );
+        principal.assignKindergarten(kindergarten);
+        memberRepository.save(principal);
+
+        mockMvc.perform(get("/notification-outbox").with(user(new CustomUserDetails(principal))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("알림 Outbox 운영")))
+                .andExpect(content().string(containsString("Dead-letter 목록")))
+                .andExpect(content().string(containsString("/api/v1/notification-outbox/summary")));
+    }
+
+    @Test
+    void testNotificationOutboxPageForTeacherForbidden() throws Exception {
+        Kindergarten kindergarten = kindergartenRepository.save(
+                Kindergarten.create("알림 운영 권한 유치원", "서울시", "010-9898-2222", LocalTime.of(9, 0), LocalTime.of(18, 0))
+        );
+
+        Member teacher = Member.create(
+                "outbox-view-teacher@test.com",
+                "encoded-password",
+                "알림운영교사",
+                "01011115555",
+                MemberRole.TEACHER
+        );
+        teacher.assignKindergarten(kindergarten);
+        memberRepository.save(teacher);
+
+        mockMvc.perform(get("/notification-outbox").with(user(new CustomUserDetails(teacher))))
+                .andExpect(status().isForbidden());
     }
 
     @Test

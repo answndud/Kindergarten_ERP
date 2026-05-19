@@ -2,6 +2,7 @@ package com.erp.global.config;
 
 import com.erp.domain.auth.service.AuthSessionRegistryService;
 import com.erp.global.security.ClientIpResolver;
+import com.erp.global.security.CorsProperties;
 import com.erp.global.security.CustomAuthenticationEntryPoint;
 import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.jwt.JwtFilter;
@@ -44,6 +45,7 @@ public class SecurityConfig {
     private final AuthSessionRegistryService authSessionRegistryService;
     private final ClientIpResolver clientIpResolver;
     private final ManagementSurfaceProperties managementSurfaceProperties;
+    private final CorsProperties corsProperties;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
@@ -53,6 +55,7 @@ public class SecurityConfig {
                           AuthSessionRegistryService authSessionRegistryService,
                           ClientIpResolver clientIpResolver,
                           ManagementSurfaceProperties managementSurfaceProperties,
+                          CorsProperties corsProperties,
                           CustomAuthenticationEntryPoint authenticationEntryPoint,
                           CustomOAuth2UserService customOAuth2UserService,
                           OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
@@ -61,6 +64,7 @@ public class SecurityConfig {
         this.authSessionRegistryService = authSessionRegistryService;
         this.clientIpResolver = clientIpResolver;
         this.managementSurfaceProperties = managementSurfaceProperties;
+        this.corsProperties = corsProperties;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
@@ -97,7 +101,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:8080"));
+        config.setAllowedOrigins(corsProperties.resolveAllowedOrigins());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

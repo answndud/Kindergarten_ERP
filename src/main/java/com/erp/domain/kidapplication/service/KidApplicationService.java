@@ -3,14 +3,9 @@ package com.erp.domain.kidapplication.service;
 import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.classroom.service.ClassroomCapacityService;
 import com.erp.domain.domainaudit.entity.DomainAuditAction;
-import com.erp.domain.domainaudit.entity.DomainAuditTargetType;
-import com.erp.domain.domainaudit.service.DomainAuditLogService;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
 import com.erp.domain.kid.entity.Kid;
-import com.erp.domain.kid.entity.ParentKid;
-import com.erp.domain.kid.repository.KidRepository;
-import com.erp.domain.kid.repository.ParentKidRepository;
 import com.erp.domain.kidapplication.config.KidApplicationWorkflowProperties;
 import com.erp.domain.kidapplication.dto.request.AcceptKidApplicationOfferRequest;
 import com.erp.domain.kidapplication.dto.request.ApproveKidApplicationRequest;
@@ -26,8 +21,6 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.repository.MemberRepository;
-import com.erp.domain.notification.entity.NotificationType;
-import com.erp.domain.notification.service.NotificationService;
 import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
@@ -38,7 +31,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -46,9 +38,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class KidApplicationService {
-
-    private static final String REVIEW_QUEUE_URL = "/applications/pending";
-    private static final String PARENT_APPLICATIONS_URL = "/applications/pending";
 
     private static final List<ApplicationStatus> ACTIVE_APPLICATION_STATUSES = List.of(
             ApplicationStatus.PENDING,
@@ -65,14 +54,13 @@ public class KidApplicationService {
     private final KidApplicationRepository applicationRepository;
     private final MemberRepository memberRepository;
     private final KindergartenRepository kindergartenRepository;
-    private final KidRepository kidRepository;
-    private final ParentKidRepository parentKidRepository;
-    private final NotificationService notificationService;
     private final DashboardService dashboardService;
     private final ClassroomCapacityService classroomCapacityService;
     private final KidApplicationWorkflowProperties workflowProperties;
-    private final DomainAuditLogService domainAuditLogService;
     private final AccessPolicyService accessPolicyService;
+    private final KidApplicationAdmissionService admissionService;
+    private final KidApplicationNotificationService notificationService;
+    private final KidApplicationAuditService auditService;
 
     @Transactional
     public Long apply(KidApplicationRequest request, Long parentId) {
@@ -131,7 +119,7 @@ public class KidApplicationService {
             parent.markPending();
         }
 
-        notifyStaffAboutApplication(kindergarten, parent, request.kidName());
+        notificationService.notifyStaffAboutApplication(kindergarten, parent, request.kidName());
         return saved.getId();
     }
 
@@ -146,12 +134,12 @@ public class KidApplicationService {
         Classroom classroom = resolveManagedClassroom(request.classroomId(), application.getKindergarten().getId());
         classroomCapacityService.validateSeatAvailable(classroom);
 
-        Kid savedKid = enrollKid(application, classroom, request.relationshipOrDefault());
+        Kid savedKid = admissionService.enrollKid(application, classroom, request.relationshipOrDefault());
         application.approveDirect(classroom, processor, savedKid.getId());
 
-        activateParent(application.getParent(), application.getKindergarten());
-        notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
-        recordApplicationAudit(
+        admissionService.activateParent(application.getParent(), application.getKindergarten());
+        notificationService.notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
+        auditService.record(
                 processor,
                 DomainAuditAction.KID_APPLICATION_APPROVED,
                 processor.getName() + "이(가) " + application.getKidName() + "의 입학을 승인했습니다.",
@@ -171,8 +159,8 @@ public class KidApplicationService {
         Classroom classroom = resolveManagedClassroom(request.classroomId(), application.getKindergarten().getId());
 
         application.placeOnWaitlist(classroom, processor, request.decisionNote());
-        notifyParentAboutWaitlist(application.getParent(), application.getKidName(), classroom);
-        recordApplicationAudit(
+        notificationService.notifyParentAboutWaitlist(application.getParent(), application.getKidName(), classroom);
+        auditService.record(
                 processor,
                 DomainAuditAction.KID_APPLICATION_WAITLISTED,
                 processor.getName() + "이(가) " + application.getKidName() + "을(를) 대기열에 등록했습니다.",
@@ -191,8 +179,8 @@ public class KidApplicationService {
 
         LocalDateTime offerExpiresAt = LocalDateTime.now().plus(workflowProperties.getOfferValidity());
         application.offerSeat(classroom, processor, offerExpiresAt, request.decisionNote());
-        notifyParentAboutOffer(application.getParent(), application.getKidName(), classroom, offerExpiresAt);
-        recordApplicationAudit(
+        notificationService.notifyParentAboutOffer(application.getParent(), application.getKidName(), classroom, offerExpiresAt);
+        auditService.record(
                 processor,
                 DomainAuditAction.KID_APPLICATION_OFFERED,
                 processor.getName() + "이(가) " + application.getKidName() + "에게 입학 제안을 발송했습니다.",
@@ -216,18 +204,18 @@ public class KidApplicationService {
         }
         if (application.getOfferExpiresAt() != null && !application.getOfferExpiresAt().isAfter(LocalDateTime.now())) {
             application.markOfferExpired();
-            notifyParentAboutOfferExpired(application.getParent(), application.getKidName());
+            notificationService.notifyParentAboutOfferExpired(application.getParent(), application.getKidName());
             throw new BusinessException(ErrorCode.APPLICATION_OFFER_EXPIRED);
         }
 
         Classroom classroom = classroomCapacityService.lockClassroom(application.getAssignedClassroom().getId());
-        Kid savedKid = enrollKid(application, classroom, request.relationshipOrDefault());
+        Kid savedKid = admissionService.enrollKid(application, classroom, request.relationshipOrDefault());
         application.acceptOffer(savedKid.getId());
 
-        activateParent(application.getParent(), application.getKindergarten());
-        notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
-        notifyStaffAboutOfferAccepted(classroom.getKindergarten(), application.getParent(), application.getKidName());
-        recordApplicationAudit(
+        admissionService.activateParent(application.getParent(), application.getKindergarten());
+        notificationService.notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
+        notificationService.notifyStaffAboutOfferAccepted(classroom.getKindergarten(), application.getParent(), application.getKidName());
+        auditService.record(
                 application.getParent(),
                 DomainAuditAction.KID_APPLICATION_OFFER_ACCEPTED,
                 application.getParent().getName() + " 학부모가 " + application.getKidName() + "의 입학 제안을 수락했습니다.",
@@ -246,8 +234,8 @@ public class KidApplicationService {
         Member processor = getProcessor(processorId, application.getKindergarten().getId());
 
         application.reject(request.reason(), processor);
-        notifyParentAboutRejection(application.getParent(), application.getKidName(), application.getKindergarten(), request.reason());
-        recordApplicationAudit(
+        notificationService.notifyParentAboutRejection(application.getParent(), application.getKidName(), application.getKindergarten(), request.reason());
+        auditService.record(
                 processor,
                 DomainAuditAction.KID_APPLICATION_REJECTED,
                 processor.getName() + "이(가) " + application.getKidName() + "의 입학을 거절했습니다.",
@@ -268,8 +256,8 @@ public class KidApplicationService {
 
         Kindergarten kindergarten = application.getKindergarten();
         if (kindergarten != null) {
-            notifyStaffAboutCancellation(kindergarten, application.getParent(), application.getKidName());
-            recordApplicationAudit(
+            notificationService.notifyStaffAboutCancellation(kindergarten, application.getParent(), application.getKidName());
+            auditService.record(
                     application.getParent(),
                     DomainAuditAction.KID_APPLICATION_CANCELLED,
                     application.getParent().getName() + " 학부모가 " + application.getKidName() + "의 입학 신청을 취소했습니다.",
@@ -330,15 +318,8 @@ public class KidApplicationService {
                 continue;
             }
             application.markOfferExpired();
-            notifyParentAboutOfferExpired(application.getParent(), application.getKidName());
-            domainAuditLogService.recordSystem(
-                    application.getKindergarten().getId(),
-                    DomainAuditAction.KID_APPLICATION_OFFER_EXPIRED,
-                    DomainAuditTargetType.KID_APPLICATION,
-                    application.getId(),
-                    application.getKidName() + "의 입학 제안이 만료되었습니다.",
-                    java.util.Map.of("offerExpiresAt", now.toString())
-            );
+            notificationService.notifyParentAboutOfferExpired(application.getParent(), application.getKidName());
+            auditService.recordSystemOfferExpired(application, now.toString());
         }
     }
 
@@ -384,28 +365,6 @@ public class KidApplicationService {
         return classroom;
     }
 
-    private Kid enrollKid(KidApplication application, Classroom classroom, com.erp.domain.kid.entity.Relationship relationship) {
-        Kid kid = Kid.create(
-                classroom,
-                application.getKidName(),
-                application.getBirthDate(),
-                application.getGender(),
-                LocalDate.now()
-        );
-        Kid savedKid = kidRepository.save(kid);
-
-        ParentKid parentKid = ParentKid.create(savedKid, application.getParent(), relationship);
-        parentKidRepository.save(parentKid);
-        return savedKid;
-    }
-
-    private void activateParent(Member parent, Kindergarten kindergarten) {
-        if (parent.getKindergarten() == null) {
-            parent.assignKindergarten(kindergarten);
-        }
-        parent.activateMember();
-    }
-
     private void validateParentKindergartenScope(Member parent, Long requestedKindergartenId) {
         if (parent.getKindergarten() == null) {
             return;
@@ -415,137 +374,4 @@ public class KidApplicationService {
         }
     }
 
-    private void recordApplicationAudit(Member actor,
-                                        DomainAuditAction action,
-                                        String summary,
-                                        java.util.Map<String, Object> metadata,
-                                        KidApplication application) {
-        domainAuditLogService.record(
-                actor,
-                application.getKindergarten().getId(),
-                action,
-                DomainAuditTargetType.KID_APPLICATION,
-                application.getId(),
-                summary,
-                metadata
-        );
-    }
-
-    private void notifyStaffAboutApplication(Kindergarten kindergarten, Member parent, String kidName) {
-        String content = parent.getName() + " 학부모님이 자녀(" + kidName + ")의 입학을 신청했습니다.";
-
-        memberRepository.findByKindergartenIdAndRole(kindergarten.getId(), MemberRole.PRINCIPAL)
-                .ifPresent(principal -> notificationService.notifyWithLink(
-                        principal.getId(),
-                        NotificationType.KID_APPLICATION_SUBMITTED,
-                        "새로운 입학 신청",
-                        content,
-                        REVIEW_QUEUE_URL
-                ));
-
-        memberRepository.findAllByKindergartenIdAndRole(kindergarten.getId(), MemberRole.TEACHER)
-                .forEach(teacher -> notificationService.notifyWithLink(
-                        teacher.getId(),
-                        NotificationType.KID_APPLICATION_SUBMITTED,
-                        "새로운 입학 신청",
-                        content,
-                        REVIEW_QUEUE_URL
-                ));
-    }
-
-    private void notifyStaffAboutCancellation(Kindergarten kindergarten, Member parent, String kidName) {
-        String content = parent.getName() + " 학부모님이 자녀(" + kidName + ")의 입학 신청을 취소했습니다.";
-
-        memberRepository.findByKindergartenIdAndRole(kindergarten.getId(), MemberRole.PRINCIPAL)
-                .ifPresent(principal -> notificationService.notify(
-                        principal.getId(),
-                        NotificationType.KID_APPLICATION_CANCELLED,
-                        "입학 신청 취소",
-                        content
-                ));
-
-        memberRepository.findAllByKindergartenIdAndRole(kindergarten.getId(), MemberRole.TEACHER)
-                .forEach(teacher -> notificationService.notify(
-                        teacher.getId(),
-                        NotificationType.KID_APPLICATION_CANCELLED,
-                        "입학 신청 취소",
-                        content
-                ));
-    }
-
-    private void notifyStaffAboutOfferAccepted(Kindergarten kindergarten, Member parent, String kidName) {
-        String content = parent.getName() + " 학부모님이 " + kidName + "의 입학 제안을 수락했습니다.";
-        memberRepository.findByKindergartenIdAndRole(kindergarten.getId(), MemberRole.PRINCIPAL)
-                .ifPresent(principal -> notificationService.notifyWithLink(
-                        principal.getId(),
-                        NotificationType.KID_APPLICATION_OFFER_ACCEPTED,
-                        "입학 제안 수락",
-                        content,
-                        REVIEW_QUEUE_URL
-                ));
-        memberRepository.findAllByKindergartenIdAndRole(kindergarten.getId(), MemberRole.TEACHER)
-                .forEach(teacher -> notificationService.notifyWithLink(
-                        teacher.getId(),
-                        NotificationType.KID_APPLICATION_OFFER_ACCEPTED,
-                        "입학 제안 수락",
-                        content,
-                        REVIEW_QUEUE_URL
-                ));
-    }
-
-    private void notifyParentAboutApproval(Member parent, String kidName, Kindergarten kindergarten) {
-        notificationService.notifyWithLink(
-                parent.getId(),
-                NotificationType.KID_APPLICATION_APPROVED,
-                "입학 승인",
-                kidName + "의 " + kindergarten.getName() + " 입학이 승인되었습니다.",
-                PARENT_APPLICATIONS_URL
-        );
-    }
-
-    private void notifyParentAboutRejection(Member parent, String kidName, Kindergarten kindergarten, String reason) {
-        String content = kidName + "의 " + kindergarten.getName() + " 입학이 거절되었습니다.";
-        if (reason != null && !reason.isEmpty()) {
-            content += "\n사유: " + reason;
-        }
-        notificationService.notifyWithLink(
-                parent.getId(),
-                NotificationType.KID_APPLICATION_REJECTED,
-                "입학 거절",
-                content,
-                PARENT_APPLICATIONS_URL
-        );
-    }
-
-    private void notifyParentAboutWaitlist(Member parent, String kidName, Classroom classroom) {
-        notificationService.notifyWithLink(
-                parent.getId(),
-                NotificationType.KID_APPLICATION_WAITLISTED,
-                "입학 대기열 등록",
-                kidName + "이(가) " + classroom.getName() + " 대기열에 등록되었습니다.",
-                PARENT_APPLICATIONS_URL
-        );
-    }
-
-    private void notifyParentAboutOffer(Member parent, String kidName, Classroom classroom, LocalDateTime offerExpiresAt) {
-        String content = kidName + "에게 " + classroom.getName() + " 입학 제안이 도착했습니다. "
-                + "만료 시각: " + offerExpiresAt;
-        notificationService.notifyWithLink(
-                parent.getId(),
-                NotificationType.KID_APPLICATION_OFFERED,
-                "입학 제안 도착",
-                content,
-                PARENT_APPLICATIONS_URL
-        );
-    }
-
-    private void notifyParentAboutOfferExpired(Member parent, String kidName) {
-        notificationService.notifyWithLink(
-                parent.getId(),
-                NotificationType.KID_APPLICATION_OFFER_EXPIRED,
-                "입학 제안 만료",
-                kidName + "의 입학 제안이 만료되었습니다.",
-                PARENT_APPLICATIONS_URL
-        );
-    }
 }
