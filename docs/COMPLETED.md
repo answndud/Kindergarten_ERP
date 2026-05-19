@@ -1383,3 +1383,40 @@
   - 실제 cloud smoke는 비용/계정/도메인 외부 의존성 때문에 후속으로 남긴다.
 - 결과:
   - 클라우드 미배포 상태에서도 운영 전환 전에 반복 가능한 dry-run 증거를 제시할 수 있게 됐다.
+
+<a id="archive-033"></a>
+## `033` Phase 5 기능 완성도 확장: Outbox dead-letter 채널 필터
+
+- 완료일: `2026-05-19`
+- 배경:
+  - Phase 5의 목표는 새 기능을 무작정 늘리는 것이 아니라, 이미 포트폴리오 스토리에서 중요한 운영 기능 1개를 실제 운영 도구처럼 더 쓰기 좋게 닫는 것이다.
+  - 기존 outbox 운영 화면은 summary/list/retry를 제공했지만, dead-letter 목록을 채널별로 좁혀 볼 수 없어 실패가 집중된 외부 채널을 빠르게 확인하기 어려웠다.
+- 변경 내용:
+  - `/api/v1/notification-outbox/dead-letters?channel=EMAIL` 형태의 optional channel 필터를 추가했다.
+  - `NotificationOutboxRepository`에 status+channel dead-letter paging query를 추가했다.
+  - `/notification-outbox` 화면에 채널 선택 필터를 추가하고, page size/refresh/pagination과 같은 목록 조회 흐름에 연결했다.
+  - README, evidence map, interview guide의 outbox 운영 설명을 채널 필터 기준으로 갱신했다.
+- 코드/문서:
+  - `src/main/java/com/erp/domain/notification/controller/NotificationOutboxOpsController.java`
+  - `src/main/java/com/erp/domain/notification/service/NotificationOutboxOpsService.java`
+  - `src/main/java/com/erp/domain/notification/repository/NotificationOutboxRepository.java`
+  - `src/main/resources/templates/notifications/outbox.html`
+  - `src/test/java/com/erp/api/NotificationOutboxOpsApiIntegrationTest.java`
+  - `README.md`
+  - `docs/guides/evidence-map.md`
+  - `docs/guides/interview-guide.md`
+  - `docs/PROGRESS.md`
+- 검증:
+  - `./gradlew test --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest"`: 통과
+  - `./gradlew compileJava compileTestJava`: 통과
+- Spring Boot Doctor 판정:
+  - 변경 surface: `api`, `persistence`, `domain`, `security`, `view`, `docs`
+  - P0/P1 신규 이슈 없음
+  - 점수: `100/100`
+- P0/P1 남은 리스크:
+  - outbox dead-letter 채널 필터 기준 없음.
+- P2/P3 후속:
+  - 전체 outbox timeline, free-text search, provider별 drill-down, webhook signature 검증은 실제 운영 확장 후보로 남긴다.
+- 결과:
+  - 운영자는 dead-letter 전체 목록뿐 아니라 실패 채널별 목록을 바로 좁혀 보고, 필요한 건만 재시도할 수 있게 됐다.
+  - 기존 API와 DB schema는 깨지지 않았고 optional query parameter만 추가했다.

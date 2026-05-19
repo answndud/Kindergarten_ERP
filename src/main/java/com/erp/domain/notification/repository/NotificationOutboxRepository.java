@@ -69,4 +69,10 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
             NotificationDeliveryStatus status,
             Pageable pageable
     );
+
+    Page<NotificationOutbox> findByStatusAndChannelOrderByDeadLetteredAtDescIdDesc(
+            NotificationDeliveryStatus status,
+            NotificationChannel channel,
+            Pageable pageable
+    );
 }

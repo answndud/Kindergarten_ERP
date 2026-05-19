@@ -56,6 +56,23 @@ class NotificationOutboxOpsApiIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("원장은 dead-letter 목록을 채널별로 필터링할 수 있다")
+    void principalCanFilterDeadLettersByChannel() throws Exception {
+        createDeadLetterOutbox(NotificationChannel.APP);
+        Long emailOutboxId = createDeadLetterOutbox(NotificationChannel.EMAIL);
+
+        mockMvc.perform(get("/api/v1/notification-outbox/dead-letters")
+                        .param("channel", "EMAIL")
+                        .with(authenticated(principalMember)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].id").value(emailOutboxId))
+                .andExpect(jsonPath("$.data.content[0].channel").value("EMAIL"));
+    }
+
+    @Test
     @DisplayName("교사는 outbox 운영 API에 접근할 수 없다")
     void teacherCannotAccessOutboxOps() throws Exception {
         mockMvc.perform(get("/api/v1/notification-outbox/summary")
@@ -87,6 +104,10 @@ class NotificationOutboxOpsApiIntegrationTest extends BaseIntegrationTest {
     }
 
     private Long createDeadLetterOutbox() {
+        return createDeadLetterOutbox(NotificationChannel.APP);
+    }
+
+    private Long createDeadLetterOutbox(NotificationChannel channel) {
         Member receiver = memberRepository.findById(parentMember.getId()).orElseThrow();
         Notification notification = notificationRepository.save(Notification.createWithLink(
                 receiver,
@@ -95,7 +116,7 @@ class NotificationOutboxOpsApiIntegrationTest extends BaseIntegrationTest {
                 "outbox 운영 API 테스트",
                 "/notifications"
         ));
-        NotificationOutbox outbox = NotificationOutbox.create(notification, NotificationChannel.APP, 1);
+        NotificationOutbox outbox = NotificationOutbox.create(notification, channel, 1);
         LocalDateTime now = LocalDateTime.now();
         outbox.markProcessing(now.minusMinutes(1));
         outbox.markDeadLetter(now, "webhook timeout");

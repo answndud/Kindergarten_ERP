@@ -261,7 +261,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | Attendance | `/api/v1/attendance`, `/api/v1/attendance-requests/*` | 출석 처리, 승인 워크플로우 |
 | Application | `/api/v1/kid-applications/*`, `/api/v1/kindergarten-applications/*` | 입학/교사 지원 워크플로우 |
 | Audit | `/api/v1/auth/audit-logs/export`, `/api/v1/domain-audit-logs` | 운영 감사/CSV export |
-| Notification Ops | `/api/v1/notification-outbox/summary`, `/api/v1/notification-outbox/dead-letters`, `/api/v1/notification-outbox/{id}/retry` | dead-letter 관측/재시도 |
+| Notification Ops | `/api/v1/notification-outbox/summary`, `/api/v1/notification-outbox/dead-letters?channel=EMAIL`, `/api/v1/notification-outbox/{id}/retry` | dead-letter 관측/채널 필터/재시도 |
 | Dashboard | `/api/v1/dashboard/statistics` | 캐시 기반 통계 조회 |
 
 ## 테스트 & CI

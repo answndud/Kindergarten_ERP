@@ -8,7 +8,7 @@
 
 ## Active Progress
 
-- 상태: Phase 4 production-like 실행 증거 확보 완료. 다음 실행 후보는 Phase 5 기능 완성도 확장.
+- 상태: Phase 5 기능 완성도 확장 완료. 다음 실행 후보는 Phase 6 최종 정리와 제출 패키지 고정.
 - Blocker: 없음.
-- 최근 검증: Phase 3 tranche를 commit/push했다. `docs/guides/production-like-checklist.md`를 추가해 prod safety, observability, bootJar, local/prod compose config dry-run 명령과 기대 결과를 고정했다.
-- 다음 액션: Phase 4 변경분을 commit/push한 뒤 Phase 5 후보 중 outbox 운영 기능 확장을 1개 수직 slice로 선정한다.
+- 최근 검증: `/api/v1/notification-outbox/dead-letters?channel=EMAIL` 계약, repository query, 화면 채널 필터, 통합 테스트를 보강했다. `./gradlew test --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest"`와 `./gradlew compileJava compileTestJava`가 통과했다.
+- 다음 액션: Phase 5 변경분을 commit/push한 뒤 Phase 6에서 README/evidence/risk/interview guide의 과장 또는 stale 표현을 최종 정리한다.

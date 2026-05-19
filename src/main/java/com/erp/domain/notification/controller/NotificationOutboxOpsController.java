@@ -3,6 +3,7 @@ package com.erp.domain.notification.controller;
 import com.erp.domain.notification.dto.response.NotificationOutboxItemResponse;
 import com.erp.domain.notification.dto.response.NotificationOutboxSummaryResponse;
 import com.erp.domain.notification.service.NotificationOutboxOpsService;
+import com.erp.domain.notification.service.channel.NotificationChannel;
 import com.erp.global.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -57,7 +58,7 @@ public class NotificationOutboxOpsController {
     @PreAuthorize("hasRole('PRINCIPAL')")
     @Operation(
             summary = "Dead-letter 목록 조회",
-            description = "최근 dead-letter 처리된 outbox를 page 단위로 조회합니다.",
+            description = "최근 dead-letter 처리된 outbox를 page 단위로 조회합니다. channel 파라미터로 특정 채널만 필터링할 수 있습니다.",
             responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
                     description = "Dead-letter page 응답",
@@ -89,9 +90,10 @@ public class NotificationOutboxOpsController {
     )
     public ResponseEntity<ApiResponse<Page<NotificationOutboxItemResponse>>> getDeadLetters(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) NotificationChannel channel
     ) {
-        return ResponseEntity.ok(ApiResponse.success(notificationOutboxOpsService.getDeadLetters(page, size)));
+        return ResponseEntity.ok(ApiResponse.success(notificationOutboxOpsService.getDeadLetters(page, size, channel)));
     }
 
     @PostMapping("/{outboxId}/retry")
