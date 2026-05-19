@@ -46,6 +46,7 @@
 - [docs/COMPLETED.md](./docs/COMPLETED.md): 배치별 구현, 검증, 후속 리스크를 archive 형태로 추적할 수 있습니다.
 - [docs/guides/evidence-map.md](./docs/guides/evidence-map.md): README의 주요 주장별 코드/테스트/문서 증거를 연결했습니다.
 - [docs/guides/risk-response.md](./docs/guides/risk-response.md): 미배포, 모놀리식, Tailwind CDN, demo/mock 범위 같은 약점 질문 대응을 정리했습니다.
+- [docs/guides/production-like-checklist.md](./docs/guides/production-like-checklist.md): cloud 미배포 상태에서 반복 가능한 prod safety/bootJar/compose dry-run 증거를 정리했습니다.
 - [docs/guides/interview-guide.md](./docs/guides/interview-guide.md): 면접관 관점에서 볼 핵심 개선 스토리와 질문 대응 포인트를 정리했습니다.
 - [docs/guides/demo-scenario.md](./docs/guides/demo-scenario.md): demo 계정, 클릭 순서, 실패 시 복구 절차를 정리했습니다.
 
@@ -65,6 +66,7 @@
 | Demo smoke | `/dashboard`, `/applications/pending`, `/notification-outbox`, `/swagger-ui.html` 확인 |
 | Release check | `./gradlew bootJar` 통과 |
 | Prod safety | seed, Swagger/OpenAPI, app-port Prometheus, insecure cookie, wildcard/non-HTTPS CORS 차단 테스트 보유 |
+| Production-like dry-run | bootJar, local/prod compose config, prod safety checklist 문서화 |
 | 배포 | 클라우드 미배포. `deploy/*`, Dockerfile, 배포 가이드만 준비 |
 
 ## 핵심 문제와 해결
