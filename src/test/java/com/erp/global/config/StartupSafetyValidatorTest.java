@@ -1,7 +1,9 @@
 package com.erp.global.config;
 
+import com.erp.global.security.CorsProperties;
 import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.jwt.JwtProperties;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
@@ -44,6 +46,38 @@ class StartupSafetyValidatorTest {
     }
 
     @Test
+    @DisplayName("prod에서는 app port Prometheus 노출을 허용하지 않는다")
+    void validate_Fails_WhenProdExposesPrometheusOnAppPort() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                true,
+                false,
+                true,
+                false,
+                false
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
+    @DisplayName("prod에서는 Springdoc API 문서를 활성화할 수 없다")
+    void validate_Fails_WhenProdEnablesSpringdocApiDocs() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                true,
+                false,
+                false,
+                true,
+                false
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
     @DisplayName("prod에서는 seed를 켤 수 없다")
     void validate_Fails_WhenProdEnablesSeed() {
         StartupSafetyValidator validator = newValidator(
@@ -57,6 +91,89 @@ class StartupSafetyValidatorTest {
         );
 
         assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
+    @DisplayName("prod에서는 legacy fallback JWT secret을 허용하지 않는다")
+    void validate_Fails_WhenProdUsesLegacyJwtFallbackSecret() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "your-256-bit-secret-key-here-must-be-at-least-32-characters",
+                true,
+                false,
+                false,
+                false,
+                false
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
+    @DisplayName("prod에서는 insecure cookie를 허용하지 않는다")
+    void validate_Fails_WhenProdDisablesSecureCookie() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                false,
+                false,
+                false,
+                false,
+                false
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
+    @DisplayName("prod에서는 wildcard CORS origin을 허용하지 않는다")
+    void validate_Fails_WhenProdUsesWildcardCorsOrigin() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                true,
+                false,
+                false,
+                false,
+                false,
+                List.of("*")
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
+    @DisplayName("prod에서는 HTTPS가 아닌 CORS origin을 허용하지 않는다")
+    void validate_Fails_WhenProdUsesNonHttpsCorsOrigin() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                true,
+                false,
+                false,
+                false,
+                false,
+                List.of("http://erp.example.com")
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
+    @Test
+    @DisplayName("prod에서는 안전 설정 조합을 허용한다")
+    void validate_Passes_ForSafeProdProfile() {
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                true,
+                false,
+                false,
+                false,
+                false,
+                List.of("https://erp.example.com")
+        );
+
+        assertDoesNotThrow(validator::validate);
     }
 
     @Test
@@ -82,6 +199,18 @@ class StartupSafetyValidatorTest {
                                                 boolean exposePrometheusOnAppPort,
                                                 boolean apiDocsEnabled,
                                                 boolean seedEnabled) {
+        return newValidator(activeProfiles, jwtSecret, cookieSecure, publicApiDocs, exposePrometheusOnAppPort,
+                apiDocsEnabled, seedEnabled, List.of("https://erp.example.com"));
+    }
+
+    private StartupSafetyValidator newValidator(String[] activeProfiles,
+                                                String jwtSecret,
+                                                boolean cookieSecure,
+                                                boolean publicApiDocs,
+                                                boolean exposePrometheusOnAppPort,
+                                                boolean apiDocsEnabled,
+                                                boolean seedEnabled,
+                                                List<String> allowedOrigins) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(activeProfiles);
         environment.setProperty("springdoc.api-docs.enabled", Boolean.toString(apiDocsEnabled));
@@ -95,9 +224,13 @@ class StartupSafetyValidatorTest {
         managementSurfaceProperties.setPublicApiDocs(publicApiDocs);
         managementSurfaceProperties.setExposePrometheusOnAppPort(exposePrometheusOnAppPort);
 
+        CorsProperties corsProperties = new CorsProperties();
+        corsProperties.setAllowedOrigins(allowedOrigins);
+
         SeedProperties seedProperties = new SeedProperties();
         seedProperties.setEnabled(seedEnabled);
 
-        return new StartupSafetyValidator(environment, jwtProperties, managementSurfaceProperties, seedProperties);
+        return new StartupSafetyValidator(environment, jwtProperties, managementSurfaceProperties,
+                corsProperties, seedProperties);
     }
 }

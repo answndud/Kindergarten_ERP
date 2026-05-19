@@ -1228,3 +1228,60 @@
   - 면접관이 강한 주장을 의심할 때 바로 코드/테스트/문서 증거로 이동할 수 있게 됐다.
   - 약점 질문은 숨기지 않고 현재 판단, 이유, 운영 전 보완책으로 답할 수 있는 상태가 됐다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-029"></a>
+## `029` Phase 1 운영 전환 리스크 감소: prod safety와 dry-run 보강
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 장기 hardening roadmap의 첫 단계로, 실제 클라우드 배포 전환 시 seed, Swagger/OpenAPI, app-port Prometheus, secure cookie, JWT secret, CORS 설정이 잘못 열리는 P0/P1 리스크를 먼저 줄여야 했다.
+  - 기존 validator는 seed, Swagger/OpenAPI, app-port Prometheus, JWT fallback, secure cookie를 막았지만, credentialed CORS에서 wildcard 또는 non-HTTPS origin을 prod에서 차단하는 명시 검증은 부족했다.
+  - prod compose는 실제 서버용 `.env.prod`에 고정되어 있어 `.env.prod.example`만으로 config dry-run을 반복하기 어려웠다.
+- 변경 내용:
+  - `StartupSafetyValidator`에 prod CORS 안전 검증을 추가했다.
+    - `*` wildcard origin 차단
+    - `https://`가 아닌 origin 차단
+  - `StartupSafetyValidatorTest`를 prod 위험 조합 중심으로 확장했다.
+    - app-port Prometheus 노출 차단
+    - Springdoc API docs 활성화 차단
+    - seed 활성화 차단
+    - legacy JWT fallback secret 차단
+    - insecure cookie 차단
+    - wildcard/non-HTTPS CORS origin 차단
+    - 안전한 prod 조합 허용
+  - `deploy/docker-compose.prod.yml`의 `env_file`을 `${PROD_ENV_FILE:-.env.prod}`로 바꿔 운영 기본값은 유지하면서 dry-run에서 `.env.prod.example`을 주입할 수 있게 했다.
+  - `deploy/.env.prod.example`에 `CORS_ALLOWED_ORIGINS=https://erp.example.com`을 추가했다.
+  - deployment guide에 `Production Safety Dry-Run` 섹션을 추가하고, prod/local compose config 검증 명령과 기대 결과를 정리했다.
+  - env contract, risk response, evidence map, README의 prod safety 설명을 CORS 차단 근거까지 확장했다.
+- 코드/문서:
+  - `src/main/java/com/erp/global/config/StartupSafetyValidator.java`
+  - `src/test/java/com/erp/global/config/StartupSafetyValidatorTest.java`
+  - `deploy/.env.prod.example`
+  - `deploy/docker-compose.prod.yml`
+  - `README.md`
+  - `docs/guides/deployment-guide.md`
+  - `docs/guides/env-contract.md`
+  - `docs/guides/evidence-map.md`
+  - `docs/guides/risk-response.md`
+  - `docs/PROGRESS.md`
+- 검증:
+  - `./gradlew test --tests "com.erp.global.config.StartupSafetyValidatorTest"`: 통과
+  - `./gradlew test --tests "com.erp.integration.ObservabilityIntegrationTest"`: 통과
+  - `./gradlew test --tests "com.erp.integration.ManagementSurfaceOptInIntegrationTest"`: 통과
+  - `./gradlew bootJar`: 통과
+  - `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config >/tmp/docker-compose.base.yml`: 통과
+  - `PROD_ENV_FILE=.env.prod.example docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config >/tmp/docker-compose.prod.yml`: 통과
+  - `git diff --check`: 통과
+  - `rg -n "wildcard|non-HTTPS|CORS_ALLOWED_ORIGINS|Production Safety Dry-Run|PROD_ENV_FILE|StartupSafetyValidatorTest|Prod safety" README.md deploy docs src/main/java src/test/java`: 관련 연결 확인
+- Spring Boot Doctor 판정:
+  - 변경 surface: `config-ops`, `security`, `docs`
+  - P0/P1 신규 이슈 없음
+  - 점수: `100/100`
+- P0/P1 남은 리스크:
+  - 없음.
+- P2/P3 후속:
+  - 실제 클라우드 계정, 운영 도메인, OAuth redirect URI, RDS/Redis 접속, backup/rollback은 외부 의존성이므로 Phase 4 production-like 실행 증거와 실제 배포 시점에서 다시 확인한다.
+- 결과:
+  - Phase 1의 prod safety gate는 seed, Swagger/OpenAPI, app-port Prometheus, JWT fallback, insecure cookie, wildcard/non-HTTPS CORS까지 닫혔다.
+  - 실제 서버용 `.env.prod` 기본 흐름은 유지하면서, `.env.prod.example` 기반 compose dry-run이 가능해졌다.
+  - 다음 실행 후보는 Phase 2 큰 서비스/워크플로우 구조 정리다.

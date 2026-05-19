@@ -19,6 +19,7 @@
 - `SPRING_PROFILES_ACTIVE`를 명시하지 않으면 부팅을 허용하지 않습니다.
 - Swagger/OpenAPI는 `prod`에서 닫혀 있어야 합니다.
 - JWT 쿠키는 `prod`에서 `secure=true` 입니다.
+- `CORS_ALLOWED_ORIGINS`는 실제 HTTPS 운영 origin만 허용합니다.
 - Redis는 인증의 critical dependency 입니다.
 
 관련 SSOT:
@@ -894,6 +895,29 @@ APP_IMAGE=ghcr.io/alex/kindergarten-erp:9f6ab2c
 
 ---
 
+## 23.1 Production Safety Dry-Run
+
+실제 클라우드 배포 전에도 아래 항목은 로컬/CI에서 반복 확인할 수 있습니다.
+
+```bash
+./gradlew test --tests "com.erp.global.config.StartupSafetyValidatorTest"
+./gradlew test --tests "com.erp.integration.ObservabilityIntegrationTest"
+./gradlew bootJar
+docker compose --env-file docker/.env.example -f docker/docker-compose.yml config >/tmp/docker-compose.base.yml
+PROD_ENV_FILE=.env.prod.example docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config >/tmp/docker-compose.prod.yml
+```
+
+기대 결과:
+
+- `prod`에서 legacy JWT fallback secret, insecure cookie, seed, Swagger/OpenAPI, app-port Prometheus, wildcard/non-HTTPS CORS origin이 부팅 검증에서 차단됩니다.
+- 기본 app port에서는 `/actuator/prometheus`, `/swagger-ui/index.html`, `/v3/api-docs`가 노출되지 않습니다.
+- `deploy/.env.prod.example`는 `SPRING_PROFILES_ACTIVE=prod`, 실제 HTTPS `CORS_ALLOWED_ORIGINS`, management port, Redis password, OAuth secret 자리를 모두 드러냅니다.
+- compose config는 포트를 `127.0.0.1`에 바인딩해 Caddy가 public entrypoint가 되도록 유지합니다.
+
+이 dry-run은 실제 클라우드 배포를 대체하지 않습니다. 실제 운영 전에는 도메인, HTTPS, OAuth redirect URI, RDS/Redis 접속, backup/rollback을 서버에서 다시 확인해야 합니다.
+
+---
+
 ## 24. 규모가 커지면 무엇을 바꿔야 하나
 
 지금은 아래까지만 해도 충분합니다.
@@ -1032,7 +1056,7 @@ services:
     container_name: kindergarten-erp-app
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ${PROD_ENV_FILE:-.env.prod}
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:9091:9091"
@@ -1047,7 +1071,7 @@ services:
     restart: unless-stopped
     command: sh -c "redis-server --appendonly yes --requirepass $$REDIS_PASSWORD"
     env_file:
-      - .env.prod
+      - ${PROD_ENV_FILE:-.env.prod}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -1061,6 +1085,8 @@ services:
     restart: unless-stopped
     depends_on:
       - app
+    env_file:
+      - ${PROD_ENV_FILE:-.env.prod}
     ports:
       - "80:80"
       - "443:443"
