@@ -68,6 +68,13 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 
 ## 7. 시연 실패 시 빠른 복구
 
+### 2분 복구 루트
+
+1. 프로파일 확인: `SPRING_PROFILES_ACTIVE=demo`로 실행했는지 확인합니다.
+2. 인프라 확인: `docker compose --env-file docker/.env -f docker/docker-compose.yml ps`로 MySQL/Redis 상태를 봅니다.
+3. seed 확인: 원장 로그인 후 `/dashboard`, `/applications/pending`, `/notification-outbox` 순서로 데이터 존재를 확인합니다.
+4. 계속 비어 있으면 local/demo DB가 부분 삭제된 상태일 수 있으므로 DB 초기화 후 다시 실행합니다.
+
 - 로그인 실패: `demo` 프로파일인지, seed가 켜졌는지 확인합니다.
 - 화면이 비어 있음: `DataLoader`는 seed 계정이 있으면 기본 seed를 다시 만들지 않지만, 시연용 신청/outbox/calendar 샘플은 누락분을 보강합니다. 그래도 비어 있으면 기본 seed 계정/반/원생이 일부 삭제된 DB일 수 있으니 local/demo DB를 초기화합니다.
 - Outbox가 비어 있음: `/notification-outbox`는 `APP`, `PUSH`, `EMAIL` dead-letter 샘플을 보강합니다. 샘플이 없으면 principal 계정과 notification/outbox 테이블 상태를 먼저 확인합니다.

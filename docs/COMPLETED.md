@@ -1077,3 +1077,45 @@
   - README는 면접관이 3분 안에 프로젝트의 백엔드 강점을 훑는 구조가 추가됐다.
   - Swagger와 demo runbook은 핵심 운영 API/화면을 더 빠르게 설명할 수 있게 정리됐다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-025"></a>
+## `025` 최근 보강 코드 단순화와 demo 복구 루트 정리
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 직전 작업으로 README, Swagger, demo runbook이 강화됐지만, 일부 Swagger annotation JSON 예시와 `DataLoader` demo supplement 진입부가 길어졌다.
+  - 사용자는 앞서 제안한 Swagger annotation 정리, `DataLoader` 단순화, README 압축, demo 2분 복구 루트를 모두 순서대로 진행하기를 원했다.
+  - 검증 비용은 계속 최소화해야 하므로 동작 변경 없이 읽기 쉬운 내부 정리와 문서 압축에만 집중했다.
+- 변경 내용:
+  - Attendance, Auth, Dashboard controller의 긴 Swagger JSON example을 private static final String 상수로 분리했다.
+  - `DataLoader.supplementDemoScenarioSamplesIfPossible()`를 `buildDemoSupplementContext()` 기반으로 정리해 required member/classroom/kid 확인과 실제 supplement 실행 단계를 분리했다.
+  - `DemoSupplementContext` record를 추가해 seed 보강에 필요한 참조를 한 번에 전달하도록 했다.
+  - README `3분 리뷰 루트` 문장을 짧게 압축했다.
+  - demo runbook에 프로파일, Docker 인프라, seed 화면 확인, DB 초기화 순서의 `2분 복구 루트`를 추가했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/guides/demo-scenario.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+  - `src/main/java/com/erp/domain/attendance/controller/AttendanceController.java`
+  - `src/main/java/com/erp/domain/auth/controller/AuthApiController.java`
+  - `src/main/java/com/erp/domain/dashboard/controller/DashboardController.java`
+  - `src/main/java/com/erp/global/config/DataLoader.java`
+- 검증:
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `git diff --check`: 통과
+  - `rg -n "DemoSupplementContext|UPSERT_REQUEST_EXAMPLE|STATISTICS_RESPONSE_EXAMPLE|2분 복구 루트|quick CI와 manual quality" README.md docs src/main/java`: 관련 변경 연결 확인
+  - 전체 `./gradlew test`와 브라우저 E2E는 최소 검증 기준에 맞춰 실행하지 않았다.
+- Simplify 판정:
+  - `SIMPLIFY_COMPLETE`
+  - 동작 변경 없이 private helper/context 추출과 annotation example 상수 분리만 수행했다.
+  - deferred: Swagger `ApiResponse`/`RequestBody` FQCN 제거는 프로젝트 `ApiResponse` 및 Spring `@RequestBody`와 이름 충돌이 있어 보류했다.
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: API 계약, DB schema, security rule, service behavior 변경 없이 compile-safe 내부 정리와 문서 보강만 적용했다.
+- 결과:
+  - 최근 보강된 Swagger/controller 코드는 메서드 본문 주변 annotation 노이즈가 줄었다.
+  - demo seed 보강 흐름은 context 생성, guard, supplement 실행이 분리돼 설명 가능성이 높아졌다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.

@@ -38,6 +38,21 @@ import java.util.List;
 @Tag(name = "Auth", description = "인증, JWT refresh rotation, 활성 세션 관리 API")
 public class AuthApiController {
 
+    private static final String ACTIVE_SESSIONS_RESPONSE_EXAMPLE = """
+            {
+              "success": true,
+              "data": [
+                {
+                  "sessionId": "01JZ-DEMO",
+                  "current": true,
+                  "clientIp": "127.0.0.1",
+                  "userAgent": "Mozilla/5.0",
+                  "expiresAt": "2026-05-26T10:00:00"
+                }
+              ]
+            }
+            """;
+
     private final AuthService authService;
     private final MemberService memberService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -153,20 +168,7 @@ public class AuthApiController {
                     description = "활성 세션 목록 응답",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "success": true,
-                                      "data": [
-                                        {
-                                          "sessionId": "01JZ-DEMO",
-                                          "current": true,
-                                          "clientIp": "127.0.0.1",
-                                          "userAgent": "Mozilla/5.0",
-                                          "expiresAt": "2026-05-26T10:00:00"
-                                        }
-                                      ]
-                                    }
-                                    """)
+                            examples = @ExampleObject(value = ACTIVE_SESSIONS_RESPONSE_EXAMPLE)
                     )
             )
     )

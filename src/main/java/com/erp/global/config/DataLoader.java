@@ -293,80 +293,112 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void supplementDemoScenarioSamplesIfPossible() {
-        Optional<Member> principalAOptional = memberRepository.findByEmail(SEED_PRINCIPAL_A_EMAIL);
-        Optional<Member> principalBOptional = memberRepository.findByEmail(SEED_PRINCIPAL_B_EMAIL);
-        Optional<Member> teacherA1Optional = memberRepository.findByEmail("teacher1@test.com");
-        Optional<Member> parentA1Optional = memberRepository.findByEmail("parent1@test.com");
-        Optional<Member> parentA2Optional = memberRepository.findByEmail("parent2@test.com");
-        Optional<Member> parentA3Optional = memberRepository.findByEmail("parent3@test.com");
-        Optional<Member> parentB1Optional = memberRepository.findByEmail("parent4@test.com");
-
-        if (principalAOptional.isEmpty()
-                || principalBOptional.isEmpty()
-                || teacherA1Optional.isEmpty()
-                || parentA1Optional.isEmpty()
-                || parentA2Optional.isEmpty()
-                || parentA3Optional.isEmpty()
-                || parentB1Optional.isEmpty()) {
-            log.info("Demo supplement skipped because required seed members are incomplete.");
+        Optional<DemoSupplementContext> context = buildDemoSupplementContext();
+        if (context.isEmpty()) {
             return;
         }
 
-        Member principalA = principalAOptional.get();
-        Member principalB = principalBOptional.get();
-        Member teacherA1 = teacherA1Optional.get();
-        Member parentA1 = parentA1Optional.get();
-        Member parentA2 = parentA2Optional.get();
-        Member parentA3 = parentA3Optional.get();
-        Member parentB1 = parentB1Optional.get();
-        Kindergarten kgA = principalA.getKindergarten();
-        Kindergarten kgB = principalB.getKindergarten();
-        if (kgA == null || kgB == null) {
-            log.info("Demo supplement skipped because seed principals are not assigned to kindergarten.");
-            return;
-        }
+        DemoSupplementContext seed = context.get();
+        KidApplication pendingApplication = kidApplicationRepository.findByParentAndKindergarten(seed.parentA1().getId(), seed.kgA().getId())
+                .orElseGet(() -> createPendingApplication(seed.parentA1(), seed.kgA(), seed.classA1(), "민준", "신규 입학 상담 후 서류 대기"));
+        KidApplication waitlistedApplication = kidApplicationRepository.findByParentAndKindergarten(seed.parentA2().getId(), seed.kgA().getId())
+                .orElseGet(() -> createWaitlistedApplication(seed.parentA2(), seed.kgA(), seed.classA1(), seed.teacherA1(), "유나", "해바라기반 정원 대기로 waitlist 등록"));
+        KidApplication offeredApplication = kidApplicationRepository.findByParentAndKindergarten(seed.parentA3().getId(), seed.kgA().getId())
+                .orElseGet(() -> createOfferedApplication(seed.parentA3(), seed.kgA(), seed.classA2(), seed.principalA(), "서아", "장미반 1석 확보 후 offer 발송"));
+        KidApplication approvedApplication = kidApplicationRepository.findByParentAndKindergarten(seed.parentB1().getId(), seed.kgB().getId())
+                .orElseGet(() -> createApprovedApplication(seed.parentB1(), seed.kgB(), seed.classB1(), seed.principalB(), seed.approvedKid(), "주원", "기존 원생 승인 완료 이력"));
 
-        List<Classroom> classroomsA = classroomRepository.findByKindergartenIdAndDeletedAtIsNull(kgA.getId());
-        List<Classroom> classroomsB = classroomRepository.findByKindergartenIdAndDeletedAtIsNull(kgB.getId());
-        Optional<Classroom> classA1Optional = findClassroomByName(classroomsA, "해바라기반");
-        Optional<Classroom> classA2Optional = findClassroomByName(classroomsA, "장미반");
-        Optional<Classroom> classB1Optional = findClassroomByName(classroomsB, "나무반");
-        Optional<Kid> approvedKidOptional = kidRepository.findByKindergartenIdAndDeletedAtIsNull(kgB.getId())
-                .stream()
-                .filter(kid -> "주원".equals(kid.getName()))
-                .findFirst();
-
-        if (classA1Optional.isEmpty() || classA2Optional.isEmpty() || classB1Optional.isEmpty() || approvedKidOptional.isEmpty()) {
-            log.info("Demo supplement skipped because required seed classrooms or kids are incomplete.");
-            return;
-        }
-
-        Classroom classA1 = classA1Optional.get();
-        Classroom classA2 = classA2Optional.get();
-        Classroom classB1 = classB1Optional.get();
-        Kid approvedKid = approvedKidOptional.get();
-
-        KidApplication pendingApplication = kidApplicationRepository.findByParentAndKindergarten(parentA1.getId(), kgA.getId())
-                .orElseGet(() -> createPendingApplication(parentA1, kgA, classA1, "민준", "신규 입학 상담 후 서류 대기"));
-        KidApplication waitlistedApplication = kidApplicationRepository.findByParentAndKindergarten(parentA2.getId(), kgA.getId())
-                .orElseGet(() -> createWaitlistedApplication(parentA2, kgA, classA1, teacherA1, "유나", "해바라기반 정원 대기로 waitlist 등록"));
-        KidApplication offeredApplication = kidApplicationRepository.findByParentAndKindergarten(parentA3.getId(), kgA.getId())
-                .orElseGet(() -> createOfferedApplication(parentA3, kgA, classA2, principalA, "서아", "장미반 1석 확보 후 offer 발송"));
-        KidApplication approvedApplication = kidApplicationRepository.findByParentAndKindergarten(parentB1.getId(), kgB.getId())
-                .orElseGet(() -> createApprovedApplication(parentB1, kgB, classB1, principalB, approvedKid, "주원", "기존 원생 승인 완료 이력"));
-
-        supplementDomainAuditSamples(kgA, kgB, parentA1, principalA, principalB, classA1, classA2, approvedKid,
+        supplementDomainAuditSamples(seed.kgA(), seed.kgB(), seed.parentA1(), seed.principalA(), seed.principalB(),
+                seed.classA1(), seed.classA2(), seed.approvedKid(),
                 waitlistedApplication, offeredApplication, approvedApplication);
-        supplementOutboxSamples(principalA);
-        supplementCalendarSamples(kgA, classA1, principalA, teacherA1);
+        supplementOutboxSamples(seed.principalA());
+        supplementCalendarSamples(seed.kgA(), seed.classA1(), seed.principalA(), seed.teacherA1());
 
         log.info("Demo scenario sample supplements checked.");
     }
 
-    private Optional<Classroom> findClassroomByName(List<Classroom> classrooms, String name) {
-        return classrooms.stream()
+    private Optional<DemoSupplementContext> buildDemoSupplementContext() {
+        Optional<Member> principalA = memberRepository.findByEmail(SEED_PRINCIPAL_A_EMAIL);
+        Optional<Member> principalB = memberRepository.findByEmail(SEED_PRINCIPAL_B_EMAIL);
+        Optional<Member> teacherA1 = memberRepository.findByEmail("teacher1@test.com");
+        Optional<Member> parentA1 = memberRepository.findByEmail("parent1@test.com");
+        Optional<Member> parentA2 = memberRepository.findByEmail("parent2@test.com");
+        Optional<Member> parentA3 = memberRepository.findByEmail("parent3@test.com");
+        Optional<Member> parentB1 = memberRepository.findByEmail("parent4@test.com");
+
+        if (principalA.isEmpty()
+                || principalB.isEmpty()
+                || teacherA1.isEmpty()
+                || parentA1.isEmpty()
+                || parentA2.isEmpty()
+                || parentA3.isEmpty()
+                || parentB1.isEmpty()) {
+            log.info("Demo supplement skipped because required seed members are incomplete.");
+            return Optional.empty();
+        }
+
+        Kindergarten kgA = principalA.get().getKindergarten();
+        Kindergarten kgB = principalB.get().getKindergarten();
+        if (kgA == null || kgB == null) {
+            log.info("Demo supplement skipped because seed principals are not assigned to kindergarten.");
+            return Optional.empty();
+        }
+
+        Optional<Classroom> classA1 = findClassroomByName(kgA, "해바라기반");
+        Optional<Classroom> classA2 = findClassroomByName(kgA, "장미반");
+        Optional<Classroom> classB1 = findClassroomByName(kgB, "나무반");
+        Optional<Kid> approvedKid = findKidByName(kgB, "주원");
+        if (classA1.isEmpty() || classA2.isEmpty() || classB1.isEmpty() || approvedKid.isEmpty()) {
+            log.info("Demo supplement skipped because required seed classrooms or kids are incomplete.");
+            return Optional.empty();
+        }
+
+        return Optional.of(new DemoSupplementContext(
+                principalA.get(),
+                principalB.get(),
+                teacherA1.get(),
+                parentA1.get(),
+                parentA2.get(),
+                parentA3.get(),
+                parentB1.get(),
+                kgA,
+                kgB,
+                classA1.get(),
+                classA2.get(),
+                classB1.get(),
+                approvedKid.get()
+        ));
+    }
+
+    private Optional<Classroom> findClassroomByName(Kindergarten kindergarten, String name) {
+        return classroomRepository.findByKindergartenIdAndDeletedAtIsNull(kindergarten.getId())
+                .stream()
                 .filter(classroom -> name.equals(classroom.getName()))
                 .findFirst();
+    }
+
+    private Optional<Kid> findKidByName(Kindergarten kindergarten, String name) {
+        return kidRepository.findByKindergartenIdAndDeletedAtIsNull(kindergarten.getId())
+                .stream()
+                .filter(kid -> name.equals(kid.getName()))
+                .findFirst();
+    }
+
+    private record DemoSupplementContext(
+            Member principalA,
+            Member principalB,
+            Member teacherA1,
+            Member parentA1,
+            Member parentA2,
+            Member parentA3,
+            Member parentB1,
+            Kindergarten kgA,
+            Kindergarten kgB,
+            Classroom classA1,
+            Classroom classA2,
+            Classroom classB1,
+            Kid approvedKid
+    ) {
     }
 
     private void supplementDomainAuditSamples(Kindergarten kgA,
