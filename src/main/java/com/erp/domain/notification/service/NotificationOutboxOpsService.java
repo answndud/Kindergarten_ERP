@@ -44,12 +44,22 @@ public class NotificationOutboxOpsService {
         return new NotificationOutboxSummaryResponse(statusCounts, deadLetterCountsByChannel);
     }
 
-    public Page<NotificationOutboxItemResponse> getDeadLetters(int page, int size) {
+    public Page<NotificationOutboxItemResponse> getDeadLetters(int page, int size, NotificationChannel channel) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), MAX_DEAD_LETTER_LIMIT);
+        PageRequest pageRequest = PageRequest.of(safePage, safeSize);
+        if (channel != null) {
+            return notificationOutboxRepository.findByStatusAndChannelOrderByDeadLetteredAtDescIdDesc(
+                            NotificationDeliveryStatus.DEAD_LETTER,
+                            channel,
+                            pageRequest
+                    )
+                    .map(NotificationOutboxItemResponse::from);
+        }
+
         return notificationOutboxRepository.findByStatusOrderByDeadLetteredAtDescIdDesc(
                         NotificationDeliveryStatus.DEAD_LETTER,
-                        PageRequest.of(safePage, safeSize)
+                        pageRequest
                 )
                 .map(NotificationOutboxItemResponse::from);
     }
