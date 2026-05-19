@@ -79,12 +79,38 @@ class AuditConsolePerformanceSmokeTest extends BaseIntegrationTest {
                 null,
                 null
         )));
+        Measurement filteredList = readCommitted(() -> measure(statistics, () -> authAuditLogQueryService.getAuditLogsForPrincipal(
+                fixture.principalId(),
+                null,
+                null,
+                null,
+                fixture.principalEmail(),
+                "A001",
+                null,
+                null,
+                0,
+                20
+        )));
+        Measurement filteredExport = readCommitted(() -> measure(statistics, () -> authAuditLogQueryService.exportAuditLogsCsvForPrincipal(
+                fixture.principalId(),
+                null,
+                null,
+                null,
+                fixture.principalEmail(),
+                "A001",
+                null,
+                null
+        )));
 
         System.out.printf("[PERF] auth-audit-list   - queries=%d, elapsedMs=%d%n", list.queryCount, list.elapsedMs);
         System.out.printf("[PERF] auth-audit-export - queries=%d, elapsedMs=%d%n", export.queryCount, export.elapsedMs);
+        System.out.printf("[PERF] auth-audit-filtered-list   - queries=%d, elapsedMs=%d%n", filteredList.queryCount, filteredList.elapsedMs);
+        System.out.printf("[PERF] auth-audit-filtered-export - queries=%d, elapsedMs=%d%n", filteredExport.queryCount, filteredExport.elapsedMs);
 
         assertTrue(list.queryCount <= 3, "auth audit list should stay within member lookup + page + count budget");
         assertTrue(export.queryCount <= 2, "auth audit export should stay within member lookup + export query budget");
+        assertTrue(filteredList.queryCount <= 3, "auth audit filtered list should stay within member lookup + page + count budget");
+        assertTrue(filteredExport.queryCount <= 2, "auth audit filtered export should stay within member lookup + export query budget");
     }
 
     @Test
@@ -116,12 +142,36 @@ class AuditConsolePerformanceSmokeTest extends BaseIntegrationTest {
                 null,
                 null
         )));
+        Measurement filteredList = readCommitted(() -> measure(statistics, () -> domainAuditLogQueryService.getAuditLogsForPrincipal(
+                fixture.principalId(),
+                DomainAuditAction.ANNOUNCEMENT_UPDATED,
+                DomainAuditTargetType.ANNOUNCEMENT,
+                "성능원장",
+                "스모크",
+                null,
+                null,
+                0,
+                20
+        )));
+        Measurement filteredExport = readCommitted(() -> measure(statistics, () -> domainAuditLogQueryService.exportAuditLogsCsvForPrincipal(
+                fixture.principalId(),
+                DomainAuditAction.ANNOUNCEMENT_UPDATED,
+                DomainAuditTargetType.ANNOUNCEMENT,
+                "성능원장",
+                "스모크",
+                null,
+                null
+        )));
 
         System.out.printf("[PERF] domain-audit-list   - queries=%d, elapsedMs=%d%n", list.queryCount, list.elapsedMs);
         System.out.printf("[PERF] domain-audit-export - queries=%d, elapsedMs=%d%n", export.queryCount, export.elapsedMs);
+        System.out.printf("[PERF] domain-audit-filtered-list   - queries=%d, elapsedMs=%d%n", filteredList.queryCount, filteredList.elapsedMs);
+        System.out.printf("[PERF] domain-audit-filtered-export - queries=%d, elapsedMs=%d%n", filteredExport.queryCount, filteredExport.elapsedMs);
 
         assertTrue(list.queryCount <= 3, "domain audit list should stay within lookup + page + count budget");
         assertTrue(export.queryCount <= 2, "domain audit export should stay within lookup + export query budget");
+        assertTrue(filteredList.queryCount <= 3, "domain audit filtered list should stay within lookup + page + count budget");
+        assertTrue(filteredExport.queryCount <= 2, "domain audit filtered export should stay within lookup + export query budget");
     }
 
     private AuditConsoleFixture seedCommittedFixture() {
@@ -157,12 +207,21 @@ class AuditConsolePerformanceSmokeTest extends BaseIntegrationTest {
     private void seedAuthAuditLogs(AuditConsoleFixture fixture) {
         writeCommitted(() -> {
             for (int i = 0; i < BULK_LOG_COUNT; i++) {
-                authAuditLogService.recordLoginSuccess(
-                        fixture.principalId(),
-                        fixture.principalEmail(),
-                        MemberAuthProvider.LOCAL,
-                        "198.51.100." + (10 + (i % 50))
-                );
+                if (i % 4 == 0) {
+                    authAuditLogService.recordLoginFailure(
+                            fixture.principalEmail(),
+                            MemberAuthProvider.LOCAL,
+                            "198.51.100." + (10 + (i % 50)),
+                            "A001"
+                    );
+                } else {
+                    authAuditLogService.recordLoginSuccess(
+                            fixture.principalId(),
+                            fixture.principalEmail(),
+                            MemberAuthProvider.LOCAL,
+                            "198.51.100." + (10 + (i % 50))
+                    );
+                }
             }
             return null;
         });

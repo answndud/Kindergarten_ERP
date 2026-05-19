@@ -1506,3 +1506,48 @@
   - 운영자는 outbox 전체 이력을 상태/채널/검색어로 조사하고, dead-letter만 재시도할 수 있게 됐다.
   - 감사 로그는 reason/summary 필터와 CSV export를 통해 운영 조사 흐름이 더 선명해졌다.
   - 면접 패키지는 최신 구현과 검증 증거를 기준으로 다시 정렬됐다.
+
+<a id="archive-036"></a>
+## `036` 운영 기능 테스트/성능 방어 보강
+
+- 완료일: `2026-05-19`
+- 배경:
+  - Outbox timeline, notification sender adapter, audit 세부 필터를 구현한 뒤에는 기능 존재만이 아니라 테스트/성능/인덱스 근거가 필요했다.
+  - README 스크린샷 최신화는 사용자가 직접 진행하므로 이번 범위에서 제외했다.
+- 변경 내용:
+  - `NotificationChannelSenderRegistryTest`를 추가했다.
+    - 채널 매핑 성공
+    - sender 누락 실패
+    - 중복 채널 sender 등록 실패
+  - `NotificationChannelSenderRegistry`가 중복 채널을 조용히 덮어쓰지 않고 부팅 시 실패하도록 보강했다.
+  - `AuditConsolePerformanceSmokeTest`에 auth `reason`, domain `summary` 필터가 적용된 list/export 경로를 추가했다.
+  - Outbox timeline status/channel 조회를 위한 `idx_notification_outbox_timeline(status, channel, created_at, id)` 인덱스와 Flyway migration을 추가했다.
+  - `NotificationOutboxPerformanceSmokeTest`를 추가해 status/channel timeline과 keyword timeline의 page+count 쿼리 예산을 고정했다.
+  - evidence map에 registry test, outbox performance smoke, timeline index 근거를 연결했다.
+- 코드/문서:
+  - `src/main/java/com/erp/domain/notification/service/channel/NotificationChannelSenderRegistry.java`
+  - `src/test/java/com/erp/domain/notification/service/channel/NotificationChannelSenderRegistryTest.java`
+  - `src/main/java/com/erp/domain/notification/entity/NotificationOutbox.java`
+  - `src/main/resources/db/migration/V16__add_notification_outbox_timeline_index.sql`
+  - `src/test/java/com/erp/performance/AuditConsolePerformanceSmokeTest.java`
+  - `src/test/java/com/erp/performance/NotificationOutboxPerformanceSmokeTest.java`
+  - `docs/guides/evidence-map.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+- 검증:
+  - `./gradlew test --tests "com.erp.domain.notification.service.channel.NotificationChannelSenderRegistryTest"`: 통과
+  - `./gradlew test --tests "com.erp.performance.AuditConsolePerformanceSmokeTest" --tests "com.erp.performance.NotificationOutboxPerformanceSmokeTest"`: 통과
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `git diff --check`: 통과
+- Spring Boot Doctor 판정:
+  - 변경 surface: `test`, `persistence/index`, `domain`, `performance`, `docs`
+  - P0/P1 신규 이슈 없음
+  - 점수: `100/100`
+- P0/P1 남은 리스크:
+  - 이번 변경 surface 기준 없음.
+- P2/P3 후속:
+  - README 스크린샷 최신화는 사용자가 직접 진행한다.
+  - 실제 provider sandbox smoke, webhook signature, provider별 rate limit은 실제 provider 계정 확보 후 진행한다.
+- 결과:
+  - 알림 adapter 경계는 실패 조건까지 단위 테스트로 고정됐다.
+  - audit 필터와 outbox timeline은 성능 smoke와 인덱스 근거를 갖게 됐다.
