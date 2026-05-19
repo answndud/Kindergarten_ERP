@@ -6,11 +6,11 @@
 
 ## 1. 5분 설명 루트
 
-1. `README.md`의 "핵심 문제와 해결"과 "수치로 검증한 개선"을 먼저 봅니다.
-2. `docs/guides/demo-scenario.md`에서 5분/10분 시연 순서를 확인합니다.
-3. `docs/COMPLETED.md`에서 작업 archive를 확인합니다.
-4. 코드에서는 `global/security`, `global/exception`, `domain/notification`, `domain/calendar`, `domain/attendance`를 확인합니다.
-5. 테스트에서는 `src/test/java/com/erp/api/*IntegrationTest.java`, `src/test/java/com/erp/integration/*`, `src/test/java/com/erp/performance/*`를 확인합니다.
+1. `README.md` 상단의 "30초 요약"으로 프로젝트 성격과 검증 상태를 먼저 설명합니다.
+2. "핵심 문제와 해결" 표에서 권한 경계, 세션 revoke, 상태 전이, 감사 로그, outbox 운영을 짚습니다.
+3. "수치로 검증한 개선" 표에서 Notepad/Dashboard query count와 CI 시간 개선을 설명합니다.
+4. 화면 캡처에서 `/applications/pending`, `/notification-outbox`, audit 화면을 보여주며 실제 운영 흐름이 닫혀 있음을 설명합니다.
+5. 코드 확인 요청이 들어오면 `global/security`, `global/exception`, `domain/notification`, `domain/calendar`, `domain/attendance` 순서로 이동합니다.
 
 ## 2. 10분 시연 루트
 
@@ -19,9 +19,40 @@
 3. `/attendance-requests`에서 학부모 요청과 교사/원장 승인 경계를 설명합니다.
 4. `/notification-outbox`에서 dead-letter summary, 목록, retry 버튼을 보여줍니다.
 5. `/audit-logs`, `/domain-audit-logs`에서 인증 이벤트와 업무 상태 전이가 archive되는 방식을 보여줍니다.
-6. README의 Notepad/Dashboard query count 개선표와 CI `5m 28s -> 1m 14s` 지표로 성능/검증 스토리를 마무리합니다.
+6. Swagger UI에서 `Attendance`, `Dashboard`, `Auth`, `Notification Ops` API 그룹을 보여주며 API 계약 확인 경로를 설명합니다.
+7. README의 Notepad/Dashboard query count 개선표와 CI `5m 28s -> 1m 14s` 대표 지표, 최신 main `1m34s` 확인 결과로 성능/검증 스토리를 마무리합니다.
 
-## 3. 면접 질문 대응 포인트
+## 3. 말하기 스크립트
+
+### 5분 버전
+
+1. "이 프로젝트는 유치원 운영을 주제로 한 Spring Boot 백엔드 포트폴리오이고, 단순 CRUD보다 권한 경계와 운영 문제를 끝까지 닫는 데 집중했습니다."
+2. "원장, 교사, 학부모가 같은 데이터에 접근하지만 가능한 액션이 다르기 때문에 tenant와 role 경계를 API, service, test에서 같이 검증했습니다."
+3. "세션은 HTTP-only cookie JWT와 Redis refresh/session registry로 관리하고, 로그아웃이나 세션 종료 시 즉시 revoke되도록 했습니다."
+4. "운영 중 실패하는 외부 알림은 outbox dead-letter로 관측하고, 원장 전용 화면/API에서 실패 건만 재시도할 수 있게 했습니다."
+5. "성능은 Notepad와 Dashboard에서 쿼리 수와 응답 시간을 전후 측정했고, CI도 혼자 운영하는 main 프로젝트에 맞게 quick check와 manual quality로 분리했습니다."
+
+### 10분 버전
+
+1. "먼저 README의 30초 요약과 핵심 문제 표를 보겠습니다. 이 저장소의 핵심은 권한, 세션, 상태 전이, 감사, 관측성입니다."
+2. "`/applications/pending`에서는 입학 신청이 승인, waitlist, offer로 전이되는 흐름을 보여줍니다. 이 상태 전이는 단순 update가 아니라 감사 로그와 알림까지 함께 닫힙니다."
+3. "`/attendance-requests`에서는 학부모가 요청하고 교사/원장이 처리하는 경계를 보여줍니다. 권한 실패 케이스도 통합 테스트로 분리했습니다."
+4. "`/notification-outbox`에서는 실제 운영자가 실패한 외부 알림을 확인하고 dead-letter만 재시도하는 흐름을 보여줍니다."
+5. "`/audit-logs`와 `/domain-audit-logs`에서는 인증 이벤트와 업무 이벤트를 분리해 조회/export할 수 있음을 보여줍니다."
+6. "마지막으로 README의 성능 표와 CI 표를 보며, 개선 전후를 숫자로 남겼고 push CI는 빠르게, heavy 검증은 수동 workflow로 분리한 이유를 설명합니다."
+
+## 4. 코드 리뷰 유도 포인트
+
+| 관심사 | 먼저 볼 위치 | 설명할 포인트 |
+| --- | --- | --- |
+| 인증/세션 | `global/security`, `domain/auth` | cookie JWT, refresh rotation, Redis TTL, active session revoke |
+| 권한 경계 | `AccessPolicyService`, `*IntegrationTest` | role + kindergarten tenant 검증을 service와 test 양쪽에 둠 |
+| 예외 계약 | `global/exception` | 입력 오류를 500이 아니라 400 `ApiResponse.error`로 정규화 |
+| Outbox 운영 | `domain/notification`, `/notification-outbox` | retry/backoff/dead-letter와 principal-only 운영 API |
+| 성능 개선 | `src/test/java/com/erp/performance` | query count와 elapsed time 전후 측정 |
+| CI 전략 | `.github/workflows/ci.yml`, `backend-quality.yml` | push quick check와 수동 heavy suite 분리 |
+
+## 5. 면접 질문 대응 포인트
 
 | 질문 | 답변 방향 | 확인 위치 |
 | --- | --- | --- |
@@ -32,7 +63,7 @@
 | 큰 service는 어떻게 관리했나요? | `KidApplicationService`는 orchestration만 남기고 admission, notification, audit 보조 책임을 분리했습니다. | `domain/kidapplication/service` |
 | 성능 개선은 어떻게 증명했나요? | query count/elapsed time을 전후 측정하고 performance smoke test와 archive에 남겼습니다. | README, `performance/*`, `docs/COMPLETED.md` |
 
-## 4. 최근 강화 작업의 의도
+## 6. 최근 강화 작업의 의도
 
 ### 입력/예외 하드닝
 
@@ -75,7 +106,7 @@
 - 결정: 사용되지 않는 custom repository 스텁을 제거하고 로컬 ignored 작업파일을 삭제했습니다.
 - 검증: 컴파일과 targeted tests로 repository wiring 회귀를 확인합니다.
 
-## 5. 면접에서 강조할 답변 포인트
+## 7. 면접에서 강조할 답변 포인트
 
 - 보안: HTTP-only cookie JWT, Redis refresh session, active session revoke, fail-closed profile.
 - 권한: `PRINCIPAL`, `TEACHER`, `PARENT` 역할과 유치원 tenant 경계를 API/service/test에서 함께 검증.
@@ -84,7 +115,7 @@
 - 테스트: Testcontainers 기반 MySQL/Redis 통합 테스트, fast/integration/performance smoke 분리.
 - 문서화: `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/COMPLETED.md`로 active/archive 상태 관리.
 
-## 6. 남은 리스크와 후속 개선
+## 8. 남은 리스크와 후속 개선
 
 - 실제 클라우드 배포는 비용 문제로 아직 실행하지 않았고, 배포 자산과 runbook 중심으로 준비된 상태입니다.
 - Notification Outbox 운영 화면은 dead-letter 중심입니다. 전체 outbox timeline이나 channel별 drill-down은 후속 개선입니다.

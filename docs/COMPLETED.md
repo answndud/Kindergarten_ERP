@@ -1162,3 +1162,36 @@
   - release jar 패키징, demo 핵심 화면, README outbox 화면 자료가 모두 현재 로컬 기준으로 검증됐다.
   - demo profile에서 seed가 비어 핵심 시연 화면이 공백으로 보일 수 있는 리스크를 제거했다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-027"></a>
+## `027` 포트폴리오 제출 직전 README, 면접 가이드, GitHub presentation 정리
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 사용자는 다음 작업으로 README 최종 압축, 면접 시연 가이드 보강, GitHub Actions 최종 확인, 최소 회귀 검증, GitHub repository presentation 정리를 모두 순서대로 진행하길 원했다.
+  - 직전 작업에서 demo smoke와 outbox screenshot은 완료됐으므로, 이번 배치는 새 기능보다 면접관이 빠르게 평가할 수 있는 제출 패키징에 집중했다.
+- 변경 내용:
+  - README 상단에 `30초 요약`을 추가해 권한 경계, 상태 전이, 감사, outbox 운영, 성능/CI 수치를 바로 보이게 했다.
+  - README에 `제출 전 상태` 표를 추가해 main 고정 운영, 최신 CI 성공, demo smoke, release check, 클라우드 미배포 상태를 명시했다.
+  - CI 시간 문구를 대표 개선값 `1m 14s`와 최신 main 확인값 `1m34s`가 함께 보이도록 정리했다.
+  - `docs/guides/interview-guide.md`에 5분/10분 말하기 스크립트와 코드 리뷰 유도 포인트를 추가했다.
+  - GitHub repository description과 topics를 백엔드 포트폴리오 기준으로 설정했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/guides/interview-guide.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+  - GitHub repository metadata
+- 검증:
+  - `gh run list --repo answndud/Kindergarten_ERP --branch main --limit 3`: 최신 main `Backend CI` success, run `26074225080`, `1m34s` 확인
+  - `gh repo view answndud/Kindergarten_ERP --json description,repositoryTopics,defaultBranchRef,url`: description/topics/main branch 확인
+  - `./gradlew bootJar`: 통과
+  - `git diff --check`: 통과
+  - `rg -n "30초 요약|제출 전 상태|1m34s|말하기 스크립트|코드 리뷰 유도 포인트" README.md docs/guides/interview-guide.md docs/PLAN.md docs/PROGRESS.md`: 관련 문서 연결 확인
+  - 전체 `./gradlew test`는 사용자의 최소 검증 선호와 문서 중심 변경 범위를 고려해 실행하지 않았다.
+- 결과:
+  - README 첫 화면에서 프로젝트의 백엔드 포트폴리오 강점, 최신 검증 상태, 미배포 사실이 더 빨리 보인다.
+  - 면접 시연은 클릭 순서뿐 아니라 말하기 순서와 코드 리뷰 유도 경로까지 준비된 상태가 됐다.
+  - GitHub repository 카드도 description/topics 기준으로 백엔드 포트폴리오임을 바로 드러낸다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.

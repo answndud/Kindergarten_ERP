@@ -8,6 +8,13 @@
 [![Redis](https://img.shields.io/badge/Redis-7.x-red.svg)](https://redis.io/)
 [![Backend CI](https://github.com/answndud/Kindergarten_ERP/actions/workflows/ci.yml/badge.svg)](https://github.com/answndud/Kindergarten_ERP/actions/workflows/ci.yml)
 
+## 30초 요약
+
+- 단순 CRUD가 아니라 **원장/교사/학부모 권한 경계, 입학 승인 상태 전이, 출결 요청 승인, 감사 로그, outbox dead-letter 운영**까지 닫은 백엔드 프로젝트입니다.
+- 성능 개선은 감으로 처리하지 않고 **쿼리 수/응답 시간/CI 시간**을 전후 비교했습니다. Notepad 목록은 `22 queries -> 4 queries`, Dashboard 반복 조회는 cache hit 기준 `5 queries -> 0 queries`로 줄였습니다.
+- 면접 시연은 `demo` 프로파일로 재현 가능합니다. 최신 main 기준 `Backend CI`는 성공 상태이며, 최근 확인 시간은 `1m34s`입니다.
+- 실제 클라우드 배포는 비용 문제로 수행하지 않았고, 대신 Docker/배포 자산/runbook과 local/demo/prod 환경 계약을 분리해 설명 가능하게 준비했습니다.
+
 ## 한눈에 보기
 
 | 항목 | 내용 |
@@ -17,7 +24,7 @@
 | 핵심 사용자 | `PRINCIPAL`, `TEACHER`, `PARENT` |
 | 핵심 기술 | Java 21, Spring Boot 3.5.9, MySQL 8, Redis, JPA, QueryDSL |
 | 실행 프로필 | `local`, `demo`, `prod` |
-| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 운영 API, `Backend CI` `5m 28s -> 1m 14s` |
+| 최근 운영 개선 | 입력 오류 500 방지, 캘린더 366일 조회 cap, Notification Outbox dead-letter 운영 API, `Backend CI` `5m 28s -> 1m34s` |
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 | 최소 로컬 검증 | 빠른 수정은 `./gradlew compileJava compileTestJava` + `git diff --check`, 릴리스 전만 `./gradlew test` |
 
@@ -27,7 +34,7 @@
 
 1. [핵심 문제와 해결](#핵심-문제와-해결): 권한, 세션, 상태 전이, 감사, outbox 실패 대응.
 2. [수치로 검증한 개선](#수치로-검증한-개선): 쿼리 수, 응답 시간, CI 시간 개선.
-3. [화면](#화면): 대시보드, 신청 큐, 출석, 감사 로그.
+3. [화면](#화면): 대시보드, 신청 큐, 출석, 감사 로그, outbox 운영 화면.
 4. [API / 운영 문서](#api--운영-문서): Swagger, audit export, outbox, dashboard API.
 5. [테스트 & CI](#테스트--ci): quick CI와 manual quality 분리 이유.
 
@@ -35,7 +42,7 @@
 
 - [5분 실행 / 검증](#5분-실행--검증): `demo` 프로파일과 시연 계정으로 빠르게 재현할 수 있습니다.
 - [수치로 검증한 개선](#수치로-검증한-개선): 쿼리 수와 응답 시간 기준 개선 결과를 먼저 볼 수 있습니다.
-- [화면](#화면): 대시보드, 신청 처리 큐, 인증 감사 로그, 업무 감사 로그 화면을 바로 확인할 수 있습니다.
+- [화면](#화면): 대시보드, 신청 처리 큐, 감사 로그, 알림 Outbox 운영 화면을 바로 확인할 수 있습니다.
 - [docs/COMPLETED.md](./docs/COMPLETED.md): 배치별 구현, 검증, 후속 리스크를 archive 형태로 추적할 수 있습니다.
 - [docs/guides/interview-guide.md](./docs/guides/interview-guide.md): 면접관 관점에서 볼 핵심 개선 스토리와 질문 대응 포인트를 정리했습니다.
 - [docs/guides/demo-scenario.md](./docs/guides/demo-scenario.md): demo 계정, 클릭 순서, 실패 시 복구 절차를 정리했습니다.
@@ -46,6 +53,16 @@
 - 기능을 추가하는 데서 멈추지 않고 Testcontainers, CI 분리, Prometheus/Grafana, structured logging까지 연결했습니다.
 - 성능 작업은 "느린 지점을 찾고, 수치로 검증하고, 개선 후 다시 측정"하는 방식으로 정리했습니다.
 - 학부모, 교사, 원장이 실제로 상호작용하는 서비스 흐름과 운영 도구가 한 저장소 안에서 닫히는 구조입니다.
+
+## 제출 전 상태
+
+| 항목 | 상태 |
+|------|------|
+| Main branch | `main` 고정 운영 |
+| 최신 CI | `Backend CI` 성공, 최근 확인 `1m34s` |
+| Demo smoke | `/dashboard`, `/applications/pending`, `/notification-outbox`, `/swagger-ui.html` 확인 |
+| Release check | `./gradlew bootJar` 통과 |
+| 배포 | 클라우드 미배포. `deploy/*`, Dockerfile, 배포 가이드만 준비 |
 
 ## 핵심 문제와 해결
 
@@ -67,7 +84,7 @@
 | Notepad 목록 조회 | queries 22, 15ms | queries 4, 4ms | 읽음 수 N+1 제거, 다건 집계 쿼리 전환 |
 | Dashboard 통계 | queries 13, 30ms | queries 5, 9ms | 정확도 보정 + 집계 쿼리 통합 |
 | Dashboard 반복 조회 | queries 5, 12ms | queries 0, 0ms | 60초 TTL 캐시 적용 (`dashboardStatistics`) |
-| Backend CI wall-clock | 5m 28s | 1m 14s | push CI는 quick check로 축소, heavy 검증은 수동 workflow로 분리 |
+| Backend CI wall-clock | 5m 28s | 1m 14s 대표, 최신 확인 1m34s | push CI는 quick check로 축소, heavy 검증은 수동 workflow로 분리 |
 
 - k6 부하 테스트 결과
   - Notepad list: avg 20.72ms, p95 45.32ms, error 0.00%
@@ -254,7 +271,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | Release check | 릴리스/면접 시연 직전 | `./gradlew test`, demo runbook 수동 확인 | 실제 시연 전 회귀 리스크 축소 |
 
 - 통합 테스트는 H2 대체가 아니라 MySQL/Redis Testcontainers를 사용합니다.
-- 최근 측정 기준으로 자동 push CI는 `5m 28s`에서 `1m 14s`로 줄었습니다.
+- 대표 측정 기준으로 자동 push CI는 `5m 28s`에서 `1m 14s`로 줄었고, 최신 main 확인 결과는 `1m34s`입니다.
 - CD는 클라우드 배포 secret이 준비되기 전까지 `workflow_dispatch` 수동 실행만 유지합니다.
 - Swagger/OpenAPI 공개 경로와 Prometheus scrape는 local/demo에서만 회귀 확인하고, prod에서는 기본 비활성화합니다.
 - 수동 quality workflow는 실패 분석을 위해 테스트 리포트를 artifact로 업로드합니다.
