@@ -17,7 +17,7 @@
 1. `demo` 프로파일로 실행하고 원장 계정으로 로그인합니다.
 2. `/applications/pending`에서 입학 신청/대기열/offer 흐름을 설명합니다.
 3. `/attendance-requests`에서 학부모 요청과 교사/원장 승인 경계를 설명합니다.
-4. `/notification-outbox`에서 dead-letter summary, 목록, retry 버튼을 보여줍니다.
+4. `/notification-outbox`에서 dead-letter summary, 채널 필터, 목록, retry 버튼을 보여줍니다.
 5. `/audit-logs`, `/domain-audit-logs`에서 인증 이벤트와 업무 상태 전이가 archive되는 방식을 보여줍니다.
 6. Swagger UI에서 `Attendance`, `Dashboard`, `Auth`, `Notification Ops` API 그룹을 보여주며 API 계약 확인 경로를 설명합니다.
 7. README의 Notepad/Dashboard query count 개선표와 CI `5m 28s -> 1m 14s` 대표 지표를 보여주고, 최신 main 결과는 GitHub Actions 배지와 run history로 확인합니다.
@@ -37,7 +37,7 @@
 1. "먼저 README의 30초 요약과 핵심 문제 표를 보겠습니다. 이 저장소의 핵심은 권한, 세션, 상태 전이, 감사, 관측성입니다."
 2. "`/applications/pending`에서는 입학 신청이 승인, waitlist, offer로 전이되는 흐름을 보여줍니다. 이 상태 전이는 단순 update가 아니라 감사 로그와 알림까지 함께 닫힙니다."
 3. "`/attendance-requests`에서는 학부모가 요청하고 교사/원장이 처리하는 경계를 보여줍니다. 권한 실패 케이스도 통합 테스트로 분리했습니다."
-4. "`/notification-outbox`에서는 실제 운영자가 실패한 외부 알림을 확인하고 dead-letter만 재시도하는 흐름을 보여줍니다."
+4. "`/notification-outbox`에서는 실제 운영자가 실패한 외부 알림을 채널별로 좁혀 보고 dead-letter만 재시도하는 흐름을 보여줍니다."
 5. "`/audit-logs`와 `/domain-audit-logs`에서는 인증 이벤트와 업무 이벤트를 분리해 조회/export할 수 있음을 보여줍니다."
 6. "마지막으로 README의 성능 표와 CI 표를 보며, 개선 전후를 숫자로 남겼고 push CI는 빠르게, heavy 검증은 수동 workflow로 분리한 이유를 설명합니다."
 
@@ -70,7 +70,7 @@
 | --- | --- | --- |
 | 왜 cookie JWT와 Redis를 같이 썼나요? | access token은 HTTP-only cookie로 노출면을 줄이고, refresh/session revoke는 Redis TTL과 active session registry로 제어합니다. | `global/security`, `domain/auth` |
 | tenant 경계는 어디서 보장하나요? | Controller 권한, service requester 검증, repository 조회 조건, 통합 테스트를 같이 둡니다. | `AccessPolicyService`, `*ApiIntegrationTest` |
-| 운영 중 알림 전송 실패는 어떻게 보나요? | outbox 상태 전이, dead-letter 목록, 원장 전용 retry API/화면으로 관측과 재처리를 분리합니다. | `/notification-outbox`, `domain/notification` |
+| 운영 중 알림 전송 실패는 어떻게 보나요? | outbox 상태 전이, dead-letter 채널 필터/목록, 원장 전용 retry API/화면으로 관측과 재처리를 분리합니다. | `/notification-outbox`, `domain/notification` |
 | 배포 전 CORS는 어떻게 바꾸나요? | `CORS_ALLOWED_ORIGINS`로 환경별 origin을 주입하고 credentialed CORS에서 wildcard를 쓰지 않습니다. | `SecurityConfig`, `env-contract.md` |
 | 큰 service는 어떻게 관리했나요? | `KidApplicationService`는 신청/조회/취소/만료 orchestration을 맡고, review 상태 전이는 `KidApplicationReviewService`, 원생 등록/알림/audit은 보조 service로 분리했습니다. | `domain/kidapplication/service` |
 | 성능 개선은 어떻게 증명했나요? | query count/elapsed time을 전후 측정하고 performance smoke test와 archive에 남겼습니다. | README, `performance/*`, `docs/COMPLETED.md` |

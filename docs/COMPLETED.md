@@ -1420,3 +1420,35 @@
 - 결과:
   - 운영자는 dead-letter 전체 목록뿐 아니라 실패 채널별 목록을 바로 좁혀 보고, 필요한 건만 재시도할 수 있게 됐다.
   - 기존 API와 DB schema는 깨지지 않았고 optional query parameter만 추가했다.
+
+<a id="archive-034"></a>
+## `034` Phase 6 최종 정리: 제출 패키지와 active 문서 정리
+
+- 완료일: `2026-05-19`
+- 배경:
+  - Phase 1~5에서 운영 safety, service 구조, 테스트 guard, production-like checklist, outbox 기능 확장을 모두 닫았으므로 제출용 문서가 실제 구현과 일치해야 했다.
+  - active roadmap은 더 이상 진행 중 작업이 아니므로 `docs/PLAN.md`, `docs/PROGRESS.md`에 남기지 않아야 했다.
+- 변경 내용:
+  - README의 최근 운영 개선과 핵심 문제 표를 outbox 채널 필터 기준으로 갱신했다.
+  - interview guide와 demo scenario에서 `/notification-outbox` 시연 순서에 채널 필터를 포함했다.
+  - risk response의 외부 알림 약점 답변을 outbox 상태 전이, dead-letter, 채널 필터, 운영 API 중심으로 맞췄다.
+  - `docs/PLAN.md`, `docs/PROGRESS.md`를 active 없음 상태로 정리했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/guides/interview-guide.md`
+  - `docs/guides/demo-scenario.md`
+  - `docs/guides/risk-response.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `git diff --check`: 통과
+  - `rg -n "TODO|미완료|배포 완료|운영 중인 서비스|1m34s|1m7s|현재 active 작업 없음|dead-letter 채널 summary|dead-letter 목록을 확인" README.md docs`: active 없음 상태와 archive 이력 외 신규 stale 표현 없음
+  - `gh run list --repo answndud/Kindergarten_ERP --branch main --limit 5`: Phase 5 push CI `success`, `1m8s` 확인
+- P0/P1 남은 리스크:
+  - 제출 패키지 문서 기준 없음.
+- P2/P3 후속:
+  - 실제 클라우드 smoke, 전체 outbox timeline, 외부 provider adapter, Tailwind build pipeline은 비용/운영 전환 시점의 선택 확장으로 남긴다.
+- 결과:
+  - 장기 roadmap은 archive로 닫혔고 active 문서는 재개 시 혼동이 없도록 비워졌다.
+  - README, evidence, risk, interview, demo 문서는 현재 구현된 기능만 주장하도록 정리됐다.
