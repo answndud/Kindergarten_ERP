@@ -273,6 +273,19 @@ class CalendarApiIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("일정 목록 조회 - 366일 초과 범위는 실패")
+    void getEvents_Fail_QueryRangeTooLong() throws Exception {
+        mockMvc.perform(get("/api/v1/calendar/events")
+                        .with(authenticated(principalMember))
+                        .param("startDate", "2026-01-01")
+                        .param("endDate", "2027-01-03"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
     @DisplayName("일정 상세 조회 - 다른 유치원 일정은 차단")
     void getEvent_Fail_OtherKindergartenMember() throws Exception {
         Kindergarten otherKindergarten = testData.createKindergarten();

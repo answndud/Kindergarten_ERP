@@ -32,6 +32,8 @@ active 문서와 완료 archive를 분리해, 다음 세션에서도 바로 이�
   - 역할별 사용 흐름
 - `docs/guides/deployment-guide.md`
   - 초보자용 배포 절차와 운영 자산 설명
+- `docs/guides/interview-guide.md`
+  - 면접관 관점의 핵심 개선 스토리와 검증 포인트
 
 ## Rules
 

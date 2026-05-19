@@ -185,6 +185,15 @@ public class NotificationOutbox extends BaseEntity {
         this.lastError = truncateError(errorMessage);
     }
 
+    public void resetDeadLetterForRetry(LocalDateTime now, int configuredMaxAttempts) {
+        this.status = NotificationDeliveryStatus.PENDING;
+        this.processingStartedAt = null;
+        this.deadLetteredAt = null;
+        this.lastError = null;
+        this.nextAttemptAt = now;
+        this.maxAttempts = Math.max(Math.max(configuredMaxAttempts, 1), this.attemptCount + 1);
+    }
+
     public boolean canRetry() {
         return this.attemptCount < this.maxAttempts;
     }

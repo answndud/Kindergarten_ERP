@@ -371,6 +371,9 @@ public class AttendanceService {
     }
 
     private YearMonthRange resolveYearMonthRange(int year, int month) {
+        if (year < 2000 || year > 2100 || month < 1 || month > 12) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "조회 연월이 올바르지 않습니다");
+        }
         YearMonth yearMonth = YearMonth.of(year, month);
         return new YearMonthRange(yearMonth.atDay(1), yearMonth.atEndOfMonth());
     }

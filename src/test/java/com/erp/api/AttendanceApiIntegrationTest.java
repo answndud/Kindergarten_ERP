@@ -201,6 +201,46 @@ class AttendanceApiIntegrationTest extends BaseIntegrationTest {
 
         @Test
         @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("원생별 월간 출석 목록 조회 - 실패 (월 범위 오류)")
+        void getMonthlyAttendances_Fail_InvalidMonth() throws Exception {
+            mockMvc.perform(get("/api/v1/attendance/kid/1/monthly")
+                            .param("year", "2025")
+                            .param("month", "13"))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("C001"));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("원생별 월간 출석 목록 조회 - 실패 (필수 파라미터 누락)")
+        void getMonthlyAttendances_Fail_MissingYear() throws Exception {
+            mockMvc.perform(get("/api/v1/attendance/kid/1/monthly")
+                            .param("month", "1"))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("C001"))
+                    .andExpect(jsonPath("$.data.year").value("필수 요청 파라미터입니다"));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
+        @DisplayName("원생별 월간 출석 목록 조회 - 실패 (파라미터 타입 오류)")
+        void getMonthlyAttendances_Fail_InvalidYearType() throws Exception {
+            mockMvc.perform(get("/api/v1/attendance/kid/1/monthly")
+                            .param("year", "invalid")
+                            .param("month", "1"))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("C001"))
+                    .andExpect(jsonPath("$.data.year").value("요청 파라미터 타입이 올바르지 않습니다"));
+        }
+
+        @Test
+        @WithMockUser(username = "parent@test.com", roles = {"PARENT"})
         @DisplayName("월간 출석 통계 조회 - 성공")
         void getMonthlyStatistics_Success() throws Exception {
             mockMvc.perform(get("/api/v1/attendance/kid/1/statistics")

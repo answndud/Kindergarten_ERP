@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -63,4 +64,9 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
     Optional<NotificationOutbox> findByNotificationIdAndChannel(Long notificationId, NotificationChannel channel);
 
     List<NotificationOutbox> findByChannelOrderByIdAsc(NotificationChannel channel);
+
+    Page<NotificationOutbox> findByStatusOrderByDeadLetteredAtDescIdDesc(
+            NotificationDeliveryStatus status,
+            Pageable pageable
+    );
 }

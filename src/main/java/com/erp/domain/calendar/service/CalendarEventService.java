@@ -22,14 +22,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +40,9 @@ public class CalendarEventService {
     private final ClassroomService classroomService;
     private final ClassroomRepository classroomRepository;
     private final KidService kidService;
+    private final RecurrenceExpander recurrenceExpander;
+
+    private static final long MAX_QUERY_RANGE_DAYS = 366;
 
     @Transactional
     public Long createEvent(CalendarEventRequest request, Long memberId) {
@@ -109,7 +111,7 @@ public class CalendarEventService {
             }
         }
 
-        return expandEvents(events, startDateTime, endDateTime);
+        return recurrenceExpander.expand(events, startDateTime, endDateTime);
     }
 
     @Transactional
@@ -160,6 +162,10 @@ public class CalendarEventService {
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        long rangeDays = ChronoUnit.DAYS.between(startDate, endDate);
+        if (rangeDays > MAX_QUERY_RANGE_DAYS) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "캘린더 조회 기간은 최대 366일입니다");
         }
     }
 
@@ -382,67 +388,6 @@ public class CalendarEventService {
         }
 
         return List.of();
-    }
-
-    private List<CalendarEventResponse> expandEvents(
-            List<CalendarEvent> events,
-            LocalDateTime rangeStart,
-            LocalDateTime rangeEnd
-    ) {
-        return events.stream()
-                .flatMap(event -> expandEvent(event, rangeStart, rangeEnd).stream())
-                .sorted(Comparator.comparing(CalendarEventResponse::startDateTime)
-                        .thenComparing(CalendarEventResponse::id))
-                .toList();
-    }
-
-    private List<CalendarEventResponse> expandEvent(
-            CalendarEvent event,
-            LocalDateTime rangeStart,
-            LocalDateTime rangeEnd
-    ) {
-        RepeatType repeatType = event.getRepeatType() == null ? RepeatType.NONE : event.getRepeatType();
-        if (repeatType == RepeatType.NONE || event.getRepeatEndDate() == null) {
-            if (!overlaps(event.getStartDateTime(), event.getEndDateTime(), rangeStart, rangeEnd)) {
-                return List.of();
-            }
-            return List.of(CalendarEventResponse.from(event));
-        }
-
-        Duration duration = Duration.between(event.getStartDateTime(), event.getEndDateTime());
-        LocalDateTime occurrenceStart = event.getStartDateTime();
-        List<CalendarEventResponse> responses = new ArrayList<>();
-
-        while (!occurrenceStart.toLocalDate().isAfter(event.getRepeatEndDate())) {
-            LocalDateTime occurrenceEnd = occurrenceStart.plus(duration);
-            if (overlaps(occurrenceStart, occurrenceEnd, rangeStart, rangeEnd)) {
-                responses.add(CalendarEventResponse.from(event, occurrenceStart, occurrenceEnd));
-            }
-            if (occurrenceStart.isAfter(rangeEnd)) {
-                break;
-            }
-            occurrenceStart = advanceOccurrence(occurrenceStart, repeatType);
-        }
-
-        return responses;
-    }
-
-    private boolean overlaps(
-            LocalDateTime occurrenceStart,
-            LocalDateTime occurrenceEnd,
-            LocalDateTime rangeStart,
-            LocalDateTime rangeEnd
-    ) {
-        return !occurrenceStart.isAfter(rangeEnd) && !occurrenceEnd.isBefore(rangeStart);
-    }
-
-    private LocalDateTime advanceOccurrence(LocalDateTime occurrenceStart, RepeatType repeatType) {
-        return switch (repeatType) {
-            case DAILY -> occurrenceStart.plusDays(1);
-            case WEEKLY -> occurrenceStart.plusWeeks(1);
-            case MONTHLY -> occurrenceStart.plusMonths(1);
-            case NONE -> occurrenceStart;
-        };
     }
 
     private record ScopeContext(CalendarScopeType scopeType, Kindergarten kindergarten, Classroom classroom) {

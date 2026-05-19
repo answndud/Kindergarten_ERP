@@ -810,3 +810,67 @@
 - 결과:
   - README의 CI 성능 스토리, DB schema, service 접근 표면, 로컬 Java 기준선이 현재 운영 방식과 맞춰졌다.
   - `getKid(Long)`와 `getKidsByParent(Long)`는 다른 domain service의 subject 기반 내부 조회가 필요해 유지했다.
+
+<a id="archive-020"></a>
+## `020` 포트폴리오 백엔드 완성도 강화: 입력 하드닝, 캘린더 안전장치, Outbox 운영 API
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 프로젝트는 이미 인증/권한/감사/성능/CI 기반이 있었지만, 면접관 관점에서 "운영 중 실패를 어떻게 다루는가"와 "잘못된 입력을 어떻게 닫는가"를 더 명확히 보여줄 필요가 있었다.
+  - 전역 MVC 입력 오류 일부는 generic 500 handler로 떨어질 여지가 있었고, 캘린더 반복 일정 확장 로직은 service 내부에 섞여 있었다.
+  - `notification_outbox`는 retry/backoff/dead-letter 상태 전이를 갖췄지만, 운영자가 dead-letter를 확인하고 수동 재시도하는 API가 없었다.
+  - 빈 QueryDSL custom repository 스텁과 로컬 swap/backup artifact가 코드 탐색 노이즈로 남아 있었다.
+- 변경 내용:
+  - `GlobalExceptionHandler`에 필수 request parameter 누락, parameter type mismatch, constraint violation, date/time 예외 handler를 추가해 잘못된 입력을 400 `ApiResponse.error`로 정규화했다.
+  - `AttendanceService` 월 조회 year/month 범위를 `2000~2100`, `1~12`로 제한하고 invalid/missing/type 오류 통합 테스트를 추가했다.
+  - 캘린더 반복 occurrence 확장을 `RecurrenceExpander`로 분리하고, 일정 목록 조회 기간을 최대 366일로 제한했다.
+  - `RecurrenceExpanderTest` fast unit test와 캘린더 366일 초과 조회 통합 테스트를 추가했다.
+  - 원장 전용 `/api/v1/notification-outbox` 운영 API를 추가했다.
+    - `GET /summary`: status별 count, dead-letter channel별 count
+    - `GET /dead-letters`: dead-letter page 조회
+    - `POST /{outboxId}/retry`: dead-letter outbox를 즉시 `PENDING` 재시도 대기 상태로 전환
+  - `NotificationOutbox.resetDeadLetterForRetry`를 추가해 기존 attempt count를 보존하면서 최소 1회 재시도가 가능하도록 `maxAttempts`를 보정했다.
+  - 사용되지 않는 `MemberRepositoryCustom`, `MemberRepositoryImpl` 빈 스텁을 제거하고 `MemberRepository`의 불필요한 상속을 제거했다.
+  - 로컬 ignored swap/backup artifact를 삭제했다.
+  - README, docs index, developer guide, blog 역사 링크, 신규 `docs/guides/interview-guide.md`에 이번 개선의 문제/결정/검증/트레이드오프를 반영했다.
+- 코드/문서:
+  - `README.md`
+  - `blog/05-jpa-flyway-querydsl-redis-cache-foundation.md`
+  - `docs/README.md`
+  - `docs/guides/developer-guide.md`
+  - `docs/guides/interview-guide.md`
+  - `src/main/java/com/erp/global/exception/GlobalExceptionHandler.java`
+  - `src/main/java/com/erp/domain/attendance/service/AttendanceService.java`
+  - `src/main/java/com/erp/domain/calendar/service/CalendarEventService.java`
+  - `src/main/java/com/erp/domain/calendar/service/RecurrenceExpander.java`
+  - `src/main/java/com/erp/domain/notification/controller/NotificationOutboxOpsController.java`
+  - `src/main/java/com/erp/domain/notification/dto/response/*`
+  - `src/main/java/com/erp/domain/notification/entity/NotificationOutbox.java`
+  - `src/main/java/com/erp/domain/notification/repository/NotificationOutboxRepository.java`
+  - `src/main/java/com/erp/domain/notification/service/NotificationOutboxOpsService.java`
+  - `src/main/java/com/erp/domain/member/repository/MemberRepository.java`
+  - `src/test/java/com/erp/api/AttendanceApiIntegrationTest.java`
+  - `src/test/java/com/erp/api/CalendarApiIntegrationTest.java`
+  - `src/test/java/com/erp/api/NotificationOutboxOpsApiIntegrationTest.java`
+  - `src/test/java/com/erp/domain/calendar/service/RecurrenceExpanderTest.java`
+- 검증:
+  - `./gradlew test --tests "com.erp.api.AttendanceApiIntegrationTest"`: 통과
+  - `./gradlew fastTest test --tests "com.erp.api.CalendarApiIntegrationTest"`: 통과
+  - `./gradlew test --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest"`: 통과
+  - `./gradlew compileJava compileTestJava fastTest test --tests "com.erp.api.AttendanceApiIntegrationTest" --tests "com.erp.api.CalendarApiIntegrationTest" --tests "com.erp.api.NotificationOutboxOpsApiIntegrationTest"`: 통과
+  - `./gradlew bootJar`: 통과
+  - `./gradlew test`: 통과
+  - `rg -n "MemberRepositoryCustom\\.java|MemberRepositoryImpl\\.java|docs/portfolio|docs/decisions|docs/archive|../PLAN.md|../PROGRESS.md" AGENTS.md README.md CURRENT_FEATURES.md blog docs src/main/java src/test/java || true`: 삭제 파일 직접 링크 없음 확인
+  - `find docs -maxdepth 2 -type f | sort`: `docs/guides/interview-guide.md` 포함 확인
+  - `git diff --check`: 통과
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: 전역 예외 handler, calendar service, notification outbox 운영 API, repository wiring 변경을 targeted/full test와 packaging으로 검증했고, 원장 전용 운영 API는 method security와 통합 테스트로 권한 경계를 확인했다.
+- 남은 리스크:
+  - Notification Outbox 운영 기능은 API까지이며, 별도 운영 화면은 아직 없다.
+  - 캘린더 조회 범위 cap은 366일로 고정했다. 실제 고객 요구가 2년 이상 일정 조회라면 별도 pagination/streaming 설계가 필요하다.
+  - `KidApplicationService`는 여전히 큰 workflow service이므로 향후 기능별 service 분리 여지가 있다.
+- 결과:
+  - 프로젝트는 잘못된 입력 처리, 반복 일정 성능 안전장치, 알림 실패 운영 대응, 코드 탐색성, 면접용 문서 스토리가 함께 강화됐다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
