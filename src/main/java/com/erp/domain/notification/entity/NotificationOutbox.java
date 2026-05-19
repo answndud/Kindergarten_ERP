@@ -35,7 +35,8 @@ import lombok.NoArgsConstructor;
         indexes = {
                 @Index(name = "idx_notification_outbox_status_next_attempt", columnList = "status, next_attempt_at, id"),
                 @Index(name = "idx_notification_outbox_processing_started", columnList = "status, processing_started_at, id"),
-                @Index(name = "idx_notification_outbox_notification_id", columnList = "notification_id")
+                @Index(name = "idx_notification_outbox_notification_id", columnList = "notification_id"),
+                @Index(name = "idx_notification_outbox_timeline", columnList = "status, channel, created_at, id")
         }
 )
 @Getter

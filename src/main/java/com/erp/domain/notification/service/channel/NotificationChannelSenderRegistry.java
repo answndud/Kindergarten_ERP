@@ -13,7 +13,11 @@ public class NotificationChannelSenderRegistry {
     public NotificationChannelSenderRegistry(List<NotificationChannelSender> channelSenders) {
         EnumMap<NotificationChannel, NotificationChannelSender> senderMap = new EnumMap<>(NotificationChannel.class);
         for (NotificationChannelSender sender : channelSenders) {
-            senderMap.put(sender.channel(), sender);
+            NotificationChannel channel = sender.channel();
+            if (senderMap.containsKey(channel)) {
+                throw new IllegalStateException("Duplicate notification sender configured for channel " + channel);
+            }
+            senderMap.put(channel, sender);
         }
         this.senders = Map.copyOf(senderMap);
     }
