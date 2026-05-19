@@ -10,7 +10,7 @@
 2. "핵심 문제와 해결" 표에서 권한 경계, 세션 revoke, 상태 전이, 감사 로그, outbox 운영을 짚습니다.
 3. "수치로 검증한 개선" 표에서 Notepad/Dashboard query count와 CI 시간 개선을 설명합니다.
 4. 화면 캡처에서 `/applications/pending`, `/notification-outbox`, audit 화면을 보여주며 실제 운영 흐름이 닫혀 있음을 설명합니다.
-5. 코드 확인 요청이 들어오면 `global/security`, `global/exception`, `domain/notification`, `domain/calendar`, `domain/attendance` 순서로 이동합니다.
+5. 코드 확인 요청이 들어오면 `docs/guides/evidence-map.md`에서 주장별 증거를 고른 뒤 `global/security`, `global/exception`, `domain/notification`, `domain/calendar`, `domain/attendance` 순서로 이동합니다.
 
 ## 2. 10분 시연 루트
 
@@ -20,7 +20,7 @@
 4. `/notification-outbox`에서 dead-letter summary, 목록, retry 버튼을 보여줍니다.
 5. `/audit-logs`, `/domain-audit-logs`에서 인증 이벤트와 업무 상태 전이가 archive되는 방식을 보여줍니다.
 6. Swagger UI에서 `Attendance`, `Dashboard`, `Auth`, `Notification Ops` API 그룹을 보여주며 API 계약 확인 경로를 설명합니다.
-7. README의 Notepad/Dashboard query count 개선표와 CI `5m 28s -> 1m 14s` 대표 지표, 최신 main `1m34s` 확인 결과로 성능/검증 스토리를 마무리합니다.
+7. README의 Notepad/Dashboard query count 개선표와 CI `5m 28s -> 1m 14s` 대표 지표를 보여주고, 최신 main 결과는 GitHub Actions 배지와 run history로 확인합니다.
 
 ## 3. 말하기 스크립트
 
@@ -52,7 +52,19 @@
 | 성능 개선 | `src/test/java/com/erp/performance` | query count와 elapsed time 전후 측정 |
 | CI 전략 | `.github/workflows/ci.yml`, `backend-quality.yml` | push quick check와 수동 heavy suite 분리 |
 
-## 5. 면접 질문 대응 포인트
+## 5. 약점 질문 선제 대응
+
+면접관이 약점을 먼저 묻는다면 `docs/guides/risk-response.md`를 기준으로 답합니다.
+
+| 약점 질문 | 짧은 답변 |
+| --- | --- |
+| 실제 배포가 없나요? | 비용 문제로 클라우드 배포는 하지 않았지만 Dockerfile, deploy compose, env contract, readiness, CD workflow_dispatch까지 준비했습니다. |
+| Tailwind CDN은 운영에 부적절하지 않나요? | 맞습니다. 백엔드 포트폴리오라 UI build pipeline은 후순위로 뒀고, 운영 전에는 Tailwind build/CSP/fingerprint를 추가해야 합니다. |
+| 모놀리식이 한계 아닌가요? | 현재 규모에서는 트랜잭션과 권한 경계를 한 저장소에서 닫는 것이 합리적이고, 분리한다면 notification/audit/reporting부터 분리합니다. |
+| 외부 알림은 실제 발송인가요? | 실제 provider 연동보다 outbox 상태 전이, dead-letter 관측, 재시도 운영면을 검증하는 데 집중했습니다. |
+| full test를 매번 안 돌려도 되나요? | push는 빠른 실패 신호, 큰 변경은 수동 quality workflow로 나눴습니다. 혼자 운영하는 main 프로젝트의 비용/피드백 균형입니다. |
+
+## 6. 면접 질문 대응 포인트
 
 | 질문 | 답변 방향 | 확인 위치 |
 | --- | --- | --- |
@@ -63,7 +75,7 @@
 | 큰 service는 어떻게 관리했나요? | `KidApplicationService`는 orchestration만 남기고 admission, notification, audit 보조 책임을 분리했습니다. | `domain/kidapplication/service` |
 | 성능 개선은 어떻게 증명했나요? | query count/elapsed time을 전후 측정하고 performance smoke test와 archive에 남겼습니다. | README, `performance/*`, `docs/COMPLETED.md` |
 
-## 6. 최근 강화 작업의 의도
+## 7. 최근 강화 작업의 의도
 
 ### 입력/예외 하드닝
 
@@ -106,7 +118,7 @@
 - 결정: 사용되지 않는 custom repository 스텁을 제거하고 로컬 ignored 작업파일을 삭제했습니다.
 - 검증: 컴파일과 targeted tests로 repository wiring 회귀를 확인합니다.
 
-## 7. 면접에서 강조할 답변 포인트
+## 8. 면접에서 강조할 답변 포인트
 
 - 보안: HTTP-only cookie JWT, Redis refresh session, active session revoke, fail-closed profile.
 - 권한: `PRINCIPAL`, `TEACHER`, `PARENT` 역할과 유치원 tenant 경계를 API/service/test에서 함께 검증.
@@ -115,9 +127,10 @@
 - 테스트: Testcontainers 기반 MySQL/Redis 통합 테스트, fast/integration/performance smoke 분리.
 - 문서화: `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/COMPLETED.md`로 active/archive 상태 관리.
 
-## 8. 남은 리스크와 후속 개선
+## 9. 남은 리스크와 후속 개선
 
 - 실제 클라우드 배포는 비용 문제로 아직 실행하지 않았고, 배포 자산과 runbook 중심으로 준비된 상태입니다.
 - Notification Outbox 운영 화면은 dead-letter 중심입니다. 전체 outbox timeline이나 channel별 drill-down은 후속 개선입니다.
 - `KidApplicationService`는 보조 책임을 분리했지만, 더 큰 규모에서는 상태 전이 전용 workflow component까지 분리할 수 있습니다.
 - 실제 운영 도메인이 생기면 `CORS_ALLOWED_ORIGINS`, OAuth redirect URI, secure cookie, reverse proxy 설정을 함께 검증해야 합니다.
+- 세부 약점 대응은 `docs/guides/risk-response.md`, 주장별 증거 연결은 `docs/guides/evidence-map.md`를 기준으로 확인합니다.
