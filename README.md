@@ -77,7 +77,7 @@
 
 ## 화면
 
-2026-04-23 기준 desktop-first 화면입니다.
+2026-05-19 기준 desktop-first 화면입니다.
 
 | 원장 대시보드 | 출석 관리 |
 |---|---|
@@ -90,6 +90,10 @@
 | 인증 감사 로그 | 업무 감사 로그 |
 |---|---|
 | ![인증 감사 로그](./docs/assets/readme/audit-desktop.png) | ![업무 감사 로그](./docs/assets/readme/domain-audit-desktop.png) |
+
+| 알림 Outbox 운영 |
+|---|
+| ![알림 Outbox 운영](./docs/assets/readme/outbox-desktop.png) |
 
 ## 서비스가 실제로 어떻게 닫히는가
 

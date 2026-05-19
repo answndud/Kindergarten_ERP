@@ -1119,3 +1119,46 @@
   - 최근 보강된 Swagger/controller 코드는 메서드 본문 주변 annotation 노이즈가 줄었다.
   - demo seed 보강 흐름은 context 생성, guard, supplement 실행이 분리돼 설명 가능성이 높아졌다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-026"></a>
+## `026` release 패키징, demo smoke, README Outbox 화면 최신화
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 사용자는 다음 작업으로 release packaging 확인, demo 핵심 화면 실스모크, README 화면 이미지 최신화를 1~3번 순서대로 진행하길 원했다.
+  - 이 프로젝트는 실제 클라우드 배포가 없으므로, 면접 직전에는 배포 workflow보다 로컬 demo 재현성과 README 시각 자료 신뢰도가 더 중요하다.
+  - 검증 비용은 최소화하되, 원장 계정 기준 핵심 시연 화면은 실제 브라우저로 확인해야 했다.
+- 변경 내용:
+  - `./gradlew bootJar`로 release jar 패키징 가능 여부를 확인했다.
+  - 첫 demo smoke 중 `demo` profile group에 포함된 `local` 설정이 `application-demo.yml`의 `app.seed.enabled=true`를 덮어 demo seed가 실행되지 않는 설정 충돌을 확인했다.
+  - seed 기본값을 base `application.yml`의 환경변수 기반 default로 옮기고, `application-local.yml`의 seed override를 제거했다.
+  - 이 변경으로 local은 기본 seed off를 유지하고, demo는 `application-demo.yml`의 seed on 설정이 정상 적용된다.
+  - demo 앱을 재기동한 뒤 원장 계정으로 `/dashboard`, `/applications/pending`, `/notification-outbox`, `/swagger-ui.html` 접근을 확인했다.
+  - README 화면 섹션에 알림 Outbox 운영 캡처를 추가했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/assets/readme/outbox-desktop.png`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+  - `src/main/resources/application.yml`
+  - `src/main/resources/application-local.yml`
+- 검증:
+  - `./gradlew bootJar`: 통과
+  - Docker compose local MySQL/Redis 실행 상태 확인
+  - `SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun`: demo 앱 기동 성공
+  - 브라우저 smoke:
+    - `/dashboard`: 원장 대시보드, 총 원생, 총 교사 확인
+    - `/applications/pending`: 승인 대기 큐와 `민준` 샘플 확인
+    - `/notification-outbox`: `DELIVERED 1`, `DEAD_LETTER 3`, APP/EMAIL/PUSH dead-letter와 retry 버튼 확인
+    - `/swagger-ui.html`: Swagger UI의 Attendance, Dashboard, Auth API 그룹 확인
+  - `git diff --check`: 통과
+  - `rg -n "outbox-desktop|app.seed|APP_SEED_ENABLED|notification-outbox" README.md docs src/main/resources`: 관련 문서/설정 연결 확인
+  - 전체 `./gradlew test`는 사용자의 최소 검증 선호와 이번 변경 범위를 고려해 실행하지 않았다.
+- Doctor 판정:
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: production 기본 seed off, local 환경변수 opt-in, demo seed on 의도가 분리됐고, API/DB/security 계약 변경 없이 demo 재현성만 복구했다.
+- 결과:
+  - release jar 패키징, demo 핵심 화면, README outbox 화면 자료가 모두 현재 로컬 기준으로 검증됐다.
+  - demo profile에서 seed가 비어 핵심 시연 화면이 공백으로 보일 수 있는 리스크를 제거했다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.

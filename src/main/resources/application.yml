@@ -110,8 +110,8 @@ notification:
 
 app:
   seed:
-    enabled: false
-    log-credentials: false
+    enabled: ${APP_SEED_ENABLED:false}
+    log-credentials: ${APP_SEED_LOG_CREDENTIALS:false}
   security:
     management-surface:
       public-api-docs: false
