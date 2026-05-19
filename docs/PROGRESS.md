@@ -8,7 +8,7 @@
 
 ## Active Progress
 
-- 상태: 장기 개선 roadmap 강화 완료. 다음 실행 후보는 Phase 1 운영 전환 리스크 감소.
+- 상태: Phase 1 운영 전환 리스크 감소 완료. 다음 실행 후보는 Phase 2 큰 서비스/워크플로우 구조 정리.
 - Blocker: 없음.
-- 최근 검증: `docs/PLAN.md`에 Phase 1~6 순서로 운영 전환, 리팩토링, 테스트 품질, production-like 실행 증거, 기능 완성도, 최종 제출 패키지 정리 계획을 작성했다. 또한 roadmap 완료 시 P0/P1 운영 리스크와 큰 리팩토링 여지가 닫혀야 한다는 최종 완료 정의를 추가했다.
-- 다음 액션: 사용자가 실행을 지시하면 Phase 1부터 세부 조사와 구현을 시작한다.
+- 최근 검증: `StartupSafetyValidatorTest`, `ObservabilityIntegrationTest`, `ManagementSurfaceOptInIntegrationTest`, `bootJar`, local/prod compose config, `git diff --check` 통과. prod CORS wildcard/non-HTTPS 차단과 `.env.prod.example` 기반 compose dry-run을 보강했다.
+- 다음 액션: Phase 1 변경분을 commit/push한 뒤 Phase 2 service size/caller map 조사를 시작한다.

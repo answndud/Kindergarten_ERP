@@ -1,5 +1,6 @@
 package com.erp.global.config;
 
+import com.erp.global.security.CorsProperties;
 import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.jwt.JwtProperties;
 import jakarta.annotation.PostConstruct;
@@ -21,6 +22,7 @@ public class StartupSafetyValidator {
     private final Environment environment;
     private final JwtProperties jwtProperties;
     private final ManagementSurfaceProperties managementSurfaceProperties;
+    private final CorsProperties corsProperties;
     private final SeedProperties seedProperties;
 
     @PostConstruct
@@ -72,6 +74,19 @@ public class StartupSafetyValidator {
 
         if (environment.getProperty("springdoc.swagger-ui.enabled", Boolean.class, false)) {
             throw new IllegalStateException("Production profile must keep springdoc.swagger-ui.enabled=false.");
+        }
+
+        validateProdCors();
+    }
+
+    private void validateProdCors() {
+        for (String origin : corsProperties.resolveAllowedOrigins()) {
+            if ("*".equals(origin)) {
+                throw new IllegalStateException("Production profile must not use wildcard CORS origins.");
+            }
+            if (!origin.startsWith("https://")) {
+                throw new IllegalStateException("Production profile requires HTTPS CORS origins.");
+            }
         }
     }
 

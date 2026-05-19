@@ -15,6 +15,7 @@
 | OAuth2는 실제 운영 redirect까지 검증했나요? | Google/Kakao 설정 경로와 local/demo 중심 | 실제 client secret과 운영 도메인이 없으므로 로컬 설정 계약까지만 준비 | 운영 도메인 발급 후 redirect URI, secure cookie, SameSite, CORS를 함께 검증 | `docs/guides/env-contract.md`, `SecurityConfig` |
 | demo seed가 prod에 켜질 위험은 없나요? | base default off, demo explicit on, prod validator로 seed 차단 | demo 재현성과 prod fail-closed를 분리했다 | 배포 pipeline에서 `SPRING_PROFILES_ACTIVE=prod`와 secret 검증을 강제 | `StartupSafetyValidator`, `StartupSafetyValidatorTest` |
 | Swagger/Prometheus가 외부 공개될 위험은 없나요? | 기본 비공개, local/demo opt-in, prod validator 차단 | 운영면은 필요하지만 기본 공개는 위험하므로 opt-in으로 분리했다 | reverse proxy와 management plane 분리, IP allowlist, auth 적용 | `SecurityConfig`, `ObservabilityIntegrationTest`, `ManagementSurfaceOptInIntegrationTest` |
+| CORS 설정을 잘못 열 위험은 없나요? | prod validator가 wildcard와 non-HTTPS origin을 차단 | cookie 인증을 쓰므로 credentialed CORS에서 origin을 좁히는 것이 필수다 | 실제 도메인 확보 후 `CORS_ALLOWED_ORIGINS=https://...`만 설정 | `CorsProperties`, `StartupSafetyValidatorTest`, `env-contract.md` |
 | full test를 매번 돌리지 않는 건 신뢰도 문제가 아닌가요? | push CI는 quick, heavy suite는 수동 workflow | 혼자 운영하는 main 포트폴리오에서 비용/시간과 빠른 피드백을 균형화했다 | 큰 기능/보안/DB 변경 후 `Backend Quality` 수동 실행을 release gate로 사용 | `.github/workflows/ci.yml`, `.github/workflows/backend-quality.yml` |
 
 ## 2. Red-Team 최소 점검
@@ -24,6 +25,7 @@
 | prod에서 seed가 켜질 수 있는가 | 낮음 | `StartupSafetyValidator`가 prod + `app.seed.enabled=true`를 차단, 테스트 존재 | 실제 CD secret/env 오입력은 workflow/서버에서 추가 검증 필요 |
 | prod에서 Swagger/OpenAPI가 공개될 수 있는가 | 낮음 | `StartupSafetyValidator`, `SecurityConfig`, observability/management opt-in tests | reverse proxy rule이 별도로 생기면 별도 점검 필요 |
 | prod에서 app-port Prometheus가 공개될 수 있는가 | 낮음 | `app.security.management-surface.expose-prometheus-on-app-port=false` 기본, opt-in test 존재 | 실제 운영에서는 management port/IP 제한 필요 |
+| prod에서 credentialed CORS가 과하게 열릴 수 있는가 | 낮음 | `StartupSafetyValidator`가 wildcard/non-HTTPS origin을 차단 | 실제 도메인 변경 시 env와 OAuth redirect URI를 함께 바꿔야 함 |
 | outbox 운영 API를 교사가 호출할 수 있는가 | 낮음 | `NotificationOutboxOpsApiIntegrationTest.teacherCannotAccessOutboxOps` | 새 endpoint 추가 시 SecurityConfig와 `@PreAuthorize` 동시 점검 필요 |
 | outbox 화면을 교사가 열 수 있는가 | 낮음 | `ViewEndpointTest.testNotificationOutboxPageForTeacherForbidden` | 프론트 링크 숨김만으로 판단하지 말고 서버 권한 테스트 유지 필요 |
 | README CI 최신 시간이 낡을 수 있는가 | 완화됨 | README에서 고정 최신값 제거, 배지/Actions 기준으로 변경 | 대표 개선값은 archive와 실제 run history가 어긋나면 재측정 필요 |

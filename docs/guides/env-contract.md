@@ -84,6 +84,10 @@
 - `KAKAO_CLIENT_SECRET`
 - `CORS_ALLOWED_ORIGINS`
 
+`CORS_ALLOWED_ORIGINS`는 실제 HTTPS origin만 허용합니다.
+예: `https://erp.example.com`
+`*`, `http://...`, `localhost` 계열은 `prod` 부팅 안전 검증에서 차단합니다.
+
 ### 선택
 
 - `REDIS_PORT`

@@ -64,6 +64,7 @@
 | 최신 CI | `Backend CI` 배지와 Actions에서 확인. 최근 main push는 1분대 통과 |
 | Demo smoke | `/dashboard`, `/applications/pending`, `/notification-outbox`, `/swagger-ui.html` 확인 |
 | Release check | `./gradlew bootJar` 통과 |
+| Prod safety | seed, Swagger/OpenAPI, app-port Prometheus, insecure cookie, wildcard/non-HTTPS CORS 차단 테스트 보유 |
 | 배포 | 클라우드 미배포. `deploy/*`, Dockerfile, 배포 가이드만 준비 |
 
 ## 핵심 문제와 해결
