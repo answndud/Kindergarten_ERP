@@ -21,6 +21,16 @@
 | 바로 볼 문서 | [`docs/COMPLETED.md`](./docs/COMPLETED.md), [`docs/guides/developer-guide.md`](./docs/guides/developer-guide.md), [`docs/guides/env-contract.md`](./docs/guides/env-contract.md), [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) |
 | 최소 로컬 검증 | 빠른 수정은 `./gradlew compileJava compileTestJava` + `git diff --check`, 릴리스 전만 `./gradlew test` |
 
+## 3분 리뷰 루트
+
+면접관이 짧게 훑는다면 아래 순서만 보면 됩니다.
+
+1. [핵심 문제와 해결](#핵심-문제와-해결): tenant 권한, JWT 세션, 상태 전이, 감사/관측성, outbox 실패 대응을 한 번에 확인합니다.
+2. [수치로 검증한 개선](#수치로-검증한-개선): Notepad/Dashboard 쿼리 수와 CI 시간을 어떻게 줄였는지 확인합니다.
+3. [화면](#화면): 원장 대시보드, 신청 처리 큐, 출석, 감사 로그가 실제 화면으로 닫히는지 확인합니다.
+4. [API / 운영 문서](#api--운영-문서): Swagger, audit export, notification outbox, dashboard API 표면을 확인합니다.
+5. [테스트 & CI](#테스트--ci): 혼자 운영하는 `main` 고정 프로젝트에서 quick CI와 manual quality를 분리한 이유를 확인합니다.
+
 ## 바로 확인할 것
 
 - [5분 실행 / 검증](#5분-실행--검증): `demo` 프로파일과 시연 계정으로 빠르게 재현할 수 있습니다.
@@ -230,15 +240,19 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 
 ## 테스트 & CI
 
-- 로컬 기본 검증은 `./gradlew test`입니다.
+혼자 운영하는 `main` 고정 포트폴리오 프로젝트라서, push마다 모든 heavy test를 돌리지 않고 빠른 실패 신호와 수동 품질 검증을 분리했습니다.
+
+| 구분 | 실행 시점 | 하는 일 | 이유 |
+|------|-----------|---------|------|
+| 최소 로컬 검증 | 작은 문서/annotation/seed 수정 | `compileJava compileTestJava`, 관련 targeted test, `git diff --check` | 빠르게 깨진 import, annotation, query method를 잡음 |
+| Backend CI | 모든 push | `fastTest`, `bootJar`, compose config 해석 | `main`의 빠른 실패 신호 유지 |
+| Backend Quality | 큰 기능/보안/DB/성능 변경 후 수동 | `integrationTest`, `performanceSmokeTest`, `bootJar`, monitoring compose config | Testcontainers/성능 smoke는 필요할 때 비용을 지불 |
+| Release check | 릴리스/면접 시연 직전 | `./gradlew test`, demo runbook 수동 확인 | 실제 시연 전 회귀 리스크 축소 |
+
 - 통합 테스트는 H2 대체가 아니라 MySQL/Redis Testcontainers를 사용합니다.
-- 혼자 운영하는 `main` 고정 프로젝트라 push CI는 빠른 실패 신호만 남깁니다.
-- `Backend CI`: `fastTest`, `bootJar`, compose config 해석만 자동 실행합니다.
-- `Backend Quality`: `integrationTest`, `performanceSmokeTest`, `bootJar`, monitoring compose config 해석을 수동 실행합니다.
 - 최근 측정 기준으로 자동 push CI는 `5m 28s`에서 `1m 14s`로 줄었습니다.
 - CD는 클라우드 배포 secret이 준비되기 전까지 `workflow_dispatch` 수동 실행만 유지합니다.
-- 혼자 운영하는 포트폴리오 프로젝트이므로 일상 개선 작업은 `compileJava compileTestJava`, 관련 targeted test, `git diff --check`를 우선하고 전체 테스트는 릴리스/큰 변경 직전에 실행합니다.
-- Swagger/OpenAPI 공개 경로와 Prometheus scrape도 회귀 검증합니다.
+- Swagger/OpenAPI 공개 경로와 Prometheus scrape는 local/demo에서만 회귀 확인하고, prod에서는 기본 비활성화합니다.
 - 수동 quality workflow는 실패 분석을 위해 테스트 리포트를 artifact로 업로드합니다.
 
 ## 문서

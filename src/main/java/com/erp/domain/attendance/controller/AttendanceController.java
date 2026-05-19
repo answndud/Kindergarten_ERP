@@ -14,6 +14,10 @@ import com.erp.domain.attendance.service.AttendanceService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.user.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,6 +35,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/attendance")
 @RequiredArgsConstructor
+@Tag(name = "Attendance", description = "교사/원장 출석 처리와 학부모 조회 API")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
@@ -57,6 +62,41 @@ public class AttendanceController {
      */
     @PostMapping("/upsert")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(
+            summary = "출석 등록/수정",
+            description = "교사 또는 원장이 원생의 특정 날짜 출석 상태를 upsert합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    content = @Content(
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "kidId": 1,
+                                      "attendanceDate": "2026-05-19",
+                                      "status": "PRESENT",
+                                      "note": "정상 등원"
+                                    }
+                                    """)
+                    )
+            ),
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "저장된 출석 응답",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "message": "출석이 저장되었습니다",
+                                      "data": {
+                                        "id": 10,
+                                        "kidName": "준우",
+                                        "attendanceDate": "2026-05-19",
+                                        "status": "PRESENT"
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<AttendanceResponse>> upsert(
             @Valid @RequestBody AttendanceRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -111,6 +151,31 @@ public class AttendanceController {
      */
     @GetMapping("/daily")
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "반별 일별 출석 현황",
+            description = "반 ID와 날짜 기준으로 일별 출석 상태를 조회합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "일별 출석 목록",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": [
+                                        {
+                                          "kidId": 1,
+                                          "kidName": "준우",
+                                          "status": "PRESENT",
+                                          "dropOffTime": "09:10",
+                                          "pickUpTime": "16:30"
+                                        }
+                                      ]
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<List<DailyAttendanceResponse>>> getDailyAttendance(
             @RequestParam(required = false) Long classroomId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -154,6 +219,29 @@ public class AttendanceController {
      */
     @GetMapping("/classroom/{classroomId}/monthly-report")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(
+            summary = "반별 월간 출석 리포트",
+            description = "교사/원장이 반 단위 월간 출석 집계와 원생별 요약을 조회합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "월간 출석 리포트",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": {
+                                        "classroomName": "해바라기반",
+                                        "year": 2026,
+                                        "month": 5,
+                                        "totalPresent": 42,
+                                        "totalAbsent": 3
+                                      }
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<MonthlyAttendanceReportResponse>> getMonthlyReport(
             @PathVariable Long classroomId,
             @RequestParam int year,

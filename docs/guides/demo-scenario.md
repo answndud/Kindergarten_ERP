@@ -43,7 +43,19 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 6. README 성능 표: Notepad/Dashboard query count와 CI 시간 단축 수치를 설명합니다.
 7. Swagger: `/swagger-ui.html`에서 운영 API 설명을 보여줍니다.
 
-## 5. 질문을 받았을 때 열 파일
+## 5. 화면별 기대 데이터
+
+| 화면 | 기대 데이터 | 비어 있을 때 우선 확인 |
+| --- | --- | --- |
+| `/dashboard` | 원생/교사/학부모 수, 오늘 출석 지표, 최근 운영 지표 | principal 계정의 kindergarten 연결, 기본 원생 seed |
+| `/applications/pending` | `PENDING`, `WAITLISTED`, `OFFERED` 입학 신청 샘플 | parent1~3 계정, 해바라기반/장미반, `kid_application` 테이블 |
+| `/notification-outbox` | `APP`, `PUSH`, `EMAIL` dead-letter와 retry 버튼 | principal 계정, `notification`, `notification_outbox` 테이블 |
+| `/calendar` | 유치원 전체 일정, 해바라기반 반복 일정, 개인 운영 점검 일정 | 해바라기 유치원/해바라기반, `calendar_events` 테이블 |
+| `/audit-logs` | 로그인/refresh/social link/unlink 인증 이벤트 | `auth_audit_logs` 테이블, principal tenant 필터 |
+| `/domain-audit-logs` | 입학 대기열/offer/승인 업무 변경 이력 | `domain_audit_logs` 테이블, 입학 신청 샘플 |
+| `/swagger-ui.html` | Auth, Attendance, Dashboard, Audit, Outbox, Application API 설명과 예시 | `SPRING_PROFILES_ACTIVE=demo`, springdoc local/demo 노출 설정 |
+
+## 6. 질문을 받았을 때 열 파일
 
 | 질문 | 열 파일 |
 | --- | --- |
@@ -54,7 +66,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | 운영 환경 변수는 어디에 정리했나요? | `docs/guides/env-contract.md` |
 | 완료 이력과 검증은 어디에 남기나요? | `docs/COMPLETED.md` |
 
-## 6. 시연 실패 시 빠른 복구
+## 7. 시연 실패 시 빠른 복구
 
 - 로그인 실패: `demo` 프로파일인지, seed가 켜졌는지 확인합니다.
 - 화면이 비어 있음: `DataLoader`는 seed 계정이 있으면 기본 seed를 다시 만들지 않지만, 시연용 신청/outbox/calendar 샘플은 누락분을 보강합니다. 그래도 비어 있으면 기본 seed 계정/반/원생이 일부 삭제된 DB일 수 있으니 local/demo DB를 초기화합니다.
@@ -62,7 +74,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 - Swagger가 닫힘: `SPRING_PROFILES_ACTIVE=demo`인지 확인합니다.
 - Redis/MySQL 연결 실패: `docker compose --env-file docker/.env -f docker/docker-compose.yml ps`로 컨테이너 상태를 확인합니다.
 
-## 7. 최소 검증 루트
+## 8. 최소 검증 루트
 
 시간을 아껴야 할 때는 아래만 확인합니다.
 
