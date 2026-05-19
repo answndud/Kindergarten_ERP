@@ -419,6 +419,7 @@ public class DataLoader implements CommandLineRunner {
                 null,
                 null,
                 null,
+                null,
                 org.springframework.data.domain.Sort.unsorted()
         ).isEmpty()) {
             createDomainAuditLog(
@@ -438,6 +439,7 @@ public class DataLoader implements CommandLineRunner {
                 null,
                 null,
                 null,
+                null,
                 org.springframework.data.domain.Sort.unsorted()
         ).isEmpty()) {
             createDomainAuditLog(
@@ -454,6 +456,7 @@ public class DataLoader implements CommandLineRunner {
                 kgB.getId(),
                 DomainAuditAction.KID_APPLICATION_APPROVED,
                 DomainAuditTargetType.KID_APPLICATION,
+                null,
                 null,
                 null,
                 null,

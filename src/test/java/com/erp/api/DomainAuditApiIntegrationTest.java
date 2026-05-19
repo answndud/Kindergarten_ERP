@@ -73,6 +73,7 @@ class DomainAuditApiIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(get("/api/v1/domain-audit-logs")
                         .with(authenticated(principalMember))
                         .param("action", "KID_APPLICATION_WAITLISTED")
+                        .param("summary", "대기")
                         .param("from", LocalDate.now().minusDays(1).toString())
                         .param("to", LocalDate.now().plusDays(1).toString()))
                 .andExpect(status().isOk())
@@ -97,7 +98,8 @@ class DomainAuditApiIntegrationTest extends BaseIntegrationTest {
 
         mockMvc.perform(get("/api/v1/domain-audit-logs/export")
                         .with(authenticated(principalMember))
-                        .param("action", "ANNOUNCEMENT_UPDATED"))
+                        .param("action", "ANNOUNCEMENT_UPDATED")
+                        .param("summary", "공지"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", containsString("attachment;")))
                 .andExpect(content().contentTypeCompatibleWith("text/csv"))

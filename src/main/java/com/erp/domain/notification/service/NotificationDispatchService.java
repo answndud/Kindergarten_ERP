@@ -6,9 +6,9 @@ import com.erp.domain.notification.entity.NotificationOutbox;
 import com.erp.domain.notification.repository.NotificationOutboxRepository;
 import com.erp.domain.notification.service.channel.NotificationChannel;
 import com.erp.domain.notification.service.channel.NotificationChannelSender;
+import com.erp.domain.notification.service.channel.NotificationChannelSenderRegistry;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class NotificationDispatchService {
     private final NotificationOutboxRepository notificationOutboxRepository;
     private final NotificationDeliveryPolicyService notificationDeliveryPolicyService;
     private final NotificationDeliveryProperties deliveryProperties;
-    private final List<NotificationChannelSender> channelSenders;
+    private final NotificationChannelSenderRegistry senderRegistry;
     private final PlatformTransactionManager transactionManager;
 
     @Transactional
@@ -141,16 +141,7 @@ public class NotificationDispatchService {
     }
 
     private NotificationChannelSender resolveSender(NotificationChannel channel) {
-        Map<NotificationChannel, NotificationChannelSender> senderMap = new EnumMap<>(NotificationChannel.class);
-        for (NotificationChannelSender sender : channelSenders) {
-            senderMap.put(sender.channel(), sender);
-        }
-
-        NotificationChannelSender sender = senderMap.get(channel);
-        if (sender == null) {
-            throw new IllegalStateException("No notification sender configured for channel " + channel);
-        }
-        return sender;
+        return senderRegistry.getRequired(channel);
     }
 
     private int resolveWorkerBatchSize() {

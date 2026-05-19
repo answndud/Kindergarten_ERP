@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationOutboxOpsService {
 
     private static final int MAX_DEAD_LETTER_LIMIT = 100;
+    private static final int MAX_TIMELINE_LIMIT = 100;
 
     private final NotificationOutboxRepository notificationOutboxRepository;
     private final NotificationDeliveryProperties deliveryProperties;
@@ -42,6 +44,24 @@ public class NotificationOutboxOpsService {
                 ));
 
         return new NotificationOutboxSummaryResponse(statusCounts, deadLetterCountsByChannel);
+    }
+
+    public Page<NotificationOutboxItemResponse> getTimeline(
+            int page,
+            int size,
+            NotificationDeliveryStatus status,
+            NotificationChannel channel,
+            String keyword
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_TIMELINE_LIMIT);
+        PageRequest pageRequest = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+        );
+        return notificationOutboxRepository.searchTimeline(status, channel, normalizeKeyword(keyword), pageRequest)
+                .map(NotificationOutboxItemResponse::from);
     }
 
     public Page<NotificationOutboxItemResponse> getDeadLetters(int page, int size, NotificationChannel channel) {
@@ -62,6 +82,13 @@ public class NotificationOutboxOpsService {
                         pageRequest
                 )
                 .map(NotificationOutboxItemResponse::from);
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        return keyword.trim().toLowerCase();
     }
 
     @Transactional

@@ -28,6 +28,7 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
               AND (:result IS NULL OR log.result = :result)
               AND (:provider IS NULL OR log.provider = :provider)
               AND (:emailKeyword IS NULL OR LOWER(log.email) LIKE LOWER(CONCAT('%', :emailKeyword, '%')))
+              AND (:reasonKeyword IS NULL OR LOWER(log.reason) LIKE LOWER(CONCAT('%', :reasonKeyword, '%')))
               AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
               AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
             """,
@@ -39,6 +40,7 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
               AND (:result IS NULL OR log.result = :result)
               AND (:provider IS NULL OR log.provider = :provider)
               AND (:emailKeyword IS NULL OR LOWER(log.email) LIKE LOWER(CONCAT('%', :emailKeyword, '%')))
+              AND (:reasonKeyword IS NULL OR LOWER(log.reason) LIKE LOWER(CONCAT('%', :reasonKeyword, '%')))
               AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
               AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
             """)
@@ -47,6 +49,7 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
                                               @Param("result") AuthAuditResult result,
                                               @Param("provider") MemberAuthProvider provider,
                                               @Param("emailKeyword") String emailKeyword,
+                                              @Param("reasonKeyword") String reasonKeyword,
                                               @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                               @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
                                               Pageable pageable);
@@ -59,6 +62,7 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
               AND (:result IS NULL OR log.result = :result)
               AND (:provider IS NULL OR log.provider = :provider)
               AND (:emailKeyword IS NULL OR LOWER(log.email) LIKE LOWER(CONCAT('%', :emailKeyword, '%')))
+              AND (:reasonKeyword IS NULL OR LOWER(log.reason) LIKE LOWER(CONCAT('%', :reasonKeyword, '%')))
               AND (:fromCreatedAt IS NULL OR log.createdAt >= :fromCreatedAt)
               AND (:toCreatedAtExclusive IS NULL OR log.createdAt < :toCreatedAtExclusive)
             """)
@@ -67,6 +71,7 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
                                                  @Param("result") AuthAuditResult result,
                                                  @Param("provider") MemberAuthProvider provider,
                                                  @Param("emailKeyword") String emailKeyword,
+                                                 @Param("reasonKeyword") String reasonKeyword,
                                                  @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                                  @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
                                                  Sort sort);

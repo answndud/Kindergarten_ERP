@@ -32,6 +32,7 @@ public class DomainAuditLogQueryService {
                                                                  DomainAuditAction action,
                                                                  DomainAuditTargetType targetType,
                                                                  String actorName,
+                                                                 String summary,
                                                                  LocalDate from,
                                                                  LocalDate to,
                                                                  int page,
@@ -42,6 +43,7 @@ public class DomainAuditLogQueryService {
                         action,
                         targetType,
                         normalize(actorName),
+                        normalize(summary),
                         from != null ? from.atStartOfDay() : null,
                         to != null ? to.plusDays(1).atStartOfDay() : null,
                         PageRequests.pageRequest(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"))
@@ -53,6 +55,7 @@ public class DomainAuditLogQueryService {
                                                  DomainAuditAction action,
                                                  DomainAuditTargetType targetType,
                                                  String actorName,
+                                                 String summary,
                                                  LocalDate from,
                                                  LocalDate to) {
         Long kindergartenId = resolvePrincipalKindergartenId(principalId);
@@ -61,6 +64,7 @@ public class DomainAuditLogQueryService {
                 action,
                 targetType,
                 normalize(actorName),
+                normalize(summary),
                 from != null ? from.atStartOfDay() : null,
                 to != null ? to.plusDays(1).atStartOfDay() : null,
                 Sort.by(Sort.Direction.DESC, "createdAt", "id")

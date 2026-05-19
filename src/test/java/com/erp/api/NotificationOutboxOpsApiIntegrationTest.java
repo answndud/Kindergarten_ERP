@@ -73,9 +73,36 @@ class NotificationOutboxOpsApiIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("원장은 outbox timeline을 상태, 채널, 검색어로 필터링할 수 있다")
+    void principalCanSearchOutboxTimeline() throws Exception {
+        createDeliveredOutbox(NotificationChannel.APP, "운영 알림 전달 성공");
+        Long deadLetterId = createDeadLetterOutbox(NotificationChannel.EMAIL, "SMTP connection refused");
+
+        mockMvc.perform(get("/api/v1/notification-outbox")
+                        .param("status", "DEAD_LETTER")
+                        .param("channel", "EMAIL")
+                        .param("q", "smtp")
+                        .with(authenticated(principalMember)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].id").value(deadLetterId))
+                .andExpect(jsonPath("$.data.content[0].status").value("DEAD_LETTER"))
+                .andExpect(jsonPath("$.data.content[0].channel").value("EMAIL"));
+    }
+
+    @Test
     @DisplayName("교사는 outbox 운영 API에 접근할 수 없다")
     void teacherCannotAccessOutboxOps() throws Exception {
         mockMvc.perform(get("/api/v1/notification-outbox/summary")
+                        .with(authenticated(teacherMember)))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("A004"));
+
+        mockMvc.perform(get("/api/v1/notification-outbox")
                         .with(authenticated(teacherMember)))
                 .andDo(print())
                 .andExpect(status().isForbidden())
@@ -108,6 +135,10 @@ class NotificationOutboxOpsApiIntegrationTest extends BaseIntegrationTest {
     }
 
     private Long createDeadLetterOutbox(NotificationChannel channel) {
+        return createDeadLetterOutbox(channel, "webhook timeout");
+    }
+
+    private Long createDeadLetterOutbox(NotificationChannel channel, String errorMessage) {
         Member receiver = memberRepository.findById(parentMember.getId()).orElseThrow();
         Notification notification = notificationRepository.save(Notification.createWithLink(
                 receiver,
@@ -119,7 +150,23 @@ class NotificationOutboxOpsApiIntegrationTest extends BaseIntegrationTest {
         NotificationOutbox outbox = NotificationOutbox.create(notification, channel, 1);
         LocalDateTime now = LocalDateTime.now();
         outbox.markProcessing(now.minusMinutes(1));
-        outbox.markDeadLetter(now, "webhook timeout");
+        outbox.markDeadLetter(now, errorMessage);
+        return notificationOutboxRepository.saveAndFlush(outbox).getId();
+    }
+
+    private Long createDeliveredOutbox(NotificationChannel channel, String title) {
+        Member receiver = memberRepository.findById(parentMember.getId()).orElseThrow();
+        Notification notification = notificationRepository.save(Notification.createWithLink(
+                receiver,
+                NotificationType.SYSTEM,
+                title,
+                "outbox timeline 검색 제외 샘플",
+                "/notifications"
+        ));
+        NotificationOutbox outbox = NotificationOutbox.create(notification, channel, 1);
+        LocalDateTime now = LocalDateTime.now();
+        outbox.markProcessing(now.minusMinutes(1));
+        outbox.markDelivered(now);
         return notificationOutboxRepository.saveAndFlush(outbox).getId();
     }
 }

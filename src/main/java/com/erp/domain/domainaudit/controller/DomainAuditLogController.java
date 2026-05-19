@@ -70,6 +70,7 @@ public class DomainAuditLogController {
             @RequestParam(required = false) DomainAuditAction action,
             @RequestParam(required = false) DomainAuditTargetType targetType,
             @RequestParam(required = false) String actorName,
+            @RequestParam(required = false) String summary,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
@@ -80,6 +81,7 @@ public class DomainAuditLogController {
                 action,
                 targetType,
                 actorName,
+                summary,
                 from,
                 to,
                 page,
@@ -96,6 +98,7 @@ public class DomainAuditLogController {
             @RequestParam(required = false) DomainAuditAction action,
             @RequestParam(required = false) DomainAuditTargetType targetType,
             @RequestParam(required = false) String actorName,
+            @RequestParam(required = false) String summary,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
@@ -104,6 +107,7 @@ public class DomainAuditLogController {
                 action,
                 targetType,
                 actorName,
+                summary,
                 from,
                 to
         );

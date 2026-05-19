@@ -75,4 +75,39 @@ public interface NotificationOutboxRepository extends JpaRepository<Notification
             NotificationChannel channel,
             Pageable pageable
     );
+
+    @Query(value = """
+            SELECT outbox
+            FROM NotificationOutbox outbox
+            WHERE (:status IS NULL OR outbox.status = :status)
+              AND (:channel IS NULL OR outbox.channel = :channel)
+              AND (
+                    :keyword IS NULL
+                    OR LOWER(outbox.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.receiverEmail) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.receiverName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.lastError) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              )
+            """,
+            countQuery = """
+            SELECT COUNT(outbox)
+            FROM NotificationOutbox outbox
+            WHERE (:status IS NULL OR outbox.status = :status)
+              AND (:channel IS NULL OR outbox.channel = :channel)
+              AND (
+                    :keyword IS NULL
+                    OR LOWER(outbox.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.receiverEmail) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.receiverName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(outbox.lastError) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              )
+            """)
+    Page<NotificationOutbox> searchTimeline(
+            @Param("status") NotificationDeliveryStatus status,
+            @Param("channel") NotificationChannel channel,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
 }

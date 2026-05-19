@@ -73,6 +73,7 @@ public class AuthAuditLogController {
             @RequestParam(required = false) AuthAuditResult result,
             @RequestParam(required = false) MemberAuthProvider provider,
             @RequestParam(required = false) String email,
+            @RequestParam(required = false) String reason,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(defaultValue = "0") int page,
@@ -84,6 +85,7 @@ public class AuthAuditLogController {
                 result,
                 provider,
                 email,
+                reason,
                 from,
                 to,
                 page,
@@ -102,6 +104,7 @@ public class AuthAuditLogController {
             @RequestParam(required = false) AuthAuditResult result,
             @RequestParam(required = false) MemberAuthProvider provider,
             @RequestParam(required = false) String email,
+            @RequestParam(required = false) String reason,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
@@ -111,6 +114,7 @@ public class AuthAuditLogController {
                 result,
                 provider,
                 email,
+                reason,
                 from,
                 to
         );
