@@ -27,6 +27,7 @@
 - [화면](#화면): 대시보드, 신청 처리 큐, 인증 감사 로그, 업무 감사 로그 화면을 바로 확인할 수 있습니다.
 - [docs/COMPLETED.md](./docs/COMPLETED.md): 배치별 구현, 검증, 후속 리스크를 archive 형태로 추적할 수 있습니다.
 - [docs/guides/interview-guide.md](./docs/guides/interview-guide.md): 면접관 관점에서 볼 핵심 개선 스토리와 질문 대응 포인트를 정리했습니다.
+- [docs/guides/demo-scenario.md](./docs/guides/demo-scenario.md): demo 계정, 클릭 순서, 실패 시 복구 절차를 정리했습니다.
 
 ## 왜 이 저장소를 열어볼 만한가
 
@@ -251,6 +252,7 @@ SPRING_PROFILES_ACTIVE=demo ./gradlew bootRun
 | [`docs/guides/user-guide.md`](./docs/guides/user-guide.md) | 사용자 가이드 |
 | [`docs/guides/deployment-guide.md`](./docs/guides/deployment-guide.md) | 배포 가이드 |
 | [`docs/guides/interview-guide.md`](./docs/guides/interview-guide.md) | 면접관 관점 포트폴리오 설명 가이드 |
+| [`docs/guides/demo-scenario.md`](./docs/guides/demo-scenario.md) | demo 시연 runbook |
 | [`blog/README.md`](./blog/README.md) | 구현 배경과 글 시리즈 인덱스 |
 
 ## 라이선스

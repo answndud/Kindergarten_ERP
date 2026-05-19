@@ -936,3 +936,53 @@
   - 직전 추천한 4개 후속 작업을 모두 완료했다.
   - 운영 실패 대응은 API에서 화면까지 이어졌고, 배포 설정과 입학 workflow 구조, 면접 시연 문서가 함께 정리됐다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-022"></a>
+## `022` 면접 시연 완성도 강화: demo seed, Outbox 화면 polish, runbook, Swagger 설명
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 직전 개선으로 운영 화면과 입학 workflow 구조는 갖췄지만, 면접관이 `demo` 프로파일을 켰을 때 주요 화면에 실제처럼 보이는 샘플 데이터가 즉시 나타나는 수준은 부족했다.
+  - `/notification-outbox` 화면은 동작은 가능했지만 loading/error/retry 피드백이 약해 운영 화면으로서의 완성도가 떨어졌다.
+  - 면접 시연 순서는 `interview-guide`에 일부 있었지만, 계정별 클릭 루트와 실패 복구 절차를 별도 runbook으로 고정할 필요가 있었다.
+  - Swagger/OpenAPI 문서는 주요 운영 API의 의도와 권한 경계를 빠르게 이해하기에 설명이 부족했다.
+- 변경 내용:
+  - `DataLoader` demo/local seed에 입학 신청 상태별 샘플을 추가했다.
+    - `PENDING`, `WAITLISTED`, `OFFERED`, `APPROVED` 신청을 각각 다른 학부모/반/처리자 맥락으로 구성했다.
+  - 업무 감사 로그 seed를 추가해 입학 대기열/offer/승인 변경 이력이 audit 화면에서 보이도록 했다.
+  - Notification Outbox seed를 추가해 `APP`, `PUSH`, `EMAIL` dead-letter와 delivered 샘플을 demo 실행 직후 확인할 수 있게 했다.
+  - 캘린더 seed를 추가해 유치원/반/개인 범위의 일정 샘플을 제공했다.
+  - `/notification-outbox` 화면에 마지막 갱신 시각, loading guard, fetch 공통 오류 처리, dead-letter 목록 오류 row, retry 버튼 진행 상태를 추가했다.
+  - `docs/guides/demo-scenario.md`를 새로 추가해 5분/10분 시연 순서, 계정, 열어볼 파일, 실패 복구 절차를 정리했다.
+  - README, docs index, interview guide에 demo 시연 runbook 링크를 연결했다.
+  - Notification Outbox, Auth Audit, Domain Audit, Kid Application Workflow controller에 `@Tag`, `@Operation` 설명을 추가했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/README.md`
+  - `docs/guides/demo-scenario.md`
+  - `docs/guides/interview-guide.md`
+  - `src/main/java/com/erp/global/config/DataLoader.java`
+  - `src/main/resources/templates/notifications/outbox.html`
+  - `src/main/java/com/erp/domain/notification/controller/NotificationOutboxOpsController.java`
+  - `src/main/java/com/erp/domain/authaudit/controller/AuthAuditLogController.java`
+  - `src/main/java/com/erp/domain/domainaudit/controller/DomainAuditLogController.java`
+  - `src/main/java/com/erp/domain/kidapplication/controller/KidApplicationController.java`
+- 검증:
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `./gradlew test`: 통과 (`4m 13s`)
+  - `./gradlew bootJar`: 통과
+  - `rg -n "demo-scenario|notification-outbox|@Operation|@Tag" README.md docs src/main/java src/main/resources/templates`: 관련 코드/문서 연결 확인
+  - `find docs -maxdepth 2 | sort`: 신규 `docs/guides/demo-scenario.md` 포함 확인
+  - `git diff --check`: 통과
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: demo seed, view template, OpenAPI annotation, 문서 링크 변경을 full test, packaging, diff check로 검증했고 API 계약/권한 설정은 변경하지 않았다.
+- 남은 리스크:
+  - `DataLoader`는 기존 seed principal이 이미 존재하면 전체 seed를 건너뛰므로, 이전 demo DB에서는 신규 샘플이 안 보일 수 있다. 이 경우 local/demo DB를 초기화한 뒤 다시 실행해야 한다.
+  - `/notification-outbox` 화면은 브라우저 수동 클릭까지 자동화하지 않았다. 이번 검증은 컴파일, 전체 테스트, 템플릿 정합성 확인 중심이다.
+  - Swagger 설명은 주요 운영 API 중심이다. 모든 DTO schema 예시와 response example까지 확장한 것은 아니다.
+- 결과:
+  - demo 실행 직후 운영 화면이 비어 보이는 문제를 줄였고, 면접관에게 보여줄 클릭 순서와 코드 근거가 문서화됐다.
+  - Outbox 운영 화면은 실패/재시도 상태 피드백을 갖춘 시연 가능한 화면으로 정리됐다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.

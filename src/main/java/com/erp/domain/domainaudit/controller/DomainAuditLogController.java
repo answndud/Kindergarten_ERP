@@ -6,6 +6,8 @@ import com.erp.domain.domainaudit.entity.DomainAuditTargetType;
 import com.erp.domain.domainaudit.service.DomainAuditLogQueryService;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -26,12 +28,14 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/domain-audit-logs")
 @RequiredArgsConstructor
+@Tag(name = "Domain Audit", description = "원장 전용 업무 상태 변경 이력 조회/CSV export API")
 public class DomainAuditLogController {
 
     private final DomainAuditLogQueryService domainAuditLogQueryService;
 
     @GetMapping
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "업무 감사 로그 조회", description = "입학, 출결 요청, 공지 등 주요 업무 상태 변경 이력을 유치원 단위로 조회합니다.")
     public ResponseEntity<ApiResponse<Page<DomainAuditLogResponse>>> getAuditLogs(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) DomainAuditAction action,
@@ -57,6 +61,7 @@ public class DomainAuditLogController {
 
     @GetMapping("/export")
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "업무 감사 로그 CSV export", description = "현재 필터 조건에 맞는 업무 감사 로그를 CSV 파일로 내려받습니다.")
     public ResponseEntity<byte[]> exportAuditLogs(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) DomainAuditAction action,

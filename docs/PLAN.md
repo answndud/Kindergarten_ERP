@@ -11,6 +11,4 @@
 - 완료된 작업은 active 문서에 남기지 않고 `docs/COMPLETED.md`로 archive한다.
 - active 작업이 없으면 이 문서는 아래 상태만 유지한다.
 
-## Active Work
-
 현재 active 작업 없음

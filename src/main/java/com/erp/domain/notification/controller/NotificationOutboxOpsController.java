@@ -4,6 +4,8 @@ import com.erp.domain.notification.dto.response.NotificationOutboxItemResponse;
 import com.erp.domain.notification.dto.response.NotificationOutboxSummaryResponse;
 import com.erp.domain.notification.service.NotificationOutboxOpsService;
 import com.erp.global.common.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -18,18 +20,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/notification-outbox")
 @RequiredArgsConstructor
+@Tag(name = "Notification Outbox Ops", description = "원장 전용 알림 outbox dead-letter 관측/재시도 API")
 public class NotificationOutboxOpsController {
 
     private final NotificationOutboxOpsService notificationOutboxOpsService;
 
     @GetMapping("/summary")
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "Outbox 상태 요약", description = "상태별 outbox 건수와 채널별 dead-letter 건수를 반환합니다.")
     public ResponseEntity<ApiResponse<NotificationOutboxSummaryResponse>> getSummary() {
         return ResponseEntity.ok(ApiResponse.success(notificationOutboxOpsService.getSummary()));
     }
 
     @GetMapping("/dead-letters")
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "Dead-letter 목록 조회", description = "최근 dead-letter 처리된 outbox를 page 단위로 조회합니다.")
     public ResponseEntity<ApiResponse<Page<NotificationOutboxItemResponse>>> getDeadLetters(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
@@ -39,6 +44,7 @@ public class NotificationOutboxOpsController {
 
     @PostMapping("/{outboxId}/retry")
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "Dead-letter 수동 재시도", description = "dead-letter 상태의 outbox를 PENDING으로 되돌려 worker가 다시 처리하게 합니다.")
     public ResponseEntity<ApiResponse<NotificationOutboxItemResponse>> retryDeadLetter(@PathVariable Long outboxId) {
         NotificationOutboxItemResponse response = notificationOutboxOpsService.retryDeadLetter(outboxId);
         return ResponseEntity.ok(ApiResponse.success(response, "알림 outbox 재시도가 예약되었습니다"));
