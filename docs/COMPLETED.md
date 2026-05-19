@@ -1195,3 +1195,36 @@
   - 면접 시연은 클릭 순서뿐 아니라 말하기 순서와 코드 리뷰 유도 경로까지 준비된 상태가 됐다.
   - GitHub repository 카드도 description/topics 기준으로 백엔드 포트폴리오임을 바로 드러낸다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-028"></a>
+## `028` 평가자 약점 관점 리뷰: evidence map과 risk response 추가
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 사용자는 지금까지와 다른 관점으로 다음 작업을 판단하길 원했고, 이어서 README stale risk 제거, 증거 지도, 약점 질문 대비, 최소 red-team 점검을 모두 순서대로 진행하길 원했다.
+  - 직전 README에는 최신 CI 시간 `1m34s`가 고정값으로 남아 있었지만, 이후 main push의 최신 CI는 `1m7s`로 바뀌어 숫자가 금방 낡는 문제가 확인됐다.
+- 변경 내용:
+  - README에서 변동 가능한 최신 CI 고정값을 제거하고, 대표 개선값과 GitHub Actions 배지/run history 기준 확인 방식으로 바꿨다.
+  - `docs/guides/evidence-map.md`를 추가해 권한 경계, 세션 revoke, 예외 계약, outbox 운영, prod safety, 성능 개선, CI 분리 주장별 코드/테스트/문서 증거를 연결했다.
+  - `docs/guides/risk-response.md`를 추가해 클라우드 미배포, Tailwind CDN, 모놀리식, 외부 알림 mock/demo 범위, OAuth 운영 미검증, full test 전략 등 약점 질문에 대한 답변과 운영 전 보완책을 정리했다.
+  - `docs/README.md`, `docs/guides/interview-guide.md`, README에서 새 evidence/risk 문서를 찾을 수 있게 연결했다.
+  - 최소 red-team 관점으로 prod seed, Swagger/OpenAPI, app-port Prometheus, outbox API/view 권한, README CI stale risk를 코드/테스트 근거와 함께 문서화했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/README.md`
+  - `docs/guides/evidence-map.md`
+  - `docs/guides/risk-response.md`
+  - `docs/guides/interview-guide.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `gh run list --repo answndud/Kindergarten_ERP --branch main --limit 3`: 최신 main `Backend CI` success, run `26074360351`, `1m7s` 확인
+  - `git diff --check`: 통과
+  - `rg -n "1m34s|evidence-map|risk-response|Evidence Map|Risk Response|최근 main push 1분대|Actions" README.md docs`: README 최신 고정값 제거와 새 문서 링크 확인
+  - 전체 `./gradlew test`와 `bootJar`는 문서 중심 변경이며 사용자의 최소 검증 선호에 맞춰 실행하지 않았다.
+- 결과:
+  - README는 변동 가능한 최신 CI 시간에 덜 취약해졌다.
+  - 면접관이 강한 주장을 의심할 때 바로 코드/테스트/문서 증거로 이동할 수 있게 됐다.
+  - 약점 질문은 숨기지 않고 현재 판단, 이유, 운영 전 보완책으로 답할 수 있는 상태가 됐다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
