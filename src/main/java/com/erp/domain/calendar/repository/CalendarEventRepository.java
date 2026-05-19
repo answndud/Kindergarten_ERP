@@ -16,6 +16,8 @@ import java.util.Optional;
 @Repository
 public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Long> {
 
+    boolean existsByKindergartenIdAndTitleAndDeletedAtIsNull(Long kindergartenId, String title);
+
     @Query("SELECT e FROM CalendarEvent e " +
            "LEFT JOIN FETCH e.kindergarten k " +
            "LEFT JOIN FETCH e.classroom c " +

@@ -38,6 +38,7 @@ import com.erp.domain.member.repository.MemberRepository;
 import com.erp.domain.notepad.entity.Notepad;
 import com.erp.domain.notepad.repository.NotepadRepository;
 import com.erp.domain.notification.entity.Notification;
+import com.erp.domain.notification.entity.NotificationDeliveryStatus;
 import com.erp.domain.notification.entity.NotificationOutbox;
 import com.erp.domain.notification.entity.NotificationType;
 import com.erp.domain.notification.repository.NotificationOutboxRepository;
@@ -58,6 +59,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 /**
@@ -110,7 +112,8 @@ public class DataLoader implements CommandLineRunner {
         // 시드 계정이 이미 있으면 중복 생성 방지
         if (memberRepository.existsByEmail(SEED_PRINCIPAL_A_EMAIL)
                 || memberRepository.existsByEmail(SEED_PRINCIPAL_B_EMAIL)) {
-            log.info("Seed principals already exist. Skipping data loading.");
+            log.info("Seed principals already exist. Checking demo scenario sample supplements.");
+            supplementDemoScenarioSamplesIfPossible();
             if (seedProperties.isLogCredentials()) {
                 log.info("Seed credentials are enabled for logging in this environment.");
             }
@@ -287,6 +290,190 @@ public class DataLoader implements CommandLineRunner {
         log.info("=================================================");
         log.info("총 생성: 2 유치원, 2 원장, 4 선생님, 6 학부모, 4 반, 12 원아, 입학신청 4건, outbox 샘플 4건");
         log.info("=================================================");
+    }
+
+    private void supplementDemoScenarioSamplesIfPossible() {
+        Optional<Member> principalAOptional = memberRepository.findByEmail(SEED_PRINCIPAL_A_EMAIL);
+        Optional<Member> principalBOptional = memberRepository.findByEmail(SEED_PRINCIPAL_B_EMAIL);
+        Optional<Member> teacherA1Optional = memberRepository.findByEmail("teacher1@test.com");
+        Optional<Member> parentA1Optional = memberRepository.findByEmail("parent1@test.com");
+        Optional<Member> parentA2Optional = memberRepository.findByEmail("parent2@test.com");
+        Optional<Member> parentA3Optional = memberRepository.findByEmail("parent3@test.com");
+        Optional<Member> parentB1Optional = memberRepository.findByEmail("parent4@test.com");
+
+        if (principalAOptional.isEmpty()
+                || principalBOptional.isEmpty()
+                || teacherA1Optional.isEmpty()
+                || parentA1Optional.isEmpty()
+                || parentA2Optional.isEmpty()
+                || parentA3Optional.isEmpty()
+                || parentB1Optional.isEmpty()) {
+            log.info("Demo supplement skipped because required seed members are incomplete.");
+            return;
+        }
+
+        Member principalA = principalAOptional.get();
+        Member principalB = principalBOptional.get();
+        Member teacherA1 = teacherA1Optional.get();
+        Member parentA1 = parentA1Optional.get();
+        Member parentA2 = parentA2Optional.get();
+        Member parentA3 = parentA3Optional.get();
+        Member parentB1 = parentB1Optional.get();
+        Kindergarten kgA = principalA.getKindergarten();
+        Kindergarten kgB = principalB.getKindergarten();
+        if (kgA == null || kgB == null) {
+            log.info("Demo supplement skipped because seed principals are not assigned to kindergarten.");
+            return;
+        }
+
+        List<Classroom> classroomsA = classroomRepository.findByKindergartenIdAndDeletedAtIsNull(kgA.getId());
+        List<Classroom> classroomsB = classroomRepository.findByKindergartenIdAndDeletedAtIsNull(kgB.getId());
+        Optional<Classroom> classA1Optional = findClassroomByName(classroomsA, "해바라기반");
+        Optional<Classroom> classA2Optional = findClassroomByName(classroomsA, "장미반");
+        Optional<Classroom> classB1Optional = findClassroomByName(classroomsB, "나무반");
+        Optional<Kid> approvedKidOptional = kidRepository.findByKindergartenIdAndDeletedAtIsNull(kgB.getId())
+                .stream()
+                .filter(kid -> "주원".equals(kid.getName()))
+                .findFirst();
+
+        if (classA1Optional.isEmpty() || classA2Optional.isEmpty() || classB1Optional.isEmpty() || approvedKidOptional.isEmpty()) {
+            log.info("Demo supplement skipped because required seed classrooms or kids are incomplete.");
+            return;
+        }
+
+        Classroom classA1 = classA1Optional.get();
+        Classroom classA2 = classA2Optional.get();
+        Classroom classB1 = classB1Optional.get();
+        Kid approvedKid = approvedKidOptional.get();
+
+        KidApplication pendingApplication = kidApplicationRepository.findByParentAndKindergarten(parentA1.getId(), kgA.getId())
+                .orElseGet(() -> createPendingApplication(parentA1, kgA, classA1, "민준", "신규 입학 상담 후 서류 대기"));
+        KidApplication waitlistedApplication = kidApplicationRepository.findByParentAndKindergarten(parentA2.getId(), kgA.getId())
+                .orElseGet(() -> createWaitlistedApplication(parentA2, kgA, classA1, teacherA1, "유나", "해바라기반 정원 대기로 waitlist 등록"));
+        KidApplication offeredApplication = kidApplicationRepository.findByParentAndKindergarten(parentA3.getId(), kgA.getId())
+                .orElseGet(() -> createOfferedApplication(parentA3, kgA, classA2, principalA, "서아", "장미반 1석 확보 후 offer 발송"));
+        KidApplication approvedApplication = kidApplicationRepository.findByParentAndKindergarten(parentB1.getId(), kgB.getId())
+                .orElseGet(() -> createApprovedApplication(parentB1, kgB, classB1, principalB, approvedKid, "주원", "기존 원생 승인 완료 이력"));
+
+        supplementDomainAuditSamples(kgA, kgB, parentA1, principalA, principalB, classA1, classA2, approvedKid,
+                waitlistedApplication, offeredApplication, approvedApplication);
+        supplementOutboxSamples(principalA);
+        supplementCalendarSamples(kgA, classA1, principalA, teacherA1);
+
+        log.info("Demo scenario sample supplements checked.");
+    }
+
+    private Optional<Classroom> findClassroomByName(List<Classroom> classrooms, String name) {
+        return classrooms.stream()
+                .filter(classroom -> name.equals(classroom.getName()))
+                .findFirst();
+    }
+
+    private void supplementDomainAuditSamples(Kindergarten kgA,
+                                              Kindergarten kgB,
+                                              Member parentA1,
+                                              Member principalA,
+                                              Member principalB,
+                                              Classroom classA1,
+                                              Classroom classA2,
+                                              Kid approvedKid,
+                                              KidApplication waitlistedApplication,
+                                              KidApplication offeredApplication,
+                                              KidApplication approvedApplication) {
+        if (domainAuditLogRepository.searchAllByKindergartenId(
+                kgA.getId(),
+                DomainAuditAction.KID_APPLICATION_WAITLISTED,
+                DomainAuditTargetType.KID_APPLICATION,
+                null,
+                null,
+                null,
+                org.springframework.data.domain.Sort.unsorted()
+        ).isEmpty()) {
+            createDomainAuditLog(
+                    kgA,
+                    parentA1,
+                    DomainAuditAction.KID_APPLICATION_WAITLISTED,
+                    DomainAuditTargetType.KID_APPLICATION,
+                    waitlistedApplication.getId(),
+                    "대기열 등록 샘플: " + waitlistedApplication.getKidName(),
+                    "{\"classroomId\":" + classA1.getId() + "}"
+            );
+        }
+        if (domainAuditLogRepository.searchAllByKindergartenId(
+                kgA.getId(),
+                DomainAuditAction.KID_APPLICATION_OFFERED,
+                DomainAuditTargetType.KID_APPLICATION,
+                null,
+                null,
+                null,
+                org.springframework.data.domain.Sort.unsorted()
+        ).isEmpty()) {
+            createDomainAuditLog(
+                    kgA,
+                    principalA,
+                    DomainAuditAction.KID_APPLICATION_OFFERED,
+                    DomainAuditTargetType.KID_APPLICATION,
+                    offeredApplication.getId(),
+                    "입학 제안 발송 샘플: " + offeredApplication.getKidName(),
+                    "{\"classroomId\":" + classA2.getId() + "}"
+            );
+        }
+        if (domainAuditLogRepository.searchAllByKindergartenId(
+                kgB.getId(),
+                DomainAuditAction.KID_APPLICATION_APPROVED,
+                DomainAuditTargetType.KID_APPLICATION,
+                null,
+                null,
+                null,
+                org.springframework.data.domain.Sort.unsorted()
+        ).isEmpty()) {
+            createDomainAuditLog(
+                    kgB,
+                    principalB,
+                    DomainAuditAction.KID_APPLICATION_APPROVED,
+                    DomainAuditTargetType.KID_APPLICATION,
+                    approvedApplication.getId(),
+                    "입학 승인 완료 샘플: " + approvedApplication.getKidName(),
+                    "{\"kidId\":" + approvedKid.getId() + "}"
+            );
+        }
+    }
+
+    private void supplementOutboxSamples(Member principalA) {
+        if (notificationOutboxRepository.countByStatusAndChannel(NotificationDeliveryStatus.DEAD_LETTER, NotificationChannel.APP) == 0) {
+            createDeadLetterOutbox(principalA, NotificationChannel.APP, "APP webhook timeout", "/notification-outbox");
+        }
+        if (notificationOutboxRepository.countByStatusAndChannel(NotificationDeliveryStatus.DEAD_LETTER, NotificationChannel.PUSH) == 0) {
+            createDeadLetterOutbox(principalA, NotificationChannel.PUSH, "Push provider 503", "/notification-outbox");
+        }
+        if (notificationOutboxRepository.countByStatusAndChannel(NotificationDeliveryStatus.DEAD_LETTER, NotificationChannel.EMAIL) == 0) {
+            createDeadLetterOutbox(principalA, NotificationChannel.EMAIL, "SMTP connection refused", "/notification-outbox");
+        }
+        if (notificationOutboxRepository.countByStatusAndChannel(NotificationDeliveryStatus.DELIVERED, NotificationChannel.APP) == 0) {
+            createDeliveredOutbox(principalA, NotificationChannel.APP, "운영 알림 전달 성공", "/notifications");
+        }
+    }
+
+    private void supplementCalendarSamples(Kindergarten kgA,
+                                           Classroom classA1,
+                                           Member principalA,
+                                           Member teacherA1) {
+        LocalDate today = LocalDate.now();
+        if (!calendarEventRepository.existsByKindergartenIdAndTitleAndDeletedAtIsNull(kgA.getId(), "입학 상담 주간")) {
+            createCalendarEvent(kgA, null, principalA, "입학 상담 주간", "신규 학부모 상담 집중 주간입니다.",
+                    today.plusDays(1).atTime(10, 0), today.plusDays(1).atTime(11, 30),
+                    CalendarEventType.MEETING, CalendarScopeType.KINDERGARTEN, RepeatType.NONE, null);
+        }
+        if (!calendarEventRepository.existsByKindergartenIdAndTitleAndDeletedAtIsNull(kgA.getId(), "해바라기반 매주 미술 활동")) {
+            createCalendarEvent(kgA, classA1, teacherA1, "해바라기반 매주 미술 활동", "매주 수요일 미술 활동",
+                    today.plusDays(2).atTime(13, 30), today.plusDays(2).atTime(14, 20),
+                    CalendarEventType.LESSON, CalendarScopeType.CLASSROOM, RepeatType.WEEKLY, today.plusWeeks(4));
+        }
+        if (!calendarEventRepository.existsByKindergartenIdAndTitleAndDeletedAtIsNull(kgA.getId(), "운영 지표 점검")) {
+            createCalendarEvent(kgA, null, principalA, "운영 지표 점검", "대시보드와 outbox 상태 확인",
+                    today.plusDays(3).atTime(9, 30), today.plusDays(3).atTime(10, 0),
+                    CalendarEventType.ETC, CalendarScopeType.PERSONAL, RepeatType.NONE, null);
+        }
     }
 
     private Kindergarten createKindergarten(String name, String address, String phone) {
