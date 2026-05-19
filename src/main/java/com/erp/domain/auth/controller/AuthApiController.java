@@ -13,6 +13,10 @@ import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.ClientIpResolver;
 import com.erp.global.security.jwt.JwtTokenProvider;
 import com.erp.global.security.user.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,6 +35,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "인증, JWT refresh rotation, 활성 세션 관리 API")
 public class AuthApiController {
 
     private final AuthService authService;
@@ -140,6 +145,31 @@ public class AuthApiController {
 
     @GetMapping("/sessions")
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "활성 세션 목록",
+            description = "현재 사용자 refresh session registry에서 활성 기기 세션을 조회합니다.",
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "활성 세션 목록 응답",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "data": [
+                                        {
+                                          "sessionId": "01JZ-DEMO",
+                                          "current": true,
+                                          "clientIp": "127.0.0.1",
+                                          "userAgent": "Mozilla/5.0",
+                                          "expiresAt": "2026-05-26T10:00:00"
+                                        }
+                                      ]
+                                    }
+                                    """)
+                    )
+            )
+    )
     public ResponseEntity<ApiResponse<List<AuthSessionResponse>>> getActiveSessions(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletRequest request
@@ -152,6 +182,10 @@ public class AuthApiController {
 
     @DeleteMapping("/sessions/others")
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "다른 기기 세션 종료",
+            description = "현재 세션을 제외한 같은 사용자 refresh session을 Redis registry에서 제거합니다."
+    )
     public ResponseEntity<ApiResponse<Void>> revokeOtherSessions(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             HttpServletRequest request
@@ -163,6 +197,10 @@ public class AuthApiController {
 
     @DeleteMapping("/sessions/{sessionId}")
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "선택 세션 종료",
+            description = "지정한 sessionId를 즉시 revoke하고, 현재 세션이면 응답 쿠키도 정리합니다."
+    )
     public ResponseEntity<ApiResponse<Void>> revokeSession(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String sessionId,

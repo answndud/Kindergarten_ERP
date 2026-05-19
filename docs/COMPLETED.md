@@ -1034,3 +1034,46 @@
   - 기존 demo DB에서도 최근 시연 샘플이 누락될 가능성을 줄였다.
   - Swagger, README, demo runbook, Outbox 운영 문구가 최소 검증 운영 방식에 맞게 정리됐다.
   - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
+
+<a id="archive-024"></a>
+## `024` 면접관 3분 리뷰 루트와 핵심 API Swagger 예시 보강
+
+- 완료일: `2026-05-19`
+- 배경:
+  - 사용자는 이전에 제안한 README 3분 리뷰 루트, Swagger example 확장, demo 화면별 기대 데이터, CI/검증 정책 정리를 모두 순서대로 진행하기를 원했다.
+  - 검증은 계속 최소화해야 하므로 코드 동작 변경 없이 문서와 Swagger annotation 중심으로 범위를 제한했다.
+- 변경 내용:
+  - README 상단에 `3분 리뷰 루트`를 추가해 면접관이 핵심 문제/해결, 성능 수치, 화면, API, 테스트/CI 정책을 빠르게 훑을 수 있게 했다.
+  - Attendance API에 `@Tag`와 주요 endpoint example을 추가했다.
+    - 출석 upsert
+    - 반별 일별 출석 현황
+    - 반별 월간 출석 리포트
+  - Dashboard API에 원장 통계 응답 example을 추가했다.
+  - Auth API에 활성 세션 목록, 다른 기기 세션 종료, 선택 세션 종료 설명을 추가했다.
+  - demo runbook에 화면별 기대 데이터와 비어 있을 때 우선 확인할 DB/seed 기준을 표로 추가했다.
+  - README 테스트/CI 섹션을 quick CI, manual quality, release check로 재정리했다.
+- 코드/문서:
+  - `README.md`
+  - `docs/guides/demo-scenario.md`
+  - `docs/PLAN.md`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+  - `src/main/java/com/erp/domain/attendance/controller/AttendanceController.java`
+  - `src/main/java/com/erp/domain/dashboard/controller/DashboardController.java`
+  - `src/main/java/com/erp/domain/auth/controller/AuthApiController.java`
+- 검증:
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `git diff --check`: 통과
+  - `rg -n "3분 리뷰 루트|화면별 기대 데이터|Backend Quality|Release check|@Tag\\(name = \\"Attendance\\"|@Tag\\(name = \\"Dashboard\\"|활성 세션 목록" README.md docs src/main/java`: 관련 변경 연결 확인
+  - 전체 `./gradlew test`와 브라우저 E2E는 사용자의 최소 검증 기준에 맞춰 실행하지 않았다.
+- Doctor 판정:
+  - 변경 surface 기준 P0/P1 신규 이슈 없음.
+  - Spring Boot Doctor 점수: `100/100`.
+  - 근거: API 계약/서비스/DB/보안 동작 변경 없이 Swagger annotation과 문서만 보강했고, 컴파일로 annotation/import 정합성을 확인했다.
+- 남은 리스크:
+  - Swagger example은 실제 DTO 모든 필드를 exhaustive하게 반영한 계약 테스트가 아니라 면접 이해용 예시다.
+  - demo 화면별 기대 데이터 표는 runbook 기준이며, 실제 브라우저 클릭 검증은 이번 범위에서 생략했다.
+- 결과:
+  - README는 면접관이 3분 안에 프로젝트의 백엔드 강점을 훑는 구조가 추가됐다.
+  - Swagger와 demo runbook은 핵심 운영 API/화면을 더 빠르게 설명할 수 있게 정리됐다.
+  - active plan/progress는 `현재 active 작업 없음`으로 비웠다.
