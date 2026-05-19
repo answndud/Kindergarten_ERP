@@ -1285,3 +1285,44 @@
   - Phase 1의 prod safety gate는 seed, Swagger/OpenAPI, app-port Prometheus, JWT fallback, insecure cookie, wildcard/non-HTTPS CORS까지 닫혔다.
   - 실제 서버용 `.env.prod` 기본 흐름은 유지하면서, `.env.prod.example` 기반 compose dry-run이 가능해졌다.
   - 다음 실행 후보는 Phase 2 큰 서비스/워크플로우 구조 정리다.
+
+<a id="archive-030"></a>
+## `030` Phase 2 첫 tranche: 입학 신청 review workflow service 분리
+
+- 완료일: `2026-05-19`
+- 배경:
+  - Phase 2의 목표는 면접관이 코드를 열었을 때 큰 service의 책임 혼재를 P1 리스크로 지적하지 않도록 핵심 workflow의 경계를 더 명확히 하는 것이다.
+  - service size/caller map 조사 결과 `KidApplicationService`는 포트폴리오 핵심 workflow이고, 승인/대기/제안/수락/거절 review 상태 전이 orchestration을 직접 들고 있었다.
+- 변경 내용:
+  - `KidApplicationReviewService`를 추가해 입학 신청 review 상태 전이 workflow를 분리했다.
+    - approve
+    - waitlist
+    - offer
+    - accept offer
+    - reject
+  - `KidApplicationService`는 신청, 조회, 취소, 만료 scheduler orchestration과 controller-facing facade 역할에 집중하도록 줄였다.
+  - 기존 admission, notification, audit 보조 service 구조는 유지하고 review service가 이를 조합하도록 했다.
+  - interview guide와 evidence map의 큰 service 답변을 현재 구조 기준으로 갱신했다.
+- 코드/문서:
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java`
+  - `src/main/java/com/erp/domain/kidapplication/service/KidApplicationReviewService.java`
+  - `docs/guides/interview-guide.md`
+  - `docs/guides/evidence-map.md`
+  - `docs/PROGRESS.md`
+- 검증:
+  - `./gradlew compileJava compileTestJava`: 통과
+  - `./gradlew test --tests "com.erp.api.KidApplicationApiIntegrationTest"`: 통과
+  - `git diff --check`: 통과
+  - `wc -l src/main/java/com/erp/domain/kidapplication/service/KidApplicationService.java src/main/java/com/erp/domain/kidapplication/service/KidApplicationReviewService.java`: `KidApplicationService` 266 lines, `KidApplicationReviewService` 191 lines
+  - `rg -n "KidApplicationReviewService|review 상태 전이|큰 service|KidApplicationApiIntegrationTest|Phase 2" docs src/main/java/com/erp/domain/kidapplication/service`: 관련 연결 확인
+- Spring Boot Doctor 판정:
+  - 변경 surface: `domain`, `security/authorization boundary`, `transaction`, `docs`
+  - P0/P1 신규 이슈 없음
+  - 점수: `100/100`
+- P0/P1 남은 리스크:
+  - 입학 신청 review workflow 기준 없음.
+- P2/P3 후속:
+  - `AttendanceService`, `CalendarEventService`, `AuthSessionRegistryService`, `NotepadService`는 line count가 크지만 이번 tranche에서는 포트폴리오 핵심 입학 상태 전이를 우선했다. 다음 구조 개선 후보는 Phase 2 후속 tranche로 별도 판단한다.
+- 결과:
+  - 입학 신청 상태 전이 코드는 controller-facing facade와 review workflow service로 분리되어 설명 가능성이 높아졌다.
+  - API 계약과 DB schema 변경 없이 behavior-preserving extraction으로 닫았다.

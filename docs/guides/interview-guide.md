@@ -72,7 +72,7 @@
 | tenant 경계는 어디서 보장하나요? | Controller 권한, service requester 검증, repository 조회 조건, 통합 테스트를 같이 둡니다. | `AccessPolicyService`, `*ApiIntegrationTest` |
 | 운영 중 알림 전송 실패는 어떻게 보나요? | outbox 상태 전이, dead-letter 목록, 원장 전용 retry API/화면으로 관측과 재처리를 분리합니다. | `/notification-outbox`, `domain/notification` |
 | 배포 전 CORS는 어떻게 바꾸나요? | `CORS_ALLOWED_ORIGINS`로 환경별 origin을 주입하고 credentialed CORS에서 wildcard를 쓰지 않습니다. | `SecurityConfig`, `env-contract.md` |
-| 큰 service는 어떻게 관리했나요? | `KidApplicationService`는 orchestration만 남기고 admission, notification, audit 보조 책임을 분리했습니다. | `domain/kidapplication/service` |
+| 큰 service는 어떻게 관리했나요? | `KidApplicationService`는 신청/조회/취소/만료 orchestration을 맡고, review 상태 전이는 `KidApplicationReviewService`, 원생 등록/알림/audit은 보조 service로 분리했습니다. | `domain/kidapplication/service` |
 | 성능 개선은 어떻게 증명했나요? | query count/elapsed time을 전후 측정하고 performance smoke test와 archive에 남겼습니다. | README, `performance/*`, `docs/COMPLETED.md` |
 
 ## 7. 최근 강화 작업의 의도
@@ -108,7 +108,7 @@
 ### KidApplication workflow 분리
 
 - 문제: 입학 신청 service에 상태 전이, 원생 생성, 학부모 활성화, 알림, audit 기록이 함께 섞여 있었습니다.
-- 결정: admission, notification, audit 보조 service를 추출하고 `KidApplicationService`는 orchestration 중심으로 남겼습니다.
+- 결정: admission, notification, audit 보조 service와 review 상태 전이 service를 추출하고 `KidApplicationService`는 신청/조회/취소/만료 orchestration 중심으로 남겼습니다.
 - 검증: 기존 `KidApplicationApiIntegrationTest`로 approve/waitlist/offer/accept/권한 동작을 보존했습니다.
 - 트레이드오프: public API와 DB schema는 건드리지 않는 보존형 리팩토링으로 제한했습니다.
 
@@ -131,6 +131,6 @@
 
 - 실제 클라우드 배포는 비용 문제로 아직 실행하지 않았고, 배포 자산과 runbook 중심으로 준비된 상태입니다.
 - Notification Outbox 운영 화면은 dead-letter 중심입니다. 전체 outbox timeline이나 channel별 drill-down은 후속 개선입니다.
-- `KidApplicationService`는 보조 책임을 분리했지만, 더 큰 규모에서는 상태 전이 전용 workflow component까지 분리할 수 있습니다.
+- `KidApplicationService`는 핵심 review 상태 전이를 분리했지만, 더 큰 규모에서는 상태 machine library나 workflow engine 도입을 검토할 수 있습니다.
 - 실제 운영 도메인이 생기면 `CORS_ALLOWED_ORIGINS`, OAuth redirect URI, secure cookie, reverse proxy 설정을 함께 검증해야 합니다.
 - 세부 약점 대응은 `docs/guides/risk-response.md`, 주장별 증거 연결은 `docs/guides/evidence-map.md`를 기준으로 확인합니다.
