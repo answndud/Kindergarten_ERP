@@ -5,7 +5,6 @@ import com.erp.domain.classroom.service.ClassroomCapacityService;
 import com.erp.domain.domainaudit.entity.DomainAuditAction;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
-import com.erp.domain.kid.entity.Kid;
 import com.erp.domain.kidapplication.config.KidApplicationWorkflowProperties;
 import com.erp.domain.kidapplication.dto.request.AcceptKidApplicationOfferRequest;
 import com.erp.domain.kidapplication.dto.request.ApproveKidApplicationRequest;
@@ -21,7 +20,6 @@ import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberRole;
 import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.repository.MemberRepository;
-import com.erp.domain.dashboard.service.DashboardService;
 import com.erp.global.exception.BusinessException;
 import com.erp.global.exception.ErrorCode;
 import com.erp.global.security.access.AccessPolicyService;
@@ -54,11 +52,10 @@ public class KidApplicationService {
     private final KidApplicationRepository applicationRepository;
     private final MemberRepository memberRepository;
     private final KindergartenRepository kindergartenRepository;
-    private final DashboardService dashboardService;
     private final ClassroomCapacityService classroomCapacityService;
     private final KidApplicationWorkflowProperties workflowProperties;
     private final AccessPolicyService accessPolicyService;
-    private final KidApplicationAdmissionService admissionService;
+    private final KidApplicationReviewService reviewService;
     private final KidApplicationNotificationService notificationService;
     private final KidApplicationAuditService auditService;
 
@@ -125,123 +122,27 @@ public class KidApplicationService {
 
     @Transactional
     public void approve(Long applicationId, ApproveKidApplicationRequest request, Long processorId) {
-        KidApplication application = getApplicationForUpdate(applicationId);
-        if (!application.isPending()) {
-            throw new BusinessException(ErrorCode.APPLICATION_NOT_PENDING);
-        }
-
-        Member processor = getProcessor(processorId, application.getKindergarten().getId());
-        Classroom classroom = resolveManagedClassroom(request.classroomId(), application.getKindergarten().getId());
-        classroomCapacityService.validateSeatAvailable(classroom);
-
-        Kid savedKid = admissionService.enrollKid(application, classroom, request.relationshipOrDefault());
-        application.approveDirect(classroom, processor, savedKid.getId());
-
-        admissionService.activateParent(application.getParent(), application.getKindergarten());
-        notificationService.notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
-        auditService.record(
-                processor,
-                DomainAuditAction.KID_APPLICATION_APPROVED,
-                processor.getName() + "이(가) " + application.getKidName() + "의 입학을 승인했습니다.",
-                java.util.Map.of(
-                        "classroomId", classroom.getId(),
-                        "kidId", savedKid.getId()
-                ),
-                application
-        );
-        dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
+        reviewService.approve(applicationId, request, processorId);
     }
 
     @Transactional
     public void placeOnWaitlist(Long applicationId, WaitlistKidApplicationRequest request, Long processorId) {
-        KidApplication application = getApplicationForUpdate(applicationId);
-        Member processor = getProcessor(processorId, application.getKindergarten().getId());
-        Classroom classroom = resolveManagedClassroom(request.classroomId(), application.getKindergarten().getId());
-
-        application.placeOnWaitlist(classroom, processor, request.decisionNote());
-        notificationService.notifyParentAboutWaitlist(application.getParent(), application.getKidName(), classroom);
-        auditService.record(
-                processor,
-                DomainAuditAction.KID_APPLICATION_WAITLISTED,
-                processor.getName() + "이(가) " + application.getKidName() + "을(를) 대기열에 등록했습니다.",
-                java.util.Map.of("classroomId", classroom.getId()),
-                application
-        );
+        reviewService.placeOnWaitlist(applicationId, request, processorId);
     }
 
     @Transactional
     public void offer(Long applicationId, OfferKidApplicationRequest request, Long processorId) {
-        KidApplication application = getApplicationForUpdate(applicationId);
-        Member processor = getProcessor(processorId, application.getKindergarten().getId());
-        Classroom classroom = resolveManagedClassroom(request.classroomId(), application.getKindergarten().getId());
-
-        classroomCapacityService.validateSeatAvailable(classroom);
-
-        LocalDateTime offerExpiresAt = LocalDateTime.now().plus(workflowProperties.getOfferValidity());
-        application.offerSeat(classroom, processor, offerExpiresAt, request.decisionNote());
-        notificationService.notifyParentAboutOffer(application.getParent(), application.getKidName(), classroom, offerExpiresAt);
-        auditService.record(
-                processor,
-                DomainAuditAction.KID_APPLICATION_OFFERED,
-                processor.getName() + "이(가) " + application.getKidName() + "에게 입학 제안을 발송했습니다.",
-                java.util.Map.of(
-                        "classroomId", classroom.getId(),
-                        "offerExpiresAt", offerExpiresAt.toString()
-                ),
-                application
-        );
+        reviewService.offer(applicationId, request, processorId);
     }
 
     @Transactional
     public void acceptOffer(Long applicationId, AcceptKidApplicationOfferRequest request, Long parentId) {
-        KidApplication application = getApplicationForUpdate(applicationId);
-
-        if (!application.getParent().getId().equals(parentId)) {
-            throw new BusinessException(ErrorCode.APPLICATION_ACCESS_DENIED);
-        }
-        if (!application.isOffered()) {
-            throw new BusinessException(ErrorCode.APPLICATION_NOT_OFFERED);
-        }
-        if (application.getOfferExpiresAt() != null && !application.getOfferExpiresAt().isAfter(LocalDateTime.now())) {
-            application.markOfferExpired();
-            notificationService.notifyParentAboutOfferExpired(application.getParent(), application.getKidName());
-            throw new BusinessException(ErrorCode.APPLICATION_OFFER_EXPIRED);
-        }
-
-        Classroom classroom = classroomCapacityService.lockClassroom(application.getAssignedClassroom().getId());
-        Kid savedKid = admissionService.enrollKid(application, classroom, request.relationshipOrDefault());
-        application.acceptOffer(savedKid.getId());
-
-        admissionService.activateParent(application.getParent(), application.getKindergarten());
-        notificationService.notifyParentAboutApproval(application.getParent(), application.getKidName(), application.getKindergarten());
-        notificationService.notifyStaffAboutOfferAccepted(classroom.getKindergarten(), application.getParent(), application.getKidName());
-        auditService.record(
-                application.getParent(),
-                DomainAuditAction.KID_APPLICATION_OFFER_ACCEPTED,
-                application.getParent().getName() + " 학부모가 " + application.getKidName() + "의 입학 제안을 수락했습니다.",
-                java.util.Map.of(
-                        "classroomId", classroom.getId(),
-                        "kidId", savedKid.getId()
-                ),
-                application
-        );
-        dashboardService.evictDashboardStatisticsCache(application.getKindergarten().getId());
+        reviewService.acceptOffer(applicationId, request, parentId);
     }
 
     @Transactional
     public void reject(Long applicationId, RejectRequest request, Long processorId) {
-        KidApplication application = getApplicationForUpdate(applicationId);
-        Member processor = getProcessor(processorId, application.getKindergarten().getId());
-
-        application.reject(request.reason(), processor);
-        notificationService.notifyParentAboutRejection(application.getParent(), application.getKidName(), application.getKindergarten(), request.reason());
-        auditService.record(
-                processor,
-                DomainAuditAction.KID_APPLICATION_REJECTED,
-                processor.getName() + "이(가) " + application.getKidName() + "의 입학을 거절했습니다.",
-                java.util.Map.of("reason", request.reason()),
-                application
-        );
+        reviewService.reject(applicationId, request, processorId);
     }
 
     @Transactional
@@ -340,18 +241,6 @@ public class KidApplicationService {
     private KidApplication getApplicationForUpdate(Long applicationId) {
         return applicationRepository.findByIdAndDeletedAtIsNullForUpdate(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
-    }
-
-    private Member getProcessor(Long processorId, Long kindergartenId) {
-        return getStaffReviewer(processorId, kindergartenId);
-    }
-
-    private Classroom resolveManagedClassroom(Long classroomId, Long kindergartenId) {
-        Classroom classroom = classroomCapacityService.lockClassroom(classroomId);
-        if (!classroom.getKindergarten().getId().equals(kindergartenId)) {
-            throw new BusinessException(ErrorCode.CLASSROOM_NOT_BELONG_TO_KINDERGARTEN);
-        }
-        return classroom;
     }
 
     private Classroom resolvePreferredClassroom(Long classroomId, Long kindergartenId) {
