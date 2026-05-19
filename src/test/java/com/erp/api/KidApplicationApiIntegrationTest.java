@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -147,6 +149,36 @@ class KidApplicationApiIntegrationTest extends BaseIntegrationTest {
         assertTrue(parentKidRepository.findAll().stream()
                 .anyMatch(parentKid -> parentKid.getParent().getId().equals(applicant.getId())
                         && parentKid.getKid().getId().equals(application.getKidId())));
+    }
+
+    @Test
+    @DisplayName("만료된 입학 제안은 수락할 수 없고 offer expired 상태로 전환된다")
+    void acceptOfferedKidApplication_Fail_WhenOfferExpired() throws Exception {
+        Member applicant = testData.createTestMember("expired-offer-parent@test.com", "만료학부모", MemberRole.PARENT, "test1234");
+        long applicationId = applyKidApplication(applicant, classroom.getId(), "만료원아");
+
+        var application = kidApplicationRepository.findById(applicationId).orElseThrow();
+        application.offerSeat(classroom, principalMember, LocalDateTime.now().minusMinutes(1), "만료 제안");
+        kidApplicationRepository.saveAndFlush(application);
+
+        String acceptBody = """
+                {
+                    "relationship": "MOTHER"
+                }
+                """;
+
+        mockMvc.perform(put("/api/v1/kid-applications/{id}/accept-offer", applicationId)
+                        .with(user(new CustomUserDetails(applicant)))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(acceptBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AP010"));
+
+        var expiredApplication = kidApplicationRepository.findById(applicationId).orElseThrow();
+        assertThat(expiredApplication.getStatus()).isEqualTo(ApplicationStatus.OFFER_EXPIRED);
+        assertThat(expiredApplication.getKidId()).isNull();
     }
 
     @Test

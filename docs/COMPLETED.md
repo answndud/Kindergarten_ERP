@@ -1326,3 +1326,30 @@
 - 결과:
   - 입학 신청 상태 전이 코드는 controller-facing facade와 review workflow service로 분리되어 설명 가능성이 높아졌다.
   - API 계약과 DB schema 변경 없이 behavior-preserving extraction으로 닫았다.
+
+<a id="archive-031"></a>
+## `031` Phase 3 테스트 품질 강화: 입학 제안 만료 guard 보강
+
+- 완료일: `2026-05-19`
+- 배경:
+  - Phase 2에서 입학 신청 review 상태 전이를 `KidApplicationReviewService`로 분리했으므로, 분리된 guard 중 테스트 gap을 먼저 확인해야 했다.
+  - 기존 `KidApplicationApiIntegrationTest`는 approve, waitlist, offer success, accept success, 다른 유치원 교사 차단, review queue, 상세 조회 권한을 검증했지만, 만료된 offer 수락 실패 경로는 직접 검증하지 않았다.
+- 변경 내용:
+  - `acceptOfferedKidApplication_Fail_WhenOfferExpired` 통합 테스트를 추가했다.
+  - 만료된 offer를 수락하면 `AP010` 400 응답을 반환하고, application 상태가 `OFFER_EXPIRED`로 전환되며 `kidId`가 생성되지 않는 것을 검증했다.
+- 코드/문서:
+  - `src/test/java/com/erp/api/KidApplicationApiIntegrationTest.java`
+  - `docs/PROGRESS.md`
+  - `docs/COMPLETED.md`
+- 검증:
+  - `./gradlew test --tests "com.erp.api.KidApplicationApiIntegrationTest"`: 통과
+- Spring Boot Doctor 판정:
+  - 변경 surface: `test`, `domain workflow regression guard`
+  - P0/P1 신규 이슈 없음
+  - 점수: `100/100`
+- P0/P1 남은 리스크:
+  - 입학 신청 offer 만료 guard 기준 없음.
+- P2/P3 후속:
+  - reject/cancel/reapply 세부 실패 경계는 추가 테스트 후보지만, 이번 tranche의 직접 변경 surface는 offer 만료 guard였다.
+- 결과:
+  - Phase 2에서 분리한 review workflow의 핵심 만료 방어 로직이 통합 테스트로 고정됐다.
