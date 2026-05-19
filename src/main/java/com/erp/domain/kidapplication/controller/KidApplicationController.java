@@ -10,6 +10,8 @@ import com.erp.domain.kidapplication.dto.request.RejectRequest;
 import com.erp.domain.kidapplication.dto.request.WaitlistKidApplicationRequest;
 import com.erp.domain.kidapplication.dto.response.KidApplicationResponse;
 import com.erp.domain.kidapplication.service.KidApplicationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/kid-applications")
 @RequiredArgsConstructor
+@Tag(name = "Kid Application Workflow", description = "원생 입학 신청, 대기열, offer, 수락/승인 workflow API")
 public class KidApplicationController {
 
     private final KidApplicationService applicationService;
@@ -31,6 +34,7 @@ public class KidApplicationController {
      */
     @PostMapping
     @PreAuthorize("hasRole('PARENT')")
+    @Operation(summary = "원생 입학 신청", description = "학부모가 특정 유치원에 원생 입학 신청을 생성합니다.")
     public ResponseEntity<ApiResponse<Long>> apply(
             @Valid @RequestBody KidApplicationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -43,6 +47,7 @@ public class KidApplicationController {
      */
     @GetMapping("/my")
     @PreAuthorize("hasRole('PARENT')")
+    @Operation(summary = "내 입학 신청 목록", description = "학부모가 본인이 제출한 원생 입학 신청 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<List<KidApplicationResponse>>> getMyApplications(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<KidApplicationResponse> applications = applicationService.getMyApplications(userDetails.getMemberId());
@@ -54,6 +59,7 @@ public class KidApplicationController {
      */
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(summary = "승인 대기 신청 목록", description = "원장/교사가 같은 유치원의 PENDING 입학 신청을 조회합니다.")
     public ResponseEntity<ApiResponse<List<KidApplicationResponse>>> getPendingApplications(
             @RequestParam Long kindergartenId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -63,6 +69,7 @@ public class KidApplicationController {
 
     @GetMapping("/queue")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(summary = "검토 큐 조회", description = "PENDING, WAITLISTED, OFFERED 상태를 함께 조회해 운영 검토 큐를 구성합니다.")
     public ResponseEntity<ApiResponse<List<KidApplicationResponse>>> getReviewQueueApplications(
             @RequestParam Long kindergartenId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -75,6 +82,7 @@ public class KidApplicationController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER', 'PARENT')")
+    @Operation(summary = "입학 신청 상세 조회", description = "신청자 학부모 또는 같은 유치원의 원장/교사가 입학 신청 상세를 조회합니다.")
     public ResponseEntity<ApiResponse<KidApplicationResponse>> getApplication(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -87,6 +95,7 @@ public class KidApplicationController {
      */
     @PutMapping("/{id}/approve")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(summary = "입학 즉시 승인", description = "정원 검증 후 원생과 부모 연결을 생성하고 신청을 APPROVED로 전환합니다.")
     public ResponseEntity<ApiResponse<Void>> approve(
             @PathVariable Long id,
             @Valid @RequestBody ApproveKidApplicationRequest request,
@@ -97,6 +106,7 @@ public class KidApplicationController {
 
     @PutMapping("/{id}/waitlist")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(summary = "입학 대기열 등록", description = "정원 부족 등으로 신청을 WAITLISTED 상태로 전환합니다.")
     public ResponseEntity<ApiResponse<Void>> waitlist(
             @PathVariable Long id,
             @Valid @RequestBody WaitlistKidApplicationRequest request,
@@ -107,6 +117,7 @@ public class KidApplicationController {
 
     @PutMapping("/{id}/offer")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(summary = "입학 offer 발송", description = "좌석을 확인한 뒤 학부모가 수락할 수 있는 OFFERED 상태로 전환합니다.")
     public ResponseEntity<ApiResponse<Void>> offer(
             @PathVariable Long id,
             @Valid @RequestBody OfferKidApplicationRequest request,
@@ -117,6 +128,7 @@ public class KidApplicationController {
 
     @PutMapping("/{id}/accept-offer")
     @PreAuthorize("hasRole('PARENT')")
+    @Operation(summary = "입학 offer 수락", description = "학부모가 offer를 수락하면 원생과 부모 연결을 생성하고 APPROVED로 전환합니다.")
     public ResponseEntity<ApiResponse<Void>> acceptOffer(
             @PathVariable Long id,
             @Valid @RequestBody AcceptKidApplicationOfferRequest request,
@@ -130,6 +142,7 @@ public class KidApplicationController {
      */
     @PutMapping("/{id}/reject")
     @PreAuthorize("hasAnyRole('PRINCIPAL', 'TEACHER')")
+    @Operation(summary = "입학 신청 거절", description = "검토 가능한 신청을 REJECTED 상태로 전환하고 거절 사유를 남깁니다.")
     public ResponseEntity<ApiResponse<Void>> reject(
             @PathVariable Long id,
             @Valid @RequestBody RejectRequest request,
@@ -143,6 +156,7 @@ public class KidApplicationController {
      */
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasRole('PARENT')")
+    @Operation(summary = "입학 신청 취소", description = "학부모가 본인의 활성 입학 신청을 CANCELLED 상태로 전환합니다.")
     public ResponseEntity<ApiResponse<Void>> cancel(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {

@@ -9,8 +9,17 @@ import com.erp.domain.authaudit.entity.AuthAuditEventType;
 import com.erp.domain.authaudit.entity.AuthAuditLog;
 import com.erp.domain.authaudit.entity.AuthAuditResult;
 import com.erp.domain.authaudit.repository.AuthAuditLogRepository;
+import com.erp.domain.calendar.entity.CalendarEvent;
+import com.erp.domain.calendar.entity.CalendarEventType;
+import com.erp.domain.calendar.entity.CalendarScopeType;
+import com.erp.domain.calendar.entity.RepeatType;
+import com.erp.domain.calendar.repository.CalendarEventRepository;
 import com.erp.domain.classroom.entity.Classroom;
 import com.erp.domain.classroom.repository.ClassroomRepository;
+import com.erp.domain.domainaudit.entity.DomainAuditAction;
+import com.erp.domain.domainaudit.entity.DomainAuditLog;
+import com.erp.domain.domainaudit.entity.DomainAuditTargetType;
+import com.erp.domain.domainaudit.repository.DomainAuditLogRepository;
 import com.erp.domain.kindergarten.entity.Kindergarten;
 import com.erp.domain.kindergarten.repository.KindergartenRepository;
 import com.erp.domain.kid.entity.Gender;
@@ -19,6 +28,8 @@ import com.erp.domain.kid.entity.ParentKid;
 import com.erp.domain.kid.entity.Relationship;
 import com.erp.domain.kid.repository.KidRepository;
 import com.erp.domain.kid.repository.ParentKidRepository;
+import com.erp.domain.kidapplication.entity.KidApplication;
+import com.erp.domain.kidapplication.repository.KidApplicationRepository;
 import com.erp.domain.member.entity.Member;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.domain.member.entity.MemberRole;
@@ -26,6 +37,12 @@ import com.erp.domain.member.entity.MemberStatus;
 import com.erp.domain.member.repository.MemberRepository;
 import com.erp.domain.notepad.entity.Notepad;
 import com.erp.domain.notepad.repository.NotepadRepository;
+import com.erp.domain.notification.entity.Notification;
+import com.erp.domain.notification.entity.NotificationOutbox;
+import com.erp.domain.notification.entity.NotificationType;
+import com.erp.domain.notification.repository.NotificationOutboxRepository;
+import com.erp.domain.notification.repository.NotificationRepository;
+import com.erp.domain.notification.service.channel.NotificationChannel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -37,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +93,11 @@ public class DataLoader implements CommandLineRunner {
     private final NotepadRepository notepadRepository;
     private final AnnouncementRepository announcementRepository;
     private final AuthAuditLogRepository authAuditLogRepository;
+    private final DomainAuditLogRepository domainAuditLogRepository;
+    private final KidApplicationRepository kidApplicationRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationOutboxRepository notificationOutboxRepository;
+    private final CalendarEventRepository calendarEventRepository;
     private final SeedProperties seedProperties;
     private final Random random = new Random();
 
@@ -196,6 +219,58 @@ public class DataLoader implements CommandLineRunner {
         createAuthAuditLog(parentA1, AuthAuditEventType.SOCIAL_UNLINK, AuthAuditResult.FAILURE, MemberAuthProvider.KAKAO, "A010", "198.51.100.41");
         createAuthAuditLog(parentA2, AuthAuditEventType.LOGIN, AuthAuditResult.SUCCESS, MemberAuthProvider.LOCAL, null, "203.0.113.55");
 
+        // 11. 입학 신청 workflow 시드 생성 (검토 큐/면접 시연용)
+        KidApplication pendingApplication = createPendingApplication(parentA1, kgA, classA1, "민준", "신규 입학 상담 후 서류 대기");
+        KidApplication waitlistedApplication = createWaitlistedApplication(parentA2, kgA, classA1, teacherA1, "유나", "해바라기반 정원 대기로 waitlist 등록");
+        KidApplication offeredApplication = createOfferedApplication(parentA3, kgA, classA2, principalA, "서아", "장미반 1석 확보 후 offer 발송");
+        KidApplication approvedApplication = createApprovedApplication(parentB1, kgB, classB1, principalB, kidsB.get(0), "주원", "기존 원생 승인 완료 이력");
+
+        // 12. 업무 감사 로그 시드 생성
+        createDomainAuditLog(
+                kgA,
+                parentA1,
+                DomainAuditAction.KID_APPLICATION_WAITLISTED,
+                DomainAuditTargetType.KID_APPLICATION,
+                waitlistedApplication.getId(),
+                "대기열 등록 샘플: " + waitlistedApplication.getKidName(),
+                "{\"classroomId\":" + classA1.getId() + "}"
+        );
+        createDomainAuditLog(
+                kgA,
+                principalA,
+                DomainAuditAction.KID_APPLICATION_OFFERED,
+                DomainAuditTargetType.KID_APPLICATION,
+                offeredApplication.getId(),
+                "입학 제안 발송 샘플: " + offeredApplication.getKidName(),
+                "{\"classroomId\":" + classA2.getId() + "}"
+        );
+        createDomainAuditLog(
+                kgB,
+                principalB,
+                DomainAuditAction.KID_APPLICATION_APPROVED,
+                DomainAuditTargetType.KID_APPLICATION,
+                approvedApplication.getId(),
+                "입학 승인 완료 샘플: " + approvedApplication.getKidName(),
+                "{\"kidId\":" + kidsB.get(0).getId() + "}"
+        );
+
+        // 13. 알림 outbox 실패/재시도 시연용 데이터
+        createDeadLetterOutbox(principalA, NotificationChannel.APP, "APP webhook timeout", "/notification-outbox");
+        createDeadLetterOutbox(principalA, NotificationChannel.PUSH, "Push provider 503", "/notification-outbox");
+        createDeadLetterOutbox(principalA, NotificationChannel.EMAIL, "SMTP connection refused", "/notification-outbox");
+        createDeliveredOutbox(principalA, NotificationChannel.APP, "운영 알림 전달 성공", "/notifications");
+
+        // 14. 캘린더 시연용 일정
+        createCalendarEvent(kgA, null, principalA, "입학 상담 주간", "신규 학부모 상담 집중 주간입니다.",
+                today.plusDays(1).atTime(10, 0), today.plusDays(1).atTime(11, 30),
+                CalendarEventType.MEETING, CalendarScopeType.KINDERGARTEN, RepeatType.NONE, null);
+        createCalendarEvent(kgA, classA1, teacherA1, "해바라기반 매주 미술 활동", "매주 수요일 미술 활동",
+                today.plusDays(2).atTime(13, 30), today.plusDays(2).atTime(14, 20),
+                CalendarEventType.LESSON, CalendarScopeType.CLASSROOM, RepeatType.WEEKLY, today.plusWeeks(4));
+        createCalendarEvent(kgA, null, principalA, "운영 지표 점검", "대시보드와 outbox 상태 확인",
+                today.plusDays(3).atTime(9, 30), today.plusDays(3).atTime(10, 0),
+                CalendarEventType.ETC, CalendarScopeType.PERSONAL, RepeatType.NONE, null);
+
         log.info("=================================================");
         log.info("DUMMY DATA LOADED SUCCESSFULLY!");
         log.info("=================================================");
@@ -210,7 +285,7 @@ public class DataLoader implements CommandLineRunner {
             log.info("Seed credentials logging is disabled. Refer to demo/runbook documentation for sample accounts.");
         }
         log.info("=================================================");
-        log.info("총 생성: 2 유치원, 2 원장, 4 선생님, 6 학부모, 4 반, 12 원아");
+        log.info("총 생성: 2 유치원, 2 원장, 4 선생님, 6 학부모, 4 반, 12 원아, 입학신청 4건, outbox 샘플 4건");
         log.info("=================================================");
     }
 
@@ -282,6 +357,135 @@ public class DataLoader implements CommandLineRunner {
                 result,
                 reason,
                 clientIp
+        ));
+    }
+
+    private KidApplication createPendingApplication(Member parent,
+                                                    Kindergarten kindergarten,
+                                                    Classroom preferredClassroom,
+                                                    String kidName,
+                                                    String notes) {
+        KidApplication application = KidApplication.create(
+                parent,
+                kindergarten,
+                kidName,
+                LocalDate.of(LocalDate.now().getYear() - 4, 5, 10),
+                Gender.FEMALE,
+                preferredClassroom,
+                notes
+        );
+        return kidApplicationRepository.save(application);
+    }
+
+    private KidApplication createWaitlistedApplication(Member parent,
+                                                       Kindergarten kindergarten,
+                                                       Classroom classroom,
+                                                       Member processor,
+                                                       String kidName,
+                                                       String note) {
+        KidApplication application = createPendingApplication(parent, kindergarten, classroom, kidName, note);
+        application.placeOnWaitlist(classroom, processor, note);
+        return kidApplicationRepository.save(application);
+    }
+
+    private KidApplication createOfferedApplication(Member parent,
+                                                    Kindergarten kindergarten,
+                                                    Classroom classroom,
+                                                    Member processor,
+                                                    String kidName,
+                                                    String note) {
+        KidApplication application = createPendingApplication(parent, kindergarten, classroom, kidName, note);
+        application.offerSeat(classroom, processor, LocalDateTime.now().plusDays(3), note);
+        return kidApplicationRepository.save(application);
+    }
+
+    private KidApplication createApprovedApplication(Member parent,
+                                                     Kindergarten kindergarten,
+                                                     Classroom classroom,
+                                                     Member processor,
+                                                     Kid approvedKid,
+                                                     String kidName,
+                                                     String note) {
+        KidApplication application = createPendingApplication(parent, kindergarten, classroom, kidName, note);
+        application.approveDirect(classroom, processor, approvedKid.getId());
+        return kidApplicationRepository.save(application);
+    }
+
+    private void createDomainAuditLog(Kindergarten kindergarten,
+                                      Member actor,
+                                      DomainAuditAction action,
+                                      DomainAuditTargetType targetType,
+                                      Long targetId,
+                                      String summary,
+                                      String metadataJson) {
+        domainAuditLogRepository.save(DomainAuditLog.create(
+                kindergarten.getId(),
+                actor.getId(),
+                actor.getName(),
+                actor.getRole(),
+                action,
+                targetType,
+                targetId,
+                summary,
+                metadataJson
+        ));
+    }
+
+    private void createDeadLetterOutbox(Member receiver, NotificationChannel channel, String errorMessage, String linkUrl) {
+        Notification notification = notificationRepository.save(Notification.createWithLink(
+                receiver,
+                NotificationType.SYSTEM,
+                "시연용 외부 알림 실패",
+                channel + " 채널 실패 시나리오입니다.",
+                linkUrl
+        ));
+        NotificationOutbox outbox = NotificationOutbox.create(notification, channel, 2);
+        LocalDateTime firstAttemptAt = LocalDateTime.now().minusMinutes(10);
+        outbox.markProcessing(firstAttemptAt);
+        outbox.markDeadLetter(LocalDateTime.now().minusMinutes(8), errorMessage);
+        notificationOutboxRepository.save(outbox);
+    }
+
+    private void createDeliveredOutbox(Member receiver, NotificationChannel channel, String title, String linkUrl) {
+        Notification notification = notificationRepository.save(Notification.createWithLink(
+                receiver,
+                NotificationType.SYSTEM,
+                title,
+                "정상 전달된 outbox 샘플입니다.",
+                linkUrl
+        ));
+        NotificationOutbox outbox = NotificationOutbox.create(notification, channel, 2);
+        LocalDateTime attemptAt = LocalDateTime.now().minusMinutes(3);
+        outbox.markProcessing(attemptAt);
+        outbox.markDelivered(attemptAt.plusSeconds(2));
+        notificationOutboxRepository.save(outbox);
+    }
+
+    private void createCalendarEvent(Kindergarten kindergarten,
+                                     Classroom classroom,
+                                     Member creator,
+                                     String title,
+                                     String description,
+                                     LocalDateTime startDateTime,
+                                     LocalDateTime endDateTime,
+                                     CalendarEventType eventType,
+                                     CalendarScopeType scopeType,
+                                     RepeatType repeatType,
+                                     LocalDate repeatEndDate) {
+        calendarEventRepository.save(CalendarEvent.create(
+                kindergarten,
+                classroom,
+                creator,
+                title,
+                description,
+                startDateTime,
+                endDateTime,
+                eventType,
+                scopeType,
+                false,
+                null,
+                repeatType,
+                repeatEndDate
         ));
     }
 

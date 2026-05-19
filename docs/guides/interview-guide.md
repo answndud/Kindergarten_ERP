@@ -7,9 +7,10 @@
 ## 1. 5분 설명 루트
 
 1. `README.md`의 "핵심 문제와 해결"과 "수치로 검증한 개선"을 먼저 봅니다.
-2. `docs/COMPLETED.md`에서 작업 archive를 확인합니다.
-3. 코드에서는 `global/security`, `global/exception`, `domain/notification`, `domain/calendar`, `domain/attendance`를 확인합니다.
-4. 테스트에서는 `src/test/java/com/erp/api/*IntegrationTest.java`, `src/test/java/com/erp/integration/*`, `src/test/java/com/erp/performance/*`를 확인합니다.
+2. `docs/guides/demo-scenario.md`에서 5분/10분 시연 순서를 확인합니다.
+3. `docs/COMPLETED.md`에서 작업 archive를 확인합니다.
+4. 코드에서는 `global/security`, `global/exception`, `domain/notification`, `domain/calendar`, `domain/attendance`를 확인합니다.
+5. 테스트에서는 `src/test/java/com/erp/api/*IntegrationTest.java`, `src/test/java/com/erp/integration/*`, `src/test/java/com/erp/performance/*`를 확인합니다.
 
 ## 2. 10분 시연 루트
 

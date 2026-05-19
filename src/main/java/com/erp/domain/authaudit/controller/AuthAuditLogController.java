@@ -7,6 +7,8 @@ import com.erp.domain.authaudit.service.AuthAuditLogQueryService;
 import com.erp.domain.member.entity.MemberAuthProvider;
 import com.erp.global.common.ApiResponse;
 import com.erp.global.security.user.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -27,12 +29,14 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping("/api/v1/auth/audit-logs")
 @RequiredArgsConstructor
+@Tag(name = "Auth Audit", description = "원장 전용 인증 이벤트 조회/CSV export API")
 public class AuthAuditLogController {
 
     private final AuthAuditLogQueryService authAuditLogQueryService;
 
     @GetMapping
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "인증 감사 로그 조회", description = "로그인, refresh, 소셜 연결/해제 이벤트를 같은 유치원 원장 기준으로 조회합니다.")
     public ResponseEntity<ApiResponse<Page<AuthAuditLogResponse>>> getAuditLogs(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) AuthAuditEventType eventType,
@@ -61,6 +65,7 @@ public class AuthAuditLogController {
 
     @GetMapping("/export")
     @PreAuthorize("hasRole('PRINCIPAL')")
+    @Operation(summary = "인증 감사 로그 CSV export", description = "현재 필터 조건에 맞는 인증 감사 로그를 CSV 파일로 내려받습니다.")
     public ResponseEntity<byte[]> exportAuditLogs(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) AuthAuditEventType eventType,

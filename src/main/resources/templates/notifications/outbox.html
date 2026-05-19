@@ -95,13 +95,16 @@
                         <h2 class="text-lg font-semibold text-gray-900">Dead-letter 목록</h2>
                         <p class="text-sm text-gray-500">최근 실패 건부터 정렬됩니다.</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <label for="pageSize" class="text-sm font-medium text-gray-600">페이지 크기</label>
-                        <select id="pageSize" class="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <p id="lastRefreshedAt" class="text-xs font-medium text-gray-500">아직 갱신 전</p>
+                        <div class="flex items-center gap-2">
+                            <label for="pageSize" class="text-sm font-medium text-gray-600">페이지 크기</label>
+                            <select id="pageSize" class="h-10 rounded-lg border border-gray-200 px-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200">
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -158,9 +161,11 @@
         const prevPageButton = document.getElementById('prevPageButton');
         const nextPageButton = document.getElementById('nextPageButton');
         const paginationSummary = document.getElementById('paginationSummary');
+        const lastRefreshedAt = document.getElementById('lastRefreshedAt');
 
         let currentPage = 0;
         let currentTotalPages = 0;
+        let refreshing = false;
 
         bindEvents();
         refresh();
@@ -177,20 +182,29 @@
         }
 
         async function refresh(page = 0) {
+            if (refreshing) return;
+            refreshing = true;
+            refreshButton.disabled = true;
+            refreshButton.textContent = '갱신 중...';
             hideError();
-            await Promise.all([loadSummary(), loadDeadLetters(page)]);
+            try {
+                await Promise.all([loadSummary(), loadDeadLetters(page)]);
+                lastRefreshedAt.textContent = `마지막 갱신: ${new Date().toLocaleTimeString('ko-KR')}`;
+            } finally {
+                refreshing = false;
+                refreshButton.disabled = false;
+                refreshButton.textContent = '새로고침';
+            }
         }
 
         async function loadSummary() {
-            const response = await fetch('/api/v1/notification-outbox/summary', {
-                headers: { 'Accept': 'application/json' }
-            });
-            const payload = await response.json();
-            if (!response.ok || !payload.success) {
-                showError(payload.message || 'outbox 요약을 불러오지 못했습니다.');
+            try {
+                const payload = await fetchJson('/api/v1/notification-outbox/summary');
+                renderSummary(payload.data);
+            } catch (error) {
+                showError(error.message || 'outbox 요약을 불러오지 못했습니다.');
                 return;
             }
-            renderSummary(payload.data);
         }
 
         async function loadDeadLetters(page) {
@@ -201,15 +215,21 @@
                 page: String(page),
                 size: pageSize.value
             });
-            const response = await fetch(`/api/v1/notification-outbox/dead-letters?${params.toString()}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            const payload = await response.json();
-            if (!response.ok || !payload.success) {
-                showError(payload.message || 'dead-letter 목록을 불러오지 못했습니다.');
+            try {
+                const payload = await fetchJson(`/api/v1/notification-outbox/dead-letters?${params.toString()}`);
+                renderDeadLetters(payload.data);
+            } catch (error) {
+                showError(error.message || 'dead-letter 목록을 불러오지 못했습니다.');
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-14 text-center">
+                            <p class="text-sm font-medium text-red-700">dead-letter 목록을 불러오지 못했습니다.</p>
+                            <p class="mt-2 text-sm text-gray-500">권한, 세션, 네트워크 상태를 확인한 뒤 새로고침하세요.</p>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
-            renderDeadLetters(payload.data);
         }
 
         function renderSummary(data) {
@@ -278,6 +298,7 @@
         }
 
         async function retryOutbox(outboxId) {
+            const retryButton = tableBody.querySelector(`.retry-button[data-outbox-id="${outboxId}"]`);
             const confirmed = await window.UI.confirm({
                 title: '재시도 예약',
                 text: `Outbox #${outboxId}를 PENDING 상태로 되돌릴까요?`,
@@ -294,17 +315,40 @@
             });
             if (!confirmed) return;
 
-            const response = await fetch(`/api/v1/notification-outbox/${outboxId}/retry`, {
-                method: 'POST',
-                headers: { 'Accept': 'application/json' }
-            });
-            const payload = await response.json();
-            if (!response.ok || !payload.success) {
-                showError(payload.message || '재시도 예약에 실패했습니다.');
+            if (retryButton) {
+                retryButton.disabled = true;
+                retryButton.textContent = '처리 중...';
+                retryButton.classList.add('opacity-60', 'cursor-not-allowed');
+            }
+
+            try {
+                await fetchJson(`/api/v1/notification-outbox/${outboxId}/retry`, { method: 'POST' });
+            } catch (error) {
+                showError(error.message || '재시도 예약에 실패했습니다.');
+                if (retryButton) {
+                    retryButton.disabled = false;
+                    retryButton.textContent = '재시도';
+                    retryButton.classList.remove('opacity-60', 'cursor-not-allowed');
+                }
                 return;
             }
             await window.UI.success('재시도 대기 상태로 전환했습니다.');
             refresh(0);
+        }
+
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'Accept': 'application/json',
+                    ...(options.headers || {})
+                }
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || '요청 처리에 실패했습니다.');
+            }
+            return payload;
         }
 
         function showError(message) {
