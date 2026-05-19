@@ -22,6 +22,19 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Dashboard", description = "원장용 운영 지표 API")
 public class DashboardController {
 
+    private static final String STATISTICS_RESPONSE_EXAMPLE = """
+            {
+              "success": true,
+              "data": {
+                "totalKids": 12,
+                "todayPresent": 8,
+                "todayAbsent": 1,
+                "totalTeachers": 2,
+                "unreadNotifications": 3
+              }
+            }
+            """;
+
     private final DashboardService dashboardService;
 
     @GetMapping("/statistics")
@@ -34,18 +47,7 @@ public class DashboardController {
                     description = "대시보드 통계 응답",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "success": true,
-                                      "data": {
-                                        "totalKids": 12,
-                                        "todayPresent": 8,
-                                        "todayAbsent": 1,
-                                        "totalTeachers": 2,
-                                        "unreadNotifications": 3
-                                      }
-                                    }
-                                    """)
+                            examples = @ExampleObject(value = STATISTICS_RESPONSE_EXAMPLE)
                     )
             )
     )

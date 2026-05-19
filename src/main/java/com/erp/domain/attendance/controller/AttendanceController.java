@@ -38,6 +38,56 @@ import java.util.List;
 @Tag(name = "Attendance", description = "교사/원장 출석 처리와 학부모 조회 API")
 public class AttendanceController {
 
+    private static final String UPSERT_REQUEST_EXAMPLE = """
+            {
+              "kidId": 1,
+              "attendanceDate": "2026-05-19",
+              "status": "PRESENT",
+              "note": "정상 등원"
+            }
+            """;
+
+    private static final String UPSERT_RESPONSE_EXAMPLE = """
+            {
+              "success": true,
+              "message": "출석이 저장되었습니다",
+              "data": {
+                "id": 10,
+                "kidName": "준우",
+                "attendanceDate": "2026-05-19",
+                "status": "PRESENT"
+              }
+            }
+            """;
+
+    private static final String DAILY_ATTENDANCE_RESPONSE_EXAMPLE = """
+            {
+              "success": true,
+              "data": [
+                {
+                  "kidId": 1,
+                  "kidName": "준우",
+                  "status": "PRESENT",
+                  "dropOffTime": "09:10",
+                  "pickUpTime": "16:30"
+                }
+              ]
+            }
+            """;
+
+    private static final String MONTHLY_REPORT_RESPONSE_EXAMPLE = """
+            {
+              "success": true,
+              "data": {
+                "classroomName": "해바라기반",
+                "year": 2026,
+                "month": 5,
+                "totalPresent": 42,
+                "totalAbsent": 3
+              }
+            }
+            """;
+
     private final AttendanceService attendanceService;
 
     /**
@@ -67,14 +117,7 @@ public class AttendanceController {
             description = "교사 또는 원장이 원생의 특정 날짜 출석 상태를 upsert합니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     content = @Content(
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "kidId": 1,
-                                      "attendanceDate": "2026-05-19",
-                                      "status": "PRESENT",
-                                      "note": "정상 등원"
-                                    }
-                                    """)
+                            examples = @ExampleObject(value = UPSERT_REQUEST_EXAMPLE)
                     )
             ),
             responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -82,18 +125,7 @@ public class AttendanceController {
                     description = "저장된 출석 응답",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "success": true,
-                                      "message": "출석이 저장되었습니다",
-                                      "data": {
-                                        "id": 10,
-                                        "kidName": "준우",
-                                        "attendanceDate": "2026-05-19",
-                                        "status": "PRESENT"
-                                      }
-                                    }
-                                    """)
+                            examples = @ExampleObject(value = UPSERT_RESPONSE_EXAMPLE)
                     )
             )
     )
@@ -159,20 +191,7 @@ public class AttendanceController {
                     description = "일별 출석 목록",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "success": true,
-                                      "data": [
-                                        {
-                                          "kidId": 1,
-                                          "kidName": "준우",
-                                          "status": "PRESENT",
-                                          "dropOffTime": "09:10",
-                                          "pickUpTime": "16:30"
-                                        }
-                                      ]
-                                    }
-                                    """)
+                            examples = @ExampleObject(value = DAILY_ATTENDANCE_RESPONSE_EXAMPLE)
                     )
             )
     )
@@ -227,18 +246,7 @@ public class AttendanceController {
                     description = "월간 출석 리포트",
                     content = @Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                                    {
-                                      "success": true,
-                                      "data": {
-                                        "classroomName": "해바라기반",
-                                        "year": 2026,
-                                        "month": 5,
-                                        "totalPresent": 42,
-                                        "totalAbsent": 3
-                                      }
-                                    }
-                                    """)
+                            examples = @ExampleObject(value = MONTHLY_REPORT_RESPONSE_EXAMPLE)
                     )
             )
     )
