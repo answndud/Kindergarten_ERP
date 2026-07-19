@@ -677,8 +677,7 @@ ls -la
 
 ```bash
 cd /opt/kindergarten-erp/deploy
-docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+./deploy-with-rollback.sh
 docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 ```
 
@@ -696,7 +695,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f caddy
 ### 18.1 서버 내부 점검
 
 ```bash
-curl http://127.0.0.1:9091/actuator/health/readiness
+curl --fail http://127.0.0.1:9091/actuator/health/readiness
 docker compose --env-file .env.prod -f docker-compose.prod.yml ps
 docker compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=200 app
 ```
@@ -856,9 +855,8 @@ APP_IMAGE=ghcr.io/alex/kindergarten-erp:latest
 
 ```bash
 cd /opt/kindergarten-erp/deploy
-docker compose --env-file .env.prod -f docker-compose.prod.yml pull
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
-curl http://127.0.0.1:9091/actuator/health/readiness
+./deploy-with-rollback.sh
+curl --fail http://127.0.0.1:9091/actuator/health/readiness
 ```
 
 예시:

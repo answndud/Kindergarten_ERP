@@ -70,8 +70,7 @@
         <logger name="org.hibernate.SQL" level="WARN"/>
         <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
         <root level="INFO">
-            <appender-ref ref="FILE"/>
-            <appender-ref ref="ERROR_FILE"/>
+            <appender-ref ref="CONSOLE"/>
         </root>
     </springProfile>
 
