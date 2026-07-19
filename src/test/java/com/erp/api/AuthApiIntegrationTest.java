@@ -136,6 +136,29 @@ class AuthApiIntegrationTest extends BaseIntegrationTest {
                     .andDo(print())
                     .andExpect(status().isBadRequest());
         }
+
+        @Test
+        @DisplayName("회원가입 - 공개 요청으로 원장 계정을 만들 수 없다")
+        void signup_Fail_PrincipalRoleIsNotPubliclyAssignable() throws Exception {
+            String requestBody = """
+                    {
+                        "email": "attacker-principal@test.com",
+                        "password": "Test1234!",
+                        "passwordConfirm": "Test1234!",
+                        "name": "공개원장",
+                        "phone": "01012345678",
+                        "role": "PRINCIPAL"
+                    }
+                    """;
+
+            mockMvc.perform(post("/api/v1/auth/signup")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.success").value(false))
+                    .andExpect(jsonPath("$.code").value("AP008"));
+        }
     }
 
     @Nested

@@ -57,6 +57,10 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "역할 값이 올바르지 않습니다");
         }
 
+        if (memberRole == com.erp.domain.member.entity.MemberRole.PRINCIPAL) {
+            throw new BusinessException(ErrorCode.INVALID_MEMBER_ROLE, "원장 계정은 공개 회원가입으로 만들 수 없습니다");
+        }
+
         return memberService.signUp(email, password, name, phone, memberRole);
     }
 
