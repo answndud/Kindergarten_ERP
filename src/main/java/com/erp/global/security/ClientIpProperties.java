@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class ClientIpProperties {
 
     /**
-     * 전달 헤더를 신뢰할 프록시 IP 목록.
+     * 전달 헤더를 신뢰할 프록시 IP 또는 CIDR 목록.
      * loopback은 기본적으로 신뢰한다.
      */
     private List<String> trustedProxies = new ArrayList<>();

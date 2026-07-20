@@ -1,9 +1,10 @@
 package com.erp.global.security;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.net.InetAddress;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 
 @Component
 @RequiredArgsConstructor
@@ -36,16 +37,22 @@ public class ClientIpResolver {
         if (remoteAddr == null) {
             return false;
         }
-        if (properties.getTrustedProxies().contains(remoteAddr)) {
+        if (properties.getTrustedProxies().stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .anyMatch(proxy -> matches(proxy, remoteAddr))) {
             return true;
         }
 
+        return matches("127.0.0.1/32", remoteAddr) || matches("::1/128", remoteAddr);
+    }
+
+    private boolean matches(String trustedProxy, String remoteAddr) {
         try {
-            return InetAddress.getByName(remoteAddr).isLoopbackAddress();
-        } catch (Exception ignored) {
-            return "127.0.0.1".equals(remoteAddr)
-                    || "::1".equals(remoteAddr)
-                    || "0:0:0:0:0:0:0:1".equals(remoteAddr);
+            return new IpAddressMatcher(trustedProxy).matches(remoteAddr);
+        } catch (IllegalArgumentException ignored) {
+            return false;
         }
     }
 
