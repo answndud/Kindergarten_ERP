@@ -76,5 +76,8 @@ git diff --check
 - Caddy TLS 발급 확인
 - readiness `UP` 확인
 - rollback 대상 image tag와 DB forward-fix 전략
+- `scripts/backup-production.sh`로 MySQL/Redis backup artifact 생성
+- `scripts/verify-production-backup.sh`로 checksum 검증
+- 운영 backup은 별도 암호화 object storage로 복제하고 restore drill을 월 1회 수행
 - 배포 후 장애는 correlation ID와 `/actuator/health/readiness`를 함께 확인
 - DB schema 변경은 rollback 대신 백업 확인 후 forward-fix migration을 우선 검토

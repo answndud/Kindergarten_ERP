@@ -1,0 +1,29 @@
+groups:
+  - name: kindergarten-erp-availability
+    rules:
+      - alert: KindergartenErpReadinessDown
+        expr: max_over_time(up{job="kindergarten-erp"}[2m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Kindergarten ERP metrics target is unavailable
+          description: Prometheus cannot scrape the application metrics endpoint for more than two minutes.
+
+      - alert: KindergartenErpHttp5xxRateHigh
+        expr: sum(rate(http_server_requests_seconds_count{job="kindergarten-erp",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job="kindergarten-erp"}[5m])), 1) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Kindergarten ERP HTTP 5xx rate is above 5 percent
+          description: The application has returned more than five percent HTTP 5xx responses during the last ten minutes.
+
+      - alert: KindergartenErpNotificationDeadLetters
+        expr: sum(increase(notification_delivery_attempts_total{job="kindergarten-erp",outcome="dead_letter"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Notification outbox dead-letter detected
+          description: At least one notification delivery entered dead-letter during the last fifteen minutes.

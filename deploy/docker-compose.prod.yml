@@ -17,7 +17,7 @@ services:
       - erp-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: kindergarten-erp-redis
     restart: unless-stopped
     healthcheck:
@@ -37,7 +37,7 @@ services:
       - erp-network
 
   caddy:
-    image: caddy:2
+    image: caddy:2@sha256:844f60b64e4724a5aa8245e019dace0d3f199f7433ce6c57676cb30a920dbad9
     container_name: kindergarten-erp-caddy
     restart: unless-stopped
     depends_on:
