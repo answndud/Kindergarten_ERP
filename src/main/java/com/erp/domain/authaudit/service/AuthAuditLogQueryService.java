@@ -21,12 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AuthAuditLogQueryService {
+
+    private static final int MAX_EXPORT_ROWS = 10_000;
+    private static final int MAX_EXPORT_DAYS = 31;
 
     private final AuthAuditLogRepository authAuditLogRepository;
     private final MemberService memberService;
@@ -74,6 +78,8 @@ public class AuthAuditLogQueryService {
         Member requester = memberService.getMemberByIdWithKindergarten(requesterId);
         validateRequester(requester);
 
+        LocalDate exportTo = resolveExportTo(to);
+        LocalDate exportFrom = resolveExportFrom(from, exportTo);
         List<AuthAuditLog> logs = authAuditLogRepository.searchAllByKindergartenId(
                 requester.getKindergarten().getId(),
                 eventType,
@@ -81,9 +87,10 @@ public class AuthAuditLogQueryService {
                 provider,
                 normalizeEmailKeyword(email),
                 normalizeKeyword(reason),
-                atStartOfDay(from),
-                toExclusive(to),
-                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
+                atStartOfDay(exportFrom),
+                toExclusive(exportTo),
+                org.springframework.data.domain.PageRequest.of(0, MAX_EXPORT_ROWS,
+                        Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")))
         );
 
         return toCsv(logs).getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -111,6 +118,18 @@ public class AuthAuditLogQueryService {
             return null;
         }
         return date.atStartOfDay();
+    }
+
+    private LocalDate resolveExportTo(LocalDate to) {
+        return to != null ? to : LocalDate.now();
+    }
+
+    private LocalDate resolveExportFrom(LocalDate from, LocalDate to) {
+        LocalDate resolved = from != null ? from : to.minusDays(MAX_EXPORT_DAYS - 1L);
+        if (resolved.isAfter(to) || ChronoUnit.DAYS.between(resolved, to) >= MAX_EXPORT_DAYS) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "감사 로그 export 기간은 최대 31일입니다");
+        }
+        return resolved;
     }
 
     private LocalDateTime toExclusive(LocalDate date) {

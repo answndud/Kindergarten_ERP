@@ -74,5 +74,5 @@ public interface AuthAuditLogRepository extends JpaRepository<AuthAuditLog, Long
                                                  @Param("reasonKeyword") String reasonKeyword,
                                                  @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                                  @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
-                                                 Sort sort);
+                                                 org.springframework.data.domain.Pageable pageable);
 }

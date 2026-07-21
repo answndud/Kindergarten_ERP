@@ -420,7 +420,7 @@ public class DataLoader implements CommandLineRunner {
                 null,
                 null,
                 null,
-                org.springframework.data.domain.Sort.unsorted()
+                org.springframework.data.domain.PageRequest.of(0, 1)
         ).isEmpty()) {
             createDomainAuditLog(
                     kgA,
@@ -440,7 +440,7 @@ public class DataLoader implements CommandLineRunner {
                 null,
                 null,
                 null,
-                org.springframework.data.domain.Sort.unsorted()
+                org.springframework.data.domain.PageRequest.of(0, 1)
         ).isEmpty()) {
             createDomainAuditLog(
                     kgA,
@@ -460,7 +460,7 @@ public class DataLoader implements CommandLineRunner {
                 null,
                 null,
                 null,
-                org.springframework.data.domain.Sort.unsorted()
+                org.springframework.data.domain.PageRequest.of(0, 1)
         ).isEmpty()) {
             createDomainAuditLog(
                     kgB,

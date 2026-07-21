@@ -18,12 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class DomainAuditLogQueryService {
+
+    private static final int MAX_EXPORT_ROWS = 10_000;
+    private static final int MAX_EXPORT_DAYS = 31;
 
     private final DomainAuditLogRepository domainAuditLogRepository;
     private final MemberRepository memberRepository;
@@ -59,15 +63,22 @@ public class DomainAuditLogQueryService {
                                                  LocalDate from,
                                                  LocalDate to) {
         Long kindergartenId = resolvePrincipalKindergartenId(principalId);
+        LocalDate exportTo = to != null ? to : LocalDate.now();
+        LocalDate exportFrom = from != null ? from : exportTo.minusDays(MAX_EXPORT_DAYS - 1L);
+        if (exportFrom.isAfter(exportTo) || ChronoUnit.DAYS.between(exportFrom, exportTo) >= MAX_EXPORT_DAYS) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "감사 로그 export 기간은 최대 31일입니다");
+        }
+
         List<DomainAuditLog> logs = domainAuditLogRepository.searchAllByKindergartenId(
                 kindergartenId,
                 action,
                 targetType,
                 normalize(actorName),
                 normalize(summary),
-                from != null ? from.atStartOfDay() : null,
-                to != null ? to.plusDays(1).atStartOfDay() : null,
-                Sort.by(Sort.Direction.DESC, "createdAt", "id")
+                exportFrom.atStartOfDay(),
+                exportTo.plusDays(1).atStartOfDay(),
+                org.springframework.data.domain.PageRequest.of(0, MAX_EXPORT_ROWS,
+                        Sort.by(Sort.Direction.DESC, "createdAt", "id"))
         );
 
         StringBuilder csv = new StringBuilder();

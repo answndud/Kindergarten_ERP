@@ -64,5 +64,5 @@ public interface DomainAuditLogRepository extends JpaRepository<DomainAuditLog, 
                                                    @Param("summaryKeyword") String summaryKeyword,
                                                    @Param("fromCreatedAt") LocalDateTime fromCreatedAt,
                                                    @Param("toCreatedAtExclusive") LocalDateTime toCreatedAtExclusive,
-                                                   Sort sort);
+                                                   org.springframework.data.domain.Pageable pageable);
 }
