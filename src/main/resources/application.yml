@@ -113,6 +113,8 @@ app:
     enabled: ${APP_SEED_ENABLED:false}
     log-credentials: ${APP_SEED_LOG_CREDENTIALS:false}
   security:
+    debug-db:
+      enabled: false
     management-surface:
       public-api-docs: false
       expose-prometheus-on-app-port: false
