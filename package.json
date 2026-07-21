@@ -7,6 +7,10 @@
   },
   "scripts": {
     "impeccable:detect": "node scripts/impeccable-detect.mjs",
-    "impeccable:detect:json": "node scripts/impeccable-detect.mjs --json"
+    "impeccable:detect:json": "node scripts/impeccable-detect.mjs --json",
+    "e2e:smoke": "playwright test e2e/smoke.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
   }
 }
