@@ -82,6 +82,8 @@ springdoc:
 
 app:
   security:
+    debug-db:
+      enabled: true
     management-surface:
       public-api-docs: true
       expose-prometheus-on-app-port: true

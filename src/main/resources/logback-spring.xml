@@ -47,15 +47,13 @@
         </rollingPolicy>
     </appender>
 
-    <!-- Spring Boot 로그 레벨 설정 -->
-    <logger name="com.erp" level="DEBUG"/>
-    <logger name="org.springframework.web" level="DEBUG"/>
-    <logger name="org.springframework.security" level="DEBUG"/>
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
-    <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
-
     <!-- 프로필별 설정 -->
     <springProfile name="local">
+        <logger name="com.erp" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
         <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
@@ -64,6 +62,11 @@
     </springProfile>
 
     <springProfile name="prod">
+        <logger name="com.erp" level="INFO"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
         <root level="INFO">
             <appender-ref ref="FILE"/>
             <appender-ref ref="ERROR_FILE"/>
@@ -72,6 +75,11 @@
 
     <!-- 기본 설정 (프로필 없을 때) -->
     <springProfile name="!local &amp; !prod">
+        <logger name="com.erp" level="INFO"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>

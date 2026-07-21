@@ -54,6 +54,14 @@ class PageAccessIntegrationTest extends BaseIntegrationTest {
         }
 
         @Test
+        @DisplayName("유치원 생성 페이지 - 인증 필요")
+        void kindergartenCreatePage_RequiresAuthentication() throws Exception {
+            mockMvc.perform(get("/kindergarten/create"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/login"));
+        }
+
+        @Test
         @DisplayName("구글 OAuth2 시작 URL - 접근 가능")
         void oauth2GoogleAuthorization_Accessible() throws Exception {
             mockMvc.perform(get("/oauth2/authorization/google"))
@@ -138,6 +146,14 @@ class PageAccessIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(view().name("announcement/announcements"));
         }
+
+        @Test
+        @DisplayName("유치원 생성 페이지 - 원장만 접근 가능")
+        void kindergartenCreatePage_Accessible() throws Exception {
+            mockMvc.perform(get("/kindergarten/create"))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("kindergarten/create"));
+        }
     }
 
     @Nested
@@ -184,6 +200,14 @@ class PageAccessIntegrationTest extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(view().name("announcement/announcements"));
         }
+
+        @Test
+        @DisplayName("유치원 선택 페이지 - 교사 접근 가능")
+        void kindergartenSelectPage_Accessible() throws Exception {
+            mockMvc.perform(get("/kindergarten/select"))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("kindergarten/select"));
+        }
     }
 
     @Nested
@@ -229,6 +253,13 @@ class PageAccessIntegrationTest extends BaseIntegrationTest {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(view().name("announcement/announcements"));
+        }
+
+        @Test
+        @DisplayName("유치원 생성 페이지 - 학부모 접근 거부")
+        void kindergartenCreatePage_Forbidden() throws Exception {
+            mockMvc.perform(get("/kindergarten/create"))
+                    .andExpect(status().isForbidden());
         }
     }
 
