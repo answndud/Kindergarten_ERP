@@ -1,5 +1,6 @@
 package com.erp.global.config;
 
+import com.erp.domain.notification.config.NotificationDeliveryProperties;
 import com.erp.global.security.CorsProperties;
 import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.jwt.JwtProperties;
@@ -24,6 +25,7 @@ public class StartupSafetyValidator {
     private final ManagementSurfaceProperties managementSurfaceProperties;
     private final CorsProperties corsProperties;
     private final SeedProperties seedProperties;
+    private final NotificationDeliveryProperties notificationDeliveryProperties;
 
     @PostConstruct
     void validate() {
@@ -77,6 +79,7 @@ public class StartupSafetyValidator {
         }
 
         validateProdCors();
+        validateProdWebhooks();
     }
 
     private void validateProdCors() {
@@ -87,6 +90,24 @@ public class StartupSafetyValidator {
             if (!origin.startsWith("https://")) {
                 throw new IllegalStateException("Production profile requires HTTPS CORS origins.");
             }
+        }
+    }
+
+    private void validateProdWebhooks() {
+        validateWebhook("push", notificationDeliveryProperties.getPush());
+        validateWebhook("app", notificationDeliveryProperties.getApp());
+        validateWebhook("incident-webhook", notificationDeliveryProperties.getIncidentWebhook());
+    }
+
+    private void validateWebhook(String name, NotificationDeliveryProperties.Webhook webhook) {
+        if (!webhook.isEnabled()) {
+            return;
+        }
+        if (webhook.getWebhookUrl() == null || !webhook.getWebhookUrl().startsWith("https://")) {
+            throw new IllegalStateException("Production webhook must use HTTPS: " + name);
+        }
+        if (webhook.getSignatureSecret() == null || webhook.getSignatureSecret().isBlank()) {
+            throw new IllegalStateException("Production webhook requires a signature secret: " + name);
         }
     }
 

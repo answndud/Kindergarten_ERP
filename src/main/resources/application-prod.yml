@@ -90,6 +90,15 @@ app:
       trusted-proxies:
         - 172.28.0.0/16
 
+notification:
+  delivery:
+    push:
+      signature-secret: ${NOTIFICATION_PUSH_WEBHOOK_SECRET:}
+    app:
+      signature-secret: ${NOTIFICATION_APP_WEBHOOK_SECRET:}
+    incident-webhook:
+      signature-secret: ${NOTIFICATION_INCIDENT_WEBHOOK_SECRET:}
+
 springdoc:
   api-docs:
     enabled: false

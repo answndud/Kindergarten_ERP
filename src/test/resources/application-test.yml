@@ -73,3 +73,9 @@ logging:
 notification:
   delivery:
     worker-enabled: false
+    push:
+      signature-secret: test-push-webhook-secret
+    app:
+      signature-secret: test-app-webhook-secret
+    incident-webhook:
+      signature-secret: test-incident-webhook-secret

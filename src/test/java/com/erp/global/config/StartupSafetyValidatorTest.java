@@ -1,5 +1,6 @@
 package com.erp.global.config;
 
+import com.erp.domain.notification.config.NotificationDeliveryProperties;
 import com.erp.global.security.CorsProperties;
 import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.jwt.JwtProperties;
@@ -192,6 +193,28 @@ class StartupSafetyValidatorTest {
         assertDoesNotThrow(validator::validate);
     }
 
+    @Test
+    @DisplayName("prod webhook은 HTTPS와 서명 secret 없이는 허용하지 않는다")
+    void validate_Fails_WhenProdWebhookIsUnsigned() {
+        NotificationDeliveryProperties properties = new NotificationDeliveryProperties();
+        properties.getIncidentWebhook().setEnabled(true);
+        properties.getIncidentWebhook().setWebhookUrl("https://hooks.example.com/incident");
+
+        StartupSafetyValidator validator = newValidator(
+                new String[]{"prod"},
+                "prod-secret-key-at-least-32-bytes-long",
+                true,
+                false,
+                false,
+                false,
+                false,
+                List.of("https://erp.example.com"),
+                properties
+        );
+
+        assertThrows(IllegalStateException.class, validator::validate);
+    }
+
     private StartupSafetyValidator newValidator(String[] activeProfiles,
                                                 String jwtSecret,
                                                 boolean cookieSecure,
@@ -211,6 +234,19 @@ class StartupSafetyValidatorTest {
                                                 boolean apiDocsEnabled,
                                                 boolean seedEnabled,
                                                 List<String> allowedOrigins) {
+        return newValidator(activeProfiles, jwtSecret, cookieSecure, publicApiDocs, exposePrometheusOnAppPort,
+                apiDocsEnabled, seedEnabled, allowedOrigins, new NotificationDeliveryProperties());
+    }
+
+    private StartupSafetyValidator newValidator(String[] activeProfiles,
+                                                String jwtSecret,
+                                                boolean cookieSecure,
+                                                boolean publicApiDocs,
+                                                boolean exposePrometheusOnAppPort,
+                                                boolean apiDocsEnabled,
+                                                boolean seedEnabled,
+                                                List<String> allowedOrigins,
+                                                NotificationDeliveryProperties notificationDeliveryProperties) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(activeProfiles);
         environment.setProperty("springdoc.api-docs.enabled", Boolean.toString(apiDocsEnabled));
@@ -231,6 +267,6 @@ class StartupSafetyValidatorTest {
         seedProperties.setEnabled(seedEnabled);
 
         return new StartupSafetyValidator(environment, jwtProperties, managementSurfaceProperties,
-                corsProperties, seedProperties);
+                corsProperties, seedProperties, notificationDeliveryProperties);
     }
 }

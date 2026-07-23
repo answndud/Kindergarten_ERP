@@ -101,12 +101,15 @@ notification:
     push:
       enabled: false
       webhook-url: ${NOTIFICATION_PUSH_WEBHOOK:}
+      signature-secret: ${NOTIFICATION_PUSH_WEBHOOK_SECRET:}
     app:
       enabled: false
       webhook-url: ${NOTIFICATION_APP_WEBHOOK:}
+      signature-secret: ${NOTIFICATION_APP_WEBHOOK_SECRET:}
     incident-webhook:
       enabled: false
       webhook-url: ${NOTIFICATION_INCIDENT_WEBHOOK:}
+      signature-secret: ${NOTIFICATION_INCIDENT_WEBHOOK_SECRET:}
 
 app:
   seed:

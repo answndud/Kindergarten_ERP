@@ -44,5 +44,6 @@ public class NotificationDeliveryProperties {
     public static class Webhook {
         private boolean enabled = false;
         private String webhookUrl;
+        private String signatureSecret;
     }
 }

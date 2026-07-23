@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +18,7 @@ public class AppNotificationSender implements NotificationChannelSender {
 
     private final NotificationDeliveryProperties deliveryProperties;
     private final RestTemplate notificationRestTemplate;
+    private final WebhookRequestSigner webhookRequestSigner;
 
     @Override
     public NotificationChannel channel() {
@@ -33,8 +33,10 @@ public class AppNotificationSender implements NotificationChannelSender {
         }
 
         WebhookNotificationPayload body = WebhookNotificationPayload.from(payload);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = webhookRequestSigner.createHeaders(
+                body,
+                deliveryProperties.getApp().getSignatureSecret()
+        );
 
         ResponseEntity<String> response = notificationRestTemplate.postForEntity(
                 webhookUrl,
