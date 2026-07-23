@@ -2,7 +2,6 @@ package com.erp.global.config;
 
 import com.erp.domain.member.dto.response.MemberResponse;
 import com.erp.domain.member.entity.Member;
-import com.erp.domain.member.service.MemberService;
 import com.erp.global.security.ManagementSurfaceProperties;
 import com.erp.global.security.AuthenticatedMemberResolver;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @RequiredArgsConstructor
 public class GlobalControllerAdvice {
 
-    private final MemberService memberService;
     private final AuthenticatedMemberResolver authenticatedMemberResolver;
     private final ManagementSurfaceProperties managementSurfaceProperties;
 
@@ -36,17 +34,8 @@ public class GlobalControllerAdvice {
             return null;
         }
 
-        try {
-            log.debug("currentMember: loading member with id={}", resolvedMember.getId());
-            // LazyInitializationException 방지를 위해 유치원 포함하여 조회
-            Member member = memberService.getMemberByIdWithKindergarten(resolvedMember.getId());
-            MemberResponse response = MemberResponse.from(member);
-            log.debug("currentMember: loaded successfully - {}", response.name());
-            return response;
-        } catch (Exception e) {
-            log.error("currentMember: failed to load member", e);
-            return null;
-        }
+        // AuthenticatedMemberResolver가 유치원까지 fetch한 동일 엔티티를 재사용해 중복 조회를 피한다.
+        return MemberResponse.from(resolvedMember);
     }
 
     @ModelAttribute("publicApiDocsEnabled")

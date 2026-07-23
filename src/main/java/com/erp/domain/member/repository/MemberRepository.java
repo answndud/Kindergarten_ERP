@@ -27,7 +27,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     /**
      * 이메일로 회원 조회
      */
-    Optional<Member> findByEmail(String email);
+    @Query("SELECT m FROM Member m WHERE LOWER(m.email) = LOWER(:email) AND m.deletedAt IS NULL")
+    Optional<Member> findByEmail(@Param("email") String email);
+
+    @Query("SELECT m FROM Member m WHERE m.id = :id AND m.deletedAt IS NULL")
+    Optional<Member> findActiveById(@Param("id") Long id);
 
     @Query("""
             SELECT m.kindergarten.id

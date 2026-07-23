@@ -29,12 +29,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Optional<Notification> findByIdAndDeletedAtIsNull(Long id);
 
     /**
-     * 수신자별 알림 목록 조회 (limit 적용)
-     */
-    @Query("SELECT n FROM Notification n WHERE n.receiver.id = :receiverId AND n.deletedAt IS NULL ORDER BY n.createdAt DESC")
-    List<Notification> findRecentByReceiverId(@Param("receiverId") Long receiverId);
-
-    /**
      * 안 읽은 알림 개수
      */
     @Query("SELECT COUNT(n) FROM Notification n WHERE n.receiver.id = :receiverId AND n.isRead = false AND n.deletedAt IS NULL")

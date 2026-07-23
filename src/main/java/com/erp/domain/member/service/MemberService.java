@@ -67,7 +67,7 @@ public class MemberService {
      * ID로 회원 조회
      */
     public Member getMemberById(Long id) {
-        return memberRepository.findById(id)
+        return memberRepository.findActiveById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
