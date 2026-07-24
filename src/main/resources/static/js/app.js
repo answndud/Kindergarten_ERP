@@ -125,15 +125,6 @@ function applyActiveNavLinks() {
 document.addEventListener('DOMContentLoaded', applyActiveNavLinks);
 document.addEventListener('htmx:afterSwap', applyActiveNavLinks);
 
-// HTMX 이벤트 로깅 (개발용)
-document.addEventListener('htmx:beforeRequest', function (evt) {
-    console.log('HTMX Request:', evt.detail.xhr);
-});
-
-document.addEventListener('htmx:afterRequest', function (evt) {
-    console.log('HTMX Response:', evt.detail.xhr);
-});
-
 document.addEventListener('htmx:responseError', function (evt) {
     console.error('HTMX Error:', evt.detail.xhr);
     // 에러 처리 (예: 토스트 메시지 표시)
@@ -387,7 +378,6 @@ window.Notifications = window.Notifications || {
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('유치원 ERP initialized');
     window.Notifications.startAutoRefresh();
 });
 
