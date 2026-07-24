@@ -98,13 +98,12 @@ body.bg-gray-50 {
 
 .bg-gradient-primary {
     color: #ffffff;
-    background: linear-gradient(130deg, var(--primary-500) 0%, #236145 62%, #1c4d38 100%) !important;
+    background: var(--primary-500) !important;
     box-shadow: 0 12px 26px rgba(36, 95, 69, 0.35);
 }
 
 .bg-gradient-primary:hover {
-    transform: translateY(-1px);
-    filter: saturate(1.04);
+    background: var(--primary-700) !important;
 }
 
 .rounded-lg {
@@ -295,6 +294,17 @@ table tbody tr:hover {
 /* HTMX / Alpine */
 [x-cloak] {
     display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 .htmx-indicator {
