@@ -31,6 +31,7 @@ docker build --tag kindergarten-erp:quality-check .
 docker image inspect kindergarten-erp:quality-check --format 'user={{.Config.User}}'
 docker compose --env-file docker/.env.example -f docker/docker-compose.yml config >/tmp/docker-compose.base.yml
 PROD_ENV_FILE=.env.prod.example docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config >/tmp/docker-compose.prod.yml
+ALERTMANAGER_WEBHOOK_URL=https://hooks.example.com/alerts docker compose --profile alerting -f docker/docker-compose.monitoring.yml config >/tmp/docker-compose.monitoring-alerting.yml
 docker run --rm -e APP_DOMAIN=erp.example.com -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile
 git diff --check
 ```
@@ -81,3 +82,5 @@ git diff --check
 - 운영 backup은 별도 암호화 object storage로 복제하고 restore drill을 월 1회 수행
 - 배포 후 장애는 correlation ID와 `/actuator/health/readiness`를 함께 확인
 - DB schema 변경은 rollback 대신 백업 확인 후 forward-fix migration을 우선 검토
+- Alertmanager는 `ALERTMANAGER_WEBHOOK_URL`을 주입한 `--profile alerting`으로 기동하고 테스트 alert의 수신을 확인
+- HTML 응답은 `Content-Security-Policy` nonce를 포함하고 `Content-Security-Policy-Report-Only`는 사용하지 않음

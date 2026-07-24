@@ -6,8 +6,8 @@
     <title th:text="${title}">유치원 ERP</title>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script th:attr="nonce=${cspNonce}" src="https://cdn.tailwindcss.com"></script>
+    <script th:attr="nonce=${cspNonce}">
         tailwind.config = {
             theme: {
                 extend: {
@@ -108,7 +108,7 @@
         </div>
     </nav>
 
-    <script>
+    <script th:attr="nonce=${cspNonce}">
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
             const button = document.getElementById('mobileMenuBtn');

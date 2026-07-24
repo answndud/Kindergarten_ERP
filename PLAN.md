@@ -12,4 +12,4 @@ No active work
 
 - 실제 provider sandbox는 외부 provider credential 및 endpoint가 필요하다.
 - 운영 DB/Redis의 실제 restore drill과 Alertmanager 수신 채널 연결은 운영 인프라 승인 후 실행한다.
-- CSP enforcement와 외부 asset 제거는 inline script/template 자산 전환 작업으로 별도 범위가 필요하다.
+- CDN asset SRI 전환은 각 provider가 제공하는 공식 digest 확인 후 별도 적용한다.

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>설정 - 유치원 ERP</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script th:attr="nonce=${cspNonce}" src="https://cdn.tailwindcss.com"></script>
+    <script th:attr="nonce=${cspNonce}">
         tailwind.config = {
             theme: {
                 extend: {
@@ -328,12 +328,12 @@
     </div>
 </main>
 
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script th:src="@{/js/app.js}"></script>
+<script th:attr="nonce=${cspNonce}" src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script th:attr="nonce=${cspNonce}" defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+<script th:attr="nonce=${cspNonce}" src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:attr="nonce=${cspNonce}" th:src="@{/js/app.js}"></script>
 
-<script th:if="${passwordChangeAvailable}">
+<script th:attr="nonce=${cspNonce}" th:if="${passwordChangeAvailable}">
     document.getElementById('passwordForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -385,7 +385,7 @@
     });
 </script>
 
-<script th:if="${!passwordChangeAvailable}">
+<script th:attr="nonce=${cspNonce}" th:if="${!passwordChangeAvailable}">
     document.getElementById('bootstrapPasswordForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -435,7 +435,7 @@
     });
 </script>
 
-<script>
+<script th:attr="nonce=${cspNonce}">
     document.addEventListener('DOMContentLoaded', () => {
         const sessionListElement = document.getElementById('sessionList');
         const sessionErrorBanner = document.getElementById('sessionErrorBanner');

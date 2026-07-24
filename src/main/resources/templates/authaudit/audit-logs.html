@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인증 감사 로그 - 유치원 ERP</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script th:attr="nonce=${cspNonce}" src="https://cdn.tailwindcss.com"></script>
+    <script th:attr="nonce=${cspNonce}">
         tailwind.config = {
             theme: {
                 extend: {
@@ -219,7 +219,7 @@
     </section>
 </main>
 
-<script>
+<script th:attr="nonce=${cspNonce}">
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('auditFilterForm');
         const resetButton = document.getElementById('resetFiltersButton');

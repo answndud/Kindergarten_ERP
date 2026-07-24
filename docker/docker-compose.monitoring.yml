@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:v2.54.1
+    image: prom/prometheus:v2.54.1@sha256:f6639335d34a77d9d9db382b92eeb7fc00934be8eae81dbc03b31cfe90411a94
     container_name: kindergarden_prometheus
     restart: unless-stopped
     ports:
@@ -36,10 +36,31 @@ services:
     networks:
       - erp-network
 
+  alertmanager:
+    profiles:
+      - alerting
+    image: prom/alertmanager:v0.28.1@sha256:27c475db5fb156cab31d5c18a4251ac7ed567746a2483ff264516437a39b15ba
+    container_name: kindergarden_alertmanager
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_BIND_HOST:-127.0.0.1}:${ALERTMANAGER_PUBLISHED_PORT:-9093}:9093"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'sed "s|__ALERTMANAGER_WEBHOOK_URL__|$${ALERTMANAGER_WEBHOOK_URL}|g" /etc/alertmanager/alertmanager.yml > /tmp/alertmanager.yml && exec /bin/alertmanager --config.file=/tmp/alertmanager.yml'
+    environment:
+      ALERTMANAGER_WEBHOOK_URL: ${ALERTMANAGER_WEBHOOK_URL:?set ALERTMANAGER_WEBHOOK_URL when alerting profile is enabled}
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - erp-network
+
 volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  alertmanager_data:
     driver: local
 
 networks:

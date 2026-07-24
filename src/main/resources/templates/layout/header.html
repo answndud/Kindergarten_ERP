@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script th:attr="nonce=${cspNonce}" src="https://cdn.tailwindcss.com"></script>
+    <script th:attr="nonce=${cspNonce}">
         tailwind.config = {
             theme: {
                 extend: {
@@ -101,7 +101,7 @@
     </div>
 </header>
 
-<script>
+<script th:attr="nonce=${cspNonce}">
     function toggleMobileMenu() {
         const menu = document.getElementById('mobileMenu');
         const button = document.getElementById('mobileMenuBtn');
