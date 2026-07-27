@@ -3,13 +3,16 @@ services:
     image: ${APP_IMAGE:?set APP_IMAGE}
     container_name: kindergarten-erp-app
     restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
     env_file:
       - ${PROD_ENV_FILE:-.env.prod}
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:9091:9091"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     networks:
       - erp-network
 
@@ -17,9 +20,15 @@ services:
     image: redis:7-alpine
     container_name: kindergarten-erp-redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     command: sh -c "redis-server --appendonly yes --requirepass $$REDIS_PASSWORD"
-    env_file:
-      - ${PROD_ENV_FILE:-.env.prod}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -33,8 +42,8 @@ services:
     restart: unless-stopped
     depends_on:
       - app
-    env_file:
-      - ${PROD_ENV_FILE:-.env.prod}
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
     ports:
       - "80:80"
       - "443:443"
