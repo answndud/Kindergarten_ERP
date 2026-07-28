@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,6 +35,7 @@ public class NotificationDispatchService {
     private final NotificationDeliveryProperties deliveryProperties;
     private final NotificationChannelSenderRegistry senderRegistry;
     private final PlatformTransactionManager transactionManager;
+    private final MeterRegistry meterRegistry;
 
     @Transactional
     public void dispatch(Notification notification) {
@@ -61,13 +64,19 @@ public class NotificationDispatchService {
     }
 
     public int processReadyDeliveriesBatch() {
+        Timer.Sample timer = Timer.start(meterRegistry);
         LocalDateTime now = LocalDateTime.now();
-        List<Long> claimedIds = executeInNewTransaction(() -> claimReadyDeliveries(now));
-        claimedIds.forEach(outboxId -> executeInNewTransaction(() -> {
-            processClaimedDelivery(outboxId);
-            return null;
-        }));
-        return claimedIds.size();
+        try {
+            List<Long> claimedIds = executeInNewTransaction(() -> claimReadyDeliveries(now));
+            claimedIds.forEach(outboxId -> executeInNewTransaction(() -> {
+                processClaimedDelivery(outboxId);
+                return null;
+            }));
+            meterRegistry.summary("notification.delivery.batch.claimed").record(claimedIds.size());
+            return claimedIds.size();
+        } finally {
+            timer.stop(meterRegistry.timer("notification.delivery.batch.duration"));
+        }
     }
 
     private List<Long> claimReadyDeliveries(LocalDateTime now) {
@@ -109,11 +118,13 @@ public class NotificationDispatchService {
         try {
             sender.send(outbox.toPayload());
             outbox.markDelivered(now);
+            recordDelivery(outbox, "delivered");
             log.debug("Notification outbox delivered. outboxId={}, channel={}, notificationId={}",
                     outbox.getId(), outbox.getChannel(), outbox.getNotification().getId());
         } catch (Exception ex) {
             if (!outbox.canRetry()) {
                 outbox.markDeadLetter(now, ex.getMessage());
+                recordDelivery(outbox, "dead_letter");
                 log.warn("Notification outbox dead-lettered. outboxId={}, channel={}, attempts={}, error={}",
                         outbox.getId(), outbox.getChannel(), outbox.getAttemptCount(), ex.getMessage());
                 return;
@@ -121,9 +132,17 @@ public class NotificationDispatchService {
 
             Duration retryDelay = resolveRetryDelay(outbox.getAttemptCount());
             outbox.scheduleRetry(now.plus(retryDelay), ex.getMessage());
+            recordDelivery(outbox, "retry_scheduled");
             log.warn("Notification outbox rescheduled. outboxId={}, channel={}, attempts={}, retryAfterMs={}, error={}",
                     outbox.getId(), outbox.getChannel(), outbox.getAttemptCount(), retryDelay.toMillis(), ex.getMessage());
         }
+    }
+
+    private void recordDelivery(NotificationOutbox outbox, String outcome) {
+        meterRegistry.counter("notification.delivery.attempts",
+                        "channel", outbox.getChannel().name(),
+                        "outcome", outcome)
+                .increment();
     }
 
     private void enqueueNotifications(List<Notification> notifications) {

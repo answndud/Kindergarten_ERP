@@ -26,6 +26,7 @@
                 <maxFileSize>100MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
             <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
         </rollingPolicy>
     </appender>
 
@@ -44,6 +45,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOGS_PATH}/${LOG_FILE}-error-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>90</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
         </rollingPolicy>
     </appender>
 
