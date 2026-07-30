@@ -49,7 +49,7 @@ git diff --check
 | Secret scope | Redis에는 Redis password만, Caddy에는 domain만 전달된다. |
 | Diff hygiene | `git diff --check`가 통과한다. |
 
-## 5. 2026-05-19 실행 결과
+## 5. 2026-07-31 실행 결과
 
 | 명령 | 결과 |
 | --- | --- |
@@ -59,6 +59,11 @@ git diff --check
 | `./gradlew bootJar` | 통과 |
 | `docker compose --env-file docker/.env.example -f docker/docker-compose.yml config >/tmp/docker-compose.base.yml` | 통과 |
 | `PROD_ENV_FILE=.env.prod.example docker compose --env-file deploy/.env.prod.example -f deploy/docker-compose.prod.yml config >/tmp/docker-compose.prod.yml` | 통과 |
+| `docker build --tag kindergarten-erp:quality-check .` | 통과 |
+| `docker image inspect kindergarten-erp:quality-check --format 'user={{.Config.User}}'` | `user=10001:10001` |
+| `docker run --rm -e APP_DOMAIN=erp.example.com -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile` | 통과 |
+| `./gradlew --no-daemon integrationTest --tests '*ObservabilityIntegrationTest' --tests '*NotificationOutbox*IntegrationTest'` | 32초, 통과 |
+| `./gradlew --no-daemon performanceSmokeTest` | 28초, 통과 |
 | `git diff --check` | 통과 |
 
 ## 6. 운영 전 남은 외부 의존성
@@ -71,3 +76,5 @@ git diff --check
 - Caddy TLS 발급 확인
 - readiness `UP` 확인
 - rollback 대상 image tag와 DB forward-fix 전략
+- 배포 후 장애는 correlation ID와 `/actuator/health/readiness`를 함께 확인
+- DB schema 변경은 rollback 대신 백업 확인 후 forward-fix migration을 우선 검토
